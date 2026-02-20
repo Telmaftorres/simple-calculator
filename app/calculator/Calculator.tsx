@@ -55,7 +55,7 @@ export default function Calculator({
     setPrintMode,
     isRectoVerso,
     setIsRectoVerso,
-    hasVarnish,gi
+    hasVarnish,
     setHasVarnish,
     hasFlatColor,
     setHasFlatColor,
