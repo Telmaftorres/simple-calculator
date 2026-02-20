@@ -10,6 +10,8 @@ interface SectionImpressionProps {
   setPrintMode: (mode: PrintMode) => void
   isRectoVerso: boolean
   setIsRectoVerso: (value: boolean) => void
+  rectoVersoType: 'identical' | 'different' | null
+  setRectoVersoType: (value: 'identical' | 'different' | null) => void
   hasVarnish: boolean
   setHasVarnish: (value: boolean) => void
   hasFlatColor: boolean
@@ -26,6 +28,8 @@ export function SectionImpression({
   setPrintMode,
   isRectoVerso,
   setIsRectoVerso,
+  rectoVersoType,
+  setRectoVersoType,
   hasVarnish,
   setHasVarnish,
   hasFlatColor,
@@ -39,6 +43,8 @@ export function SectionImpression({
   return (
     <SectionDisplay number="3" title="Impression" color="purple">
       <div className="space-y-4">
+
+        {/* Mode d'impression */}
         <div className="flex justify-between items-center">
           <Label>Mode d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -57,11 +63,12 @@ export function SectionImpression({
           </div>
         </div>
 
+        {/* Type d'impression */}
         <div className="flex justify-between items-center">
           <Label>Type d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
             <button
-              onClick={() => setIsRectoVerso(false)}
+              onClick={() => { setIsRectoVerso(false); setRectoVersoType(null) }}
               className={`flex-1 px-4 py-3 text-sm font-semibold rounded-lg transition-all duration-200 ${!isRectoVerso ? 'bg-white shadow-sm text-purple-700 ring-1 ring-purple-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
             >
               Recto Seul
@@ -75,7 +82,28 @@ export function SectionImpression({
           </div>
         </div>
 
-        {/* Finitions — cumulables, +5% encre chacune */}
+        {/* Identique / Différent — visible seulement si Recto/Verso activé */}
+        {isRectoVerso && (
+          <div>
+            <Label className="mb-2 block">Visuel Recto / Verso</Label>
+            <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl">
+              <button
+                onClick={() => setRectoVersoType('identical')}
+                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${rectoVersoType === 'identical' ? 'bg-white shadow-sm text-purple-700 ring-1 ring-purple-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              >
+                Identique
+              </button>
+              <button
+                onClick={() => setRectoVersoType('different')}
+                className={`flex-1 px-4 py-2 text-sm font-semibold rounded-lg transition-all duration-200 ${rectoVersoType === 'different' ? 'bg-white shadow-sm text-purple-700 ring-1 ring-purple-100' : 'text-slate-500 hover:text-slate-700 hover:bg-slate-50'}`}
+              >
+                Différent
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Finitions */}
         <div>
           <Label className="mb-2 block">Finitions</Label>
           <div className="flex gap-2">
@@ -99,6 +127,7 @@ export function SectionImpression({
           )}
         </div>
 
+        {/* Surface imprimée */}
         <GaugeSlider
           label="Surface Imprimée"
           value={printSurfacePercent}

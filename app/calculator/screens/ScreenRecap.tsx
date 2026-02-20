@@ -13,6 +13,10 @@ interface ScreenRecapProps {
   flatHeight: number
   impositionResult: ImpositionResult | undefined
   printSurfacePercent: number
+  isRectoVerso: boolean
+  rectoVersoType: 'identical' | 'different' | null
+  hasVarnish: boolean
+  hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number
   printingCostData: PrintingCostData
   cuttingCost: number
@@ -37,6 +41,10 @@ export function ScreenRecap({
   flatHeight,
   impositionResult,
   printSurfacePercent,
+  isRectoVerso,
+  rectoVersoType,
+  hasVarnish,
+  hasFlatColor,
   cuttingTimePerPoseSeconds,
   printingCostData,
   cuttingCost,
@@ -58,13 +66,12 @@ export function ScreenRecap({
             <h1 className="text-3xl font-bold mb-2">Devis Sauvegardé</h1>
             <p className="text-emerald-400 font-mono text-lg">{studyNumber}</p>
           </div>
-          {/* Background decorative elements */}
           <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] z-0"></div>
         </div>
 
         <CardContent className="p-8 space-y-8">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            {/* Box 1: Info Client */}
+            {/* Box 1: Informations */}
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <LayoutDashboard className="w-4 h-4 text-slate-500" /> Informations
@@ -88,14 +95,12 @@ export function ScreenRecap({
                 </div>
                 <div className="flex justify-between border-t pt-2 mt-2">
                   <dt className="text-slate-500">Format à Plat</dt>
-                  <dd className="font-medium">
-                    {flatWidth}x{flatHeight} mm
-                  </dd>
+                  <dd className="font-medium">{flatWidth}x{flatHeight} mm</dd>
                 </div>
               </dl>
             </div>
 
-            {/* Box 2: Production */}
+            {/* Box 2: Technique */}
             <div className="bg-slate-50 p-6 rounded-xl border border-slate-100">
               <h3 className="font-semibold text-slate-900 mb-4 flex items-center gap-2">
                 <CalcIcon className="w-4 h-4 text-slate-500" /> Technique
@@ -114,10 +119,26 @@ export function ScreenRecap({
                   <dd className="font-medium">{printSurfacePercent}%</dd>
                 </div>
                 <div className="flex justify-between">
-                  <dt className="text-slate-500">Temps Découpe</dt>
+                  <dt className="text-slate-500">Impression</dt>
                   <dd className="font-medium">
-                    {cuttingTimePerPoseSeconds} s/pose (calage incl.)
+                    {isRectoVerso
+                      ? `Recto/Verso — ${rectoVersoType === 'identical' ? 'Identique' : rectoVersoType === 'different' ? 'Différent' : 'Non précisé'}`
+                      : 'Recto seul'}
                   </dd>
+                </div>
+                {(hasVarnish || hasFlatColor) && (
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">Finitions</dt>
+                    <dd className="font-medium">
+                      {[hasVarnish && 'Vernis', hasFlatColor && 'Aplat']
+                        .filter(Boolean)
+                        .join(' + ')}
+                    </dd>
+                  </div>
+                )}
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Temps Découpe</dt>
+                  <dd className="font-medium">{cuttingTimePerPoseSeconds} s/pose (calage incl.)</dd>
                 </div>
               </dl>
             </div>
@@ -188,7 +209,7 @@ export function ScreenRecap({
                 <tfoot className="bg-slate-900 text-white">
                   <tr>
                     <td className="p-4 font-bold">Total HT</td>
-                    <td className="p-4 text-right opacity-80 decoration-slate-400">
+                    <td className="p-4 text-right opacity-80">
                       {(totalCost / (quantity || 1)).toFixed(2)} € / pce
                     </td>
                     <td className="p-4 text-right font-bold text-lg">{totalCost.toFixed(2)} €</td>

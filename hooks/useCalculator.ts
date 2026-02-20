@@ -35,12 +35,13 @@ export function useCalculator(
   const [flatWidth, setFlatWidth] = useState<number>(0)
   const [flatHeight, setFlatHeight] = useState<number>(0)
 
-  // ── Section 3: Impression ──
-  const [printSurfacePercent, setPrintSurfacePercent] = useState<number>(0)
-  const [printMode, setPrintMode] = useState<PrintMode>('production')
-  const [isRectoVerso, setIsRectoVerso] = useState<boolean>(false)
-  const [hasVarnish, setHasVarnish] = useState<boolean>(false)
-  const [hasFlatColor, setHasFlatColor] = useState<boolean>(false)
+ // Section 3: Impression
+const [printSurfacePercent, setPrintSurfacePercent] = useState<number>(0)
+const [printMode, setPrintMode] = useState<PrintMode>('production')
+const [isRectoVerso, setIsRectoVerso] = useState<boolean>(false)
+const [hasVarnish, setHasVarnish] = useState<boolean>(false)
+const [hasFlatColor, setHasFlatColor] = useState<boolean>(false)
+const [rectoVersoType, setRectoVersoType] = useState<'identical' | 'different' | null>(null)
 
   // ── Section 4: Découpe ──
   const [cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds] = useState<number>(20)
@@ -270,6 +271,7 @@ export function useCalculator(
     setIsRectoVerso(false)
     setHasVarnish(false)
     setHasFlatColor(false)
+    setRectoVersoType(null)
     setCuttingTimePerPoseSeconds(20)
     setAssemblyTimePerPieceSeconds(0)
     setPackTimePerPieceSeconds(0)
@@ -320,6 +322,8 @@ export function useCalculator(
     setHasVarnish,
     hasFlatColor,
     setHasFlatColor,
+    rectoVersoType,
+    setRectoVersoType,
     printingCostData,
     printingCost,
 

@@ -55,6 +55,8 @@ export default function Calculator({
     setPrintMode,
     isRectoVerso,
     setIsRectoVerso,
+    rectoVersoType,
+    setRectoVersoType,
     hasVarnish,
     setHasVarnish,
     hasFlatColor,
@@ -102,6 +104,10 @@ export default function Calculator({
         flatHeight={flatHeight}
         impositionResult={impositionResult || undefined}
         printSurfacePercent={printSurfacePercent}
+        isRectoVerso={isRectoVerso}
+        rectoVersoType={rectoVersoType}
+        hasVarnish={hasVarnish}
+        hasFlatColor={hasFlatColor}
         cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
         printingCostData={printingCostData}
         cuttingCost={cuttingCost}
@@ -128,9 +134,8 @@ export default function Calculator({
             <CalcIcon className="h-6 w-6 text-emerald-400" />
             Calculateur de ouf
           </h1>
-      </div>
+        </div>
         <div className="flex gap-2">
-          {/* Bouton Paramètres — admin uniquement */}
           {isAdmin && (
             <Link href="/settings">
               <Button
@@ -202,20 +207,22 @@ export default function Calculator({
 
           {/* 3. Impression */}
           <SectionImpression
-          printMode={printMode}
-          setPrintMode={setPrintMode}
-          isRectoVerso={isRectoVerso}
-          setIsRectoVerso={setIsRectoVerso}
-          hasVarnish={hasVarnish}
-          setHasVarnish={setHasVarnish}
-          hasFlatColor={hasFlatColor}
-          setHasFlatColor={setHasFlatColor}
-          printSurfacePercent={printSurfacePercent}
-          setPrintSurfacePercent={setPrintSurfacePercent}
-          printingCostData={printingCostData}
-          impositionResult={impositionResult || undefined}
-          selectedPlate={selectedPlate}
-        />
+            printMode={printMode}
+            setPrintMode={setPrintMode}
+            isRectoVerso={isRectoVerso}
+            setIsRectoVerso={setIsRectoVerso}
+            rectoVersoType={rectoVersoType}
+            setRectoVersoType={setRectoVersoType}
+            hasVarnish={hasVarnish}
+            setHasVarnish={setHasVarnish}
+            hasFlatColor={hasFlatColor}
+            setHasFlatColor={setHasFlatColor}
+            printSurfacePercent={printSurfacePercent}
+            setPrintSurfacePercent={setPrintSurfacePercent}
+            printingCostData={printingCostData}
+            impositionResult={impositionResult || undefined}
+            selectedPlate={selectedPlate}
+          />
 
           {/* 4. Découpe */}
           <SectionDisplay number="4" title="Découpe" color="orange">
