@@ -19,7 +19,6 @@ export const getStudies = unstable_cache(
 
 /**
  * Fetches all product types (PLV) with their associated elements.
- * Cached with tag 'product-types'
  */
 export const getProductTypes = unstable_cache(
   async () => {
@@ -36,7 +35,6 @@ export const getProductTypes = unstable_cache(
 
 /**
  * Fetches all available plates (materials).
- * Cached with tag 'plates'
  */
 export const getPlates = unstable_cache(
   async () => {
@@ -47,6 +45,23 @@ export const getPlates = unstable_cache(
   ['plates'],
   { tags: ['plates'] }
 )
+
+/**
+ * Génère une référence unique au format C0001-MMAAAA
+ * Ex: C0001-022026, C0042-022026
+ */
+async function generateReference(): Promise<string> {
+  const now = new Date()
+  const month = String(now.getMonth() + 1).padStart(2, '0')
+  const year = String(now.getFullYear())
+  const suffix = `${month}${year}`
+
+  // Compter le nombre de devis existants pour incrémenter le numéro
+  const count = await prisma.quote.count()
+  const number = String(count + 1).padStart(4, '0')
+
+  return `C${number}-${suffix}`
+}
 
 export async function createQuote(data: {
   studyNumber: string
@@ -67,11 +82,10 @@ export async function createQuote(data: {
   elements: { name: string; quantity: number }[]
   accessories?: { id: number; quantity: number }[]
 }) {
-  // ✅ Vérification d'authentification
   const session = await auth()
   if (!session?.user) throw new Error('Non autorisé')
 
-  // Find or create the study
+  // Trouver ou créer l'étude
   let study = await prisma.study.findUnique({
     where: { number: data.studyNumber },
   })
@@ -85,8 +99,12 @@ export async function createQuote(data: {
     })
   }
 
+  // Générer la référence unique
+  const reference = await generateReference()
+
   return await prisma.quote.create({
     data: {
+      reference,
       studyId: study.id,
       productTypeId: data.productTypeId,
       quantity: data.quantity,
@@ -102,7 +120,7 @@ export async function createQuote(data: {
       cuttingMinutes: data.cuttingMinutes,
       assemblySeconds: data.assemblySeconds,
       packSeconds: data.packSeconds,
-      userId: session.user.id, // ✅ Plus de '?' — on sait que la session existe
+      userId: session.user.id,
       accessories: {
         create: data.accessories?.map((acc) => ({
           accessoryId: acc.id,

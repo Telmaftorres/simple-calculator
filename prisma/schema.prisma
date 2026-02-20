@@ -1,6 +1,3 @@
-// This is your Prisma schema file,
-// learn more about it in the docs: https://pris.ly/d/prisma-schema
-
 generator client {
   provider = "prisma-client-js"
 }
@@ -10,7 +7,6 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
-// 1. Etude (Study)
 model Study {
   id        Int      @id @default(autoincrement())
   number    String   @unique
@@ -19,129 +15,105 @@ model Study {
   quotes    Quote[]
 }
 
-// 2. Type de PLV (Product Type)
 model ProductType {
-  id        Int       @id @default(autoincrement())
-  name      String    @unique // e.g., "PRESENTOIR DE COMPTOIR"
-  elements  Element[]
-  quotes    Quote[]
-  
-  // Dynamic Calculation Formulas
-  // Variables: L (Length/Longueur), l (Width/Largeur), H (Height/Hauteur)
-  flatWidthFormula  String @default("l") 
-  flatHeightFormula String @default("L")
+  id                Int       @id @default(autoincrement())
+  name              String    @unique
+  flatWidthFormula  String    @default("l")
+  flatHeightFormula String    @default("L")
+  elements          Element[]
+  quotes            Quote[]
 }
 
-// 3. Elements associated with a Product Type
 model Element {
   id            Int         @id @default(autoincrement())
   name          String
-  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
   productTypeId Int
   quantity      Int         @default(1)
+  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
 }
 
-// 4. Plaques (Plates) - Materials
 model Plate {
-  id        Int      @id @default(autoincrement())
-  name      String   @unique // e.g., "Microbis 1700x2000"
-  width     Int      // mm
-  height    Int      // mm
-  cost      Float
-  material  String   // e.g., "Microbis"
-  quotes    Quote[]
+  id       Int     @id @default(autoincrement())
+  name     String  @unique
+  width    Int
+  height   Int
+  cost     Float
+  material String
+  quotes   Quote[]
 }
 
-// 4b. Accessoires
 model Accessory {
-  id          Int      @id @default(autoincrement())
-  name        String
-  description String?
-  price       Float
-  supplier    String?
-  weight      Float?    // in grams
-  
+  id               Int              @id @default(autoincrement())
+  name             String
+  description      String?
+  price            Float
+  supplier         String?
+  weight           Float?
   quoteAccessories QuoteAccessory[]
 }
 
-// 5. Devis (Quote)
 model Quote {
-  id            Int         @id @default(autoincrement())
-  
-  // Presentation Tab
-  study         Study       @relation(fields: [studyId], references: [id])
-  studyId       Int
-  
-  productType   ProductType @relation(fields: [productTypeId], references: [id])
-  productTypeId Int
-  
-  quantity      Int
-  width         Int         // mm (Product size Length)
-  height        Int         // mm (Product size Width)
-
-  // V2 Fields (Optional)
+  id              Int              @id @default(autoincrement())
+  reference       String?          @unique
+  studyId         Int
+  productTypeId   Int
+  quantity        Int
+  width           Int
+  height          Int
   flatWidth       Int?
   flatHeight      Int?
   printSurface    Int?
   cuttingMinutes  Int?
   assemblySeconds Int?
   packSeconds     Int?
-  
-  // Nomenclature & Imposition
-  plate         Plate?      @relation(fields: [plateId], references: [id])
-  plateId       Int?
-  
-  itemsPerPlate Int?        // Calculated: How many items fit on one plate
-  platesCount   Int?        // Calculated: Total plates needed
-  totalCost     Float?      // Calculated cost
-  
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
-  
-  // Custom elements for this specific quote
-  elements      QuoteElement[]
-  
-  // User Link
-  user          User?       @relation(fields: [userId], references: [id])
-  userId        String?
-
+  plateId         Int?
+  itemsPerPlate   Int?
+  platesCount     Int?
+  totalCost       Float?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  userId          String?
+  plate           Plate?           @relation(fields: [plateId], references: [id])
+  productType     ProductType      @relation(fields: [productTypeId], references: [id])
+  study           Study            @relation(fields: [studyId], references: [id])
+  user            User?            @relation(fields: [userId], references: [id])
   accessories     QuoteAccessory[]
+  elements        QuoteElement[]
 }
 
 model QuoteElement {
-  id        Int      @id @default(autoincrement())
-  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
-  quoteId   Int
-  name      String
-  quantity  Int
+  id       Int    @id @default(autoincrement())
+  quoteId  Int
+  name     String
+  quantity Int
+  quote    Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model QuoteAccessory {
-  id          Int      @id @default(autoincrement())
+  id          Int       @id @default(autoincrement())
   quoteId     Int
-  quote       Quote    @relation(fields: [quoteId], references: [id])
   accessoryId Int
-  accessory   Accessory @relation(fields: [accessoryId], references: [id])
   quantity    Int
+  accessory   Accessory @relation(fields: [accessoryId], references: [id])
+  quote       Quote     @relation(fields: [quoteId], references: [id])
 }
 
+model User {
+  id                 String   @id @default(cuid())
+  email              String   @unique
+  password           String
+  name               String?
+  firstName          String?
+  lastName           String?
+  mustChangePassword Boolean  @default(true)
+  createdAt          DateTime @default(now())
+  updatedAt          DateTime @updatedAt
+  permissions        String[]
+  role               Role     @default(USER)
+  quotes             Quote[]
+}
 
 enum Role {
   ADMIN
   USER
-}
-
-model User {
-  id        String   @id @default(cuid())
-  email     String   @unique
-  password  String
-  name      String?
-  firstName String?
-  lastName  String?
-  role      Role     @default(USER)
-  permissions String[] // e.g., ["MANAGE_USERS", "MANAGE_PRODUCTS"]
-  mustChangePassword Boolean @default(true)
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-  quotes    Quote[]
 }

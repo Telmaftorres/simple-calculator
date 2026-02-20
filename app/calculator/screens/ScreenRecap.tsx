@@ -1,6 +1,7 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Calculator as CalcIcon, Plus } from 'lucide-react'
+import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText } from 'lucide-react'
+import Link from 'next/link'
 import { formatTimeSeconds, formatMinutes } from '@/hooks/useCalculator'
 import { ImpositionResult, PrintingCostData, Plate, SelectedAccessory } from '@/types/calculator'
 
@@ -219,7 +220,19 @@ export function ScreenRecap({
             </div>
           </div>
 
-          <div className="flex justify-center pt-8">
+          <div className="flex flex-wrap justify-center gap-4 pt-8 border-t border-slate-100 mt-8">
+            <Link href="/dashboard/my-quotes">
+              <Button variant="outline" size="lg" className="border-slate-200">
+                <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Devis
+              </Button>
+            </Link>
+            
+            <Link href="/dashboard">
+              <Button variant="outline" size="lg" className="border-slate-200">
+                <LayoutDashboard className="mr-2 h-5 w-5 text-slate-500" /> Dashboard
+              </Button>
+            </Link>
+
             <Button
               onClick={() => setScreenState('form')}
               size="lg"

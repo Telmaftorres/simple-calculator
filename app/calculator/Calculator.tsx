@@ -161,6 +161,7 @@ export default function Calculator({
 
           {/* 1. Présentation */}
           <SectionPresentation
+            key="section-presentation"
             studyNumber={studyNumber}
             setStudyNumber={setStudyNumber}
             productSearch={productSearch}
@@ -183,7 +184,7 @@ export default function Calculator({
 
           {/* 2. Poses */}
           {impositionResult && (
-            <SectionDisplay number="2" title="Poses (Imposition)" color="blue">
+            <SectionDisplay key="section-poses" number="2" title="Poses (Imposition)" color="blue">
               <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
@@ -207,6 +208,7 @@ export default function Calculator({
 
           {/* 3. Impression */}
           <SectionImpression
+            key="section-impression"
             printMode={printMode}
             setPrintMode={setPrintMode}
             isRectoVerso={isRectoVerso}
@@ -225,7 +227,7 @@ export default function Calculator({
           />
 
           {/* 4. Découpe */}
-          <SectionDisplay number="4" title="Découpe" color="orange">
+          <SectionDisplay key="section-decoupe" number="4" title="Découpe" color="orange">
             <GaugeSlider
               label="Temps par Pose"
               value={cuttingTimePerPoseSeconds}
@@ -239,7 +241,7 @@ export default function Calculator({
           </SectionDisplay>
 
           {/* 5. Façonnage */}
-          <SectionDisplay number="5" title="Façonnage" color="pink">
+          <SectionDisplay key="section-faconnage" number="5" title="Façonnage" color="pink">
             <GaugeSlider
               label="Temps par Pièce"
               value={assemblyTimePerPieceSeconds}
@@ -253,7 +255,7 @@ export default function Calculator({
           </SectionDisplay>
 
           {/* 6. Conditionnement */}
-          <SectionDisplay number="6" title="Conditionnement" color="teal">
+          <SectionDisplay key="section-conditionnement" number="6" title="Conditionnement" color="teal">
             <GaugeSlider
               label="Temps par Pièce"
               value={packTimePerPieceSeconds}
@@ -285,6 +287,7 @@ export default function Calculator({
 
           {/* 7. Accessoires */}
           <SectionAccessoires
+            key="section-accessoires"
             currentAccessoryId={currentAccessoryId}
             setCurrentAccessoryId={setCurrentAccessoryId}
             accessories={accessories}
