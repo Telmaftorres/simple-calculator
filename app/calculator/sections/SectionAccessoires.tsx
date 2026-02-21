@@ -41,9 +41,13 @@ export function SectionAccessoires({
         <div className="flex gap-4 items-end">
           <div className="flex-1 space-y-2">
             <Label>Accessoire</Label>
-            <Select value={currentAccessoryId} onValueChange={setCurrentAccessoryId}>
+            <Select 
+              value={currentAccessoryId || undefined} 
+              onValueChange={setCurrentAccessoryId}
+              disabled={accessories.length === 0}
+            >
               <SelectTrigger>
-                <SelectValue placeholder="Choisir..." />
+                <SelectValue placeholder={accessories.length === 0 ? "Aucun accessoire disponible" : "Choisir..."} />
               </SelectTrigger>
               <SelectContent>
                 {accessories.map((acc) => (

@@ -1,5 +1,4 @@
 'use client'
-// Formulas management client component
 
 import { useState } from 'react'
 import { Pencil } from 'lucide-react'
@@ -44,7 +43,6 @@ export default function FormulasClient({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<ProductType | null>(null)
-
   const [flatWidthFormula, setFlatWidthFormula] = useState('')
   const [flatHeightFormula, setFlatHeightFormula] = useState('')
 
@@ -60,12 +58,11 @@ export default function FormulasClient({
     if (!editingProduct) return
 
     try {
-      // Pass existing name as we are only updating formulas here
       await updateProductType(
-        editingProduct.id,
+        Number(editingProduct.id), // ← forcé en number
         editingProduct.name,
-        flatWidthFormula,
-        flatHeightFormula
+        flatWidthFormula || 'l',
+        flatHeightFormula || 'L'
       )
       setIsDialogOpen(false)
     } catch (error) {
@@ -131,15 +128,9 @@ export default function FormulasClient({
               <div className="bg-blue-50 p-4 rounded-md text-sm text-blue-800 space-y-1">
                 <p className="font-semibold">Variables disponibles :</p>
                 <ul className="list-disc list-inside ml-2">
-                  <li>
-                    <b>L</b> : Longueur (input utilisateur)
-                  </li>
-                  <li>
-                    <b>l</b> : Largeur (input utilisateur)
-                  </li>
-                  <li>
-                    <b>H</b> : Hauteur (input utilisateur)
-                  </li>
+                  <li><b>L</b> : Longueur (input utilisateur)</li>
+                  <li><b>l</b> : Largeur (input utilisateur)</li>
+                  <li><b>H</b> : Hauteur (input utilisateur)</li>
                 </ul>
                 <p className="pt-2 text-xs">
                   Utilisez des opérateurs mathématiques standards (+, -, *, /).

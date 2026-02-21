@@ -110,8 +110,8 @@ export async function updateProductType(
     where: { id },
     data: {
       name: validated.name,
-      flatWidthFormula: validated.flatWidthFormula,
-      flatHeightFormula: validated.flatHeightFormula,
+      flatWidthFormula: validated.flatWidthFormula || undefined,
+      flatHeightFormula: validated.flatHeightFormula || undefined,
     },
   })
   revalidatePath('/dashboard/products')

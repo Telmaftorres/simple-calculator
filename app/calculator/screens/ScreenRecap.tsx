@@ -191,7 +191,7 @@ export function ScreenRecap({
                   <tr>
                     <td className="p-3">Impression (Temps)</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
-                      {formatMinutes(printingCostData.timeMin)} (incl. 15min)
+                      {formatMinutes(printingCostData.timeMin)} {printSurfacePercent > 0 ? '(incl. 15min)' : ''}
                     </td>
                     <td className="p-3 text-right font-medium">
                       {printingCostData.laborCost.toFixed(2)} €

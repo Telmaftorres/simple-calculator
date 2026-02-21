@@ -146,7 +146,8 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
     const pace = printMode === 'production' ? 1 : 2
     const timePerPlateMin = printedAreaM2 * pace * multiplier
-    const totalTimeMin = timePerPlateMin * impositionResult.platesNeeded + 15
+    const setupTimeMin = printSurfacePercent > 0 ? 15 : 0
+    const totalTimeMin = timePerPlateMin * impositionResult.platesNeeded + setupTimeMin
 
     const laborCost = (totalTimeMin / 60) * 65
 
@@ -257,12 +258,16 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
   }
 
   const handleSave = async () => {
-    if (!impositionResult || !selectedPlateId || !selectedProductTypeId) return
+    const parsedProductId = parseInt(selectedProductTypeId)
+    if (!impositionResult || !selectedPlateId || !selectedProductTypeId || isNaN(parsedProductId)) {
+      alert("Veuillez sélectionner un Type de PLV valide.");
+      return;
+    }
     setIsServing(true)
     try {
       await createQuote({
         studyNumber,
-        productTypeId: parseInt(selectedProductTypeId),
+        productTypeId: parsedProductId,
         quantity,
         width: flatWidth,
         height: flatHeight,
@@ -294,9 +299,9 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
       })
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
-    } catch (error) {
+    } catch (error: unknown) {
       console.error('Save error:', error)
-      alert('Erreur lors de la sauvegarde.')
+      alert((error as Error)?.message || 'Erreur lors de la sauvegarde.')
     } finally {
       setIsServing(false)
     }

@@ -108,6 +108,17 @@ export async function createQuote(data: {
   // Générer la référence unique
   const reference = await generateReference()
 
+  // VERIFICATION SUPPLEMENTAIRE AVANT INSERTION POUR EVITER L'ERREUR 500 (Quote_productTypeId_fkey)
+  const productTypeExists = await prisma.productType.findUnique({
+    where: { id: data.productTypeId },
+    select: { id: true }
+  })
+
+  if (!productTypeExists) {
+    console.error(`Erreur: Tentative de création d'un devis pour un ProductType inexistant (ID: ${data.productTypeId})`)
+    throw new Error(`Le type de PLV sélectionné (ID: ${data.productTypeId}) n'existe plus dans la base de données. Veuillez actualiser la page.`)
+  }
+
   return await prisma.quote.create({
     data: {
       reference,

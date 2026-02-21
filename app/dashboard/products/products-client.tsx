@@ -61,12 +61,11 @@ export default function ProductsClient({
     e.preventDefault()
     try {
       if (editingProduct) {
-        // Pass existing formulas to keep them unchanged when just renaming
         await updateProductType(
-          editingProduct.id,
+          Number(editingProduct.id), // ← forcé en number
           name,
-          editingProduct.flatWidthFormula,
-          editingProduct.flatHeightFormula
+          editingProduct.flatWidthFormula || 'l',
+          editingProduct.flatHeightFormula || 'L'
         )
       } else {
         await createProductType(name)
@@ -84,7 +83,7 @@ export default function ProductsClient({
         'Êtes-vous sûr de vouloir supprimer ce type de PLV ? Cela supprimera également tous ses éléments.'
       )
     ) {
-      await deleteProductType(id)
+      await deleteProductType(Number(id))
     }
   }
 
