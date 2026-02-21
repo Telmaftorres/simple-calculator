@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth'
-import { unstable_cache } from 'next/cache'
+import { unstable_cache, revalidatePath } from 'next/cache'
 
 /**
  * Fetches all studies from the database.
@@ -76,9 +76,15 @@ export async function createQuote(data: {
   flatWidth?: number
   flatHeight?: number
   printSurface?: number
-  cuttingMinutes?: number
-  assemblySeconds?: number
-  packSeconds?: number
+  printMode?: string
+  isRectoVerso?: boolean
+  rectoVersoType?: string | null
+  hasVarnish?: boolean
+  hasFlatColor?: boolean
+  cuttingTimePerPoseSeconds?: number
+  assemblyTimePerPieceSeconds?: number
+  packTimePerPieceSeconds?: number
+  hasAssemblyNotice?: boolean
   elements: { name: string; quantity: number }[]
   accessories?: { id: number; quantity: number }[]
 }) {
@@ -117,14 +123,26 @@ export async function createQuote(data: {
       flatWidth: data.flatWidth,
       flatHeight: data.flatHeight,
       printSurface: data.printSurface,
-      cuttingMinutes: data.cuttingMinutes,
-      assemblySeconds: data.assemblySeconds,
-      packSeconds: data.packSeconds,
+      printMode: data.printMode || 'production',
+      isRectoVerso: data.isRectoVerso || false,
+      rectoVersoType: data.rectoVersoType,
+      hasVarnish: data.hasVarnish || false,
+      hasFlatColor: data.hasFlatColor || false,
+      cuttingTimePerPoseSeconds: data.cuttingTimePerPoseSeconds || 20,
+      assemblyTimePerPieceSeconds: data.assemblyTimePerPieceSeconds || 0,
+      packTimePerPieceSeconds: data.packTimePerPieceSeconds || 0,
+      hasAssemblyNotice: data.hasAssemblyNotice || false,
       userId: session.user.id,
       accessories: {
         create: data.accessories?.map((acc) => ({
           accessoryId: acc.id,
           quantity: acc.quantity,
+        })),
+      },
+      elements: {
+        create: data.elements.map((el) => ({
+          name: el.name,
+          quantity: el.quantity,
         })),
       },
     },
@@ -143,5 +161,40 @@ export async function getUserQuotes() {
       plate: true,
     },
     orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function deleteQuote(id: number) {
+  const session = await auth()
+  if (!session?.user) throw new Error('Non autorisé')
+
+  await prisma.quote.delete({
+    where: { id },
+  })
+
+  revalidatePath('/dashboard/my-quotes')
+}
+
+export async function getQuoteById(id: number) {
+  const session = await auth()
+  if (!session?.user) throw new Error('Non autorisé')
+
+  return await prisma.quote.findUnique({
+    where: { id },
+    include: {
+      study: true,
+      productType: {
+        include: {
+          elements: true,
+        },
+      },
+      plate: true,
+      accessories: {
+        include: {
+          accessory: true,
+        },
+      },
+      elements: true,
+    },
   })
 }

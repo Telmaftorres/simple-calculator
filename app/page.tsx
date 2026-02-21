@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import Calculator from './calculator/Calculator'
-import { getProductTypes, getPlates } from './actions/get-data'
+import { getProductTypes, getPlates, getQuoteById } from './actions/get-data'
 import { getAccessories } from './actions/accessories'
 
 export const dynamic = 'force-dynamic'
@@ -12,14 +12,23 @@ export const metadata: Metadata = {
   description: 'Créez vos devis de PLV rapidement et efficacement.',
 }
 
-export default async function Home() {
+export default async function Home({
+  searchParams,
+}: {
+  searchParams: Promise<{ editId?: string; viewId?: string }>
+}) {
+  const { editId, viewId } = await searchParams
+  const idToFetch = editId || viewId
+  const isViewOnly = !!viewId
+
   const session = await auth()
   const userName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'Inconnu'
 
-  const [productTypes, plates, accessories] = await Promise.all([
+  const [productTypes, plates, accessories, initialQuote] = await Promise.all([
     getProductTypes(),
     getPlates(),
     getAccessories(),
+    idToFetch ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
   ])
 
   return (
@@ -39,6 +48,8 @@ export default async function Home() {
             plates={plates}
             accessories={accessories}
             isAdmin={session?.user?.role === 'admin'}
+            initialQuote={initialQuote || undefined}
+            isViewOnly={isViewOnly}
           />
         </section>
       </div>

@@ -59,11 +59,45 @@ export interface PrintingCostData {
   laborCost: number
 }
 
+export interface Quote {
+  id: number
+  reference: string | null
+  studyId: number
+  productTypeId: number
+  quantity: number
+  width: number
+  height: number
+  flatWidth: number | null
+  flatHeight: number | null
+  printSurface: number | null
+  printMode: string
+  isRectoVerso: boolean
+  rectoVersoType: 'identical' | 'different' | null
+  hasVarnish: boolean
+  hasFlatColor: boolean
+  cuttingTimePerPoseSeconds: number
+  assemblyTimePerPieceSeconds: number
+  packTimePerPieceSeconds: number
+  hasAssemblyNotice: boolean
+  plateId: number | null
+  itemsPerPlate: number | null
+  platesCount: number | null
+  totalCost: number | null
+  createdAt: Date
+  study: { number: string } | null
+  productType: { name: string; elements: { name: string; quantity: number }[] } | null
+  plate: { name: string } | null
+  accessories?: { accessoryId: number; quantity: number }[]
+  elements: { name: string; quantity: number }[]
+}
+
 export interface CalculatorProps {
   productTypes: ProductType[]
   plates: Plate[]
   accessories: Accessory[]
   isAdmin: boolean
+  initialQuote?: Quote
+  isViewOnly?: boolean
 }
 
 export type ScreenState = 'form' | 'success' | 'recap'

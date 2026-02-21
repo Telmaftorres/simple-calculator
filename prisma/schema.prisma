@@ -63,9 +63,18 @@ model Quote {
   flatWidth       Int?
   flatHeight      Int?
   printSurface    Int?
+  printMode       String           @default("production")
+  isRectoVerso    Boolean          @default(false)
+  rectoVersoType  String?
+  hasVarnish      Boolean          @default(false)
+  hasFlatColor    Boolean          @default(false)
   cuttingMinutes  Int?
+  cuttingTimePerPoseSeconds Int     @default(20)
   assemblySeconds Int?
+  assemblyTimePerPieceSeconds Int   @default(0)
   packSeconds     Int?
+  packTimePerPieceSeconds Int       @default(0)
+  hasAssemblyNotice Boolean         @default(false)
   plateId         Int?
   itemsPerPlate   Int?
   platesCount     Int?

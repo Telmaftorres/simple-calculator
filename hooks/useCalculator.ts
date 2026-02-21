@@ -13,15 +13,18 @@ import type {
   PrintingCostData,
   ScreenState,
   PrintMode,
+  Quote,
 } from '@/types/calculator'
 
 export function useCalculator(
   initialProductTypes: ProductType[],
   plates: Plate[],
-  accessories: Accessory[]
+  accessories: Accessory[],
+  initialQuote?: Quote,
+  isViewOnly?: boolean
 ) {
   // ── UI State ──
-  const [screenState, setScreenState] = useState<ScreenState>('form')
+  const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
   const [isServing, setIsServing] = useState(false)
 
   // ── Section 1: Configuration ──
@@ -57,6 +60,42 @@ const [rectoVersoType, setRectoVersoType] = useState<'identical' | 'different' |
   const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessory[]>([])
   const [currentAccessoryId, setCurrentAccessoryId] = useState<string>('')
   const [currentAccessoryQty, setCurrentAccessoryQty] = useState<number>(0)
+
+  // ── Initialization from initialQuote ──
+  useEffect(() => {
+    if (initialQuote) {
+      setStudyNumber(initialQuote.study?.number || 'ET')
+      setSelectedProductTypeId(initialQuote.productTypeId.toString())
+      setQuantity(initialQuote.quantity)
+      setSelectedPlateId(initialQuote.plateId?.toString() || '')
+      setFlatWidth(initialQuote.width)
+      setFlatHeight(initialQuote.height)
+      setPrintSurfacePercent(initialQuote.printSurface || 0)
+      setPrintMode(initialQuote.printMode as PrintMode || 'production')
+      setIsRectoVerso(initialQuote.isRectoVerso || false)
+      setRectoVersoType(initialQuote.rectoVersoType || null)
+      setHasVarnish(initialQuote.hasVarnish || false)
+      setHasFlatColor(initialQuote.hasFlatColor || false)
+      setCuttingTimePerPoseSeconds(initialQuote.cuttingTimePerPoseSeconds || 20)
+      setAssemblyTimePerPieceSeconds(initialQuote.assemblyTimePerPieceSeconds || 0)
+      setPackTimePerPieceSeconds(initialQuote.packTimePerPieceSeconds || 0)
+      setHasAssemblyNotice(initialQuote.hasAssemblyNotice || false)
+      
+      // Load accessories
+      if (initialQuote.accessories) {
+        const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map(qa => {
+          const acc = accessories.find(a => a.id === qa.accessoryId)
+          return {
+            id: qa.accessoryId,
+            name: acc?.name || 'Inconnu',
+            price: acc?.price || 0,
+            quantity: qa.quantity
+          }
+        })
+        setSelectedAccessories(loadedAccs)
+      }
+    }
+  }, [initialQuote, accessories])
 
   // ── Derived values ──
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
@@ -234,9 +273,15 @@ const [rectoVersoType, setRectoVersoType] = useState<'identical' | 'different' |
         flatWidth,
         flatHeight,
         printSurface: printSurfacePercent,
-        cuttingMinutes: (cuttingTimePerPoseSeconds * quantity + 900) / 60,
-        assemblySeconds: assemblyTimePerPieceSeconds * quantity,
-        packSeconds: packTimePerPieceSeconds * quantity,
+        printMode,
+        isRectoVerso,
+        rectoVersoType,
+        hasVarnish,
+        hasFlatColor,
+        cuttingTimePerPoseSeconds,
+        assemblyTimePerPieceSeconds,
+        packTimePerPieceSeconds,
+        hasAssemblyNotice,
         elements:
           selectedProductType?.elements.map((el) => ({
             name: el.name,

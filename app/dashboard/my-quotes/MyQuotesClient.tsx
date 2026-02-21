@@ -10,8 +10,12 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { FileText, Calendar, Box, Layers, Search } from 'lucide-react'
+import { FileText, Calendar, Box, Layers, Search, Pencil, Trash2, Eye } from 'lucide-react'
 import { Input } from '@/components/ui/input'
+import { Button } from '@/components/ui/button'
+import { deleteQuote } from '@/app/actions/get-data'
+import Link from 'next/link'
+import { useRouter } from 'next/navigation'
 
 const formatDate = (date: Date) => {
   return new Intl.DateTimeFormat('fr-FR', {
@@ -42,6 +46,22 @@ interface MyQuotesClientProps {
 
 export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
   const [search, setSearch] = useState('')
+  const [isDeleting, setIsDeleting] = useState<number | null>(null)
+  const router = useRouter()
+
+  const handleDelete = async (id: number) => {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce devis ?')) return
+    setIsDeleting(id)
+    try {
+      await deleteQuote(id)
+      router.refresh()
+    } catch (error) {
+      console.error('Delete error:', error)
+      alert('Erreur lors de la suppression')
+    } finally {
+      setIsDeleting(null)
+    }
+  }
 
   const filtered = quotes.filter((quote) => {
     const q = search.toLowerCase()
@@ -60,7 +80,7 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
 
       <Card>
         <CardHeader>
-          <div className="flex items-center justify-between gap-4">
+          <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
             <div>
               <CardTitle className="flex items-center gap-2">
                 <FileText className="h-5 w-5 text-emerald-500" />
@@ -71,7 +91,7 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
               </CardDescription>
             </div>
             {/* Barre de recherche */}
-            <div className="relative w-72">
+            <div className="relative w-full md:w-72">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
               <Input
                 placeholder="Rechercher par dossier ou référence..."
@@ -82,7 +102,7 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
             </div>
           </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="p-0 md:p-6 overflow-x-auto">
           <Table>
             <TableHeader>
               <TableRow>
@@ -90,9 +110,9 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                 <TableHead>Dossier</TableHead>
                 <TableHead>Date</TableHead>
                 <TableHead>Produit</TableHead>
-                <TableHead>Matière</TableHead>
                 <TableHead className="text-right">Quantité</TableHead>
                 <TableHead className="text-right">Montant HT</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -120,13 +140,13 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                       {quote.study?.number}
                     </TableCell>
                     <TableCell className="text-slate-500">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 whitespace-nowrap">
                         <Calendar className="h-3 w-3" />
                         {formatDate(quote.createdAt)}
                       </div>
                     </TableCell>
                     <TableCell>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-2 whitespace-nowrap">
                         <Box className="h-3 w-3 text-emerald-600" />
                         {quote.productType?.name}
                         <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold border-transparent bg-slate-100 text-slate-900">
@@ -134,15 +154,33 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                         </span>
                       </div>
                     </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2">
-                        <Layers className="h-3 w-3 text-blue-600" />
-                        {quote.plate?.name}
-                      </div>
-                    </TableCell>
                     <TableCell className="text-right font-mono">{quote.quantity}</TableCell>
                     <TableCell className="text-right font-bold text-slate-900">
                       {quote.totalCost ? `${quote.totalCost.toFixed(2)} €` : '-'}
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-1">
+                        <Link href={`/?viewId=${quote.id}`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir le récapitulatif">
+                            <Eye className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Link href={`/?editId=${quote.id}`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600" title="Modifier">
+                            <Pencil className="h-4 w-4" />
+                          </Button>
+                        </Link>
+                        <Button
+                          variant="ghost"
+                          size="icon"
+                          className="h-8 w-8 text-slate-400 hover:text-rose-600"
+                          onClick={() => handleDelete(quote.id)}
+                          disabled={isDeleting === quote.id}
+                          title="Supprimer"
+                        >
+                          <Trash2 className={`h-4 w-4 ${isDeleting === quote.id ? 'animate-pulse' : ''}`} />
+                        </Button>
+                      </div>
                     </TableCell>
                   </TableRow>
                 ))

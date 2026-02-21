@@ -1,6 +1,6 @@
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText } from 'lucide-react'
+import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download } from 'lucide-react'
 import Link from 'next/link'
 import { formatTimeSeconds, formatMinutes } from '@/hooks/useCalculator'
 import { ImpositionResult, PrintingCostData, Plate, SelectedAccessory } from '@/types/calculator'
@@ -59,6 +59,10 @@ export function ScreenRecap({
   getPackDetails,
   setScreenState,
 }: ScreenRecapProps) {
+  const handleDownload = () => {
+    window.print()
+  }
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 animate-in slide-in-from-bottom duration-500">
       <Card className="shadow-2xl border-slate-200 overflow-hidden">
@@ -66,6 +70,16 @@ export function ScreenRecap({
           <div className="relative z-10">
             <h1 className="text-3xl font-bold mb-2">Devis Sauvegardé</h1>
             <p className="text-emerald-400 font-mono text-lg">{studyNumber}</p>
+          </div>
+          <div className="absolute top-4 right-4 z-20 no-print">
+            <Button 
+              onClick={handleDownload}
+              variant="secondary"
+              className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+            >
+              <Download className="mr-2 h-4 w-4" />
+              Télécharger PDF
+            </Button>
           </div>
           <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] z-0"></div>
         </div>
