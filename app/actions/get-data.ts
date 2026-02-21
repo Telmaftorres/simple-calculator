@@ -87,6 +87,7 @@ export async function createQuote(data: {
   hasAssemblyNotice?: boolean
   elements: { name: string; quantity: number }[]
   accessories?: { id: number; quantity: number }[]
+  consumables?: { id: number; sizePerItem: number }[]
 }) {
   const session = await auth()
   if (!session?.user) throw new Error('Non autorisé')
@@ -148,6 +149,12 @@ export async function createQuote(data: {
         create: data.accessories?.map((acc) => ({
           accessoryId: acc.id,
           quantity: acc.quantity,
+        })),
+      },
+      consumables: {
+        create: data.consumables?.map((c) => ({
+          consumableId: c.id,
+          sizePerItem: c.sizePerItem,
         })),
       },
       elements: {

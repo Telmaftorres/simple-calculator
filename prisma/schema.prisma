@@ -87,7 +87,25 @@ model Quote {
   study           Study            @relation(fields: [studyId], references: [id])
   user            User?            @relation(fields: [userId], references: [id])
   accessories     QuoteAccessory[]
+  consumables     QuoteConsumable[]
   elements        QuoteElement[]
+}
+
+model Consumable {
+  id              Int               @id @default(autoincrement())
+  name            String
+  price           Float
+  size            Float
+  quoteConsumables QuoteConsumable[]
+}
+
+model QuoteConsumable {
+  id             Int        @id @default(autoincrement())
+  quoteId        Int
+  consumableId   Int
+  sizePerItem    Float
+  consumable     Consumable @relation(fields: [consumableId], references: [id])
+  quote          Quote      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model QuoteElement {

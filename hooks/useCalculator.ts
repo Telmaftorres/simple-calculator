@@ -8,7 +8,9 @@ import type {
   ProductType,
   Plate,
   Accessory,
+  Consumable,
   SelectedAccessory,
+  SelectedConsumable,
   ImpositionResult,
   PrintingCostData,
   ScreenState,
@@ -20,6 +22,7 @@ export function useCalculator(
   initialProductTypes: ProductType[],
   plates: Plate[],
   accessories: Accessory[],
+  consumables: Consumable[],
   initialQuote?: Quote,
   isViewOnly?: boolean
 ) {
@@ -51,6 +54,9 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
 
   // ── Section 5: Façonnage ──
   const [assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds] = useState<number>(0)
+  const [selectedConsumables, setSelectedConsumables] = useState<SelectedConsumable[]>([])
+  const [currentConsumableId, setCurrentConsumableId] = useState<string>('')
+  const [currentConsumableSize, setCurrentConsumableSize] = useState<number>(0)
 
   // ── Section 6: Conditionnement ──
   const [packTimePerPieceSeconds, setPackTimePerPieceSeconds] = useState<number>(0)
@@ -93,6 +99,22 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
           }
         })
         setSelectedAccessories(loadedAccs)
+      }
+
+      // Load consumables
+      if (initialQuote.consumables) {
+        const loadedCons: SelectedConsumable[] = initialQuote.consumables.map(qc => {
+          const c = consumables.find(x => x.id === qc.consumableId)
+          return {
+            id: qc.consumableId,
+            name: c?.name || 'Inconnu',
+            price: c?.price || 0,
+            size: c?.size || 1,
+            sizePerItem: qc.sizePerItem,
+            quantity: initialQuote.quantity
+          }
+        })
+        setSelectedConsumables(loadedCons)
       }
     }
   }, [initialQuote, accessories])
@@ -180,13 +202,19 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     0
   )
 
+  const consumablesCost = selectedConsumables.reduce(
+    (sum, item) => sum + ((item.sizePerItem * item.quantity) / item.size) * item.price,
+    0
+  )
+
   const totalCost =
     (impositionResult?.materialCost || 0) +
     printingCost +
     cuttingCost +
     assemblyCost +
     packagingCost +
-    accessoriesCost
+    accessoriesCost +
+    consumablesCost
 
   // ── Detail helpers ──
 
@@ -236,6 +264,38 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
 
   const handleRemoveAccessory = (id: number) => {
     setSelectedAccessories(selectedAccessories.filter((sa) => sa.id !== id))
+  }
+
+  const handleAddConsumable = () => {
+    if (!currentConsumableId || currentConsumableSize <= 0) return
+    const c = consumables.find((x) => x.id.toString() === currentConsumableId)
+    if (!c) return
+
+    const existing = selectedConsumables.find((sc) => sc.id === c.id)
+    if (existing) {
+      setSelectedConsumables(
+        selectedConsumables.map((sc) =>
+          sc.id === c.id ? { ...sc, sizePerItem: sc.sizePerItem + currentConsumableSize } : sc
+        )
+      )
+    } else {
+      setSelectedConsumables([
+        ...selectedConsumables,
+        { 
+          id: c.id, 
+          name: c.name, 
+          price: c.price, 
+          size: c.size, 
+          sizePerItem: currentConsumableSize, 
+          quantity 
+        },
+      ])
+    }
+    setCurrentConsumableSize(0)
+  }
+
+  const handleRemoveConsumable = (id: number) => {
+    setSelectedConsumables(selectedConsumables.filter((sc) => sc.id !== id))
   }
 
   const handleCreateProductType = async () => {
@@ -296,6 +356,10 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
           id: sa.id,
           quantity: sa.quantity,
         })),
+        consumables: selectedConsumables.map((sc) => ({
+          id: sc.id,
+          sizePerItem: sc.sizePerItem,
+        })),
       })
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
@@ -329,6 +393,9 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     setSelectedAccessories([])
     setCurrentAccessoryId('')
     setCurrentAccessoryQty(0)
+    setSelectedConsumables([])
+    setCurrentConsumableId('')
+    setCurrentConsumableSize(0)
   }
 
   return {
@@ -402,12 +469,22 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     setCurrentAccessoryQty,
     accessoriesCost,
 
+    // Consumables (Façonnage extension)
+    selectedConsumables,
+    currentConsumableId,
+    setCurrentConsumableId,
+    currentConsumableSize,
+    setCurrentConsumableSize,
+    consumablesCost,
+
     // Costs
     totalCost,
 
     // Actions
     handleAddAccessory,
     handleRemoveAccessory,
+    handleAddConsumable,
+    handleRemoveConsumable,
     handleCreateProductType,
     handleSave,
     handleReset,

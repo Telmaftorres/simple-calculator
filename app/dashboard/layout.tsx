@@ -58,6 +58,14 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
 
           <Link
+            href="/dashboard/consumables"
+            className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
+          >
+            <FlaskConical className="h-5 w-5" />
+            Consommables
+          </Link>
+
+          <Link
             href="/dashboard/products"
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >

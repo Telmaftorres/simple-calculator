@@ -2,6 +2,7 @@ import { auth } from '@/auth'
 import Calculator from './calculator/Calculator'
 import { getProductTypes, getPlates, getQuoteById } from './actions/get-data'
 import { getAccessories } from './actions/accessories'
+import { getConsumables } from './actions/consumables'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,10 +25,11 @@ export default async function Home({
   const session = await auth()
   const userName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'Inconnu'
 
-  const [productTypes, plates, accessories, initialQuote] = await Promise.all([
+  const [productTypes, plates, accessories, consumables, initialQuote] = await Promise.all([
     getProductTypes(),
     getPlates(),
     getAccessories(),
+    getConsumables(),
     idToFetch ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
   ])
 
@@ -47,6 +49,7 @@ export default async function Home({
             productTypes={productTypes}
             plates={plates}
             accessories={accessories}
+            consumables={consumables}
             isAdmin={session?.user?.role === 'admin'}
             initialQuote={initialQuote || undefined}
             isViewOnly={isViewOnly}

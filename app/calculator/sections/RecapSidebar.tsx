@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { CostRow } from '../shared'
-import { ImpositionResult, Plate, PrintingCostData, SelectedAccessory } from '@/types/calculator'
+import { ImpositionResult, Plate, PrintingCostData, SelectedAccessory, SelectedConsumable } from '@/types/calculator'
 import { formatMinutes } from '@/hooks/useCalculator'
 
 interface RecapSidebarProps {
@@ -17,6 +17,8 @@ interface RecapSidebarProps {
   getPackDetails: () => string
   accessoriesCost: number
   selectedAccessories: SelectedAccessory[]
+  consumablesCost: number
+  selectedConsumables: SelectedConsumable[]
   totalCost: number
   quantity: number
   handleSave: () => void
@@ -35,6 +37,8 @@ export function RecapSidebar({
   getPackDetails,
   accessoriesCost,
   selectedAccessories,
+  consumablesCost,
+  selectedConsumables,
   totalCost,
   quantity,
   handleSave,
@@ -89,6 +93,14 @@ export function RecapSidebar({
             value={accessoriesCost}
             details={
               selectedAccessories.length > 0 ? `${selectedAccessories.length} ref(s)` : undefined
+            }
+          />
+
+          <CostRow
+            label="Consommables"
+            value={consumablesCost}
+            details={
+              selectedConsumables.length > 0 ? `${selectedConsumables.length} ref(s)` : undefined
             }
           />
 

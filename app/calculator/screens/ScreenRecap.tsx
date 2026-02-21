@@ -27,6 +27,8 @@ interface ScreenRecapProps {
   packagingCost: number
   totalCost: number
   accessoriesCost: number
+  consumablesCost: number
+  selectedConsumables?: { id: number; name: string; sizePerItem: number; size: number }[]
   getCuttingDetails: () => string
   getAssemblyDetails: () => string
   getPackDetails: () => string
@@ -52,6 +54,9 @@ export function ScreenRecap({
   assemblyCost,
   packagingCost,
   totalCost,
+  accessoriesCost,
+  consumablesCost,
+  selectedConsumables = [],
   getCuttingDetails,
   getAssemblyDetails,
   getPackDetails,
@@ -211,6 +216,17 @@ export function ScreenRecap({
                     </td>
                     <td className="p-3 text-right font-medium">{assemblyCost.toFixed(2)} €</td>
                   </tr>
+                  {selectedConsumables.length > 0 && (
+                    <tr>
+                      <td className="p-3 text-slate-600 pl-6 border-l-2 border-slate-200">
+                        ↳ Consommables
+                      </td>
+                      <td className="p-3 text-right text-slate-500 italic text-xs">
+                        {selectedConsumables.length} type(s)
+                      </td>
+                      <td className="p-3 text-right font-medium">{consumablesCost.toFixed(2)} €</td>
+                    </tr>
+                  )}
                   <tr>
                     <td className="p-3">Conditionnement</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
