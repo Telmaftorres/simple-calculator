@@ -28,7 +28,7 @@ export async function getUsers() {
 
 export async function createUser(formData: FormData) {
   const session = await auth()
-  if (!session?.user || (session.user as any).role !== 'ADMIN') throw new Error('Unauthorized')
+  if (!session?.user || (session.user as { role?: string }).role !== 'ADMIN') throw new Error('Unauthorized')
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
@@ -67,7 +67,7 @@ export async function createUser(formData: FormData) {
 
 export async function updateUser(formData: FormData) {
   const session = await auth()
-  if (!session?.user || (session.user as any).role !== 'ADMIN') throw new Error('Unauthorized')
+  if (!session?.user || (session.user as { role?: string }).role !== 'ADMIN') throw new Error('Unauthorized')
 
   const userId = formData.get('id') as string
   const email = formData.get('email') as string

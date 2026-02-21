@@ -72,7 +72,7 @@ export interface Quote {
   printSurface: number | null
   printMode: string
   isRectoVerso: boolean
-  rectoVersoType: 'identical' | 'different' | null
+  rectoVersoType: string | null
   hasVarnish: boolean
   hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number

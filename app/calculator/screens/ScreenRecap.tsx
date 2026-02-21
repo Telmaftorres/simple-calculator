@@ -2,8 +2,8 @@ import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download } from 'lucide-react'
 import Link from 'next/link'
-import { formatTimeSeconds, formatMinutes } from '@/hooks/useCalculator'
-import { ImpositionResult, PrintingCostData, Plate, SelectedAccessory } from '@/types/calculator'
+import { formatMinutes } from '@/hooks/useCalculator'
+import { ImpositionResult, PrintingCostData, Plate } from '@/types/calculator'
 
 interface ScreenRecapProps {
   studyNumber: string
@@ -15,7 +15,7 @@ interface ScreenRecapProps {
   impositionResult: ImpositionResult | undefined
   printSurfacePercent: number
   isRectoVerso: boolean
-  rectoVersoType: 'identical' | 'different' | null
+  rectoVersoType: string | null
   hasVarnish: boolean
   hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number
@@ -49,9 +49,7 @@ export function ScreenRecap({
   cuttingTimePerPoseSeconds,
   printingCostData,
   cuttingCost,
-  assemblyTimePerPieceSeconds,
   assemblyCost,
-  packTimePerPieceSeconds,
   packagingCost,
   totalCost,
   getCuttingDetails,

@@ -43,6 +43,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
                 role: user.role,
                 permissions: user.permissions,
                 mustChangePassword: user.mustChangePassword,
+             // eslint-disable-next-line @typescript-eslint/no-explicit-any
              } as any
           }
         }

@@ -10,7 +10,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { FileText, Calendar, Box, Layers, Search, Pencil, Trash2, Eye } from 'lucide-react'
+import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { deleteQuote } from '@/app/actions/get-data'

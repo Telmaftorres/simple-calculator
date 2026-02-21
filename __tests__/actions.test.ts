@@ -23,6 +23,7 @@ describe('Server Actions: get-data', () => {
     const mockPlates = [
         { id: 1, name: 'Plaque 1', width: 1000, height: 2000, cost: 10, material: 'Test' }
     ];
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (prisma.plate.findMany as any).mockResolvedValue(mockPlates)
 
     const plates = await getPlates()
@@ -34,6 +35,7 @@ describe('Server Actions: get-data', () => {
       const mockProductTypes = [
           { id: 1, name: 'Stand', elements: [] }
       ];
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma.productType.findMany as any).mockResolvedValue(mockProductTypes)
 
       const productTypes = await getProductTypes()

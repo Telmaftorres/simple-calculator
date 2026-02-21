@@ -10,7 +10,7 @@ interface SectionImpressionProps {
   setPrintMode: (mode: PrintMode) => void
   isRectoVerso: boolean
   setIsRectoVerso: (value: boolean) => void
-  rectoVersoType: 'identical' | 'different' | null
+  rectoVersoType: string | null
   setRectoVersoType: (value: 'identical' | 'different' | null) => void
   hasVarnish: boolean
   setHasVarnish: (value: boolean) => void

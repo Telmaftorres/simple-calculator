@@ -44,7 +44,7 @@ const [printMode, setPrintMode] = useState<PrintMode>('production')
 const [isRectoVerso, setIsRectoVerso] = useState<boolean>(false)
 const [hasVarnish, setHasVarnish] = useState<boolean>(false)
 const [hasFlatColor, setHasFlatColor] = useState<boolean>(false)
-const [rectoVersoType, setRectoVersoType] = useState<'identical' | 'different' | null>(null)
+const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
 
   // ── Section 4: Découpe ──
   const [cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds] = useState<number>(20)
