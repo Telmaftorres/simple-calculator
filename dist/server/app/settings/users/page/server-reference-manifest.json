@@ -1,0 +1,80 @@
+{
+  "node": {
+    "0018e74754c0c877abf9fc36b4cd9bcb0fcfc79101": {
+      "workers": {
+        "app/settings/users/page": {
+          "moduleId": 34253,
+          "async": false,
+          "exportedName": "getUsers",
+          "filename": "app/lib/user-actions.ts"
+        }
+      },
+      "layer": {
+        "app/settings/users/page": "rsc"
+      },
+      "exportedName": "getUsers",
+      "filename": "app/lib/user-actions.ts"
+    },
+    "402ddd7b74699d3d0946cbe3aa099521ab4700c424": {
+      "workers": {
+        "app/settings/users/page": {
+          "moduleId": 34253,
+          "async": false,
+          "exportedName": "createUser",
+          "filename": "app/lib/user-actions.ts"
+        }
+      },
+      "layer": {
+        "app/settings/users/page": "action-browser"
+      },
+      "exportedName": "createUser",
+      "filename": "app/lib/user-actions.ts"
+    },
+    "4069c4f067f816af6e2f3f7f22dfc3266430c31ccb": {
+      "workers": {
+        "app/settings/users/page": {
+          "moduleId": 34253,
+          "async": false,
+          "exportedName": "updateUser",
+          "filename": "app/lib/user-actions.ts"
+        }
+      },
+      "layer": {
+        "app/settings/users/page": "action-browser"
+      },
+      "exportedName": "updateUser",
+      "filename": "app/lib/user-actions.ts"
+    },
+    "406a400e5971a8aced5e4e34c489725650a653aefd": {
+      "workers": {
+        "app/settings/users/page": {
+          "moduleId": 34253,
+          "async": false,
+          "exportedName": "deleteUser",
+          "filename": "app/lib/user-actions.ts"
+        }
+      },
+      "layer": {
+        "app/settings/users/page": "action-browser"
+      },
+      "exportedName": "deleteUser",
+      "filename": "app/lib/user-actions.ts"
+    },
+    "40e256e1f1fee2ea4d5b56396bc0d32d1f04facdb1": {
+      "workers": {
+        "app/settings/users/page": {
+          "moduleId": 34253,
+          "async": false,
+          "exportedName": "updatePassword",
+          "filename": "app/lib/user-actions.ts"
+        }
+      },
+      "layer": {
+        "app/settings/users/page": "rsc"
+      },
+      "exportedName": "updatePassword",
+      "filename": "app/lib/user-actions.ts"
+    }
+  },
+  "edge": {}
+}

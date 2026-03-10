@@ -1,0 +1,20 @@
+{
+  "node": {
+    "40e256e1f1fee2ea4d5b56396bc0d32d1f04facdb1": {
+      "workers": {
+        "app/change-password/page": {
+          "moduleId": 10805,
+          "async": false,
+          "exportedName": "updatePassword",
+          "filename": "app/lib/user-actions.ts"
+        }
+      },
+      "layer": {
+        "app/change-password/page": "action-browser"
+      },
+      "exportedName": "updatePassword",
+      "filename": "app/lib/user-actions.ts"
+    }
+  },
+  "edge": {}
+}

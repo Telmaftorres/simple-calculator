@@ -1,0 +1,50 @@
+{
+  "node": {
+    "40cf06b3bd9a722559dca2bf9ea29bd4549d1be8c6": {
+      "workers": {
+        "app/dashboard/products/[id]/page": {
+          "moduleId": 88950,
+          "async": false,
+          "exportedName": "createElement",
+          "filename": "app/actions/admin.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/products/[id]/page": "action-browser"
+      },
+      "exportedName": "createElement",
+      "filename": "app/actions/admin.ts"
+    },
+    "70dcf63ca6399af1aacc788034fc531e6babe03b5b": {
+      "workers": {
+        "app/dashboard/products/[id]/page": {
+          "moduleId": 88950,
+          "async": false,
+          "exportedName": "updateElement",
+          "filename": "app/actions/admin.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/products/[id]/page": "action-browser"
+      },
+      "exportedName": "updateElement",
+      "filename": "app/actions/admin.ts"
+    },
+    "608af652ad87350549367b28e0a850cfce1fc4d85a": {
+      "workers": {
+        "app/dashboard/products/[id]/page": {
+          "moduleId": 88950,
+          "async": false,
+          "exportedName": "deleteElement",
+          "filename": "app/actions/admin.ts"
+        }
+      },
+      "layer": {
+        "app/dashboard/products/[id]/page": "action-browser"
+      },
+      "exportedName": "deleteElement",
+      "filename": "app/actions/admin.ts"
+    }
+  },
+  "edge": {}
+}
