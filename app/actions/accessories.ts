@@ -2,8 +2,10 @@
 
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/auth'
-import { revalidatePath, revalidateTag, unstable_cache } from 'next/cache'
+import { requireAuth } from '@/lib/auth-guard'
+import { revalidatePath } from 'next/cache'
+import { unstable_cache } from 'next/cache'
+import { revalidateCache } from '@/lib/cache'
 
 // ────────────────────────────────────────────────────
 // Schema de validation
@@ -16,16 +18,6 @@ const accessorySchema = z.object({
   supplier: z.string().optional(),
   weight: z.number().positive().optional(),
 })
-
-// ────────────────────────────────────────────────────
-// Helper : vérification d'authentification
-// ────────────────────────────────────────────────────
-
-async function requireAuth() {
-  const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
-  return session
-}
 
 // ────────────────────────────────────────────────────
 // Lecture (tous les connectés)
@@ -50,8 +42,7 @@ export async function createAccessory(data: z.infer<typeof accessorySchema>) {
   const validated = accessorySchema.parse(data)
   await prisma.accessory.create({ data: validated })
   revalidatePath('/dashboard/accessories')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('accessories')
+  revalidateCache('accessories')
 }
 
 export async function updateAccessory(id: number, data: z.infer<typeof accessorySchema>) {
@@ -59,8 +50,7 @@ export async function updateAccessory(id: number, data: z.infer<typeof accessory
   const validated = accessorySchema.parse(data)
   await prisma.accessory.update({ where: { id }, data: validated })
   revalidatePath('/dashboard/accessories')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('accessories')
+  revalidateCache('accessories')
 }
 
 export async function deleteAccessory(id: number) {
@@ -68,6 +58,5 @@ export async function deleteAccessory(id: number) {
   const validId = z.number().int().positive().parse(id)
   await prisma.accessory.delete({ where: { id: validId } })
   revalidatePath('/dashboard/accessories')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('accessories')
+  revalidateCache('accessories')
 }

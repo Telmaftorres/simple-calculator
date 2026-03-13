@@ -188,7 +188,6 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { email: 'admin@kontfeel.fr' },
     update: {
-      password: passwordHash, // Ensure password is reset if user exists
       role: 'ADMIN',
       permissions: ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'],
     },

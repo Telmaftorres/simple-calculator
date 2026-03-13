@@ -1,144 +1,186 @@
-# Kontfeel Calculator V2
+# 🧮 Calculateur PLV — Outil de Chiffrage
 
-Bienvenue dans le dépôt de **Kontfeel Calculator V2**, une application web moderne et performante conçue pour automatiser et optimiser le calcul de devis pour la PLV (Publicité sur Lieu de Vente).
+Application web de calcul de prix de revient pour la **PLV** (Publicité sur Lieu de Vente).
+Permet de créer des devis en estimant les coûts de matière, impression, découpe, façonnage, conditionnement et accessoires.
 
-## 🌟 Points Forts
+## Fonctionnalités
 
-- **Précision Industrielle** : Algorithmes de calepinage (imposition) temps réel.
-- **Expérience Utilisateur Premium** : Interface réactive, animations fluides et visualisation graphique.
-- **Architecture de Pointe** : Basé sur Next.js 16 (App Router) et Prisma ORM.
-- **Performance Optimisée** : Système de mise en cache serveur agressif.
+- **Calculateur de devis** avec calcul d'imposition automatique (optimisation de la découpe sur plaque)
+- **Impression** : recto/verso, vernis, aplat, surfaces d'impression avec estimation encre + main d'œuvre
+- **Découpe**, **Façonnage**, **Conditionnement** : temps par pièce configurable avec calcul horaire
+- **Accessoires & Consommables** : ajout au devis avec calcul de coût automatique
+- **Dashboard Admin** : gestion CRUD des matières, types de PLV, accessoires, consommables, utilisateurs
+- **Authentification** : login par email/mot de passe avec rôles (Admin / User)
+- **Changement de mot de passe forcé** à la première connexion
+- **Récapitulatif & Export** : récap du devis avec mode impression optimisé (CSS `@media print`)
 
----
+## Stack Technique
 
-## 🚀 Écosystème de l'Application
+| Couche | Technologie |
+|--------|-------------|
+| Frontend | [Next.js 16](https://nextjs.org/) (App Router) + React 19 |
+| Langage | TypeScript 5 |
+| Styling | [Tailwind CSS 4](https://tailwindcss.com/) + [shadcn/ui](https://ui.shadcn.com/) |
+| Base de données | PostgreSQL via [Prisma ORM](https://www.prisma.io/) |
+| Authentification | [NextAuth.js v5](https://authjs.dev/) (Credentials provider) |
+| Validation | [Zod](https://zod.dev/) |
+| Tests | [Vitest](https://vitest.dev/) |
+| Linting | ESLint + Prettier |
 
-### 🆕 Calculateur de Devis (Refactorisé V2)
-Le calculateur a été entièrement modularisé pour une maintenance simplifiée. Il permet désormais :
-- **Configuration Dynamique** : Saisie des dimensions, quantités et choix des matières.
-- **Visualisation Dynamique** : Un rendu 2D (`PlateVisualizer`) qui montre exactement comment les pièces sont disposées sur la plaque.
-- **Composantes de Production** :
-  - **Impression** : Gestion fine des modes (Production/Qualité) et du Recto/Verso.
-  - **Découpe/Façonnage/Conditionnement** : Jauges interactives (`GaugeSlider`) pour estimer les temps de main-d'œuvre.
-- **Système d'Accessoires** : Ajout à la volée d'accessoires (pieds, adhésifs, etc.) avec mise à jour instantanée du coût.
+## Prérequis
 
-### 🔐 Administration & Sécurité
-- **RBAC (Role-Based Access Control)** : Distinction nette entre `ADMIN` et `USER`.
-- **Gestion fine des permissions** via un tableau de chaînes de caractères.
-- **Sécurité** : Hashing de mot de passe avec `bcryptjs` et session persistante via `Auth.js`.
-- **First Login Policy** : Obligation de changer de mot de passe à la première connexion.
+- **Node.js** ≥ 18
+- **PostgreSQL** (serveur local ou distant)
+- **npm** ou **pnpm**
 
-### 📊 Dashboard & Gestion des Données
-- **Analyse des Devis** : Historique complet avec recherche et filtrage.
-- **CRUD Avancé** :
-  - **Matières** : Gestion des formats de plaques et prix au m².
-  - **Produits** : Configuration des types de PLV et de leurs éléments constitutifs.
-  - **Formules** : Éditeur de formules dynamiques pour les calculs de formats à plat.
-
----
-
-## 🛠 Stack Technique
-
-| Technologie | Usage |
-| :--- | :--- |
-| **Next.js 16** | Framework Fullstack (React 19, App Router) |
-| **Prisma** | ORM pour la gestion de la base de données (PostgreSQL/SQLite) |
-| **Tailwind CSS 4** | Framework CSS utilitaire pour un design sur mesure |
-| **Shadcn/UI** | Bibliothèque de composants UI accessibles (Radix UI) |
-| **Auth.js v5** | Gestion de l'authentification et des sessions |
-| **Vitest** | Environnement de tests unitaires et d'intégration |
-| **Lucide React** | Pack d'icônes vectorielles |
-
----
-
-## 📂 Structure du Projet
+## Installation
 
 ```bash
-├── app/
-│   ├── actions/          # Logique serveur (Server Actions) pour les CRUD
-│   ├── admin/            # Pages réservées aux administrateurs
-│   ├── components/       # Composants globaux
-│   │   └── calculator/   # Composants atomiques du calculateur (shared, screens, sections)
-│   ├── hooks/            # Hooks personnalisés (ex: useCalculator)
-│   ├── lib/              # Utilitaires côté client
-│   └── (routes)/         # Structure des pages de l'application
-├── prisma/
-│   ├── schema.prisma     # Définition des modèles de données (Study, Quote, Plate, User, etc.)
-│   └── seed.ts           # Scripts de population de données de test
-├── lib/
-│   ├── calculation/      # Moteur de calcul d'imposition (géométrie 2D)
-│   └── prisma.ts         # Initialisation du client Prisma
-├── types/                # Définitions TypeScript globales
-└── middleware.ts          # Protection des routes et redirection auth
+# Cloner le repo
+git clone <url-du-repo>
+cd simple-calculator
+
+# Installer les dépendances
+npm install
+
+# Configurer les variables d'environnement
+cp .env.example .env
+# Éditer .env avec vos valeurs (DATABASE_URL, NEXTAUTH_SECRET, etc.)
+
+# Créer les tables et appliquer les migrations Prisma
+npx prisma migrate dev
+
+# Générer le client Prisma
+npx prisma generate
+
+# Optionnel : peupler la base avec des données de test
+npx prisma db seed
 ```
 
----
+## Variables d'environnement
 
-## 💾 Modèle de Données
+Créer un fichier `.env` à la racine :
 
-Le schéma Prisma est conçu pour une flexibilité maximale :
-- **Study & Quote** : Liaison entre un dossier client et ses multiples devis.
-- **ProductType & Element** : Permet de définir des produits complexes composés de plusieurs parties.
-- **Plate & Accessory** : Stockage des caractéristiques techniques et de coût des consommables.
-- **User & Role** : Système d'authentification robuste avec gestion des droits.
+```env
+DATABASE_URL="postgresql://user:password@localhost:5432/kontfeel"
+NEXTAUTH_SECRET="<secret-généré-avec-openssl-rand-base64-32>"
+NEXTAUTH_URL="http://localhost:3000"
+AUTH_TRUST_HOST="true"
+```
 
----
+> ⚠️ **Ne jamais commiter le fichier `.env`.** Utiliser `.env.example` comme template.
 
-## ⚙️ Installation & Configuration
+Pour générer un secret NextAuth :
+```bash
+openssl rand -base64 32
+```
 
-### Prérequis
-- `Node.js` v18.0.0 ou supérieur
-- `npm` ou `yarn`
+## Lancement
 
-### Étapes d'installation
+```bash
+# Mode développement
+npm run dev
 
-1. **Cloner le projet**
-   ```bash
-   git clone <url-du-repo>
-   cd simple-calculator
-   ```
+# L'application sera disponible sur http://localhost:3000
+```
 
-2. **Installer les dépendances**
-   ```bash
-   npm install
-   ```
+## Scripts disponibles
 
-3. **Configurer les variables d'environnement**
-   Créez un fichier `.env` à la racine :
-   ```env
-   DATABASE_URL="postgresql://user:password@localhost:5432/kontfeel"
-   NEXTAUTH_SECRET="votre-secret-ultra-securise"
-   ```
+| Commande | Description |
+|----------|-------------|
+| `npm run dev` | Démarrer en mode développement |
+| `npm run build` | Build de production |
+| `npm run start` | Démarrer le build de production |
+| `npm run lint` | Lancer ESLint |
+| `npm run test` | Lancer les tests (Vitest) |
+| `npm run test:watch` | Tests en mode watch |
+| `npm run format` | Formater le code (Prettier) |
+| `npm run format:check` | Vérifier le formatage |
 
-4. **Préparer la base de données**
-   ```bash
-   npx prisma migrate dev
-   npx prisma db seed
-   ```
+## Structure du projet
 
-5. **Lancer le serveur de développement**
-   ```bash
-   npm run dev
-   ```
+```
+├── app/
+│   ├── actions/           # Server actions (CRUD, auth, stats)
+│   │   ├── admin.ts       # CRUD plaques, types de PLV, éléments
+│   │   ├── accessories.ts # CRUD accessoires
+│   │   ├── consumables.ts # CRUD consommables
+│   │   ├── get-data.ts    # Lecture des données + création de devis
+│   │   ├── auth.ts        # Action de login
+│   │   └── stats.ts       # Statistiques dashboard
+│   ├── calculator/        # Composant calculateur principal
+│   │   ├── Calculator.tsx
+│   │   ├── screens/       # Écrans (succès, récapitulatif)
+│   │   ├── sections/      # Sections du formulaire
+│   │   └── shared.tsx     # Composants partagés
+│   ├── dashboard/         # Pages admin (matières, produits, devis...)
+│   ├── login/             # Page de connexion
+│   ├── change-password/   # Changement de mot de passe
+│   ├── settings/          # Paramètres admin
+│   ├── components/        # Composants spécifiques à l'app
+│   └── lib/               # Actions utilisateur
+├── components/ui/         # Composants shadcn/ui
+├── hooks/
+│   └── useCalculator.ts   # Hook principal du calculateur
+├── lib/
+│   ├── calculation/
+│   │   └── imposition.ts  # Algorithme de calcul d'imposition
+│   ├── prisma.ts          # Client Prisma singleton
+│   └── utils.ts           # Utilitaires (cn)
+├── prisma/
+│   ├── schema.prisma      # Schéma de la base de données
+│   ├── migrations/        # Migrations DB
+│   └── seed.ts            # Données initiales
+├── types/
+│   ├── calculator.ts      # Types métier du calculateur
+│   └── next-auth.d.ts     # Augmentation des types NextAuth
+├── __tests__/             # Tests unitaires
+├── auth.ts                # Configuration NextAuth
+├── auth.config.ts         # Callbacks et pages auth
+└── middleware.ts           # Middleware de protection des routes
+```
 
----
+## Base de données
 
-## 🧪 Tests & Qualité
+Le schéma Prisma comprend les modèles suivants :
 
-Nous attachons une grande importance à la qualité du code :
-- **Tests Unitaires** : `npm run test` pour valider la logique de calcul.
-- **Linting** : `npm run lint` pour garantir le respect des standards de code.
-- **Formatage** : `npm run format` pour une base de code uniforme.
+- **User** — Utilisateurs avec rôles (ADMIN/USER) et gestion de mot de passe
+- **Study** — Études / projets regroupant des devis
+- **Quote** — Devis complets avec toutes les options de chiffrage
+- **ProductType** — Types de PLV (présentoir de comptoir, de sol, etc.)
+- **Element** — Éléments constitutifs d'un type de PLV
+- **Plate** — Matières premières / plaques avec dimensions et coûts
+- **Accessory** / **QuoteAccessory** — Accessoires avec relation many-to-many
+- **Consumable** / **QuoteConsumable** — Consommables (rubans, colles, etc.)
+- **QuoteElement** — Éléments spécifiques à un devis
 
----
+## Authentification
 
-## 📈 Roadmap & Évolution ERP
+- Provider: **Credentials** (email + mot de passe hashé avec bcrypt)
+- Rôles: `ADMIN` (accès complet) et `USER` (calculateur + mes devis)
+- Middleware de protection sur toutes les routes sauf `/login` et les assets
+- Changement de mot de passe forcé à la première connexion
 
-Le projet est conçu pour s'intégrer facilement avec des systèmes tiers (ERP/CRM) :
-- **Intégration Laravel** : Prêt pour une communication via API REST ou connexion directe à la DB.
-- **SSO** : Possibilité d'étendre `Auth.js` pour supporter des fournisseurs d'identité externes.
-- **Export PDF** : (À venir) Génération automatique des fiches techniques et devis clients.
+## Compte par défaut
 
----
+Après le seed initial :
+- **Email** : `admin@kontfeel.fr`
+- **Mot de passe** : `admin` (changement obligatoire à la première connexion)
 
-© 2024 Kontfeel - Tous droits réservés.
+## Tests
+
+```bash
+# Lancer tous les tests
+npm run test
+
+# Mode watch
+npm run test:watch
+```
+
+Les tests couvrent actuellement :
+- Algorithme d'imposition (`calculateImposition`, `calculateQuote`)
+- Actions serveur de lecture (mocks Prisma)
+
+## Licence
+
+Projet privé — tous droits réservés.
