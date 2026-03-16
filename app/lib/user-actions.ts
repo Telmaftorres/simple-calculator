@@ -4,11 +4,10 @@ import { prisma } from '@/lib/prisma'
 import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import { auth, signOut as authSignOut } from '@/auth'
+import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function getUsers() {
-  const session = await auth()
-  if (!session?.user) throw new Error('Unauthorized')
-  if (session.user.role !== 'ADMIN') throw new Error('Unauthorized')
+  await requireAdmin()
 
   return await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
@@ -28,18 +27,17 @@ export async function getUsers() {
 }
 
 export async function createUser(formData: FormData) {
-  const session = await auth()
-  if (!session?.user || (session.user as { role?: string }).role !== 'ADMIN') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const email = formData.get('email') as string
   const password = formData.get('password') as string
-  // Support both unified name and split names
   const firstName = formData.get('firstName') as string
   const lastName = formData.get('lastName') as string
   const name = (formData.get('name') as string) || `${firstName} ${lastName}`.trim()
   const role = (formData.get('role') as 'ADMIN' | 'USER') || 'USER'
 
   if (!email || !password) return { error: 'Email and password required' }
+  if (password.length < 8) return { error: 'Le mot de passe doit faire au moins 8 caractères' }
 
   const hashedPassword = await bcrypt.hash(password, 10)
 
@@ -51,7 +49,7 @@ export async function createUser(formData: FormData) {
         name,
         firstName,
         lastName,
-        mustChangePassword: true, // Force change on first login
+        mustChangePassword: true,
         role,
         permissions: role === 'ADMIN' ? ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'] : [],
       },
@@ -60,15 +58,14 @@ export async function createUser(formData: FormData) {
     return { success: true }
   } catch (e: unknown) {
     if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'P2002') {
-      return { error: 'Email already exists' }
+      return { error: 'Cet email existe déjà' }
     }
-    return { error: 'Failed to create user' }
+    return { error: 'Erreur lors de la création' }
   }
 }
 
 export async function updateUser(formData: FormData) {
-  const session = await auth()
-  if (!session?.user || (session.user as { role?: string }).role !== 'ADMIN') throw new Error('Unauthorized')
+  await requireAdmin()
 
   const userId = formData.get('id') as string
   const email = formData.get('email') as string
@@ -78,7 +75,7 @@ export async function updateUser(formData: FormData) {
   const role = formData.get('role') as 'ADMIN' | 'USER'
   const permissions = formData.getAll('permissions') as string[]
 
-  if (!userId || !email) return { error: 'ID and Email required' }
+  if (!userId || !email) return { error: 'ID et Email requis' }
 
   const data: {
     email: string
@@ -97,7 +94,7 @@ export async function updateUser(formData: FormData) {
     permissions,
   }
 
-  if (password && password.length >= 6) {
+  if (password && password.length >= 8) {
     data.password = await bcrypt.hash(password, 10)
   }
 
@@ -109,17 +106,16 @@ export async function updateUser(formData: FormData) {
     revalidatePath('/settings/users')
     return { success: true }
   } catch {
-    return { error: 'Failed to update user' }
+    return { error: 'Erreur lors de la mise à jour' }
   }
 }
 
 export async function deleteUser(userId: string) {
-  const session = await auth()
-  if (!session?.user) throw new Error('Unauthorized')
-  if (session.user.role !== 'ADMIN') throw new Error('Unauthorized')
+  await requireAdmin()
 
-  if (session.user.id === userId) {
-    return { error: 'Cannot delete yourself' }
+  const session = await auth()
+  if (session?.user?.id === userId) {
+    return { error: 'Vous ne pouvez pas supprimer votre propre compte' }
   }
 
   try {
@@ -128,23 +124,23 @@ export async function deleteUser(userId: string) {
     return { success: true }
   } catch (e) {
     console.error('deleteUser error:', e)
-    return { error: 'Failed to delete user' }
+    return { error: 'Erreur lors de la suppression' }
   }
 }
 
 export async function updatePassword(formData: FormData) {
   const session = await auth()
-  if (!session?.user || !session.user.email) throw new Error('Unauthorized')
+  if (!session?.user || !session.user.email) throw new Error('Non autorisé')
 
   const newPassword = formData.get('newPassword') as string
   const confirmPassword = formData.get('confirmPassword') as string
 
   if (newPassword !== confirmPassword) {
-    return { error: 'Passwords do not match' }
+    return { error: 'Les mots de passe ne correspondent pas' }
   }
 
-  if (newPassword.length < 6) {
-    return { error: 'Password must be at least 6 characters' }
+  if (newPassword.length < 8) {
+    return { error: 'Le mot de passe doit faire au moins 8 caractères' }
   }
 
   const hashedPassword = await bcrypt.hash(newPassword, 10)

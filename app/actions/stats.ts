@@ -1,33 +1,26 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-guard'
-import { unstable_cache } from 'next/cache'
-
-const getCachedDashboardStats = unstable_cache(
-  async () => {
-    const [totalQuotes, totalRevenue, platesCount] = await Promise.all([
-      prisma.quote.count(),
-      prisma.quote.aggregate({
-        _sum: {
-          totalCost: true,
-        },
-      }),
-      // prisma.quote.count({ where: { status: 'PENDING' } }), // Status not yet implemented
-      prisma.plate.count(),
-    ])
-
-    return {
-      totalQuotes,
-      totalRevenue: totalRevenue._sum.totalCost || 0,
-      platesCount,
-    }
-  },
-  ['dashboard-stats'],
-  { tags: ['dashboard-stats'], revalidate: 60 } // Cache for 60 seconds
-)
+import { requireAuth } from '@/lib/auth-helpers'
 
 export async function getDashboardStats() {
-  await requireAuth()
-  return await getCachedDashboardStats()
+  const session = await requireAuth()
+  const isAdmin = session.user.role === 'ADMIN'
+
+  const [totalQuotes, totalRevenue, platesCount] = await Promise.all([
+    prisma.quote.count(
+      isAdmin ? undefined : { where: { userId: session.user.id } }
+    ),
+    prisma.quote.aggregate({
+      ...(isAdmin ? {} : { where: { userId: session.user.id } }),
+      _sum: { totalCost: true },
+    }),
+    prisma.plate.count(),
+  ])
+
+  return {
+    totalQuotes,
+    totalRevenue: totalRevenue._sum.totalCost || 0,
+    platesCount,
+  }
 }

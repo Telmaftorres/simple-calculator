@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-guard'
+import { requireAuth } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
 

@@ -2,38 +2,21 @@
 
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth-guard'
+import { requireAuth, requireAdmin } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
-import { unstable_cache } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
-
-// ────────────────────────────────────────────────────
-// Schema de validation
-// ────────────────────────────────────────────────────
 
 const consumableSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
   price: z.number().positive('Le prix doit être positif'),
-  size: z.number().positive('La taille (en mètres ou cm) doit être positive'),
+  size: z.number().positive('La taille doit être positive'),
 })
 
-// ────────────────────────────────────────────────────
-// Lecture (tous les connectés)
-// ────────────────────────────────────────────────────
-
-export const getConsumables = unstable_cache(
-  async () => {
-    return await prisma.consumable.findMany({
-      orderBy: { name: 'asc' },
-    })
-  },
-  ['consumables'],
-  { tags: ['consumables'] }
-)
-
-// ────────────────────────────────────────────────────
-// Mutations (Admin seulement)
-// ────────────────────────────────────────────────────
+export const getConsumables = async () => {
+  return await prisma.consumable.findMany({
+    orderBy: { name: 'asc' },
+  })
+}
 
 export async function createConsumable(data: z.infer<typeof consumableSchema>) {
   await requireAdmin()
