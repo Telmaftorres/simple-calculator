@@ -109,34 +109,37 @@ export default function Calculator({
   if (screenState === 'recap') {
     return (
       <ScreenRecap
-        studyNumber={studyNumber}
-        productSearch={productSearch}
-        quantity={quantity}
-        selectedPlate={selectedPlate}
-        flatWidth={flatWidth}
-        flatHeight={flatHeight}
-        impositionResult={impositionResult || undefined}
-        printSurfacePercent={printSurfacePercent}
-        isRectoVerso={isRectoVerso}
-        rectoVersoType={rectoVersoType}
-        hasVarnish={hasVarnish}
-        hasFlatColor={hasFlatColor}
-        cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
-        printingCostData={printingCostData}
-        cuttingCost={cuttingCost}
-        assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
-        assemblyCost={assemblyCost}
-        packTimePerPieceSeconds={packTimePerPieceSeconds}
-        packagingCost={packagingCost}
-        totalCost={totalCost}
-        accessoriesCost={accessoriesCost}
-        consumablesCost={consumablesCost}
-        selectedConsumables={selectedConsumables}
-        getCuttingDetails={getCuttingDetails}
-        getAssemblyDetails={getAssemblyDetails}
-        getPackDetails={getPackDetails}
-        setScreenState={setScreenState}
-      />
+      studyNumber={studyNumber}
+      productSearch={productSearch}
+      quantity={quantity}
+      selectedPlate={selectedPlate}
+      flatWidth={flatWidth}
+      flatHeight={flatHeight}
+      impositionResult={impositionResult || undefined}
+      printSurfacePercent={printSurfacePercent}
+      isRectoVerso={isRectoVerso}
+      rectoVersoType={rectoVersoType}
+      hasVarnish={hasVarnish}
+      hasFlatColor={hasFlatColor}
+      printMode={printMode}
+      cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
+      printingCostData={printingCostData}
+      cuttingCost={cuttingCost}
+      assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
+      assemblyCost={assemblyCost}
+      packTimePerPieceSeconds={packTimePerPieceSeconds}
+      packagingCost={packagingCost}
+      hasAssemblyNotice={hasAssemblyNotice}
+      totalCost={totalCost}
+      accessoriesCost={accessoriesCost}
+      consumablesCost={consumablesCost}
+      selectedAccessories={selectedAccessories}
+      selectedConsumables={selectedConsumables}
+      getCuttingDetails={getCuttingDetails}
+      getAssemblyDetails={getAssemblyDetails}
+      getPackDetails={getPackDetails}
+      setScreenState={setScreenState}
+    />
     )
   }
 
