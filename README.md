@@ -121,10 +121,14 @@ npm run dev
 │   └── lib/               # Actions utilisateur
 ├── components/ui/         # Composants shadcn/ui
 ├── hooks/
-│   └── useCalculator.ts   # Hook principal du calculateur
+│   ├── useCalculator.ts   # Hook principal du calculateur
+│   └── useCostCalculation.ts # Hook des calculs de coûts additionnels
 ├── lib/
 │   ├── calculation/
 │   │   └── imposition.ts  # Algorithme de calcul d'imposition
+│   ├── auth-guard.ts      # Utilitaire de protection des routes (requireAuth, requireAdmin)
+│   ├── cache.ts           # Utilitaire de gestion détaillée du cache (Next.js tags)
+│   ├── constants.ts       # Constantes globales métiers et tarifs par défaut
 │   ├── prisma.ts          # Client Prisma singleton
 │   └── utils.ts           # Utilitaires (cn)
 ├── prisma/

@@ -171,12 +171,16 @@ export async function getUserQuotes() {
   const session = await auth()
   if (!session?.user?.id) return []
 
+  const isAdmin = session.user.role === 'ADMIN'
+  const where = isAdmin ? {} : { userId: session.user.id }
+
   return await prisma.quote.findMany({
-    where: { userId: session.user.id },
+    where,
     include: {
       study: true,
       productType: true,
       plate: true,
+      user: true,
     },
     orderBy: { createdAt: 'desc' },
   })
