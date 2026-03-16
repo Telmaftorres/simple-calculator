@@ -10,6 +10,7 @@ export const authConfig = {
       const isOnLogin = nextUrl.pathname.startsWith('/login')
       const isOnChangePassword = nextUrl.pathname.startsWith('/change-password')
       const isOnSettings = nextUrl.pathname.startsWith('/settings')
+      const isOnAdmin = nextUrl.pathname.startsWith('/admin')
       const mustChangePassword = auth?.user?.mustChangePassword
       const role = auth?.user?.role
 
@@ -31,6 +32,13 @@ export const authConfig = {
 
       // Paramètres — admin uniquement
       if (isOnSettings) {
+        if (!isLoggedIn) return false
+        if (role !== 'ADMIN') return Response.redirect(new URL('/', nextUrl))
+        return true
+      }
+
+      // Routes admin — admin uniquement
+      if (isOnAdmin) {
         if (!isLoggedIn) return false
         if (role !== 'ADMIN') return Response.redirect(new URL('/', nextUrl))
         return true

@@ -30,7 +30,7 @@ export default async function Home({
     getPlates(),
     getAccessories(),
     getConsumables(),
-    idToFetch ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
+    idToFetch && !isNaN(parseInt(idToFetch)) ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
   ])
 
   return (
