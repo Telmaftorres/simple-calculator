@@ -1,48 +1,35 @@
-export type { ImpositionResultWithCost as ImpositionResult } from '@/lib/calculation/imposition'
+import type {
+  ProductType as PrismaProductType,
+  Plate as PrismaPlate,
+  Accessory as PrismaAccessory,
+  Consumable as PrismaConsumable,
+  Element as PrismaElement,
+} from '@prisma/client'
+import type { ImpositionResult as BaseImpositionResult } from '@/lib/calculation/imposition'
 
 // ────────────────────────────────────────────────────
-// Types Prisma (miroir des modèles)
+// Types Prisma simplifiés pour le calculateur
 // ────────────────────────────────────────────────────
 
-export interface ProductType {
-  id: number
-  name: string
-  flatWidthFormula: string
-  flatHeightFormula: string
-  elements: Element[]
-}
-
-export interface Element {
-  id: number
-  name: string
-  quantity: number
-}
-
-export interface Plate {
-  id: number
-  name: string
-  width: number
-  height: number
-  cost: number
-  material: string
-}
-
-export interface Accessory {
-  id: number
-  name: string
-  price: number
-}
-
-export interface Consumable {
-  id: number
-  name: string
-  price: number
-  size: number
+export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost' | 'material'>
+export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'>
+export type Consumable = Pick<PrismaConsumable, 'id' | 'name' | 'price' | 'size'>
+export type PLVElement = Pick<PrismaElement, 'id' | 'name' | 'quantity'>
+export type ProductType = Pick<
+  PrismaProductType,
+  'id' | 'name' | 'flatWidthFormula' | 'flatHeightFormula'
+> & {
+  elements: PLVElement[]
 }
 
 // ────────────────────────────────────────────────────
 // Types métier (spécifiques au calculateur)
 // ────────────────────────────────────────────────────
+
+export interface ImpositionResult extends BaseImpositionResult {
+  platesNeeded: number
+  materialCost: number
+}
 
 export interface SelectedAccessory {
   id: number
