@@ -1,12 +1,17 @@
+'use client'
+
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download } from 'lucide-react'
+import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { formatMinutes } from '@/hooks/useCalculator'
-import { ImpositionResult, PrintingCostData, Plate } from '@/types/calculator'
+import { ImpositionResult, PrintingCostData, Plate, SelectedAccessory, SelectedConsumable } from '@/types/calculator'
+import { BlobProvider } from '@react-pdf/renderer'
+import { QuotePDF } from '@/app/components/QuotePDF'
 
 interface ScreenRecapProps {
   studyNumber: string
+  reference?: string | null
   productSearch: string
   quantity: number
   selectedPlate: Plate | undefined
@@ -18,6 +23,7 @@ interface ScreenRecapProps {
   rectoVersoType: string | null
   hasVarnish: boolean
   hasFlatColor: boolean
+  printMode: string
   cuttingTimePerPoseSeconds: number
   printingCostData: PrintingCostData
   cuttingCost: number
@@ -25,10 +31,12 @@ interface ScreenRecapProps {
   assemblyCost: number
   packTimePerPieceSeconds: number
   packagingCost: number
+  hasAssemblyNotice: boolean
   totalCost: number
   accessoriesCost: number
   consumablesCost: number
-  selectedConsumables?: { id: number; name: string; sizePerItem: number; size: number }[]
+  selectedAccessories: SelectedAccessory[]
+  selectedConsumables: SelectedConsumable[]
   getCuttingDetails: () => string
   getAssemblyDetails: () => string
   getPackDetails: () => string
@@ -37,6 +45,7 @@ interface ScreenRecapProps {
 
 export function ScreenRecap({
   studyNumber,
+  reference,
   productSearch,
   quantity,
   selectedPlate,
@@ -48,24 +57,25 @@ export function ScreenRecap({
   rectoVersoType,
   hasVarnish,
   hasFlatColor,
+  printMode,
   cuttingTimePerPoseSeconds,
   printingCostData,
   cuttingCost,
+  assemblyTimePerPieceSeconds,
   assemblyCost,
+  packTimePerPieceSeconds,
   packagingCost,
+  hasAssemblyNotice,
   totalCost,
   accessoriesCost,
   consumablesCost,
-  selectedConsumables = [],
+  selectedAccessories,
+  selectedConsumables,
   getCuttingDetails,
   getAssemblyDetails,
   getPackDetails,
   setScreenState,
 }: ScreenRecapProps) {
-  const handleDownload = () => {
-    window.print()
-  }
-
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 animate-in slide-in-from-bottom duration-500">
       <Card className="shadow-2xl border-slate-200 overflow-hidden">
@@ -73,17 +83,71 @@ export function ScreenRecap({
           <div className="relative z-10">
             <h1 className="text-3xl font-bold mb-2">Devis Sauvegardé</h1>
             <p className="text-emerald-400 font-mono text-lg">{studyNumber}</p>
+            {reference && (
+              <p className="text-emerald-300 font-mono text-sm mt-1">{reference}</p>
+            )}
           </div>
+
+          {/* Boutons PDF */}
           <div className="absolute top-4 right-4 z-20 no-print">
-            <Button 
-              onClick={handleDownload}
-              variant="secondary"
-              className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
-            >
-              <Download className="mr-2 h-4 w-4" />
-              Télécharger PDF
-            </Button>
+            <BlobProvider document={
+              <QuotePDF
+                studyNumber={studyNumber}
+                reference={reference}
+                productName={productSearch}
+                quantity={quantity}
+                selectedPlate={selectedPlate}
+                flatWidth={flatWidth}
+                flatHeight={flatHeight}
+                impositionResult={impositionResult}
+                printSurfacePercent={printSurfacePercent}
+                isRectoVerso={isRectoVerso}
+                rectoVersoType={rectoVersoType}
+                hasVarnish={hasVarnish}
+                hasFlatColor={hasFlatColor}
+                printMode={printMode}
+                cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
+                assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
+                packTimePerPieceSeconds={packTimePerPieceSeconds}
+                hasAssemblyNotice={hasAssemblyNotice}
+                printingCostData={printingCostData}
+                cuttingCost={cuttingCost}
+                assemblyCost={assemblyCost}
+                packagingCost={packagingCost}
+                accessoriesCost={accessoriesCost}
+                consumablesCost={consumablesCost}
+                selectedAccessories={selectedAccessories}
+                selectedConsumables={selectedConsumables}
+                totalCost={totalCost}
+              />
+            }>
+              {({ url, loading }) => (
+                <div className="flex gap-2">
+                  <a href={url || '#'} download={`devis-${studyNumber}.pdf`}>
+                    <Button
+                      variant="secondary"
+                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+                      disabled={loading}
+                    >
+                      <Download className="mr-2 h-4 w-4" />
+                      {loading ? 'Génération...' : 'Télécharger PDF'}
+                    </Button>
+                  </a>
+                  <a href={url || '#'} target="_blank" rel="noopener noreferrer">
+                    <Button
+                      variant="secondary"
+                      className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+                      disabled={loading}
+                    >
+                      <Eye className="mr-2 h-4 w-4" />
+                      {loading ? '...' : 'Voir PDF'}
+                    </Button>
+                  </a>
+                </div>
+              )}
+            </BlobProvider>
           </div>
+
           <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] z-0"></div>
         </div>
 
@@ -156,7 +220,7 @@ export function ScreenRecap({
                 )}
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Temps Découpe</dt>
-                  <dd className="font-medium">{cuttingTimePerPoseSeconds} s/pose (calage incl.)</dd>
+                  <dd className="font-medium">{cuttingTimePerPoseSeconds} s/pose</dd>
                 </div>
               </dl>
             </div>
@@ -234,6 +298,15 @@ export function ScreenRecap({
                     </td>
                     <td className="p-3 text-right font-medium">{packagingCost.toFixed(2)} €</td>
                   </tr>
+                  {accessoriesCost > 0 && (
+                    <tr>
+                      <td className="p-3">Accessoires</td>
+                      <td className="p-3 text-right text-slate-500 italic text-xs">
+                        {selectedAccessories.length} réf.
+                      </td>
+                      <td className="p-3 text-right font-medium">{accessoriesCost.toFixed(2)} €</td>
+                    </tr>
+                  )}
                 </tbody>
                 <tfoot className="bg-slate-900 text-white">
                   <tr>
@@ -254,7 +327,7 @@ export function ScreenRecap({
                 <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Devis
               </Button>
             </Link>
-            
+
             <Link href="/dashboard">
               <Button variant="outline" size="lg" className="border-slate-200">
                 <LayoutDashboard className="mr-2 h-5 w-5 text-slate-500" /> Dashboard
