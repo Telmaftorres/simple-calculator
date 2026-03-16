@@ -29,9 +29,9 @@ export default function Calculator({
   isAdmin = false,
   initialQuote,
   isViewOnly,
+  settings,
 }: CalculatorProps) {
-  const calc = useCalculator(initialProductTypes, plates, accessories, consumables, initialQuote, isViewOnly)
-
+const calc = useCalculator(initialProductTypes, plates, accessories, consumables, initialQuote, isViewOnly, settings)
   const {
     screenState,
     setScreenState,

@@ -27,7 +27,8 @@ export function useCalculator(
   accessories: Accessory[],
   consumables: Consumable[],
   initialQuote?: Quote,
-  isViewOnly?: boolean
+  isViewOnly?: boolean,
+  settings?: Record<string, number>
 ) {
   // ── UI State ──
   const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
@@ -167,8 +168,9 @@ export function useCalculator(
     hasAssemblyNotice,
     selectedAccessories,
     selectedConsumables,
+    settings,
   })
-
+  
   // ── Detail helpers ──
   const getCuttingDetails = () => {
     const totalSeconds = cuttingTimePerPoseSeconds * quantity + CUTTING_SETUP_SECONDS

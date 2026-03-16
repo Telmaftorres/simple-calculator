@@ -5,6 +5,28 @@ const prisma = new PrismaClient({
   log: ['query', 'info', 'warn', 'error'],
 })
 
+async function seedSettings() {
+  const settings = [
+    { key: 'HOURLY_RATE_PRINT', value: '65', label: 'Taux horaire impression/découpe', unit: '€/h' },
+    { key: 'HOURLY_RATE_ASSEMBLY', value: '45', label: 'Taux horaire façonnage/conditionnement', unit: '€/h' },
+    { key: 'INK_COST_PER_LITER', value: '40', label: "Coût de l'encre", unit: '€/L' },
+    { key: 'INK_BASE_ML_PER_PLATE', value: '20', label: "Volume d'encre de base par plaque", unit: 'ml' },
+    { key: 'PRINT_SETUP_TIME_MIN', value: '15', label: 'Temps de calage impression', unit: 'min' },
+    { key: 'CUTTING_SETUP_SECONDS', value: '900', label: 'Temps de calage découpe', unit: 's' },
+    { key: 'FINISHING_SURCHARGE_PERCENT', value: '0.05', label: 'Supplément finitions (vernis, aplat)', unit: '%' },
+    { key: 'ASSEMBLY_NOTICE_COST_PER_PIECE', value: '0.10', label: 'Coût notice de montage', unit: '€/pce' },
+  ]
+
+  for (const setting of settings) {
+    await prisma.setting.upsert({
+      where: { key: setting.key },
+      update: {},
+      create: setting,
+    })
+    console.log(`Setting: ${setting.key} = ${setting.value} ${setting.unit}`)
+  }
+}
+
 async function main() {
   console.log('Seeding database...')
 
@@ -208,6 +230,9 @@ async function main() {
   })
 
   console.log({ admin })
+
+  // 5. Seed Settings
+  await seedSettings()
 }
 
 main()
