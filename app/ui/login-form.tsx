@@ -24,7 +24,7 @@ export default function LoginForm() {
           name="password"
           placeholder="******"
           required
-          minLength={3}
+          minLength={8}
         />
       </div>
       <div className="pt-4">

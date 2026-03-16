@@ -6,6 +6,42 @@ import { revalidatePath } from 'next/cache'
 import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
 
+const createQuoteSchema = z.object({
+  studyNumber: z.string().min(1, 'Le numéro de dossier est requis'),
+  productTypeId: z.number().int().positive(),
+  quantity: z.number().int().positive('La quantité doit être positive'),
+  width: z.number().int().positive(),
+  height: z.number().int().positive(),
+  plateId: z.number().int().positive(),
+  itemsPerPlate: z.number().int().positive(),
+  platesCount: z.number().int().positive(),
+  totalCost: z.number().min(0),
+  flatWidth: z.number().int().optional(),
+  flatHeight: z.number().int().optional(),
+  printSurface: z.number().min(0).max(100).optional(),
+  printMode: z.string().optional(),
+  isRectoVerso: z.boolean().optional(),
+  rectoVersoType: z.string().nullable().optional(),
+  hasVarnish: z.boolean().optional(),
+  hasFlatColor: z.boolean().optional(),
+  cuttingTimePerPoseSeconds: z.number().int().optional(),
+  assemblyTimePerPieceSeconds: z.number().int().optional(),
+  packTimePerPieceSeconds: z.number().int().optional(),
+  hasAssemblyNotice: z.boolean().optional(),
+  elements: z.array(z.object({
+    name: z.string().min(1),
+    quantity: z.number().int().positive(),
+  })),
+  accessories: z.array(z.object({
+    id: z.number().int().positive(),
+    quantity: z.number().int().positive(),
+  })).optional(),
+  consumables: z.array(z.object({
+    id: z.number().int().positive(),
+    sizePerItem: z.number().positive(),
+  })).optional(),
+})
+
 export const getStudies = unstable_cache(
   async () => {
     return await prisma.study.findMany({
@@ -51,43 +87,19 @@ async function generateReference(): Promise<string> {
   return `C${number}-${suffix}`
 }
 
-export async function createQuote(data: {
-  studyNumber: string
-  productTypeId: number
-  quantity: number
-  width: number
-  height: number
-  plateId: number
-  itemsPerPlate: number
-  platesCount: number
-  totalCost: number
-  flatWidth?: number
-  flatHeight?: number
-  printSurface?: number
-  printMode?: string
-  isRectoVerso?: boolean
-  rectoVersoType?: string | null
-  hasVarnish?: boolean
-  hasFlatColor?: boolean
-  cuttingTimePerPoseSeconds?: number
-  assemblyTimePerPieceSeconds?: number
-  packTimePerPieceSeconds?: number
-  hasAssemblyNotice?: boolean
-  elements: { name: string; quantity: number }[]
-  accessories?: { id: number; quantity: number }[]
-  consumables?: { id: number; sizePerItem: number }[]
-}) {
+export async function createQuote(data: z.infer<typeof createQuoteSchema>) {
   const session = await requireAuth()
+  const validated = createQuoteSchema.parse(data)
 
   let study = await prisma.study.findUnique({
-    where: { number: data.studyNumber },
+    where: { number: validated.studyNumber },
   })
 
   if (!study) {
     study = await prisma.study.create({
       data: {
-        number: data.studyNumber,
-        name: `Etude ${data.studyNumber}`,
+        number: validated.studyNumber,
+        name: `Etude ${validated.studyNumber}`,
       },
     })
   }
@@ -95,53 +107,53 @@ export async function createQuote(data: {
   const reference = await generateReference()
 
   const productTypeExists = await prisma.productType.findUnique({
-    where: { id: data.productTypeId },
+    where: { id: validated.productTypeId },
     select: { id: true },
   })
 
   if (!productTypeExists) {
-    throw new Error(`Le type de PLV sélectionné (ID: ${data.productTypeId}) n'existe plus. Veuillez actualiser la page.`)
+    throw new Error(`Le type de PLV sélectionné (ID: ${validated.productTypeId}) n'existe plus. Veuillez actualiser la page.`)
   }
 
   return await prisma.quote.create({
     data: {
       reference,
       studyId: study.id,
-      productTypeId: data.productTypeId,
-      quantity: data.quantity,
-      width: data.width,
-      height: data.height,
-      plateId: data.plateId,
-      itemsPerPlate: data.itemsPerPlate,
-      platesCount: data.platesCount,
-      totalCost: data.totalCost,
-      flatWidth: data.flatWidth,
-      flatHeight: data.flatHeight,
-      printSurface: data.printSurface,
-      printMode: data.printMode || 'production',
-      isRectoVerso: data.isRectoVerso || false,
-      rectoVersoType: data.rectoVersoType,
-      hasVarnish: data.hasVarnish || false,
-      hasFlatColor: data.hasFlatColor || false,
-      cuttingTimePerPoseSeconds: data.cuttingTimePerPoseSeconds || 20,
-      assemblyTimePerPieceSeconds: data.assemblyTimePerPieceSeconds || 0,
-      packTimePerPieceSeconds: data.packTimePerPieceSeconds || 0,
-      hasAssemblyNotice: data.hasAssemblyNotice || false,
+      productTypeId: validated.productTypeId,
+      quantity: validated.quantity,
+      width: validated.width,
+      height: validated.height,
+      plateId: validated.plateId,
+      itemsPerPlate: validated.itemsPerPlate,
+      platesCount: validated.platesCount,
+      totalCost: validated.totalCost,
+      flatWidth: validated.flatWidth,
+      flatHeight: validated.flatHeight,
+      printSurface: validated.printSurface,
+      printMode: validated.printMode || 'production',
+      isRectoVerso: validated.isRectoVerso || false,
+      rectoVersoType: validated.rectoVersoType,
+      hasVarnish: validated.hasVarnish || false,
+      hasFlatColor: validated.hasFlatColor || false,
+      cuttingTimePerPoseSeconds: validated.cuttingTimePerPoseSeconds || 20,
+      assemblyTimePerPieceSeconds: validated.assemblyTimePerPieceSeconds || 0,
+      packTimePerPieceSeconds: validated.packTimePerPieceSeconds || 0,
+      hasAssemblyNotice: validated.hasAssemblyNotice || false,
       userId: session.user.id,
       accessories: {
-        create: data.accessories?.map((acc) => ({
+        create: validated.accessories?.map((acc) => ({
           accessoryId: acc.id,
           quantity: acc.quantity,
         })),
       },
       consumables: {
-        create: data.consumables?.map((c) => ({
+        create: validated.consumables?.map((c) => ({
           consumableId: c.id,
           sizePerItem: c.sizePerItem,
         })),
       },
       elements: {
-        create: data.elements.map((el) => ({
+        create: validated.elements.map((el) => ({
           name: el.name,
           quantity: el.quantity,
         })),
