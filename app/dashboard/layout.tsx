@@ -77,13 +77,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
             href="/dashboard/formulas"
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
-            <FlaskConical className="h-5 w-5" />
+            <Calculator className="h-5 w-5" />
             Formules de Calcul
           </Link>
         </nav>
 
         <div className="p-4 border-t border-slate-800 space-y-2">
-          {/* Bouton Paramètres — admin uniquement */}
           {isAdmin && (
             <Link
               href="/settings"

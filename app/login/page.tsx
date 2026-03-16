@@ -13,7 +13,7 @@ export default function LoginPage() {
         </div>
         <Card className="border-slate-200 shadow-xl">
           <CardHeader>
-            <CardTitle>Connexion Admin</CardTitle>
+            <CardTitle>Connexion</CardTitle>
             <CardDescription>
               Veuillez vous authentifier pour accéder au calculateur.
             </CardDescription>
