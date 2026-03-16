@@ -3,6 +3,7 @@ import Calculator from './calculator/Calculator'
 import { getProductTypes, getPlates, getQuoteById } from './actions/get-data'
 import { getAccessories } from './actions/accessories'
 import { getConsumables } from './actions/consumables'
+import { getSettingsMap } from './actions/settings'
 
 export const dynamic = 'force-dynamic'
 
@@ -25,12 +26,13 @@ export default async function Home({
   const session = await auth()
   const userName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'Inconnu'
 
-  const [productTypes, plates, accessories, consumables, initialQuote] = await Promise.all([
+  const [productTypes, plates, accessories, consumables, initialQuote, settings] = await Promise.all([
     getProductTypes(),
     getPlates(),
     getAccessories(),
     getConsumables(),
     idToFetch && !isNaN(parseInt(idToFetch)) ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
+    getSettingsMap(),
   ])
 
   return (
@@ -53,6 +55,7 @@ export default async function Home({
             isAdmin={session?.user?.role === 'ADMIN'}
             initialQuote={initialQuote || undefined}
             isViewOnly={isViewOnly}
+            settings={settings}
           />
         </section>
       </div>

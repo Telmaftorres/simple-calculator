@@ -45,11 +45,11 @@ describe('calculateImposition', () => {
     const result = calculateImposition({ width: 100, height: 100 }, { width: 210, height: 210 }, 5)
     // cols = floor(215/105) = 2, rows = floor(215/105) = 2 → 4
     expect(result.itemsPerPlate).toBe(4)
-    expect(result.layout[0]).toEqual({ x: 0, y: 0, width: 100, height: 100 })
-    expect(result.layout[1]).toEqual({ x: 105, y: 0, width: 100, height: 100 })
-    expect(result.layout[2]).toEqual({ x: 0, y: 105, width: 100, height: 100 })
-    expect(result.layout[3]).toEqual({ x: 105, y: 105, width: 100, height: 100 })
-  })
+    expect(result.layout[0]).toEqual({ x: 0, y: 0, width: 100, height: 100, rotated: false })
+    expect(result.layout[1]).toEqual({ x: 105, y: 0, width: 100, height: 100, rotated: false })
+    expect(result.layout[2]).toEqual({ x: 0, y: 105, width: 100, height: 100, rotated: false })
+    expect(result.layout[3]).toEqual({ x: 105, y: 105, width: 100, height: 100, rotated: false }) 
+   })
 
   it('handles single item fitting', () => {
     const result = calculateImposition({ width: 400, height: 300 }, { width: 400, height: 300 }, 0)

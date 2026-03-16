@@ -95,6 +95,7 @@ export interface CalculatorProps {
   isAdmin: boolean
   initialQuote?: Quote
   isViewOnly?: boolean
+  settings?: Record<string, number>
 }
 
 export type ScreenState = 'form' | 'success' | 'recap'

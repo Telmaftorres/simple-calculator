@@ -8,7 +8,14 @@ import {
   FINISHING_SURCHARGE_PERCENT,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
 } from '@/lib/constants'
-import type { ImpositionResult, SelectedAccessory, SelectedConsumable, PrintingCostData, Plate, PrintMode } from '@/types/calculator'
+import type {
+  ImpositionResult,
+  SelectedAccessory,
+  SelectedConsumable,
+  PrintingCostData,
+  Plate,
+  PrintMode,
+} from '@/types/calculator'
 
 export interface CostCalculationParams {
   quantity: number
@@ -25,6 +32,7 @@ export interface CostCalculationParams {
   hasAssemblyNotice: boolean
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
+  settings?: Record<string, number>
 }
 
 export function useCostCalculation(params: CostCalculationParams) {
@@ -43,7 +51,18 @@ export function useCostCalculation(params: CostCalculationParams) {
     hasAssemblyNotice,
     selectedAccessories,
     selectedConsumables,
+    settings,
   } = params
+
+  // Utilise les valeurs DB si disponibles, sinon fallback sur les constantes
+  const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
+  const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
+  const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
+  const inkBaseMlPerPlate = settings?.INK_BASE_ML_PER_PLATE ?? INK_BASE_ML_PER_PLATE
+  const printSetupTimeMin = settings?.PRINT_SETUP_TIME_MIN ?? PRINT_SETUP_TIME_MIN
+  const cuttingSetupSeconds = settings?.CUTTING_SETUP_SECONDS ?? CUTTING_SETUP_SECONDS
+  const finishingSurchargePercent = settings?.FINISHING_SURCHARGE_PERCENT ?? FINISHING_SURCHARGE_PERCENT
+  const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
 
   const printingCostData: PrintingCostData = (() => {
     if (!impositionResult || !selectedPlate)
@@ -51,22 +70,24 @@ export function useCostCalculation(params: CostCalculationParams) {
 
     const multiplier = isRectoVerso ? 2 : 1
     const inkVolumeL =
-      ((impositionResult.platesNeeded * INK_BASE_ML_PER_PLATE * ((printSurfacePercent / 100) * 2)) / 1000) *
+      ((impositionResult.platesNeeded * inkBaseMlPerPlate * ((printSurfacePercent / 100) * 2)) /
+        1000) *
       multiplier
 
-    // +5% par option activée (cumulables)
     const finishingMultiplier =
-      1 + (hasVarnish ? FINISHING_SURCHARGE_PERCENT : 0) + (hasFlatColor ? FINISHING_SURCHARGE_PERCENT : 0)
-    const inkCost = inkVolumeL * INK_COST_PER_LITER * finishingMultiplier
+      1 +
+      (hasVarnish ? finishingSurchargePercent : 0) +
+      (hasFlatColor ? finishingSurchargePercent : 0)
+    const inkCost = inkVolumeL * inkCostPerLiter * finishingMultiplier
 
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
     const pace = printMode === 'production' ? 1 : 2
     const timePerPlateMin = printedAreaM2 * pace * multiplier
-    const setupTimeMin = printSurfacePercent > 0 ? PRINT_SETUP_TIME_MIN : 0
+    const setupTimeMin = printSurfacePercent > 0 ? printSetupTimeMin : 0
     const totalTimeMin = timePerPlateMin * impositionResult.platesNeeded + setupTimeMin
 
-    const laborCost = (totalTimeMin / 60) * HOURLY_RATE_PRINT
+    const laborCost = (totalTimeMin / 60) * hourlyRatePrint
 
     return { cost: inkCost + laborCost, timeMin: totalTimeMin, inkCost, laborCost }
   })()
@@ -75,20 +96,20 @@ export function useCostCalculation(params: CostCalculationParams) {
 
   const cuttingCost = (() => {
     if (!impositionResult) return 0
-    const totalSeconds = cuttingTimePerPoseSeconds * quantity + CUTTING_SETUP_SECONDS
+    const totalSeconds = cuttingTimePerPoseSeconds * quantity + cuttingSetupSeconds
     const totalHours = totalSeconds / 3600
-    return totalHours * HOURLY_RATE_PRINT
+    return totalHours * hourlyRatePrint
   })()
 
   const assemblyCost = (() => {
     const totalHours = (assemblyTimePerPieceSeconds * quantity) / 3600
-    return totalHours * HOURLY_RATE_ASSEMBLY
+    return totalHours * hourlyRateAssembly
   })()
 
   const packagingCost = (() => {
     const totalHours = (packTimePerPieceSeconds * quantity) / 3600
-    const timeCost = totalHours * HOURLY_RATE_ASSEMBLY
-    const noticeCost = hasAssemblyNotice ? ASSEMBLY_NOTICE_COST_PER_PIECE * quantity : 0
+    const timeCost = totalHours * hourlyRateAssembly
+    const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
     return timeCost + noticeCost
   })()
 
