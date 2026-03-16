@@ -4,12 +4,12 @@ import { useState, useEffect } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
+import { toast } from 'sonner'
 import {
   CUTTING_SETUP_SECONDS,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
 } from '@/lib/constants'
 import { useCostCalculation } from './useCostCalculation'
-import { toast } from 'sonner'
 import type {
   ProductType,
   Plate,
@@ -22,6 +22,7 @@ import type {
   ScreenState,
   PrintMode,
   Quote,
+  PLVElement,
 } from '@/types/calculator'
 
 export function useCalculator(
@@ -47,13 +48,13 @@ export function useCalculator(
   const [flatWidth, setFlatWidth] = useState<number>(0)
   const [flatHeight, setFlatHeight] = useState<number>(0)
 
- // Section 3: Impression
-const [printSurfacePercent, setPrintSurfacePercent] = useState<number>(0)
-const [printMode, setPrintMode] = useState<PrintMode>('production')
-const [isRectoVerso, setIsRectoVerso] = useState<boolean>(false)
-const [hasVarnish, setHasVarnish] = useState<boolean>(false)
-const [hasFlatColor, setHasFlatColor] = useState<boolean>(false)
-const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
+  // ── Section 3: Impression ──
+  const [printSurfacePercent, setPrintSurfacePercent] = useState<number>(0)
+  const [printMode, setPrintMode] = useState<PrintMode>('production')
+  const [isRectoVerso, setIsRectoVerso] = useState<boolean>(false)
+  const [hasVarnish, setHasVarnish] = useState<boolean>(false)
+  const [hasFlatColor, setHasFlatColor] = useState<boolean>(false)
+  const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
 
   // ── Section 4: Découpe ──
   const [cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds] = useState<number>(20)
@@ -83,7 +84,7 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
       setFlatWidth(initialQuote.width)
       setFlatHeight(initialQuote.height)
       setPrintSurfacePercent(initialQuote.printSurface || 0)
-      setPrintMode(initialQuote.printMode as PrintMode || 'production')
+      setPrintMode((initialQuote.printMode as PrintMode) || 'production')
       setIsRectoVerso(initialQuote.isRectoVerso || false)
       setRectoVersoType(initialQuote.rectoVersoType || null)
       setHasVarnish(initialQuote.hasVarnish || false)
@@ -92,38 +93,36 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
       setAssemblyTimePerPieceSeconds(initialQuote.assemblyTimePerPieceSeconds || 0)
       setPackTimePerPieceSeconds(initialQuote.packTimePerPieceSeconds || 0)
       setHasAssemblyNotice(initialQuote.hasAssemblyNotice || false)
-      
-      // Load accessories
+
       if (initialQuote.accessories) {
-        const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map(qa => {
-          const acc = accessories.find(a => a.id === qa.accessoryId)
+        const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => {
+          const acc = accessories.find((a) => a.id === qa.accessoryId)
           return {
             id: qa.accessoryId,
             name: acc?.name || 'Inconnu',
             price: acc?.price || 0,
-            quantity: qa.quantity
+            quantity: qa.quantity,
           }
         })
         setSelectedAccessories(loadedAccs)
       }
 
-      // Load consumables
       if (initialQuote.consumables) {
-        const loadedCons: SelectedConsumable[] = initialQuote.consumables.map(qc => {
-          const c = consumables.find(x => x.id === qc.consumableId)
+        const loadedCons: SelectedConsumable[] = initialQuote.consumables.map((qc) => {
+          const c = consumables.find((x) => x.id === qc.consumableId)
           return {
             id: qc.consumableId,
             name: c?.name || 'Inconnu',
             price: c?.price || 0,
             size: c?.size || 1,
             sizePerItem: qc.sizePerItem,
-            quantity: initialQuote.quantity
+            quantity: initialQuote.quantity,
           }
         })
         setSelectedConsumables(loadedCons)
       }
     }
-  }, [initialQuote, accessories])
+  }, [initialQuote, accessories, consumables])
 
   // ── Derived values ──
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
@@ -155,7 +154,6 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
   }, [flatWidth, flatHeight, quantity, selectedPlate])
 
   // ── Cost calculations ──
-
   const {
     printingCostData,
     printingCost,
@@ -247,13 +245,13 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     } else {
       setSelectedConsumables([
         ...selectedConsumables,
-        { 
-          id: c.id, 
-          name: c.name, 
-          price: c.price, 
-          size: c.size, 
-          sizePerItem: currentConsumableSize, 
-          quantity 
+        {
+          id: c.id,
+          name: c.name,
+          price: c.price,
+          size: c.size,
+          sizePerItem: currentConsumableSize,
+          quantity,
         },
       ])
     }
@@ -286,8 +284,8 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
   const handleSave = async () => {
     const parsedProductId = parseInt(selectedProductTypeId)
     if (!impositionResult || !selectedPlateId || !selectedProductTypeId || isNaN(parsedProductId)) {
-      toast.error("Veuillez sélectionner un Type de PLV valide.");
-      return;
+      toast.error('Veuillez sélectionner un Type de PLV valide.')
+      return
     }
     setIsServing(true)
     try {
@@ -314,7 +312,7 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
         packTimePerPieceSeconds,
         hasAssemblyNotice,
         elements:
-          selectedProductType?.elements.map((el) => ({
+          selectedProductType?.elements.map((el: PLVElement) => ({
             name: el.name,
             quantity: el.quantity,
           })) || [],
@@ -435,7 +433,7 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     setCurrentAccessoryQty,
     accessoriesCost,
 
-    // Consumables (Façonnage extension)
+    // Consumables
     selectedConsumables,
     currentConsumableId,
     setCurrentConsumableId,

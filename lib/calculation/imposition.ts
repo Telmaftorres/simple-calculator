@@ -30,13 +30,6 @@ export interface ImpositionResult {
   layout: Rect[]
 }
 
-export interface ImpositionResultWithCost extends ImpositionResult {
-  platesNeeded: number
-  materialCost: number
-}
-
-// ...
-
 export function calculateImposition(
   item: Dimensions,
   plate: Plate,
@@ -50,7 +43,6 @@ export function calculateImposition(
     return Math.floor((available + spacing) / (size + spacing))
   }
 
-  // Helper to generate layout for grid
   const generateLayout = (
     rows: number,
     cols: number,
@@ -71,12 +63,10 @@ export function calculateImposition(
     return layout
   }
 
-  // Case 1: Normal Orientation
   const colsNormal = calcFit(pW, iW)
   const rowsNormal = calcFit(pH, iH)
   const totalNormal = colsNormal * rowsNormal
 
-  // Case 2: Rotated Item Orientation
   const colsRotated = calcFit(pW, iH)
   const rowsRotated = calcFit(pH, iW)
   const totalRotated = colsRotated * rowsRotated
@@ -85,7 +75,7 @@ export function calculateImposition(
     return {
       itemsPerPlate: totalRotated,
       orientation: 'rotated',
-      layout: generateLayout(rowsRotated, colsRotated, iH, iW), // Width is iH, Height is iW
+      layout: generateLayout(rowsRotated, colsRotated, iH, iW),
     }
   }
 
