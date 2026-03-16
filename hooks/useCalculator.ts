@@ -5,11 +5,9 @@ import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
-import {
-  CUTTING_SETUP_SECONDS,
-  ASSEMBLY_NOTICE_COST_PER_PIECE,
-} from '@/lib/constants'
+import { CUTTING_SETUP_SECONDS, ASSEMBLY_NOTICE_COST_PER_PIECE } from '@/lib/constants'
 import { useCostCalculation } from './useCostCalculation'
+import { useCalculatorForm } from './useCalculatorForm'
 import type {
   ProductType,
   Plate,
@@ -18,9 +16,7 @@ import type {
   SelectedAccessory,
   SelectedConsumable,
   ImpositionResult,
-  PrintingCostData,
   ScreenState,
-  PrintMode,
   Quote,
   PLVElement,
 } from '@/types/calculator'
@@ -36,63 +32,58 @@ export function useCalculator(
   // ── UI State ──
   const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
   const [isServing, setIsServing] = useState(false)
-
-  // ── Section 1: Configuration ──
-  const [studyNumber, setStudyNumber] = useState<string>('ET')
   const [productTypes, setProductTypes] = useState(initialProductTypes)
-  const [productSearch, setProductSearch] = useState('')
-  const [isProductDropdownOpen, setIsProductDropdownOpen] = useState(false)
-  const [selectedProductTypeId, setSelectedProductTypeId] = useState<string>('')
-  const [quantity, setQuantity] = useState<number>(100)
-  const [selectedPlateId, setSelectedPlateId] = useState<string>('')
-  const [flatWidth, setFlatWidth] = useState<number>(0)
-  const [flatHeight, setFlatHeight] = useState<number>(0)
-
-  // ── Section 3: Impression ──
-  const [printSurfacePercent, setPrintSurfacePercent] = useState<number>(0)
-  const [printMode, setPrintMode] = useState<PrintMode>('production')
-  const [isRectoVerso, setIsRectoVerso] = useState<boolean>(false)
-  const [hasVarnish, setHasVarnish] = useState<boolean>(false)
-  const [hasFlatColor, setHasFlatColor] = useState<boolean>(false)
-  const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
-
-  // ── Section 4: Découpe ──
-  const [cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds] = useState<number>(20)
-
-  // ── Section 5: Façonnage ──
-  const [assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds] = useState<number>(0)
-  const [selectedConsumables, setSelectedConsumables] = useState<SelectedConsumable[]>([])
-  const [currentConsumableId, setCurrentConsumableId] = useState<string>('')
-  const [currentConsumableSize, setCurrentConsumableSize] = useState<number>(0)
-
-  // ── Section 6: Conditionnement ──
-  const [packTimePerPieceSeconds, setPackTimePerPieceSeconds] = useState<number>(0)
-  const [hasAssemblyNotice, setHasAssemblyNotice] = useState<boolean>(false)
-
-  // ── Section 7: Accessoires ──
   const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessory[]>([])
-  const [currentAccessoryId, setCurrentAccessoryId] = useState<string>('')
-  const [currentAccessoryQty, setCurrentAccessoryQty] = useState<number>(0)
+  const [selectedConsumables, setSelectedConsumables] = useState<SelectedConsumable[]>([])
+  const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
+
+  // ── Form State (useReducer) ──
+  const { formState, setField, resetForm } = useCalculatorForm()
+
+  const {
+    studyNumber,
+    selectedProductTypeId,
+    productSearch,
+    isProductDropdownOpen,
+    quantity,
+    selectedPlateId,
+    flatWidth,
+    flatHeight,
+    printSurfacePercent,
+    printMode,
+    isRectoVerso,
+    hasVarnish,
+    hasFlatColor,
+    rectoVersoType,
+    cuttingTimePerPoseSeconds,
+    assemblyTimePerPieceSeconds,
+    packTimePerPieceSeconds,
+    hasAssemblyNotice,
+    currentAccessoryId,
+    currentAccessoryQty,
+    currentConsumableId,
+    currentConsumableSize,
+  } = formState
 
   // ── Initialization from initialQuote ──
   useEffect(() => {
     if (initialQuote) {
-      setStudyNumber(initialQuote.study?.number || 'ET')
-      setSelectedProductTypeId(initialQuote.productTypeId.toString())
-      setQuantity(initialQuote.quantity)
-      setSelectedPlateId(initialQuote.plateId?.toString() || '')
-      setFlatWidth(initialQuote.width)
-      setFlatHeight(initialQuote.height)
-      setPrintSurfacePercent(initialQuote.printSurface || 0)
-      setPrintMode((initialQuote.printMode as PrintMode) || 'production')
-      setIsRectoVerso(initialQuote.isRectoVerso || false)
-      setRectoVersoType(initialQuote.rectoVersoType || null)
-      setHasVarnish(initialQuote.hasVarnish || false)
-      setHasFlatColor(initialQuote.hasFlatColor || false)
-      setCuttingTimePerPoseSeconds(initialQuote.cuttingTimePerPoseSeconds || 20)
-      setAssemblyTimePerPieceSeconds(initialQuote.assemblyTimePerPieceSeconds || 0)
-      setPackTimePerPieceSeconds(initialQuote.packTimePerPieceSeconds || 0)
-      setHasAssemblyNotice(initialQuote.hasAssemblyNotice || false)
+      setField('studyNumber', initialQuote.study?.number || 'ET')
+      setField('selectedProductTypeId', initialQuote.productTypeId.toString())
+      setField('quantity', initialQuote.quantity)
+      setField('selectedPlateId', initialQuote.plateId?.toString() || '')
+      setField('flatWidth', initialQuote.width)
+      setField('flatHeight', initialQuote.height)
+      setField('printSurfacePercent', initialQuote.printSurface || 0)
+      setField('printMode', (initialQuote.printMode as 'production' | 'quality') || 'production')
+      setField('isRectoVerso', initialQuote.isRectoVerso || false)
+      setField('rectoVersoType', initialQuote.rectoVersoType || null)
+      setField('hasVarnish', initialQuote.hasVarnish || false)
+      setField('hasFlatColor', initialQuote.hasFlatColor || false)
+      setField('cuttingTimePerPoseSeconds', initialQuote.cuttingTimePerPoseSeconds || 20)
+      setField('assemblyTimePerPieceSeconds', initialQuote.assemblyTimePerPieceSeconds || 0)
+      setField('packTimePerPieceSeconds', initialQuote.packTimePerPieceSeconds || 0)
+      setField('hasAssemblyNotice', initialQuote.hasAssemblyNotice || false)
 
       if (initialQuote.accessories) {
         const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => {
@@ -129,8 +120,6 @@ export function useCalculator(
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
 
   // ── Imposition calculation ──
-  const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
-
   useEffect(() => {
     if (selectedPlate && flatWidth > 0 && flatHeight > 0 && quantity > 0) {
       const imp = calculateImposition(
@@ -181,7 +170,6 @@ export function useCalculator(
   })
 
   // ── Detail helpers ──
-
   const getCuttingDetails = () => {
     const totalSeconds = cuttingTimePerPoseSeconds * quantity + CUTTING_SETUP_SECONDS
     const totalMinutes = totalSeconds / 60
@@ -204,7 +192,6 @@ export function useCalculator(
   }
 
   // ── Actions ──
-
   const handleAddAccessory = () => {
     if (!currentAccessoryId || currentAccessoryQty <= 0) return
     const acc = accessories.find((a) => a.id.toString() === currentAccessoryId)
@@ -223,7 +210,7 @@ export function useCalculator(
         { id: acc.id, name: acc.name, price: acc.price, quantity: currentAccessoryQty },
       ])
     }
-    setCurrentAccessoryQty(0)
+    setField('currentAccessoryQty', 0)
   }
 
   const handleRemoveAccessory = (id: number) => {
@@ -255,7 +242,7 @@ export function useCalculator(
         },
       ])
     }
-    setCurrentConsumableSize(0)
+    setField('currentConsumableSize', 0)
   }
 
   const handleRemoveConsumable = (id: number) => {
@@ -272,9 +259,9 @@ export function useCalculator(
           { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [] },
         ])
       }
-      setSelectedProductTypeId(newType.id.toString())
-      setProductSearch(newType.name)
-      setIsProductDropdownOpen(false)
+      setField('selectedProductTypeId', newType.id.toString())
+      setField('productSearch', newType.name)
+      setField('isProductDropdownOpen', false)
     } catch (e) {
       console.error(e)
       toast.error('Erreur lors de la création du type de PLV')
@@ -337,29 +324,10 @@ export function useCalculator(
 
   const handleReset = () => {
     setScreenState('form')
-    setStudyNumber('ET')
-    setSelectedProductTypeId('')
-    setProductSearch('')
-    setQuantity(100)
-    setSelectedPlateId('')
-    setFlatWidth(0)
-    setFlatHeight(0)
-    setPrintSurfacePercent(0)
-    setPrintMode('production')
-    setIsRectoVerso(false)
-    setHasVarnish(false)
-    setHasFlatColor(false)
-    setRectoVersoType(null)
-    setCuttingTimePerPoseSeconds(20)
-    setAssemblyTimePerPieceSeconds(0)
-    setPackTimePerPieceSeconds(0)
-    setHasAssemblyNotice(false)
+    resetForm()
     setSelectedAccessories([])
-    setCurrentAccessoryId('')
-    setCurrentAccessoryQty(0)
     setSelectedConsumables([])
-    setCurrentConsumableId('')
-    setCurrentConsumableSize(0)
+    setImpositionResult(null)
   }
 
   return {
@@ -368,80 +336,82 @@ export function useCalculator(
     setScreenState,
     isServing,
 
-    // Section 1
-    studyNumber,
-    setStudyNumber,
+    // Product types
     productTypes,
+
+    // Form state
+    studyNumber,
+    setStudyNumber: (v: string) => setField('studyNumber', v),
     productSearch,
-    setProductSearch,
+    setProductSearch: (v: string) => setField('productSearch', v),
     isProductDropdownOpen,
-    setIsProductDropdownOpen,
+    setIsProductDropdownOpen: (v: boolean) => setField('isProductDropdownOpen', v),
     selectedProductTypeId,
-    setSelectedProductTypeId,
+    setSelectedProductTypeId: (v: string) => setField('selectedProductTypeId', v),
     quantity,
-    setQuantity,
+    setQuantity: (v: number) => setField('quantity', v),
     selectedPlateId,
-    setSelectedPlateId,
+    setSelectedPlateId: (v: string) => setField('selectedPlateId', v),
     flatWidth,
-    setFlatWidth,
+    setFlatWidth: (v: number) => setField('flatWidth', v),
     flatHeight,
-    setFlatHeight,
+    setFlatHeight: (v: number) => setField('flatHeight', v),
     selectedPlate,
     selectedProductType,
 
-    // Section 2
+    // Imposition
     impositionResult,
 
-    // Section 3
+    // Impression
     printSurfacePercent,
-    setPrintSurfacePercent,
+    setPrintSurfacePercent: (v: number) => setField('printSurfacePercent', v),
     printMode,
-    setPrintMode,
+    setPrintMode: (v: 'production' | 'quality') => setField('printMode', v),
     isRectoVerso,
-    setIsRectoVerso,
+    setIsRectoVerso: (v: boolean) => setField('isRectoVerso', v),
     hasVarnish,
-    setHasVarnish,
+    setHasVarnish: (v: boolean) => setField('hasVarnish', v),
     hasFlatColor,
-    setHasFlatColor,
+    setHasFlatColor: (v: boolean) => setField('hasFlatColor', v),
     rectoVersoType,
-    setRectoVersoType,
+    setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
     printingCostData,
     printingCost,
 
-    // Section 4
+    // Découpe
     cuttingTimePerPoseSeconds,
-    setCuttingTimePerPoseSeconds,
+    setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
     cuttingCost,
 
-    // Section 5
+    // Façonnage
     assemblyTimePerPieceSeconds,
-    setAssemblyTimePerPieceSeconds,
+    setAssemblyTimePerPieceSeconds: (v: number) => setField('assemblyTimePerPieceSeconds', v),
     assemblyCost,
 
-    // Section 6
+    // Conditionnement
     packTimePerPieceSeconds,
-    setPackTimePerPieceSeconds,
+    setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
     hasAssemblyNotice,
-    setHasAssemblyNotice,
+    setHasAssemblyNotice: (v: boolean) => setField('hasAssemblyNotice', v),
     packagingCost,
 
-    // Section 7
+    // Accessoires
     selectedAccessories,
     currentAccessoryId,
-    setCurrentAccessoryId,
+    setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),
     currentAccessoryQty,
-    setCurrentAccessoryQty,
+    setCurrentAccessoryQty: (v: number) => setField('currentAccessoryQty', v),
     accessoriesCost,
 
-    // Consumables
+    // Consommables
     selectedConsumables,
     currentConsumableId,
-    setCurrentConsumableId,
+    setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
     currentConsumableSize,
-    setCurrentConsumableSize,
+    setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),
     consumablesCost,
 
-    // Costs
+    // Coûts
     totalCost,
 
     // Actions
@@ -453,7 +423,7 @@ export function useCalculator(
     handleSave,
     handleReset,
 
-    // Detail helpers
+    // Helpers
     getCuttingDetails,
     getAssemblyDetails,
     getPackDetails,
