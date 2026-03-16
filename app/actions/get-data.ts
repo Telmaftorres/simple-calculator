@@ -1,13 +1,11 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/auth'
+import { requireAuth } from '@/lib/auth-helpers'
+import { revalidatePath } from 'next/cache'
+import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
-import { unstable_cache, revalidatePath } from 'next/cache'
 
-/**
- * Fetches all studies from the database.
- */
 export const getStudies = unstable_cache(
   async () => {
     return await prisma.study.findMany({
@@ -18,15 +16,10 @@ export const getStudies = unstable_cache(
   { tags: ['studies'] }
 )
 
-/**
- * Fetches all product types (PLV) with their associated elements.
- */
 export const getProductTypes = unstable_cache(
   async () => {
     return await prisma.productType.findMany({
-      include: {
-        elements: true,
-      },
+      include: { elements: true },
       orderBy: { name: 'asc' },
     })
   },
@@ -34,9 +27,6 @@ export const getProductTypes = unstable_cache(
   { tags: ['product-types'] }
 )
 
-/**
- * Fetches all available plates (materials).
- */
 export const getPlates = unstable_cache(
   async () => {
     return await prisma.plate.findMany({
@@ -47,17 +37,12 @@ export const getPlates = unstable_cache(
   { tags: ['plates'] }
 )
 
-/**
- * Génère une référence unique au format C0001-MMAAAA
- * Ex: C0001-022026, C0042-022026
- */
 async function generateReference(): Promise<string> {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const year = String(now.getFullYear())
   const suffix = `${month}${year}`
 
-  // Compter le nombre de devis existants pour incrémenter le numéro
   const count = await prisma.quote.count()
   const number = String(count + 1).padStart(4, '0')
 
@@ -90,10 +75,8 @@ export async function createQuote(data: {
   accessories?: { id: number; quantity: number }[]
   consumables?: { id: number; sizePerItem: number }[]
 }) {
-  const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
+  const session = await requireAuth()
 
-  // Trouver ou créer l'étude
   let study = await prisma.study.findUnique({
     where: { number: data.studyNumber },
   })
@@ -107,18 +90,15 @@ export async function createQuote(data: {
     })
   }
 
-  // Générer la référence unique
   const reference = await generateReference()
 
-  // VERIFICATION SUPPLEMENTAIRE AVANT INSERTION POUR EVITER L'ERREUR 500 (Quote_productTypeId_fkey)
   const productTypeExists = await prisma.productType.findUnique({
     where: { id: data.productTypeId },
-    select: { id: true }
+    select: { id: true },
   })
 
   if (!productTypeExists) {
-    console.error(`Erreur: Tentative de création d'un devis pour un ProductType inexistant (ID: ${data.productTypeId})`)
-    throw new Error(`Le type de PLV sélectionné (ID: ${data.productTypeId}) n'existe plus dans la base de données. Veuillez actualiser la page.`)
+    throw new Error(`Le type de PLV sélectionné (ID: ${data.productTypeId}) n'existe plus. Veuillez actualiser la page.`)
   }
 
   return await prisma.quote.create({
@@ -169,31 +149,24 @@ export async function createQuote(data: {
 }
 
 export async function getUserQuotes() {
-  const session = await auth()
-  if (!session?.user?.id) return []
-
-  const isAdmin = session.user.role === 'ADMIN'
-  const where = isAdmin ? {} : { userId: session.user.id }
+  const session = await requireAuth()
 
   return await prisma.quote.findMany({
-    where,
+    where: { userId: session.user.id },
     include: {
       study: true,
       productType: true,
       plate: true,
-      user: true,
     },
     orderBy: { createdAt: 'desc' },
   })
 }
 
 export async function deleteQuote(id: number) {
-  const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
+  const session = await requireAuth()
 
   const validId = z.number().int().positive().parse(id)
 
-  // Un user ne peut supprimer que ses propres devis, un admin peut tout supprimer
   const whereClause =
     session.user.role === 'ADMIN'
       ? { id: validId }
@@ -205,23 +178,18 @@ export async function deleteQuote(id: number) {
 }
 
 export async function getQuoteById(id: number) {
-  const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
+  const session = await requireAuth()
 
   const quote = await prisma.quote.findUnique({
     where: { id },
     include: {
       study: true,
       productType: {
-        include: {
-          elements: true,
-        },
+        include: { elements: true },
       },
       plate: true,
       accessories: {
-        include: {
-          accessory: true,
-        },
+        include: { accessory: true },
       },
       elements: true,
     },
@@ -229,7 +197,6 @@ export async function getQuoteById(id: number) {
 
   if (!quote) return null
 
-  // Un user ne peut voir que ses propres devis, un admin peut tout voir
   if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
     throw new Error('Non autorisé')
   }
