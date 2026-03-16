@@ -2,6 +2,7 @@
 
 import { prisma } from '@/lib/prisma'
 import { auth } from '@/auth'
+import { z } from 'zod'
 import { unstable_cache, revalidatePath } from 'next/cache'
 
 /**
@@ -190,9 +191,15 @@ export async function deleteQuote(id: number) {
   const session = await auth()
   if (!session?.user) throw new Error('Non autorisé')
 
-  await prisma.quote.delete({
-    where: { id },
-  })
+  const validId = z.number().int().positive().parse(id)
+
+  // Un user ne peut supprimer que ses propres devis, un admin peut tout supprimer
+  const whereClause =
+    session.user.role === 'ADMIN'
+      ? { id: validId }
+      : { id: validId, userId: session.user.id }
+
+  await prisma.quote.delete({ where: whereClause })
 
   revalidatePath('/dashboard/my-quotes')
 }
@@ -201,7 +208,7 @@ export async function getQuoteById(id: number) {
   const session = await auth()
   if (!session?.user) throw new Error('Non autorisé')
 
-  return await prisma.quote.findUnique({
+  const quote = await prisma.quote.findUnique({
     where: { id },
     include: {
       study: true,
@@ -219,4 +226,13 @@ export async function getQuoteById(id: number) {
       elements: true,
     },
   })
+
+  if (!quote) return null
+
+  // Un user ne peut voir que ses propres devis, un admin peut tout voir
+  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
+    throw new Error('Non autorisé')
+  }
+
+  return quote
 }
