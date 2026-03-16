@@ -2,7 +2,7 @@
 
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { requireAuth, requireAdmin } from '@/lib/auth-helpers'
+import { requireAuth } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
 
@@ -19,7 +19,7 @@ export const getConsumables = async () => {
 }
 
 export async function createConsumable(data: z.infer<typeof consumableSchema>) {
-  await requireAdmin()
+  await requireAuth()
   const validated = consumableSchema.parse(data)
   await prisma.consumable.create({ data: validated })
   revalidatePath('/dashboard/consumables')
@@ -27,7 +27,7 @@ export async function createConsumable(data: z.infer<typeof consumableSchema>) {
 }
 
 export async function updateConsumable(id: number, data: z.infer<typeof consumableSchema>) {
-  await requireAdmin()
+  await requireAuth()
   const validated = consumableSchema.parse(data)
   await prisma.consumable.update({ where: { id }, data: validated })
   revalidatePath('/dashboard/consumables')
@@ -35,7 +35,7 @@ export async function updateConsumable(id: number, data: z.infer<typeof consumab
 }
 
 export async function deleteConsumable(id: number) {
-  await requireAdmin()
+  await requireAuth()
   const validId = z.number().int().positive().parse(id)
   await prisma.consumable.delete({ where: { id: validId } })
   revalidatePath('/dashboard/consumables')

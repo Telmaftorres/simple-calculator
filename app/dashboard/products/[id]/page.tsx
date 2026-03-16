@@ -1,8 +1,6 @@
-import { PrismaClient } from '@prisma/client'
+import { prisma } from '@/lib/prisma'
 import ElementsClient from './elements-client'
 import { notFound } from 'next/navigation'
-
-const prisma = new PrismaClient()
 
 interface PageProps {
   params: Promise<{ id: string }>

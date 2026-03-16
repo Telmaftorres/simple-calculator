@@ -5,6 +5,7 @@ import { requireAuth } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
+import { revalidateCache } from '@/lib/cache'
 
 const createQuoteSchema = z.object({
   studyNumber: z.string().min(1, 'Le numéro de dossier est requis'),
@@ -115,6 +116,7 @@ export async function createQuote(data: z.infer<typeof createQuoteSchema>) {
     throw new Error(`Le type de PLV sélectionné (ID: ${validated.productTypeId}) n'existe plus. Veuillez actualiser la page.`)
   }
 
+  revalidateCache('quotes')  
   return await prisma.quote.create({
     data: {
       reference,
@@ -187,7 +189,7 @@ export async function deleteQuote(id: number) {
       : { id: validId, userId: session.user.id }
 
   await prisma.quote.delete({ where: whereClause })
-
+  revalidateCache('quotes')
   revalidatePath('/dashboard/my-quotes')
 }
 

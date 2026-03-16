@@ -19,7 +19,7 @@ export const metadata: Metadata = {
   },
   description: 'Application de calcul de prix et de matière pour la PLV.',
   icons: {
-    icon: '/favicon.ico',
+    icon: '/icon.jpg',
   },
 }
 

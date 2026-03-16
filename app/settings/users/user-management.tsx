@@ -40,8 +40,9 @@ interface User {
 export function UserManagement({ users }: { users: User[] }) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [createError, setCreateError] = useState<string | null>(null)
+  const [createSuccess, setCreateSuccess] = useState(false)
 
-  // Helper to format date
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('fr-FR', {
       day: '2-digit',
@@ -70,7 +71,15 @@ export function UserManagement({ users }: { users: User[] }) {
           <CardContent>
             <form
               action={async (formData) => {
-                await createUser(formData)
+                setCreateError(null)
+                setCreateSuccess(false)
+                const result = await createUser(formData)
+                if (result?.error) {
+                  setCreateError(result.error)
+                } else {
+                  setCreateSuccess(true)
+                  setTimeout(() => setCreateSuccess(false), 3000)
+                }
               }}
               className="space-y-4"
             >
@@ -96,14 +105,21 @@ export function UserManagement({ users }: { users: User[] }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Mot de passe</Label>
-                <Input id="password" name="password" type="password" required />
+                <Input
+                  id="password"
+                  name="password"
+                  type="password"
+                  required
+                  minLength={8}
+                />
+                <p className="text-xs text-slate-400">Minimum 8 caractères</p>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="role">Rôle</Label>
-                <select 
-                  id="role" 
-                  name="role" 
+                <select
+                  id="role"
+                  name="role"
                   className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                   defaultValue="USER"
                 >
@@ -111,6 +127,18 @@ export function UserManagement({ users }: { users: User[] }) {
                   <option value="ADMIN">Administrateur</option>
                 </select>
               </div>
+
+              {createError && (
+                <p className="text-sm text-red-600 bg-red-50 border border-red-200 p-2 rounded">
+                  {createError}
+                </p>
+              )}
+
+              {createSuccess && (
+                <p className="text-sm text-green-600 bg-green-50 border border-green-200 p-2 rounded">
+                  Utilisateur créé avec succès !
+                </p>
+              )}
 
               <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">
                 Créer
@@ -161,8 +189,8 @@ export function UserManagement({ users }: { users: User[] }) {
                           </span>
                         )}
                         <span className={`inline-flex w-fit items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${
-                          user.role === 'ADMIN' 
-                            ? 'bg-purple-100 text-purple-800' 
+                          user.role === 'ADMIN'
+                            ? 'bg-purple-100 text-purple-800'
                             : 'bg-blue-100 text-blue-800'
                         }`}>
                           {user.role}
@@ -256,15 +284,17 @@ export function UserManagement({ users }: { users: User[] }) {
                   name="password"
                   type="password"
                   placeholder="Laisser vide pour ne pas changer"
+                  minLength={8}
                 />
+                <p className="text-xs text-slate-400">Minimum 8 caractères si renseigné</p>
               </div>
 
               <div className="grid gap-4 pt-4 border-t">
                 <div className="space-y-2">
                   <Label htmlFor="edit-role">Rôle</Label>
-                  <select 
-                    id="edit-role" 
-                    name="role" 
+                  <select
+                    id="edit-role"
+                    name="role"
                     className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                     defaultValue={editingUser.role}
                   >
