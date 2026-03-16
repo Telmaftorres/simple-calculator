@@ -7,6 +7,10 @@ const prisma = new PrismaClient({
 
 async function main() {
   console.log('Seeding database...')
+
+  const seedPassword = process.env.SEED_ADMIN_PASSWORD
+  if (!seedPassword) throw new Error('SEED_ADMIN_PASSWORD non défini dans .env')
+
   // 1. Create Studies
   const study1 = await prisma.study.upsert({
     where: { number: 'E-2024-001' },
@@ -183,11 +187,13 @@ async function main() {
     pvc700,
   })
 
-  // 4. Create Users
-  const passwordHash = await bcrypt.hash('admin', 10)
+  // 4. Create Admin User
+  const passwordHash = await bcrypt.hash(seedPassword, 10)
+
   const admin = await prisma.user.upsert({
     where: { email: 'admin@kontfeel.fr' },
     update: {
+      password: passwordHash,
       role: 'ADMIN',
       permissions: ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'],
     },
