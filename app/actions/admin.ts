@@ -2,8 +2,9 @@
 
 import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/auth'
-import { revalidatePath, revalidateTag } from 'next/cache'
+import { requireAuth } from '@/lib/auth-guard'
+import { revalidatePath } from 'next/cache'
+import { revalidateCache } from '@/lib/cache'
 
 // ────────────────────────────────────────────────────
 // Schemas de validation Zod
@@ -30,16 +31,6 @@ const elementSchema = z.object({
 })
 
 // ────────────────────────────────────────────────────
-// Helper : vérification d'authentification
-// ────────────────────────────────────────────────────
-
-async function requireAuth() {
-  const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
-  return session
-}
-
-// ────────────────────────────────────────────────────
 // PLATES
 // ────────────────────────────────────────────────────
 
@@ -49,8 +40,7 @@ export async function createPlate(data: z.infer<typeof plateSchema>) {
   await prisma.plate.create({ data: validated })
   revalidatePath('/dashboard/plates')
   revalidatePath('/')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('plates')
+  revalidateCache('plates')
 }
 
 export async function updatePlate(id: number, data: z.infer<typeof plateSchema>) {
@@ -59,8 +49,7 @@ export async function updatePlate(id: number, data: z.infer<typeof plateSchema>)
   await prisma.plate.update({ where: { id }, data: validated })
   revalidatePath('/dashboard/plates')
   revalidatePath('/')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('plates')
+  revalidateCache('plates')
 }
 
 export async function deletePlate(id: number) {
@@ -69,8 +58,7 @@ export async function deletePlate(id: number) {
   await prisma.plate.delete({ where: { id: validId } })
   revalidatePath('/dashboard/plates')
   revalidatePath('/')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('plates')
+  revalidateCache('plates')
 }
 
 // ────────────────────────────────────────────────────
@@ -93,8 +81,7 @@ export async function createProductType(
   })
   revalidatePath('/dashboard/products')
   revalidatePath('/')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('product-types')
+  revalidateCache('product-types')
   return result
 }
 
@@ -116,8 +103,7 @@ export async function updateProductType(
   })
   revalidatePath('/dashboard/products')
   revalidatePath('/')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('product-types')
+  revalidateCache('product-types')
 }
 
 export async function deleteProductType(id: number) {
@@ -126,8 +112,7 @@ export async function deleteProductType(id: number) {
   await prisma.productType.delete({ where: { id: validId } })
   revalidatePath('/dashboard/products')
   revalidatePath('/')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('product-types')
+  revalidateCache('product-types')
 }
 
 // ────────────────────────────────────────────────────
@@ -140,8 +125,7 @@ export async function createElement(data: z.infer<typeof elementSchema>) {
   await prisma.element.create({ data: validated })
   revalidatePath(`/dashboard/products/${validated.productTypeId}`)
   revalidatePath('/dashboard/products')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('product-types')
+  revalidateCache('product-types')
 }
 
 export async function updateElement(
@@ -154,8 +138,7 @@ export async function updateElement(
   await prisma.element.update({ where: { id }, data: validated })
   revalidatePath(`/dashboard/products/${productTypeId}`)
   revalidatePath('/dashboard/products')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('product-types')
+  revalidateCache('product-types')
 }
 
 export async function deleteElement(id: number, productTypeId: number) {
@@ -164,6 +147,5 @@ export async function deleteElement(id: number, productTypeId: number) {
   await prisma.element.delete({ where: { id: validId } })
   revalidatePath(`/dashboard/products/${productTypeId}`)
   revalidatePath('/dashboard/products')
-  // @ts-expect-error - Next.js type mismatch
-  revalidateTag('product-types')
+  revalidateCache('product-types')
 }

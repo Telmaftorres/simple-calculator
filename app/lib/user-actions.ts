@@ -8,6 +8,7 @@ import { auth, signOut as authSignOut } from '@/auth'
 export async function getUsers() {
   const session = await auth()
   if (!session?.user) throw new Error('Unauthorized')
+  if (session.user.role !== 'ADMIN') throw new Error('Unauthorized')
 
   return await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
@@ -113,11 +114,10 @@ export async function updateUser(formData: FormData) {
 }
 
 export async function deleteUser(userId: string) {
-  console.log('deleteUser called with id:', userId)
   const session = await auth()
   if (!session?.user) throw new Error('Unauthorized')
+  if (session.user.role !== 'ADMIN') throw new Error('Unauthorized')
 
-  // Prevent deleting self?
   if (session.user.id === userId) {
     return { error: 'Cannot delete yourself' }
   }

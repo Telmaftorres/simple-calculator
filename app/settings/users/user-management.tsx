@@ -179,20 +179,17 @@ export function UserManagement({ users }: { users: User[] }) {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
-
-                        <form
-                          action={async () => {
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                          onClick={async () => {
+                            if (!confirm(`Supprimer définitivement ${user.firstName || user.email} ?`)) return
                             await deleteUser(user.id)
                           }}
                         >
-                          <Button
-                            size="icon"
-                            variant="ghost"
-                            className="text-red-500 hover:text-red-700 hover:bg-red-50"
-                          >
-                            <Trash2 className="h-4 w-4" />
-                          </Button>
-                        </form>
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
                       </div>
                     </TableCell>
                   </TableRow>

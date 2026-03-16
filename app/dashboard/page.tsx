@@ -132,7 +132,7 @@ export default async function AdminDashboard() {
           </Card>
         </Link>
 
-        {(session?.user as { role?: string })?.role === 'ADMIN' && (
+        {session?.user?.role === 'ADMIN' && (
           <Link href="/dashboard/users">
             <Card className="hover:shadow-md transition-shadow cursor-pointer border-l-4 border-l-pink-500 h-full">
               <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">

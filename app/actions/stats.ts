@@ -1,15 +1,8 @@
 'use server'
 
 import { prisma } from '@/lib/prisma'
-import { auth } from '@/auth'
+import { requireAuth } from '@/lib/auth-guard'
 import { unstable_cache } from 'next/cache'
-
-async function requireAuth() {
-  const session = await auth()
-  if (!session?.user) {
-    throw new Error('Non autorisé')
-  }
-}
 
 const getCachedDashboardStats = unstable_cache(
   async () => {

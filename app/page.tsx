@@ -50,7 +50,7 @@ export default async function Home({
             plates={plates}
             accessories={accessories}
             consumables={consumables}
-            isAdmin={session?.user?.role === 'admin'}
+            isAdmin={session?.user?.role === 'ADMIN'}
             initialQuote={initialQuote || undefined}
             isViewOnly={isViewOnly}
           />

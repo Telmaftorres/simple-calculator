@@ -18,6 +18,12 @@ vi.mock('@/auth', () => ({
   auth: vi.fn(),
 }))
 
+vi.mock('next/cache', () => ({
+  unstable_cache: vi.fn((cb) => cb),
+  revalidatePath: vi.fn(),
+  revalidateTag: vi.fn(),
+}))
+
 describe('Server Actions: get-data', () => {
   it('should return plates', async () => {
     const mockPlates = [

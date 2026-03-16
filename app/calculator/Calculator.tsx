@@ -17,6 +17,8 @@ import { ScreenRecap } from './screens/ScreenRecap'
 import { SectionPresentation } from './sections/SectionPresentation'
 import { SectionImpression } from './sections/SectionImpression'
 import { SectionAccessoires } from './sections/SectionAccessoires'
+import { SectionFaconnage } from './sections/SectionFaconnage'
+import { SectionConditionnement } from './sections/SectionConditionnement'
 import { RecapSidebar } from './sections/RecapSidebar'
 
 export default function Calculator({
@@ -254,119 +256,29 @@ export default function Calculator({
           </SectionDisplay>
 
           {/* 5. Façonnage */}
-          <SectionDisplay key="section-faconnage" number="5" title="Façonnage" color="pink">
-            <GaugeSlider
-              label="Temps par Pièce"
-              value={assemblyTimePerPieceSeconds}
-              min={0}
-              max={300}
-              unit="sec"
-              onChange={setAssemblyTimePerPieceSeconds}
-              formatValue={formatTimeSeconds}
-              gradientColors="from-pink-300 to-rose-600"
-            />
-            {/* Consommables additionnels */}
-            <div className="mt-6 pt-4 border-t border-pink-100">
-              <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center justify-between">
-                Consommables ({selectedConsumables.length})
-                <span className="text-pink-600 font-bold">{consumablesCost.toFixed(2)}€</span>
-              </h4>
-              <div className="space-y-3">
-                {selectedConsumables.map((sc) => (
-                  <div key={sc.id} className="flex flex-col sm:flex-row justify-between sm:items-center bg-white border border-slate-200 p-2 sm:p-3 rounded-md gap-2">
-                    <div>
-                      <span className="font-medium text-slate-800 text-sm">{sc.name}</span>
-                      <span className="text-xs text-slate-500 ml-2">
-                        Rouleau de {sc.size} m / {sc.price.toFixed(2)}€
-                      </span>
-                    </div>
-                    <div className="flex items-center gap-3">
-                      <span className="text-sm font-semibold text-slate-700 bg-slate-100 px-2 py-1 rounded">
-                        {sc.sizePerItem} m / pose
-                      </span>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => handleRemoveConsumable(sc.id)}
-                        className="text-red-500 hover:text-red-700 hover:bg-red-50 h-8 px-2"
-                      >
-                        Retirer
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-
-                <div className="flex flex-col sm:flex-row gap-2 mt-2">
-                  <div className="flex-1">
-                    <Label className="sr-only">Accessoire de façonnage</Label>
-                    <select
-                      value={currentConsumableId}
-                      onChange={(e) => setCurrentConsumableId(e.target.value)}
-                      className="w-full flex h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950 focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                    >
-                      <option value="">Choisir un consommable...</option>
-                      {consumables.map((c) => (
-                        <option key={c.id} value={c.id}>
-                          {c.name} ({c.price.toFixed(2)}€ / {c.size}m)
-                        </option>
-                      ))}
-                    </select>
-                  </div>
-                  <div className="w-full sm:w-32 relative">
-                    <Label className="sr-only">Taille unitaire (m)</Label>
-                    <input
-                      type="number"
-                      step="0.01"
-                      min="0.01"
-                      value={currentConsumableSize === 0 ? '' : currentConsumableSize}
-                      onChange={(e) => setCurrentConsumableSize(Number(e.target.value))}
-                      className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm pr-8"
-                      placeholder="0.20"
-                    />
-                    <div className="absolute right-3 top-2.5 text-slate-400 text-sm">m</div>
-                  </div>
-                  <Button
-                    onClick={handleAddConsumable}
-                    disabled={!currentConsumableId || currentConsumableSize <= 0}
-                    className="bg-slate-900 hover:bg-slate-800"
-                  >
-                    Ajouter
-                  </Button>
-                </div>
-              </div>
-            </div>
-          </SectionDisplay>
+          <SectionFaconnage
+            key="section-faconnage"
+            assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
+            setAssemblyTimePerPieceSeconds={setAssemblyTimePerPieceSeconds}
+            selectedConsumables={selectedConsumables}
+            consumablesCost={consumablesCost}
+            consumables={consumables}
+            currentConsumableId={currentConsumableId}
+            setCurrentConsumableId={setCurrentConsumableId}
+            currentConsumableSize={currentConsumableSize}
+            setCurrentConsumableSize={setCurrentConsumableSize}
+            handleAddConsumable={handleAddConsumable}
+            handleRemoveConsumable={handleRemoveConsumable}
+          />
 
           {/* 6. Conditionnement */}
-          <SectionDisplay key="section-conditionnement" number="6" title="Conditionnement" color="teal">
-            <GaugeSlider
-              label="Temps par Pièce"
-              value={packTimePerPieceSeconds}
-              min={0}
-              max={300}
-              unit="sec"
-              onChange={setPackTimePerPieceSeconds}
-              formatValue={formatTimeSeconds}
-              gradientColors="from-teal-300 to-emerald-600"
-            />
-            {packTimePerPieceSeconds === 0 && (
-              <p className="text-xs text-slate-400 italic text-center mt-2">
-                Glisser pour ajouter
-              </p>
-            )}
-            <div className="mt-6 flex items-center space-x-2 bg-teal-50 p-3 rounded-lg border border-teal-100">
-              <input
-                type="checkbox"
-                id="assemblyNotice"
-                checked={hasAssemblyNotice}
-                onChange={(e) => setHasAssemblyNotice(e.target.checked)}
-                className="h-5 w-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
-              />
-              <Label htmlFor="assemblyNotice" className="text-teal-900 cursor-pointer font-medium">
-                Ajouter Notice de Montage (+0.10€ / pce)
-              </Label>
-            </div>
-          </SectionDisplay>
+          <SectionConditionnement
+            key="section-conditionnement"
+            packTimePerPieceSeconds={packTimePerPieceSeconds}
+            setPackTimePerPieceSeconds={setPackTimePerPieceSeconds}
+            hasAssemblyNotice={hasAssemblyNotice}
+            setHasAssemblyNotice={setHasAssemblyNotice}
+          />
 
           {/* 7. Accessoires */}
           <SectionAccessoires

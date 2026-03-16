@@ -4,6 +4,11 @@ import { useState, useEffect } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
+import {
+  CUTTING_SETUP_SECONDS,
+  ASSEMBLY_NOTICE_COST_PER_PIECE,
+} from '@/lib/constants'
+import { useCostCalculation } from './useCostCalculation'
 import type {
   ProductType,
   Plate,
@@ -150,78 +155,38 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
 
   // ── Cost calculations ──
 
-  const printingCostData: PrintingCostData = (() => {
-    if (!impositionResult || !selectedPlate)
-      return { cost: 0, timeMin: 0, inkCost: 0, laborCost: 0 }
-
-    const inkBaseMl = 20
-    const multiplier = isRectoVerso ? 2 : 1
-    const inkVolumeL =
-      ((impositionResult.platesNeeded * inkBaseMl * ((printSurfacePercent / 100) * 2)) / 1000) *
-      multiplier
-
-    // +5% par option activée (cumulables)
-    const finishingMultiplier = 1 + (hasVarnish ? 0.05 : 0) + (hasFlatColor ? 0.05 : 0)
-    const inkCost = inkVolumeL * 40 * finishingMultiplier
-
-    const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
-    const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
-    const pace = printMode === 'production' ? 1 : 2
-    const timePerPlateMin = printedAreaM2 * pace * multiplier
-    const setupTimeMin = printSurfacePercent > 0 ? 15 : 0
-    const totalTimeMin = timePerPlateMin * impositionResult.platesNeeded + setupTimeMin
-
-    const laborCost = (totalTimeMin / 60) * 65
-
-    return { cost: inkCost + laborCost, timeMin: totalTimeMin, inkCost, laborCost }
-  })()
-
-  const printingCost = printingCostData.cost
-
-  const cuttingCost = (() => {
-    if (!impositionResult) return 0
-    const totalSeconds = cuttingTimePerPoseSeconds * quantity + 900
-    const totalHours = totalSeconds / 3600
-    return totalHours * 65
-  })()
-
-  const assemblyCost = (() => {
-    const totalHours = (assemblyTimePerPieceSeconds * quantity) / 3600
-    return totalHours * 45
-  })()
-
-  const packagingCost = (() => {
-    const totalHours = (packTimePerPieceSeconds * quantity) / 3600
-    const timeCost = totalHours * 45
-    const noticeCost = hasAssemblyNotice ? 0.1 * quantity : 0
-    return timeCost + noticeCost
-  })()
-
-  const accessoriesCost = selectedAccessories.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  )
-
-  const consumablesCost = selectedConsumables.reduce(
-    (sum, item) => sum + ((item.sizePerItem * item.quantity) / item.size) * item.price,
-    0
-  )
-
-  const totalCost =
-    (impositionResult?.materialCost || 0) +
-    printingCost +
-    cuttingCost +
-    assemblyCost +
-    packagingCost +
-    accessoriesCost +
-    consumablesCost
+  const {
+    printingCostData,
+    printingCost,
+    cuttingCost,
+    assemblyCost,
+    packagingCost,
+    accessoriesCost,
+    consumablesCost,
+    totalCost,
+  } = useCostCalculation({
+    quantity,
+    impositionResult,
+    selectedPlate,
+    printSurfacePercent,
+    printMode,
+    isRectoVerso,
+    hasVarnish,
+    hasFlatColor,
+    cuttingTimePerPoseSeconds,
+    assemblyTimePerPieceSeconds,
+    packTimePerPieceSeconds,
+    hasAssemblyNotice,
+    selectedAccessories,
+    selectedConsumables,
+  })
 
   // ── Detail helpers ──
 
   const getCuttingDetails = () => {
-    const totalSeconds = cuttingTimePerPoseSeconds * quantity + 900
+    const totalSeconds = cuttingTimePerPoseSeconds * quantity + CUTTING_SETUP_SECONDS
     const totalMinutes = totalSeconds / 60
-    return `${formatMinutes(totalMinutes)} (${formatTimeSeconds(cuttingTimePerPoseSeconds)}/pose + 15 min calage)`
+    return `${formatMinutes(totalMinutes)} (${formatTimeSeconds(cuttingTimePerPoseSeconds)}/pose + ${CUTTING_SETUP_SECONDS / 60} min calage)`
   }
 
   const getAssemblyDetails = () => {
@@ -233,7 +198,7 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
     const totalMinutes = (packTimePerPieceSeconds * quantity) / 60
     let details = `${formatMinutes(totalMinutes)} (${formatTimeSeconds(packTimePerPieceSeconds)}/pce)`
     if (hasAssemblyNotice) {
-      const noticeCost = 0.1 * quantity
+      const noticeCost = ASSEMBLY_NOTICE_COST_PER_PIECE * quantity
       details += ` + Notice: ${noticeCost.toFixed(2)}€`
     }
     return details
