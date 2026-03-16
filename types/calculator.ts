@@ -1,4 +1,4 @@
-import { Rect } from '@/lib/calculation/imposition'
+export type { ImpositionResultWithCost as ImpositionResult } from '@/lib/calculation/imposition'
 
 // ────────────────────────────────────────────────────
 // Types Prisma (miroir des modèles)
@@ -55,17 +55,9 @@ export interface SelectedConsumable {
   id: number
   name: string
   price: number
-  size: number // Total size of the consumable (e.g. 33m)
-  sizePerItem: number // Required size per pose/item (e.g. 0.2m)
-  quantity: number // Number of poses/items
-}
-
-export interface ImpositionResult {
-  itemsPerPlate: number
-  platesNeeded: number
-  materialCost: number
-  orientation: string
-  layout: Rect[]
+  size: number
+  sizePerItem: number
+  quantity: number
 }
 
 export interface PrintingCostData {

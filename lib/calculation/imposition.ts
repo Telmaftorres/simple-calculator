@@ -30,6 +30,11 @@ export interface ImpositionResult {
   layout: Rect[]
 }
 
+export interface ImpositionResultWithCost extends ImpositionResult {
+  platesNeeded: number
+  materialCost: number
+}
+
 // ...
 
 export function calculateImposition(
