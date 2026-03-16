@@ -43,8 +43,10 @@ async function generateReference(): Promise<string> {
   const year = String(now.getFullYear())
   const suffix = `${month}${year}`
 
-  const count = await prisma.quote.count()
-  const number = String(count + 1).padStart(4, '0')
+  const result = await prisma.$queryRaw<[{ nextval: bigint }]>`
+    SELECT nextval('quote_reference_seq')
+  `
+  const number = String(Number(result[0].nextval)).padStart(4, '0')
 
   return `C${number}-${suffix}`
 }
