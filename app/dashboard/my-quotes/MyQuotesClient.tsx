@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Table,
@@ -57,7 +58,7 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
       router.refresh()
     } catch (error) {
       console.error('Delete error:', error)
-      alert('Erreur lors de la suppression')
+      toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(null)
     }

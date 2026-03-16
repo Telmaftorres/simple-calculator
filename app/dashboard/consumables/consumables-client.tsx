@@ -5,6 +5,7 @@ import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { toast } from 'sonner'
 import {
   Table,
   TableBody,
@@ -73,7 +74,7 @@ export default function ConsumablesClient({
       setIsDialogOpen(false)
     } catch (error) {
       console.error('Failed to save consumable', error)
-      alert("Erreur lors de l'enregistrement du consommable. Vérifiez les champs.")
+      toast.error("Erreur lors de l'enregistrement du consommable. Vérifiez les champs.")
     }
   }
 
@@ -83,7 +84,7 @@ export default function ConsumablesClient({
         await deleteConsumable(id)
       } catch (error) {
         console.error('Failed to delete consumable', error)
-        alert('Erreur lors de la suppression')
+        toast.error('Erreur lors de la suppression')
       }
     }
   }

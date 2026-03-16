@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { toast } from 'sonner'
 import { Plus, Pencil, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -89,7 +90,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
       // but server actions revalidatePath SHOULD trigger a refresh of the server component data passed down.
     } catch (error) {
       console.error('Failed to save plate', error)
-      alert('Erreur lors de la sauvegarde')
+      toast.error('Erreur lors de la sauvegarde')
     }
   }
 
