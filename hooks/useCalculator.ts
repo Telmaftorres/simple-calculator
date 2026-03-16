@@ -9,6 +9,7 @@ import {
   ASSEMBLY_NOTICE_COST_PER_PIECE,
 } from '@/lib/constants'
 import { useCostCalculation } from './useCostCalculation'
+import { toast } from 'sonner'
 import type {
   ProductType,
   Plate,
@@ -278,14 +279,14 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
       setIsProductDropdownOpen(false)
     } catch (e) {
       console.error(e)
-      alert('Erreur lors de la création du type de PLV')
+      toast.error('Erreur lors de la création du type de PLV')
     }
   }
 
   const handleSave = async () => {
     const parsedProductId = parseInt(selectedProductTypeId)
     if (!impositionResult || !selectedPlateId || !selectedProductTypeId || isNaN(parsedProductId)) {
-      alert("Veuillez sélectionner un Type de PLV valide.");
+      toast.error("Veuillez sélectionner un Type de PLV valide.");
       return;
     }
     setIsServing(true)
@@ -330,7 +331,7 @@ const [rectoVersoType, setRectoVersoType] = useState<string | null>(null)
       setTimeout(() => setScreenState('recap'), 3000)
     } catch (error: unknown) {
       console.error('Save error:', error)
-      alert((error as Error)?.message || 'Erreur lors de la sauvegarde.')
+      toast.error((error as Error)?.message || 'Erreur lors de la sauvegarde.')
     } finally {
       setIsServing(false)
     }
