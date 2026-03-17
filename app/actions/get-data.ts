@@ -29,11 +29,12 @@ const createQuoteSchema = z.object({
   assemblyTimePerPieceSeconds: z.number().int().optional(),
   packTimePerPieceSeconds: z.number().int().optional(),
   hasAssemblyNotice: z.boolean().optional(),
-  // ✅ Emballage
   hasPackaging: z.boolean().optional(),
   packagingPlateId: z.number().int().positive().nullable().optional(),
   packagingQuantity: z.number().int().positive().nullable().optional(),
   packagingCuttingTimePerPoseSeconds: z.number().int().optional(),
+  packagingWidth: z.number().int().positive().nullable().optional(),
+  packagingHeight: z.number().int().positive().nullable().optional(),
   elements: z.array(z.object({
     name: z.string().min(1),
     quantity: z.number().int().positive(),
@@ -149,11 +150,12 @@ export async function createQuote(data: z.infer<typeof createQuoteSchema>) {
       assemblyTimePerPieceSeconds: validated.assemblyTimePerPieceSeconds || 0,
       packTimePerPieceSeconds: validated.packTimePerPieceSeconds || 0,
       hasAssemblyNotice: validated.hasAssemblyNotice || false,
-      // ✅ Emballage
       hasPackaging: validated.hasPackaging || false,
       packagingPlateId: validated.packagingPlateId || null,
       packagingQuantity: validated.packagingQuantity || null,
       packagingCuttingTimePerPoseSeconds: validated.packagingCuttingTimePerPoseSeconds || 20,
+      packagingWidth: validated.packagingWidth || null,
+      packagingHeight: validated.packagingHeight || null,
       userId: session.user.id,
       accessories: {
         create: validated.accessories?.map((acc) => ({
@@ -220,7 +222,7 @@ export async function getQuoteById(id: number) {
       accessories: {
         include: { accessory: true },
       },
-      consumables: {              // ✅ bug corrigé
+      consumables: {
         include: { consumable: true },
       },
       elements: true,
