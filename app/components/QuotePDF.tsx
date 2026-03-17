@@ -130,9 +130,21 @@ const styles = StyleSheet.create({
     borderBottomColor: '#f1f5f9',
     backgroundColor: '#f8fafc',
   },
+  tableRowSub: {
+    flexDirection: 'row',
+    padding: '4 10 4 20',
+    borderBottomWidth: 1,
+    borderBottomColor: '#f1f5f9',
+    backgroundColor: '#f8fafc',
+  },
   tableCell: {
     flex: 1,
     color: '#1e293b',
+  },
+  tableCellSub: {
+    flex: 1,
+    color: '#64748b',
+    fontSize: 9,
   },
   tableCellRight: {
     width: 80,
@@ -194,18 +206,24 @@ interface QuotePDFProps {
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
   printingCostData: PrintingCostData
-  inkVolumeL: number                 // ✅
+  inkVolumeL: number
+  hasPrintSetup: boolean
   cuttingCost: number
+  cuttingMachineCost: number
+  cuttingSetupCost: number
+  cuttingSetupTimeMin: number
+  cuttingMachineTimeMin: number
+  hasCuttingSetup: boolean
   assemblyCost: number
   packagingCost: number
   accessoriesCost: number
   consumablesCost: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
-  hasPackaging: boolean              // ✅
-  packagingTotalCost: number         // ✅
-  packagingMaterialCost: number      // ✅
-  packagingCuttingCost: number       // ✅
+  hasPackaging: boolean
+  packagingTotalCost: number
+  packagingMaterialCost: number
+  packagingCuttingCost: number
   totalCost: number
 }
 
@@ -230,7 +248,13 @@ export function QuotePDF({
   hasAssemblyNotice,
   printingCostData,
   inkVolumeL,
+  hasPrintSetup,
   cuttingCost,
+  cuttingMachineCost,
+  cuttingSetupCost,
+  cuttingSetupTimeMin,
+  cuttingMachineTimeMin,
+  hasCuttingSetup,
   assemblyCost,
   packagingCost,
   accessoriesCost,
@@ -248,57 +272,6 @@ export function QuotePDF({
     month: '2-digit',
     year: 'numeric',
   })
-
-  const costRows = [
-    {
-      label: 'Matière',
-      detail: `${impositionResult?.platesNeeded} plaque(s) × ${selectedPlate?.cost}€`,
-      value: impositionResult?.materialCost || 0,
-    },
-    {
-      label: 'Impression (Encre)',
-      detail: `${inkVolumeL.toFixed(3)} L`,   // ✅ corrigé
-      value: printingCostData.inkCost,
-    },
-    {
-      label: 'Impression (Temps)',
-      detail: `${Math.round(printingCostData.timeMin)} min`,
-      value: printingCostData.laborCost,
-    },
-    {
-      label: 'Découpe',
-      detail: `${cuttingTimePerPoseSeconds}s/pose`,
-      value: cuttingCost,
-    },
-    {
-      label: 'Façonnage',
-      detail: `${assemblyTimePerPieceSeconds}s/pce`,
-      value: assemblyCost,
-    },
-    {
-      label: 'Conditionnement',
-      detail: hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`,
-      value: packagingCost,
-    },
-    {
-      label: 'Accessoires',
-      detail: `${selectedAccessories.length} réf.`,
-      value: accessoriesCost,
-    },
-    {
-      label: 'Consommables',
-      detail: `${selectedConsumables.length} réf.`,
-      value: consumablesCost,
-    },
-    // ✅ Emballage — ajouté uniquement si activé
-    ...(hasPackaging && packagingTotalCost > 0
-      ? [{
-          label: 'Emballage',
-          detail: `Matière ${packagingMaterialCost.toFixed(2)}€ + Découpe ${packagingCuttingCost.toFixed(2)}€`,
-          value: packagingTotalCost,
-        }]
-      : []),
-  ]
 
   return (
     <Document>
@@ -396,8 +369,8 @@ export function QuotePDF({
                 <Text style={styles.value}>{hasFlatColor ? 'Oui (+5%)' : 'Non'}</Text>
               </View>
               <View style={styles.rowLast}>
-                <Text style={styles.label}>Temps total</Text>
-                <Text style={styles.value}>{Math.round(printingCostData.timeMin)} min</Text>
+                <Text style={styles.label}>Temps machine</Text>
+                <Text style={styles.value}>{Math.round(printingCostData.machineTimeMin)} min</Text>
               </View>
             </View>
           </View>
@@ -412,15 +385,131 @@ export function QuotePDF({
               <Text style={{ ...styles.tableHeaderText, textAlign: 'center' }}>Détail</Text>
               <Text style={styles.tableHeaderTextRight}>Montant</Text>
             </View>
-            {costRows.map((row, i) => (
-              <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
-                <Text style={styles.tableCell}>{row.label}</Text>
-                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                  {row.detail}
+
+            {/* Matière */}
+            <View style={styles.tableRow}>
+              <Text style={styles.tableCell}>Matière</Text>
+              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                {impositionResult?.platesNeeded} plaque(s) × {selectedPlate?.cost}€
+              </Text>
+              <Text style={styles.tableCellRight}>
+                {(impositionResult?.materialCost || 0).toFixed(2)} €
+              </Text>
+            </View>
+
+            {/* Impression encre */}
+            <View style={styles.tableRowAlt}>
+              <Text style={styles.tableCell}>Impression (Encre)</Text>
+              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                {inkVolumeL.toFixed(3)} L
+              </Text>
+              <Text style={styles.tableCellRight}>
+                {printingCostData.inkCost.toFixed(2)} €
+              </Text>
+            </View>
+
+            {/* Impression temps machine */}
+            <View style={styles.tableRow}>
+              <Text style={styles.tableCell}>Impression (temps machine)</Text>
+              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                {Math.round(printingCostData.machineTimeMin)} min
+              </Text>
+              <Text style={styles.tableCellRight}>
+                {printingCostData.machineCost.toFixed(2)} €
+              </Text>
+            </View>
+
+            {/* ✅ Calage impression */}
+            {hasPrintSetup && printingCostData.setupCost > 0 && (
+              <View style={styles.tableRowSub}>
+                <Text style={styles.tableCellSub}>↳ Calage impression</Text>
+                <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
+                  {printingCostData.setupTimeMin} min
                 </Text>
-                <Text style={styles.tableCellRight}>{row.value.toFixed(2)} €</Text>
+                <Text style={{ ...styles.tableCellRight, color: '#64748b', fontSize: 9 }}>
+                  {printingCostData.setupCost.toFixed(2)} €
+                </Text>
               </View>
-            ))}
+            )}
+
+            {/* Découpe temps machine */}
+            <View style={styles.tableRowAlt}>
+              <Text style={styles.tableCell}>Découpe (temps machine)</Text>
+              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                {Math.round(cuttingMachineTimeMin)} min
+              </Text>
+              <Text style={styles.tableCellRight}>
+                {cuttingMachineCost.toFixed(2)} €
+              </Text>
+            </View>
+
+            {/* ✅ Calage découpe */}
+            {hasCuttingSetup && cuttingSetupCost > 0 && (
+              <View style={styles.tableRowSub}>
+                <Text style={styles.tableCellSub}>↳ Calage découpe</Text>
+                <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
+                  {cuttingSetupTimeMin} min
+                </Text>
+                <Text style={{ ...styles.tableCellRight, color: '#64748b', fontSize: 9 }}>
+                  {cuttingSetupCost.toFixed(2)} €
+                </Text>
+              </View>
+            )}
+
+            {/* Façonnage */}
+            <View style={styles.tableRow}>
+              <Text style={styles.tableCell}>Façonnage</Text>
+              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                {assemblyTimePerPieceSeconds}s/pce
+              </Text>
+              <Text style={styles.tableCellRight}>{assemblyCost.toFixed(2)} €</Text>
+            </View>
+
+            {/* Consommables */}
+            {selectedConsumables.length > 0 && (
+              <View style={styles.tableRowSub}>
+                <Text style={styles.tableCellSub}>↳ Consommables</Text>
+                <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
+                  {selectedConsumables.length} type(s)
+                </Text>
+                <Text style={{ ...styles.tableCellRight, color: '#64748b', fontSize: 9 }}>
+                  {consumablesCost.toFixed(2)} €
+                </Text>
+              </View>
+            )}
+
+            {/* Conditionnement */}
+            <View style={styles.tableRowAlt}>
+              <Text style={styles.tableCell}>Conditionnement</Text>
+              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                {hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`}
+              </Text>
+              <Text style={styles.tableCellRight}>{packagingCost.toFixed(2)} €</Text>
+            </View>
+
+            {/* Accessoires */}
+            {accessoriesCost > 0 && (
+              <View style={styles.tableRow}>
+                <Text style={styles.tableCell}>Accessoires</Text>
+                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                  {selectedAccessories.length} réf.
+                </Text>
+                <Text style={styles.tableCellRight}>{accessoriesCost.toFixed(2)} €</Text>
+              </View>
+            )}
+
+            {/* Emballage */}
+            {hasPackaging && packagingTotalCost > 0 && (
+              <View style={styles.tableRowAlt}>
+                <Text style={styles.tableCell}>Emballage</Text>
+                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                  Mat. {packagingMaterialCost.toFixed(2)}€ + Déc. {packagingCuttingCost.toFixed(2)}€
+                </Text>
+                <Text style={styles.tableCellRight}>{packagingTotalCost.toFixed(2)} €</Text>
+              </View>
+            )}
+
+            {/* Total */}
             <View style={styles.tableFooter}>
               <Text style={styles.tableFooterLabel}>Total HT</Text>
               <View>
@@ -433,7 +522,7 @@ export function QuotePDF({
           </View>
         </View>
 
-        {/* Accessoires */}
+        {/* Accessoires détail */}
         {selectedAccessories.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Accessoires</Text>
@@ -451,7 +540,7 @@ export function QuotePDF({
           </View>
         )}
 
-        {/* Consommables */}
+        {/* Consommables détail */}
         {selectedConsumables.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Consommables</Text>

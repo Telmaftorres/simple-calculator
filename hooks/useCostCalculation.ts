@@ -4,7 +4,7 @@ import {
   INK_COST_PER_LITER,
   INK_BASE_ML_PER_PLATE,
   PRINT_SETUP_TIME_MIN,
-  CUTTING_SETUP_SECONDS,
+  CUTTING_SETUP_MINUTES,
   FINISHING_SURCHARGE_PERCENT,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
 } from '@/lib/constants'
@@ -27,6 +27,8 @@ export interface CostCalculationParams {
   isRectoVerso: boolean
   hasVarnish: boolean
   hasFlatColor: boolean
+  hasPrintSetup: boolean
+  hasCuttingSetup: boolean
   cuttingTimePerPoseSeconds: number
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
@@ -34,7 +36,6 @@ export interface CostCalculationParams {
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
   settings?: Record<string, number>
-  // Emballage
   hasPackaging: boolean
   packagingPlate: Plate | undefined
   packagingQuantity: number
@@ -53,6 +54,8 @@ export function useCostCalculation(params: CostCalculationParams) {
     isRectoVerso,
     hasVarnish,
     hasFlatColor,
+    hasPrintSetup,
+    hasCuttingSetup,
     cuttingTimePerPoseSeconds,
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
@@ -68,20 +71,29 @@ export function useCostCalculation(params: CostCalculationParams) {
     packagingHeight,
   } = params
 
-  // Fallback sur les constantes si DB indisponible
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
   const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkBaseMlPerPlate = settings?.INK_BASE_ML_PER_PLATE ?? INK_BASE_ML_PER_PLATE
   const printSetupTimeMin = settings?.PRINT_SETUP_TIME_MIN ?? PRINT_SETUP_TIME_MIN
-  const cuttingSetupSeconds = settings?.CUTTING_SETUP_SECONDS ?? CUTTING_SETUP_SECONDS
+  const cuttingSetupMinutes = settings?.CUTTING_SETUP_MINUTES ?? CUTTING_SETUP_MINUTES
   const finishingSurchargePercent = settings?.FINISHING_SURCHARGE_PERCENT ?? FINISHING_SURCHARGE_PERCENT
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
 
   // ── Impression ──
   const printingCostData: PrintingCostData = (() => {
     if (!impositionResult || !selectedPlate)
-      return { cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0 }
+      return {
+        cost: 0,
+        timeMin: 0,
+        inkCost: 0,
+        laborCost: 0,
+        inkVolumeL: 0,
+        setupCost: 0,
+        machineCost: 0,
+        setupTimeMin: 0,
+        machineTimeMin: 0,
+      }
 
     const multiplier = isRectoVerso ? 2 : 1
 
@@ -98,22 +110,42 @@ export function useCostCalculation(params: CostCalculationParams) {
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
     const pace = printMode === 'production' ? 1 : 2
-    const timePerPlateMin = printedAreaM2 * pace * multiplier
-    const setupTimeMin = printSurfacePercent > 0 ? printSetupTimeMin : 0
-    const totalTimeMin = timePerPlateMin * impositionResult.platesNeeded + setupTimeMin
-    const laborCost = (totalTimeMin / 60) * hourlyRatePrint
+    const machineTimeMin = printedAreaM2 * pace * multiplier * impositionResult.platesNeeded
 
-    return { cost: inkCost + laborCost, timeMin: totalTimeMin, inkCost, laborCost, inkVolumeL }
+    const setupTimeMin = hasPrintSetup && printSurfacePercent > 0 ? printSetupTimeMin : 0
+
+    const totalTimeMin = machineTimeMin + setupTimeMin
+    const machineCost = (machineTimeMin / 60) * hourlyRatePrint
+    const setupCost = (setupTimeMin / 60) * hourlyRatePrint
+    const laborCost = machineCost + setupCost
+
+    return {
+      cost: inkCost + laborCost,
+      timeMin: totalTimeMin,
+      inkCost,
+      laborCost,
+      inkVolumeL,
+      setupCost,
+      machineCost,
+      setupTimeMin,
+      machineTimeMin,
+    }
   })()
 
   const printingCost = printingCostData.cost
 
   // ── Découpe ──
-  const cuttingCost = (() => {
-    if (!impositionResult) return 0
-    const totalSeconds = cuttingTimePerPoseSeconds * quantity + cuttingSetupSeconds
-    return (totalSeconds / 3600) * hourlyRatePrint
-  })()
+  const cuttingMachineTimeMin = impositionResult
+    ? (cuttingTimePerPoseSeconds * quantity) / 60
+    : 0
+
+  const cuttingSetupTimeMin = (impositionResult && hasCuttingSetup)
+    ? cuttingSetupMinutes
+    : 0
+
+  const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRatePrint
+  const cuttingSetupCost = (cuttingSetupTimeMin / 60) * hourlyRatePrint
+  const cuttingCost = cuttingMachineCost + cuttingSetupCost
 
   // ── Façonnage ──
   const assemblyCost = (() => {
@@ -160,21 +192,21 @@ export function useCostCalculation(params: CostCalculationParams) {
   // ── Emballage — matière ──
   const packagingMaterialCost = (() => {
     if (!hasPackaging || !packagingPlate || packagingQuantity <= 0) return 0
-    if (packagingWidth <= 0 || packagingHeight <= 0) return 0
-    if (packagingItemsPerPlate <= 0) return 0
+    if (packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
     return packagingPlatesNeeded * packagingPlate.cost
   })()
 
   // ── Emballage — découpe ──
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
-    const totalSeconds = packagingCuttingTimePerPoseSeconds * packagingQuantity + cuttingSetupSeconds
-    return (totalSeconds / 3600) * hourlyRatePrint
+    const totalMinutes =
+      (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60 + cuttingSetupMinutes
+    return (totalMinutes / 60) * hourlyRatePrint
   })()
 
   const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
 
-  // ── Total général ──
+  // ── Total ──
   const totalCost =
     (impositionResult?.materialCost || 0) +
     printingCost +
@@ -189,6 +221,10 @@ export function useCostCalculation(params: CostCalculationParams) {
     printingCostData,
     printingCost,
     cuttingCost,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    cuttingSetupTimeMin,
+    cuttingMachineTimeMin,
     assemblyCost,
     packagingCost,
     accessoriesCost,

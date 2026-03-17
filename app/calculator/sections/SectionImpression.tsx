@@ -21,6 +21,8 @@ interface SectionImpressionProps {
   printingCostData: PrintingCostData
   impositionResult: ImpositionResult | undefined
   selectedPlate: Plate | undefined
+  hasPrintSetup: boolean          // ✅
+  setHasPrintSetup: (v: boolean) => void // ✅
 }
 
 export function SectionImpression({
@@ -39,6 +41,8 @@ export function SectionImpression({
   printingCostData,
   impositionResult,
   selectedPlate,
+  hasPrintSetup,
+  setHasPrintSetup,
 }: SectionImpressionProps) {
   return (
     <SectionDisplay number="3" title="Impression" color="purple">
@@ -82,7 +86,7 @@ export function SectionImpression({
           </div>
         </div>
 
-        {/* Identique / Différent — visible seulement si Recto/Verso activé */}
+        {/* Identique / Différent */}
         {isRectoVerso && (
           <div>
             <Label className="mb-2 block">Visuel Recto / Verso</Label>
@@ -137,10 +141,31 @@ export function SectionImpression({
           gradientColors="from-indigo-300 to-purple-600"
         />
 
-        <div className="mt-2 flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800 mb-4">
-          <span>Temps Estimé (Total):</span>
-          <span className="font-bold text-sm">{formatMinutes(printingCostData.timeMin)}</span>
+        {/* ✅ Toggle calage impression */}
+        <div className="flex items-center space-x-2 bg-purple-50 p-3 rounded-lg border border-purple-100">
+          <input
+            type="checkbox"
+            id="hasPrintSetup"
+            checked={hasPrintSetup}
+            onChange={(e) => setHasPrintSetup(e.target.checked)}
+            className="h-5 w-5 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
+          />
+          <Label htmlFor="hasPrintSetup" className="text-purple-900 cursor-pointer font-medium">
+            Inclure calage impression (15 min)
+          </Label>
         </div>
+
+        {/* Temps estimé */}
+        <div className="flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800">
+          <span>Temps machine :</span>
+          <span className="font-bold text-sm">{formatMinutes(printingCostData.machineTimeMin)}</span>
+        </div>
+        {hasPrintSetup && printingCostData.setupTimeMin > 0 && (
+          <div className="flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800 -mt-2">
+            <span>Calage :</span>
+            <span className="font-bold text-sm">{printingCostData.setupTimeMin} min</span>
+          </div>
+        )}
 
         {impositionResult && selectedPlate && (
           <div className="mt-4">

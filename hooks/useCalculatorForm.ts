@@ -30,6 +30,8 @@ export interface CalculatorFormState {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number
   packagingHeight: number
+  hasPrintSetup: boolean   // ✅
+  hasCuttingSetup: boolean // ✅
 }
 
 export const initialFormState: CalculatorFormState = {
@@ -37,7 +39,7 @@ export const initialFormState: CalculatorFormState = {
   selectedProductTypeId: '',
   productSearch: '',
   isProductDropdownOpen: false,
-  quantity: 100,
+  quantity: 0,
   selectedPlateId: '',
   flatWidth: 0,
   flatHeight: 0,
@@ -47,7 +49,7 @@ export const initialFormState: CalculatorFormState = {
   hasVarnish: false,
   hasFlatColor: false,
   rectoVersoType: null,
-  cuttingTimePerPoseSeconds: 20,
+  cuttingTimePerPoseSeconds: 0,
   assemblyTimePerPieceSeconds: 0,
   packTimePerPieceSeconds: 0,
   hasAssemblyNotice: false,
@@ -58,9 +60,11 @@ export const initialFormState: CalculatorFormState = {
   hasPackaging: false,
   packagingPlateId: '',
   packagingQuantity: 0,
-  packagingCuttingTimePerPoseSeconds: 20,
+  packagingCuttingTimePerPoseSeconds: 0,
   packagingWidth: 0,
   packagingHeight: 0,
+  hasPrintSetup: true,   
+  hasCuttingSetup: true, 
 }
 
 export type CalculatorFormAction =
