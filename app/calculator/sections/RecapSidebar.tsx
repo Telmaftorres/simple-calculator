@@ -9,6 +9,7 @@ interface RecapSidebarProps {
   impositionResult: ImpositionResult | undefined
   selectedPlate: Plate | undefined
   printingCostData: PrintingCostData
+  inkVolumeL: number                    // ✅ remplace le / 40 hardcodé
   cuttingCost: number
   getCuttingDetails: () => string
   assemblyCost: number
@@ -19,6 +20,9 @@ interface RecapSidebarProps {
   selectedAccessories: SelectedAccessory[]
   consumablesCost: number
   selectedConsumables: SelectedConsumable[]
+  // ✅ Emballage
+  hasPackaging: boolean
+  packagingTotalCost: number
   totalCost: number
   quantity: number
   handleSave: () => void
@@ -29,6 +33,7 @@ export function RecapSidebar({
   impositionResult,
   selectedPlate,
   printingCostData,
+  inkVolumeL,
   cuttingCost,
   getCuttingDetails,
   assemblyCost,
@@ -39,6 +44,8 @@ export function RecapSidebar({
   selectedAccessories,
   consumablesCost,
   selectedConsumables,
+  hasPackaging,
+  packagingTotalCost,
   totalCost,
   quantity,
   handleSave,
@@ -67,7 +74,7 @@ export function RecapSidebar({
             value={printingCostData.inkCost}
             details={
               printingCostData.inkCost > 0
-                ? `${(printingCostData.inkCost / 40).toFixed(3)} L`
+                ? `${inkVolumeL.toFixed(3)} L`  // ✅ corrigé
                 : undefined
             }
           />
@@ -103,6 +110,15 @@ export function RecapSidebar({
               selectedConsumables.length > 0 ? `${selectedConsumables.length} ref(s)` : undefined
             }
           />
+
+          {/* ✅ Ligne emballage — visible uniquement si activé */}
+          {hasPackaging && (
+            <CostRow
+              label="Emballage"
+              value={packagingTotalCost}
+              details={packagingTotalCost > 0 ? 'Matière + découpe' : undefined}
+            />
+          )}
 
           <div className="pt-4 border-t border-slate-200 mt-4">
             <div className="flex justify-between items-end">

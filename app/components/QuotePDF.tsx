@@ -7,7 +7,6 @@ import {
   View,
   Image,
   StyleSheet,
-  Font,
 } from '@react-pdf/renderer'
 import type { ImpositionResult, PrintingCostData, SelectedAccessory, SelectedConsumable, Plate } from '@/types/calculator'
 
@@ -19,7 +18,6 @@ const styles = StyleSheet.create({
     color: '#1e293b',
     backgroundColor: '#ffffff',
   },
-  // ── Header ──
   header: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -53,7 +51,6 @@ const styles = StyleSheet.create({
     color: '#10b981',
     marginTop: 4,
   },
-  // ── Section ──
   section: {
     marginBottom: 16,
   },
@@ -65,7 +62,6 @@ const styles = StyleSheet.create({
     padding: '6 10',
     marginBottom: 8,
   },
-  // ── Grid ──
   grid: {
     flexDirection: 'row',
     gap: 12,
@@ -79,7 +75,6 @@ const styles = StyleSheet.create({
     padding: 10,
     borderRadius: 4,
   },
-  // ── Row ──
   row: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -100,7 +95,6 @@ const styles = StyleSheet.create({
     fontFamily: 'Helvetica-Bold',
     textAlign: 'right',
   },
-  // ── Cost table ──
   table: {
     borderWidth: 1,
     borderColor: '#e2e8f0',
@@ -163,7 +157,6 @@ const styles = StyleSheet.create({
     fontSize: 14,
     textAlign: 'right',
   },
-  // ── Footer ──
   footer: {
     position: 'absolute',
     bottom: 30,
@@ -178,21 +171,6 @@ const styles = StyleSheet.create({
   footerText: {
     fontSize: 8,
     color: '#94a3b8',
-  },
-  // ── Badge ──
-  badge: {
-    backgroundColor: '#dcfce7',
-    color: '#166534',
-    padding: '2 6',
-    borderRadius: 4,
-    fontSize: 9,
-    fontFamily: 'Helvetica-Bold',
-  },
-  unitCost: {
-    fontSize: 9,
-    color: '#64748b',
-    textAlign: 'right',
-    marginTop: 2,
   },
 })
 
@@ -216,6 +194,7 @@ interface QuotePDFProps {
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
   printingCostData: PrintingCostData
+  inkVolumeL: number                 // ✅
   cuttingCost: number
   assemblyCost: number
   packagingCost: number
@@ -223,6 +202,10 @@ interface QuotePDFProps {
   consumablesCost: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
+  hasPackaging: boolean              // ✅
+  packagingTotalCost: number         // ✅
+  packagingMaterialCost: number      // ✅
+  packagingCuttingCost: number       // ✅
   totalCost: number
 }
 
@@ -246,6 +229,7 @@ export function QuotePDF({
   packTimePerPieceSeconds,
   hasAssemblyNotice,
   printingCostData,
+  inkVolumeL,
   cuttingCost,
   assemblyCost,
   packagingCost,
@@ -253,6 +237,10 @@ export function QuotePDF({
   consumablesCost,
   selectedAccessories,
   selectedConsumables,
+  hasPackaging,
+  packagingTotalCost,
+  packagingMaterialCost,
+  packagingCuttingCost,
   totalCost,
 }: QuotePDFProps) {
   const date = new Date().toLocaleDateString('fr-FR', {
@@ -262,14 +250,54 @@ export function QuotePDF({
   })
 
   const costRows = [
-    { label: 'Matière', detail: `${impositionResult?.platesNeeded} plaque(s) × ${selectedPlate?.cost}€`, value: impositionResult?.materialCost || 0 },
-    { label: 'Impression (Encre)', detail: `${(printingCostData.inkCost / 40).toFixed(3)} L`, value: printingCostData.inkCost },
-    { label: 'Impression (Temps)', detail: `${Math.round(printingCostData.timeMin)} min`, value: printingCostData.laborCost },
-    { label: 'Découpe', detail: `${cuttingTimePerPoseSeconds}s/pose`, value: cuttingCost },
-    { label: 'Façonnage', detail: `${assemblyTimePerPieceSeconds}s/pce`, value: assemblyCost },
-    { label: 'Conditionnement', detail: hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`, value: packagingCost },
-    { label: 'Accessoires', detail: `${selectedAccessories.length} réf.`, value: accessoriesCost },
-    { label: 'Consommables', detail: `${selectedConsumables.length} réf.`, value: consumablesCost },
+    {
+      label: 'Matière',
+      detail: `${impositionResult?.platesNeeded} plaque(s) × ${selectedPlate?.cost}€`,
+      value: impositionResult?.materialCost || 0,
+    },
+    {
+      label: 'Impression (Encre)',
+      detail: `${inkVolumeL.toFixed(3)} L`,   // ✅ corrigé
+      value: printingCostData.inkCost,
+    },
+    {
+      label: 'Impression (Temps)',
+      detail: `${Math.round(printingCostData.timeMin)} min`,
+      value: printingCostData.laborCost,
+    },
+    {
+      label: 'Découpe',
+      detail: `${cuttingTimePerPoseSeconds}s/pose`,
+      value: cuttingCost,
+    },
+    {
+      label: 'Façonnage',
+      detail: `${assemblyTimePerPieceSeconds}s/pce`,
+      value: assemblyCost,
+    },
+    {
+      label: 'Conditionnement',
+      detail: hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`,
+      value: packagingCost,
+    },
+    {
+      label: 'Accessoires',
+      detail: `${selectedAccessories.length} réf.`,
+      value: accessoriesCost,
+    },
+    {
+      label: 'Consommables',
+      detail: `${selectedConsumables.length} réf.`,
+      value: consumablesCost,
+    },
+    // ✅ Emballage — ajouté uniquement si activé
+    ...(hasPackaging && packagingTotalCost > 0
+      ? [{
+          label: 'Emballage',
+          detail: `Matière ${packagingMaterialCost.toFixed(2)}€ + Découpe ${packagingCuttingCost.toFixed(2)}€`,
+          value: packagingTotalCost,
+        }]
+      : []),
   ]
 
   return (
@@ -290,7 +318,9 @@ export function QuotePDF({
         {/* Informations générales */}
         <View style={styles.grid}>
           <View style={styles.gridItem}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Informations</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>
+              Informations
+            </Text>
             <View style={styles.row}>
               <Text style={styles.label}>Dossier</Text>
               <Text style={styles.value}>{studyNumber}</Text>
@@ -310,7 +340,9 @@ export function QuotePDF({
           </View>
 
           <View style={styles.gridItem}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Technique</Text>
+            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>
+              Technique
+            </Text>
             <View style={styles.row}>
               <Text style={styles.label}>Format à plat</Text>
               <Text style={styles.value}>{flatWidth} × {flatHeight} mm</Text>
@@ -337,7 +369,9 @@ export function QuotePDF({
             <View style={styles.gridItem}>
               <View style={styles.row}>
                 <Text style={styles.label}>Mode</Text>
-                <Text style={styles.value}>{printMode === 'production' ? 'Production' : 'Qualité'}</Text>
+                <Text style={styles.value}>
+                  {printMode === 'production' ? 'Production' : 'Qualité'}
+                </Text>
               </View>
               <View style={styles.row}>
                 <Text style={styles.label}>Surface imprimée</Text>
@@ -381,7 +415,9 @@ export function QuotePDF({
             {costRows.map((row, i) => (
               <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                 <Text style={styles.tableCell}>{row.label}</Text>
-                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>{row.detail}</Text>
+                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                  {row.detail}
+                </Text>
                 <Text style={styles.tableCellRight}>{row.value.toFixed(2)} €</Text>
               </View>
             ))}
@@ -406,7 +442,29 @@ export function QuotePDF({
                 <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                   <Text style={styles.tableCell}>{acc.name}</Text>
                   <Text style={{ ...styles.tableCell, textAlign: 'center' }}>× {acc.quantity}</Text>
-                  <Text style={styles.tableCellRight}>{(acc.price * acc.quantity).toFixed(2)} €</Text>
+                  <Text style={styles.tableCellRight}>
+                    {(acc.price * acc.quantity).toFixed(2)} €
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Consommables */}
+        {selectedConsumables.length > 0 && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Consommables</Text>
+            <View style={styles.table}>
+              {selectedConsumables.map((sc, i) => (
+                <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+                  <Text style={styles.tableCell}>{sc.name}</Text>
+                  <Text style={{ ...styles.tableCell, textAlign: 'center' }}>
+                    {sc.sizePerItem} m/pose
+                  </Text>
+                  <Text style={styles.tableCellRight}>
+                    {(((sc.sizePerItem * quantity) / sc.size) * sc.price).toFixed(2)} €
+                  </Text>
                 </View>
               ))}
             </View>
@@ -415,7 +473,9 @@ export function QuotePDF({
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>© {new Date().getFullYear()} Kontfeel — Document généré automatiquement</Text>
+          <Text style={styles.footerText}>
+            © {new Date().getFullYear()} Kontfeel — Document généré automatiquement
+          </Text>
           <Text style={styles.footerText}>Dossier : {studyNumber} — {date}</Text>
         </View>
 

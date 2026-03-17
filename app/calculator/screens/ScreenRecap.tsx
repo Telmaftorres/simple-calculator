@@ -26,6 +26,7 @@ interface ScreenRecapProps {
   printMode: string
   cuttingTimePerPoseSeconds: number
   printingCostData: PrintingCostData
+  inkVolumeL: number                   // ✅
   cuttingCost: number
   assemblyTimePerPieceSeconds: number
   assemblyCost: number
@@ -37,6 +38,11 @@ interface ScreenRecapProps {
   consumablesCost: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
+  // ✅ Emballage
+  hasPackaging: boolean
+  packagingTotalCost: number
+  packagingMaterialCost: number
+  packagingCuttingCost: number
   getCuttingDetails: () => string
   getAssemblyDetails: () => string
   getPackDetails: () => string
@@ -60,6 +66,7 @@ export function ScreenRecap({
   printMode,
   cuttingTimePerPoseSeconds,
   printingCostData,
+  inkVolumeL,
   cuttingCost,
   assemblyTimePerPieceSeconds,
   assemblyCost,
@@ -71,6 +78,10 @@ export function ScreenRecap({
   consumablesCost,
   selectedAccessories,
   selectedConsumables,
+  hasPackaging,
+  packagingTotalCost,
+  packagingMaterialCost,
+  packagingCuttingCost,
   getCuttingDetails,
   getAssemblyDetails,
   getPackDetails,
@@ -111,6 +122,7 @@ export function ScreenRecap({
                 packTimePerPieceSeconds={packTimePerPieceSeconds}
                 hasAssemblyNotice={hasAssemblyNotice}
                 printingCostData={printingCostData}
+                inkVolumeL={inkVolumeL}
                 cuttingCost={cuttingCost}
                 assemblyCost={assemblyCost}
                 packagingCost={packagingCost}
@@ -118,6 +130,10 @@ export function ScreenRecap({
                 consumablesCost={consumablesCost}
                 selectedAccessories={selectedAccessories}
                 selectedConsumables={selectedConsumables}
+                hasPackaging={hasPackaging}
+                packagingTotalCost={packagingTotalCost}
+                packagingMaterialCost={packagingMaterialCost}
+                packagingCuttingCost={packagingCuttingCost}
                 totalCost={totalCost}
               />
             }>
@@ -226,7 +242,7 @@ export function ScreenRecap({
             </div>
           </div>
 
-          {/* Cost Breakdown Table */}
+          {/* Tableau des coûts */}
           <div>
             <h3 className="font-semibold text-slate-900 mb-4">Détail des Coûts</h3>
             <div className="border rounded-lg overflow-hidden">
@@ -251,7 +267,7 @@ export function ScreenRecap({
                   <tr>
                     <td className="p-3">Impression (Encre)</td>
                     <td className="p-3 text-right text-slate-500 italic">
-                      {(printingCostData.inkCost / 40).toFixed(3)} L
+                      {inkVolumeL.toFixed(3)} L  {/* ✅ corrigé */}
                     </td>
                     <td className="p-3 text-right font-medium">
                       {printingCostData.inkCost.toFixed(2)} €
@@ -260,7 +276,7 @@ export function ScreenRecap({
                   <tr>
                     <td className="p-3">Impression (Temps)</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
-                      {formatMinutes(printingCostData.timeMin)} {printSurfacePercent > 0 ? '(incl. 15min)' : ''}
+                      {formatMinutes(printingCostData.timeMin)}{printSurfacePercent > 0 ? ' (incl. 15min)' : ''}
                     </td>
                     <td className="p-3 text-right font-medium">
                       {printingCostData.laborCost.toFixed(2)} €
@@ -307,6 +323,16 @@ export function ScreenRecap({
                       <td className="p-3 text-right font-medium">{accessoriesCost.toFixed(2)} €</td>
                     </tr>
                   )}
+                  {/* ✅ Ligne emballage */}
+                  {hasPackaging && packagingTotalCost > 0 && (
+                    <tr>
+                      <td className="p-3">Emballage</td>
+                      <td className="p-3 text-right text-slate-500 italic text-xs">
+                        Matière {packagingMaterialCost.toFixed(2)}€ + Découpe {packagingCuttingCost.toFixed(2)}€
+                      </td>
+                      <td className="p-3 text-right font-medium">{packagingTotalCost.toFixed(2)} €</td>
+                    </tr>
+                  )}
                 </tbody>
                 <tfoot className="bg-slate-900 text-white">
                   <tr>
@@ -327,13 +353,11 @@ export function ScreenRecap({
                 <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Devis
               </Button>
             </Link>
-
             <Link href="/dashboard">
               <Button variant="outline" size="lg" className="border-slate-200">
                 <LayoutDashboard className="mr-2 h-5 w-5 text-slate-500" /> Dashboard
               </Button>
             </Link>
-
             <Button
               onClick={() => setScreenState('form')}
               size="lg"

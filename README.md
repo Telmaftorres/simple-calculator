@@ -8,7 +8,7 @@ Application web de calcul de devis pour la PLV (Publicité sur Lieu de Vente), d
  
 | Technologie | Version | Usage |
 |---|---|---|
-| **Next.js** | 15.x (nommé 16.1.6 dans package.json — à corriger) | Framework Fullstack, App Router |
+| **Next.js** | 15.x (nommé 16.1.6 dans package.json) | Framework Fullstack, App Router |
 | **React** | 19.2.3 | UI |
 | **Prisma** | 5.22 | ORM PostgreSQL |
 | **Tailwind CSS** | 4 | Styles |
@@ -32,6 +32,7 @@ Application web de calcul de devis pour la PLV (Publicité sur Lieu de Vente), d
 │   │   ├── accessories.ts    # CRUD Accessories (requireAuth — ouvert à tous, voulu)
 │   │   ├── consumables.ts    # CRUD Consumables (requireAuth — ouvert à tous, voulu)
 │   │   ├── get-data.ts       # Lectures + createQuote (Zod) + deleteQuote (vérif propriétaire)
+│   │   ├── settings.ts       # Lecture/modification des constantes métier (getSettings, getSettingsMap, updateSetting)
 │   │   ├── stats.ts          # Stats dashboard (USER voit son CA, ADMIN voit tout)
 │   │   └── auth.ts           # Action de connexion (signIn)
 │   ├── lib/
@@ -57,6 +58,7 @@ Application web de calcul de devis pour la PLV (Publicité sur Lieu de Vente), d
 │   │   ├── consumables/      # CRUD consommables
 │   │   └── formulas/         # Éditeur de formules flatWidth/flatHeight
 │   ├── settings/
+│   │   ├── calculator/       # Page admin pour modifier les constantes métier en DB
 │   │   └── users/            # Gestion utilisateurs — protégée ADMIN
 │   ├── login/                # Page de connexion
 │   ├── change-password/      # Changement MDP obligatoire (First Login Policy)
@@ -64,28 +66,34 @@ Application web de calcul de devis pour la PLV (Publicité sur Lieu de Vente), d
 ├── hooks/
 │   ├── useCalculator.ts      # Hook principal orchestrateur
 │   ├── useCalculatorForm.ts  # useReducer pour état formulaire (22 useState → 1 reducer)
-│   └── useCostCalculation.ts # Calculs de coûts extraits
+│   └── useCostCalculation.ts # Calculs de coûts (utilise settings DB avec fallback constants)
 ├── lib/
 │   ├── auth-helpers.ts       # requireAuth() et requireAdmin() centralisés
 │   ├── cache.ts              # revalidateCache() centralisé
-│   ├── constants.ts          # Constantes métier (taux horaires, encre, etc.)
+│   ├── constants.ts          # Constantes métier (fallback si DB indisponible)
 │   ├── prisma.ts             # Singleton PrismaClient
 │   └── calculation/
-│       └── imposition.ts     # Moteur de calepinage 2D
+│       └── imposition.ts     # Moteur de calepinage 2D (normal, rotated, mixed)
 ├── prisma/
 │   ├── schema.prisma         # Modèle de données PostgreSQL
-│   └── seed.ts               # Données initiales (mot de passe via SEED_ADMIN_PASSWORD)
+│   ├── seed.ts               # Données initiales (mot de passe via SEED_ADMIN_PASSWORD)
+│   └── migrations/
+│       ├── 20260219160255_init_postgresql/
+│       ├── 20260219185510_add_user_roles/
+│       ├── 20260219215712_cascade_delete_elements/
+│       ├── 20260220161252_add_technical_params_to_quote/
+│       ├── 20260316000001_add_consumable_table/
+│       └── 20260316000002_add_settings_table/
 ├── scripts/
 │   ├── seed-admin.js         # Création admin (mot de passe via SEED_ADMIN_PASSWORD)
 │   └── seed-accessories.js   # Accessories de démo
 ├── types/
 │   ├── calculator.ts         # Types métier (Pick<Prisma...> + interfaces)
 │   └── next-auth.d.ts        # Module augmentation Auth.js (role typé 'ADMIN' | 'USER')
-├── __tests__/
-│   ├── imposition.test.ts    # Tests moteur calepinage (12 tests)
-│   ├── costs.test.ts         # Tests calculs de coûts (20 tests)
-│   └── actions.test.ts       # Tests actions (2 tests)
-└── components/ui/            # Composants Shadcn générés
+└── __tests__/
+    ├── imposition.test.ts    # Tests moteur calepinage (12 tests)
+    ├── costs.test.ts         # Tests calculs de coûts (20 tests)
+    └── actions.test.ts       # Tests actions (2 tests)
 ```
  
 ---
@@ -103,11 +111,14 @@ Study (dossier client)
  
 User
   └── Quote[]
+ 
+Setting (constantes métier modifiables)
 ```
  
 **Règles métier :**
 - `Consumable` = matériaux de façonnage vendus au mètre (ruban adhésif, scotch double face...). Champ `size` = taille totale du rouleau, `sizePerItem` = consommation par pièce.
 - `Accessory`, `Plate`, `ProductType`, `Consumable` = créables par tous les utilisateurs connectés (voulu).
+- `Setting` = constantes métier modifiables depuis l'interface admin sans redéploiement.
  
 ---
  
@@ -123,6 +134,7 @@ User
 | Créer/modifier/supprimer consumables | ✓ | ✓ |
 | Ses propres devis | ✓ | ✓ tous |
 | Voir stats CA | Son propre CA ✓ | CA total ✓ |
+| Modifier constantes métier | ✗ | ✓ |
 | Gérer les utilisateurs | ✗ | ✓ |
 | `/settings/*` | ✗ | ✓ |
 | `/admin/*` | ✗ | ✓ |
@@ -147,14 +159,19 @@ npm install
 cp .env.example .env
 # Remplir DATABASE_URL, NEXTAUTH_SECRET et SEED_ADMIN_PASSWORD
  
-# 3. Migrations et seed
-npx prisma migrate dev
-npx prisma db seed
+# 3. Générer le client Prisma
+npx prisma generate
  
-# 4. Créer la séquence PostgreSQL pour les références de devis
+# 4. Migrations
+npx prisma migrate deploy
+ 
+# 5. Créer la séquence PostgreSQL pour les références de devis
 psql $DATABASE_URL -c "CREATE SEQUENCE IF NOT EXISTS quote_reference_seq START WITH 1000;"
  
-# 5. Lancer en dev
+# 6. Seed (données initiales + constantes métier)
+npx prisma db seed
+ 
+# 7. Lancer en dev
 npm run dev
 ```
  
@@ -189,7 +206,7 @@ npm run format      # Prettier
 ## 🚀 Déploiement
  
 **Infrastructure :**
-- VPS OVH Ubuntu 24.04 — `ubuntu@51.77.XXX.XXX`
+- VPS OVH Ubuntu 24.04
 - PM2 (id:0 = kontfeel-calculator port 3000, id:1 = webhook-server port 3001)
 - PostgreSQL
 - Nginx (reverse proxy HTTPS)
@@ -217,11 +234,17 @@ pm2 restart kontfeel-calculator --update-env
 sudo -u postgres psql -c "CREATE SEQUENCE IF NOT EXISTS quote_reference_seq START WITH 1000;" kontfeel
 ```
  
+**Tables créées manuellement sur le VPS** (migrations marquées comme appliquées via `prisma migrate resolve`) :
+- `Consumable` + `QuoteConsumable` → migration `20260316000001`
+- `Setting` → migration `20260316000002`
+ 
 ---
  
-## 📋 Constantes métier (`lib/constants.ts`)
+## 📋 Constantes métier (`Setting` en DB)
  
-| Constante | Valeur | Description |
+Modifiables depuis `/settings/calculator` sans redéploiement. Fallback sur `lib/constants.ts` si DB indisponible.
+ 
+| Clé | Valeur par défaut | Description |
 |---|---|---|
 | `HOURLY_RATE_PRINT` | 65 €/h | Taux horaire impression et découpe |
 | `HOURLY_RATE_ASSEMBLY` | 45 €/h | Taux horaire façonnage et conditionnement |
@@ -234,7 +257,7 @@ sudo -u postgres psql -c "CREATE SEQUENCE IF NOT EXISTS quote_reference_seq STAR
  
 ---
  
-## ✅ Corrections effectuées (audit mars 2026)
+## ✅ Corrections effectuées (audit + roadmap mars 2026)
  
 ### Sécurité
 - ✅ `NEXTAUTH_SECRET` régénéré, `.env` jamais commité
@@ -248,6 +271,7 @@ sudo -u postgres psql -c "CREATE SEQUENCE IF NOT EXISTS quote_reference_seq STAR
 - ✅ `lib/auth-helpers.ts` centralisé (`requireAuth`, `requireAdmin`)
 - ✅ Routes `/settings/*` et `/admin/*` protégées dans `auth.config.ts`
 - ✅ Validation `parseInt` dans `app/page.tsx`
+- ✅ 0 vulnérabilités npm
  
 ### Corrections importantes
 - ✅ Race condition `generateReference` → séquence PostgreSQL atomique
@@ -258,41 +282,33 @@ sudo -u postgres psql -c "CREATE SEQUENCE IF NOT EXISTS quote_reference_seq STAR
 - ✅ `lang="fr"` dans `app/layout.tsx`
 - ✅ Feedback erreur création utilisateur
 - ✅ Cache stats avec tags pour invalidation
-- ✅ `lib/cache.ts` centralisé (`@ts-expect-error` en un seul endroit)
+- ✅ `lib/cache.ts` centralisé
  
 ### Qualité & refactoring
 - ✅ `ImpositionResult` unifié via `extends`
+- ✅ Orientation `mixed` implémentée dans le moteur d'imposition
 - ✅ Tous les `alert()` remplacés par toasts Sonner
-- ✅ Constantes métier extraites dans `lib/constants.ts`
+- ✅ Constantes métier extraites dans `lib/constants.ts` + table `Setting` en DB
 - ✅ `role` typé `'ADMIN' | 'USER'` dans `types/next-auth.d.ts`
 - ✅ Types Prisma via `Pick<Prisma...>` dans `types/calculator.ts`
-- ✅ `lib/calculation/auth-guard.ts` supprimé (doublon de `lib/auth-helpers.ts`)
+- ✅ `lib/calculation/auth-guard.ts` supprimé (doublon)
 - ✅ 22 `useState` → `useReducer` dans `useCalculatorForm.ts`
 - ✅ Calculs de coût extraits dans `useCostCalculation.ts`
-- ✅ Icône dupliquée corrigée dans sidebar (`FlaskConical` → `Calculator` pour Formules)
+- ✅ Icône dupliquée corrigée dans sidebar
 - ✅ Titre "Connexion Admin" → "Connexion"
  
 ### Tests
 - ✅ 34 tests, 34 passés
 - ✅ 20 nouveaux tests sur `useCostCalculation`
  
-### Déploiement
+### Déploiement & infrastructure
 - ✅ Déploiement automatique via webhook GitHub → VPS opérationnel
 - ✅ `deploy.sh` corrigé (`git reset --hard`, `npx prisma generate`)
 - ✅ Export PDF réel avec `@react-pdf/renderer` (téléchargement + aperçu)
-- ✅ Tables `Consumable` et `QuoteConsumable` créées sur le VPS
+- ✅ Tables `Consumable`, `QuoteConsumable`, `Setting` créées sur le VPS
+- ✅ Page admin `/settings/calculator` pour modifier les constantes métier
  
 ---
  
-## 📈 Roadmap
- 
-- [ ] Avertissement Next.js : `"middleware" file convention is deprecated` → migrer vers `proxy`
-- [ ] `npm audit fix` — 9 vulnérabilités (1 moderate, 8 high)
-- [ ] Implémenter orientation `'mixed'` dans le moteur d'imposition
-- [ ] Table `Settings` en DB pour les constantes métier (taux horaires, prix encre...)
-- [ ] Intégration ERP/Laravel via API REST
-- [ ] SSO via Auth.js providers externes
- 
----
  
 © 2024-2026 Kontfeel — Tous droits réservés

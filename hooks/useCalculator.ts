@@ -64,6 +64,11 @@ export function useCalculator(
     currentAccessoryQty,
     currentConsumableId,
     currentConsumableSize,
+    // ✅ Emballage
+    hasPackaging,
+    packagingPlateId,
+    packagingQuantity,
+    packagingCuttingTimePerPoseSeconds,
   } = formState
 
   // ── Initialization from initialQuote ──
@@ -85,6 +90,11 @@ export function useCalculator(
       setField('assemblyTimePerPieceSeconds', initialQuote.assemblyTimePerPieceSeconds || 0)
       setField('packTimePerPieceSeconds', initialQuote.packTimePerPieceSeconds || 0)
       setField('hasAssemblyNotice', initialQuote.hasAssemblyNotice || false)
+      // ✅ Emballage
+      setField('hasPackaging', initialQuote.hasPackaging || false)
+      setField('packagingPlateId', initialQuote.packagingPlateId?.toString() || '')
+      setField('packagingQuantity', initialQuote.packagingQuantity || 0)
+      setField('packagingCuttingTimePerPoseSeconds', initialQuote.packagingCuttingTimePerPoseSeconds || 20)
 
       if (initialQuote.accessories) {
         const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => {
@@ -120,6 +130,9 @@ export function useCalculator(
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
 
+  // ✅ Plaque emballage dérivée
+  const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
+
   // ── Imposition calculation ──
   useEffect(() => {
     if (selectedPlate && flatWidth > 0 && flatHeight > 0 && quantity > 0) {
@@ -153,6 +166,10 @@ export function useCalculator(
     accessoriesCost,
     consumablesCost,
     totalCost,
+    inkVolumeL,          // ✅
+    packagingMaterialCost, // ✅
+    packagingCuttingCost,  // ✅
+    packagingTotalCost,    // ✅
   } = useCostCalculation({
     quantity,
     impositionResult,
@@ -169,8 +186,13 @@ export function useCalculator(
     selectedAccessories,
     selectedConsumables,
     settings,
+    // ✅ Emballage
+    hasPackaging,
+    packagingPlate,
+    packagingQuantity,
+    packagingCuttingTimePerPoseSeconds,
   })
-  
+
   // ── Detail helpers ──
   const getCuttingDetails = () => {
     const totalSeconds = cuttingTimePerPoseSeconds * quantity + CUTTING_SETUP_SECONDS
@@ -300,6 +322,11 @@ export function useCalculator(
         assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds,
         hasAssemblyNotice,
+        // ✅ Emballage
+        hasPackaging,
+        packagingPlateId: packagingPlateId ? parseInt(packagingPlateId) : null,
+        packagingQuantity: packagingQuantity || null,
+        packagingCuttingTimePerPoseSeconds,
         elements:
           selectedProductType?.elements.map((el: PLVElement) => ({
             name: el.name,
@@ -379,6 +406,7 @@ export function useCalculator(
     setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
     printingCostData,
     printingCost,
+    inkVolumeL,            // ✅
 
     // Découpe
     cuttingTimePerPoseSeconds,
@@ -415,6 +443,19 @@ export function useCalculator(
 
     // Coûts
     totalCost,
+
+    // ✅ Emballage
+    hasPackaging,
+    setHasPackaging: (v: boolean) => setField('hasPackaging', v),
+    packagingPlateId,
+    setPackagingPlateId: (v: string) => setField('packagingPlateId', v),
+    packagingQuantity,
+    setPackagingQuantity: (v: number) => setField('packagingQuantity', v),
+    packagingCuttingTimePerPoseSeconds,
+    setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
+    packagingMaterialCost,
+    packagingCuttingCost,
+    packagingTotalCost,
 
     // Actions
     handleAddAccessory,
