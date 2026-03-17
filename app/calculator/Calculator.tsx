@@ -1,6 +1,5 @@
 'use client'
 
-import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import {
   LayoutDashboard,
@@ -19,6 +18,7 @@ import { SectionImpression } from './sections/SectionImpression'
 import { SectionAccessoires } from './sections/SectionAccessoires'
 import { SectionFaconnage } from './sections/SectionFaconnage'
 import { SectionConditionnement } from './sections/SectionConditionnement'
+import { SectionEmballage } from './sections/SectionEmballage' // ✅
 import { RecapSidebar } from './sections/RecapSidebar'
 
 export default function Calculator({
@@ -31,7 +31,16 @@ export default function Calculator({
   isViewOnly,
   settings,
 }: CalculatorProps) {
-const calc = useCalculator(initialProductTypes, plates, accessories, consumables, initialQuote, isViewOnly, settings)
+  const calc = useCalculator(
+    initialProductTypes,
+    plates,
+    accessories,
+    consumables,
+    initialQuote,
+    isViewOnly,
+    settings
+  )
+
   const {
     screenState,
     setScreenState,
@@ -67,6 +76,7 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
     hasFlatColor,
     setHasFlatColor,
     printingCostData,
+    inkVolumeL,
     cuttingTimePerPoseSeconds,
     setCuttingTimePerPoseSeconds,
     cuttingCost,
@@ -100,6 +110,18 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
     getCuttingDetails,
     getAssemblyDetails,
     getPackDetails,
+    // ✅ Emballage
+    hasPackaging,
+    setHasPackaging,
+    packagingPlateId,
+    setPackagingPlateId,
+    packagingQuantity,
+    setPackagingQuantity,
+    packagingCuttingTimePerPoseSeconds,
+    setPackagingCuttingTimePerPoseSeconds,
+    packagingMaterialCost,
+    packagingCuttingCost,
+    packagingTotalCost,
   } = calc
 
   if (screenState === 'success') {
@@ -109,37 +131,42 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
   if (screenState === 'recap') {
     return (
       <ScreenRecap
-      studyNumber={studyNumber}
-      productSearch={productSearch}
-      quantity={quantity}
-      selectedPlate={selectedPlate}
-      flatWidth={flatWidth}
-      flatHeight={flatHeight}
-      impositionResult={impositionResult || undefined}
-      printSurfacePercent={printSurfacePercent}
-      isRectoVerso={isRectoVerso}
-      rectoVersoType={rectoVersoType}
-      hasVarnish={hasVarnish}
-      hasFlatColor={hasFlatColor}
-      printMode={printMode}
-      cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
-      printingCostData={printingCostData}
-      cuttingCost={cuttingCost}
-      assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
-      assemblyCost={assemblyCost}
-      packTimePerPieceSeconds={packTimePerPieceSeconds}
-      packagingCost={packagingCost}
-      hasAssemblyNotice={hasAssemblyNotice}
-      totalCost={totalCost}
-      accessoriesCost={accessoriesCost}
-      consumablesCost={consumablesCost}
-      selectedAccessories={selectedAccessories}
-      selectedConsumables={selectedConsumables}
-      getCuttingDetails={getCuttingDetails}
-      getAssemblyDetails={getAssemblyDetails}
-      getPackDetails={getPackDetails}
-      setScreenState={setScreenState}
-    />
+        studyNumber={studyNumber}
+        productSearch={productSearch}
+        quantity={quantity}
+        selectedPlate={selectedPlate}
+        flatWidth={flatWidth}
+        flatHeight={flatHeight}
+        impositionResult={impositionResult || undefined}
+        printSurfacePercent={printSurfacePercent}
+        isRectoVerso={isRectoVerso}
+        rectoVersoType={rectoVersoType}
+        hasVarnish={hasVarnish}
+        hasFlatColor={hasFlatColor}
+        printMode={printMode}
+        cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
+        printingCostData={printingCostData}
+        inkVolumeL={inkVolumeL}
+        cuttingCost={cuttingCost}
+        assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
+        assemblyCost={assemblyCost}
+        packTimePerPieceSeconds={packTimePerPieceSeconds}
+        packagingCost={packagingCost}
+        hasAssemblyNotice={hasAssemblyNotice}
+        totalCost={totalCost}
+        accessoriesCost={accessoriesCost}
+        consumablesCost={consumablesCost}
+        selectedAccessories={selectedAccessories}
+        selectedConsumables={selectedConsumables}
+        hasPackaging={hasPackaging}
+        packagingTotalCost={packagingTotalCost}
+        packagingMaterialCost={packagingMaterialCost}
+        packagingCuttingCost={packagingCuttingCost}
+        getCuttingDetails={getCuttingDetails}
+        getAssemblyDetails={getAssemblyDetails}
+        getPackDetails={getPackDetails}
+        setScreenState={setScreenState}
+      />
     )
   }
 
@@ -179,7 +206,6 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
 
           {/* 1. Présentation */}
           <SectionPresentation
-            key="section-presentation"
             studyNumber={studyNumber}
             setStudyNumber={setStudyNumber}
             productSearch={productSearch}
@@ -202,7 +228,7 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
 
           {/* 2. Poses */}
           {impositionResult && (
-            <SectionDisplay key="section-poses" number="2" title="Poses (Imposition)" color="blue">
+            <SectionDisplay number="2" title="Poses (Imposition)" color="blue">
               <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
                 <div className="text-center">
                   <div className="text-2xl font-bold text-blue-600">
@@ -226,7 +252,6 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
 
           {/* 3. Impression */}
           <SectionImpression
-            key="section-impression"
             printMode={printMode}
             setPrintMode={setPrintMode}
             isRectoVerso={isRectoVerso}
@@ -245,7 +270,7 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
           />
 
           {/* 4. Découpe */}
-          <SectionDisplay key="section-decoupe" number="4" title="Découpe" color="orange">
+          <SectionDisplay number="4" title="Découpe" color="orange">
             <GaugeSlider
               label="Temps par Pose"
               value={cuttingTimePerPoseSeconds}
@@ -260,7 +285,6 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
 
           {/* 5. Façonnage */}
           <SectionFaconnage
-            key="section-faconnage"
             assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
             setAssemblyTimePerPieceSeconds={setAssemblyTimePerPieceSeconds}
             selectedConsumables={selectedConsumables}
@@ -276,7 +300,6 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
 
           {/* 6. Conditionnement */}
           <SectionConditionnement
-            key="section-conditionnement"
             packTimePerPieceSeconds={packTimePerPieceSeconds}
             setPackTimePerPieceSeconds={setPackTimePerPieceSeconds}
             hasAssemblyNotice={hasAssemblyNotice}
@@ -285,7 +308,6 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
 
           {/* 7. Accessoires */}
           <SectionAccessoires
-            key="section-accessoires"
             currentAccessoryId={currentAccessoryId}
             setCurrentAccessoryId={setCurrentAccessoryId}
             accessories={accessories}
@@ -296,6 +318,22 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
             handleRemoveAccessory={handleRemoveAccessory}
             accessoriesCost={accessoriesCost}
           />
+
+          {/* 8. Emballage ✅ */}
+          <SectionEmballage
+            hasPackaging={hasPackaging}
+            setHasPackaging={setHasPackaging}
+            packagingPlateId={packagingPlateId}
+            setPackagingPlateId={setPackagingPlateId}
+            packagingQuantity={packagingQuantity}
+            setPackagingQuantity={setPackagingQuantity}
+            packagingCuttingTimePerPoseSeconds={packagingCuttingTimePerPoseSeconds}
+            setPackagingCuttingTimePerPoseSeconds={setPackagingCuttingTimePerPoseSeconds}
+            plates={plates}
+            packagingMaterialCost={packagingMaterialCost}
+            packagingCuttingCost={packagingCuttingCost}
+            packagingTotalCost={packagingTotalCost}
+          />
         </div>
 
         {/* Sidebar */}
@@ -303,6 +341,7 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
           impositionResult={impositionResult || undefined}
           selectedPlate={selectedPlate}
           printingCostData={printingCostData}
+          inkVolumeL={inkVolumeL}
           cuttingCost={cuttingCost}
           getCuttingDetails={getCuttingDetails}
           assemblyCost={assemblyCost}
@@ -313,6 +352,8 @@ const calc = useCalculator(initialProductTypes, plates, accessories, consumables
           selectedAccessories={selectedAccessories}
           consumablesCost={consumablesCost}
           selectedConsumables={selectedConsumables}
+          hasPackaging={hasPackaging}
+          packagingTotalCost={packagingTotalCost}
           totalCost={totalCost}
           quantity={quantity}
           handleSave={handleSave}

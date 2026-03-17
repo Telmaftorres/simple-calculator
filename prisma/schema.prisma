@@ -39,6 +39,7 @@ model Plate {
   height   Int
   cost     Float
   material String
+  packagingQuotes Quote[] @relation("PackagingPlate")
   quotes   Quote[]
 }
 
@@ -79,6 +80,11 @@ model Quote {
   itemsPerPlate   Int?
   platesCount     Int?
   totalCost       Float?
+  hasPackaging                       Boolean  @default(false)
+  packagingPlateId                   Int?
+  packagingQuantity                  Int?
+  packagingCuttingTimePerPoseSeconds Int      @default(20)
+  packagingPlate                     Plate?   @relation("PackagingPlate", fields: [packagingPlateId], references: [id])
   createdAt       DateTime         @default(now())
   updatedAt       DateTime         @updatedAt
   userId          String?

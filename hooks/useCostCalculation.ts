@@ -8,6 +8,7 @@ import {
   FINISHING_SURCHARGE_PERCENT,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
 } from '@/lib/constants'
+import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
   ImpositionResult,
   SelectedAccessory,
@@ -33,6 +34,11 @@ export interface CostCalculationParams {
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
   settings?: Record<string, number>
+  // ✅ Emballage
+  hasPackaging: boolean
+  packagingPlate: Plate | undefined
+  packagingQuantity: number
+  packagingCuttingTimePerPoseSeconds: number
 }
 
 export function useCostCalculation(params: CostCalculationParams) {
@@ -52,9 +58,12 @@ export function useCostCalculation(params: CostCalculationParams) {
     selectedAccessories,
     selectedConsumables,
     settings,
+    hasPackaging,
+    packagingPlate,
+    packagingQuantity,
+    packagingCuttingTimePerPoseSeconds,
   } = params
 
-  // Utilise les valeurs DB si disponibles, sinon fallback sur les constantes
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
   const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
@@ -66,13 +75,14 @@ export function useCostCalculation(params: CostCalculationParams) {
 
   const printingCostData: PrintingCostData = (() => {
     if (!impositionResult || !selectedPlate)
-      return { cost: 0, timeMin: 0, inkCost: 0, laborCost: 0 }
+      return { cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0 }
 
     const multiplier = isRectoVerso ? 2 : 1
+
+    // ✅ Corrigé : suppression du × 2 hardcodé
     const inkVolumeL =
-      ((impositionResult.platesNeeded * inkBaseMlPerPlate * ((printSurfacePercent / 100) * 2)) /
-        1000) *
-      multiplier
+      ((impositionResult.platesNeeded * inkBaseMlPerPlate * (printSurfacePercent / 100)) / 1000)
+      * multiplier
 
     const finishingMultiplier =
       1 +
@@ -86,10 +96,9 @@ export function useCostCalculation(params: CostCalculationParams) {
     const timePerPlateMin = printedAreaM2 * pace * multiplier
     const setupTimeMin = printSurfacePercent > 0 ? printSetupTimeMin : 0
     const totalTimeMin = timePerPlateMin * impositionResult.platesNeeded + setupTimeMin
-
     const laborCost = (totalTimeMin / 60) * hourlyRatePrint
 
-    return { cost: inkCost + laborCost, timeMin: totalTimeMin, inkCost, laborCost }
+    return { cost: inkCost + laborCost, timeMin: totalTimeMin, inkCost, laborCost, inkVolumeL }
   })()
 
   const printingCost = printingCostData.cost
@@ -97,8 +106,7 @@ export function useCostCalculation(params: CostCalculationParams) {
   const cuttingCost = (() => {
     if (!impositionResult) return 0
     const totalSeconds = cuttingTimePerPoseSeconds * quantity + cuttingSetupSeconds
-    const totalHours = totalSeconds / 3600
-    return totalHours * hourlyRatePrint
+    return (totalSeconds / 3600) * hourlyRatePrint
   })()
 
   const assemblyCost = (() => {
@@ -123,6 +131,20 @@ export function useCostCalculation(params: CostCalculationParams) {
     0
   )
 
+  // ✅ Coûts emballage
+  const packagingMaterialCost = (() => {
+    if (!hasPackaging || !packagingPlate || packagingQuantity <= 0) return 0
+    return packagingQuantity * packagingPlate.cost
+  })()
+
+  const packagingCuttingCost = (() => {
+    if (!hasPackaging || packagingQuantity <= 0) return 0
+    const totalSeconds = packagingCuttingTimePerPoseSeconds * packagingQuantity + cuttingSetupSeconds
+    return (totalSeconds / 3600) * hourlyRatePrint
+  })()
+
+  const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
+
   const totalCost =
     (impositionResult?.materialCost || 0) +
     printingCost +
@@ -130,7 +152,8 @@ export function useCostCalculation(params: CostCalculationParams) {
     assemblyCost +
     packagingCost +
     accessoriesCost +
-    consumablesCost
+    consumablesCost +
+    packagingTotalCost // ✅
 
   return {
     printingCostData,
@@ -141,5 +164,9 @@ export function useCostCalculation(params: CostCalculationParams) {
     accessoriesCost,
     consumablesCost,
     totalCost,
+    inkVolumeL: printingCostData.inkVolumeL,
+    packagingMaterialCost,
+    packagingCuttingCost,
+    packagingTotalCost,
   }
 }

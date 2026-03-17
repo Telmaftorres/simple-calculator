@@ -7,24 +7,13 @@ import type {
 } from '@prisma/client'
 import type { ImpositionResult as BaseImpositionResult } from '@/lib/calculation/imposition'
 
-// ────────────────────────────────────────────────────
-// Types Prisma simplifiés pour le calculateur
-// ────────────────────────────────────────────────────
-
 export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost' | 'material'>
 export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'>
 export type Consumable = Pick<PrismaConsumable, 'id' | 'name' | 'price' | 'size'>
 export type PLVElement = Pick<PrismaElement, 'id' | 'name' | 'quantity'>
-export type ProductType = Pick<
-  PrismaProductType,
-  'id' | 'name' | 'flatWidthFormula' | 'flatHeightFormula'
-> & {
+export type ProductType = Pick<PrismaProductType, 'id' | 'name' | 'flatWidthFormula' | 'flatHeightFormula'> & {
   elements: PLVElement[]
 }
-
-// ────────────────────────────────────────────────────
-// Types métier (spécifiques au calculateur)
-// ────────────────────────────────────────────────────
 
 export interface ImpositionResult extends BaseImpositionResult {
   platesNeeded: number
@@ -52,6 +41,7 @@ export interface PrintingCostData {
   timeMin: number
   inkCost: number
   laborCost: number
+  inkVolumeL: number
 }
 
 export interface Quote {
@@ -79,6 +69,10 @@ export interface Quote {
   platesCount: number | null
   totalCost: number | null
   createdAt: Date
+  hasPackaging: boolean
+  packagingPlateId: number | null
+  packagingQuantity: number | null
+  packagingCuttingTimePerPoseSeconds: number
   study: { number: string } | null
   productType: { name: string; elements: { name: string; quantity: number }[] } | null
   plate: { name: string } | null
