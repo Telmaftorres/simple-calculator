@@ -97,6 +97,8 @@ model Quote {
   accessories                        QuoteAccessory[]
   consumables                        QuoteConsumable[]
   elements                           QuoteElement[]
+  hasPrintSetup                      Boolean           @default(true)
+  hasCuttingSetup                    Boolean           @default(true)
 }
 
 model Consumable {

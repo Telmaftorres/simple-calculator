@@ -35,6 +35,8 @@ const createQuoteSchema = z.object({
   packagingCuttingTimePerPoseSeconds: z.number().int().optional(),
   packagingWidth: z.number().int().positive().nullable().optional(),
   packagingHeight: z.number().int().positive().nullable().optional(),
+  hasPrintSetup: z.boolean().optional(),   // ✅
+  hasCuttingSetup: z.boolean().optional(), // ✅
   elements: z.array(z.object({
     name: z.string().min(1),
     quantity: z.number().int().positive(),
@@ -156,6 +158,8 @@ export async function createQuote(data: z.infer<typeof createQuoteSchema>) {
       packagingCuttingTimePerPoseSeconds: validated.packagingCuttingTimePerPoseSeconds || 20,
       packagingWidth: validated.packagingWidth || null,
       packagingHeight: validated.packagingHeight || null,
+      hasPrintSetup: validated.hasPrintSetup ?? true,   // ✅
+      hasCuttingSetup: validated.hasCuttingSetup ?? true, // ✅
       userId: session.user.id,
       accessories: {
         create: validated.accessories?.map((acc) => ({

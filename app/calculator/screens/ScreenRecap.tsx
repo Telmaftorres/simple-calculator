@@ -26,8 +26,14 @@ interface ScreenRecapProps {
   printMode: string
   cuttingTimePerPoseSeconds: number
   printingCostData: PrintingCostData
-  inkVolumeL: number                   // ✅
+  inkVolumeL: number
+  hasPrintSetup: boolean
   cuttingCost: number
+  cuttingMachineCost: number
+  cuttingSetupCost: number
+  cuttingSetupTimeMin: number
+  cuttingMachineTimeMin: number
+  hasCuttingSetup: boolean
   assemblyTimePerPieceSeconds: number
   assemblyCost: number
   packTimePerPieceSeconds: number
@@ -38,7 +44,6 @@ interface ScreenRecapProps {
   consumablesCost: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
-  // ✅ Emballage
   hasPackaging: boolean
   packagingTotalCost: number
   packagingMaterialCost: number
@@ -67,7 +72,13 @@ export function ScreenRecap({
   cuttingTimePerPoseSeconds,
   printingCostData,
   inkVolumeL,
+  hasPrintSetup,
   cuttingCost,
+  cuttingMachineCost,
+  cuttingSetupCost,
+  cuttingSetupTimeMin,
+  cuttingMachineTimeMin,
+  hasCuttingSetup,
   assemblyTimePerPieceSeconds,
   assemblyCost,
   packTimePerPieceSeconds,
@@ -123,7 +134,13 @@ export function ScreenRecap({
                 hasAssemblyNotice={hasAssemblyNotice}
                 printingCostData={printingCostData}
                 inkVolumeL={inkVolumeL}
+                hasPrintSetup={hasPrintSetup}
                 cuttingCost={cuttingCost}
+                cuttingMachineCost={cuttingMachineCost}
+                cuttingSetupCost={cuttingSetupCost}
+                cuttingSetupTimeMin={cuttingSetupTimeMin}
+                cuttingMachineTimeMin={cuttingMachineTimeMin}
+                hasCuttingSetup={hasCuttingSetup}
                 assemblyCost={assemblyCost}
                 packagingCost={packagingCost}
                 accessoriesCost={accessoriesCost}
@@ -255,6 +272,7 @@ export function ScreenRecap({
                   </tr>
                 </thead>
                 <tbody className="divide-y divide-slate-100">
+                  {/* Matière */}
                   <tr>
                     <td className="p-3">Matière</td>
                     <td className="p-3 text-right text-slate-500 italic">
@@ -264,31 +282,71 @@ export function ScreenRecap({
                       {impositionResult?.materialCost.toFixed(2)} €
                     </td>
                   </tr>
+
+                  {/* Impression encre */}
                   <tr>
                     <td className="p-3">Impression (Encre)</td>
                     <td className="p-3 text-right text-slate-500 italic">
-                      {inkVolumeL.toFixed(3)} L  {/* ✅ corrigé */}
+                      {inkVolumeL.toFixed(3)} L
                     </td>
                     <td className="p-3 text-right font-medium">
                       {printingCostData.inkCost.toFixed(2)} €
                     </td>
                   </tr>
+
+                  {/* Impression temps machine */}
                   <tr>
-                    <td className="p-3">Impression (Temps)</td>
+                    <td className="p-3">Impression (temps machine)</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
-                      {formatMinutes(printingCostData.timeMin)}{printSurfacePercent > 0 ? ' (incl. 15min)' : ''}
+                      {formatMinutes(printingCostData.machineTimeMin)}
                     </td>
                     <td className="p-3 text-right font-medium">
-                      {printingCostData.laborCost.toFixed(2)} €
+                      {printingCostData.machineCost.toFixed(2)} €
                     </td>
                   </tr>
+
+                  {/* ✅ Calage impression — uniquement si activé */}
+                  {hasPrintSetup && printingCostData.setupCost > 0 && (
+                    <tr className="bg-slate-50/50">
+                      <td className="p-3 text-slate-600 pl-6 border-l-2 border-purple-200">
+                        ↳ Calage impression
+                      </td>
+                      <td className="p-3 text-right text-slate-500 italic text-xs">
+                        {printingCostData.setupTimeMin} min
+                      </td>
+                      <td className="p-3 text-right font-medium">
+                        {printingCostData.setupCost.toFixed(2)} €
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Découpe temps machine */}
                   <tr>
-                    <td className="p-3">Découpe</td>
+                    <td className="p-3">Découpe (temps machine)</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
-                      {getCuttingDetails()}
+                      {formatMinutes(cuttingMachineTimeMin)}
                     </td>
-                    <td className="p-3 text-right font-medium">{cuttingCost.toFixed(2)} €</td>
+                    <td className="p-3 text-right font-medium">
+                      {cuttingMachineCost.toFixed(2)} €
+                    </td>
                   </tr>
+
+                  {/* ✅ Calage découpe — uniquement si activé */}
+                  {hasCuttingSetup && cuttingSetupCost > 0 && (
+                    <tr className="bg-slate-50/50">
+                      <td className="p-3 text-slate-600 pl-6 border-l-2 border-orange-200">
+                        ↳ Calage découpe
+                      </td>
+                      <td className="p-3 text-right text-slate-500 italic text-xs">
+                        {cuttingSetupTimeMin} min
+                      </td>
+                      <td className="p-3 text-right font-medium">
+                        {cuttingSetupCost.toFixed(2)} €
+                      </td>
+                    </tr>
+                  )}
+
+                  {/* Façonnage */}
                   <tr>
                     <td className="p-3">Façonnage</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
@@ -296,6 +354,8 @@ export function ScreenRecap({
                     </td>
                     <td className="p-3 text-right font-medium">{assemblyCost.toFixed(2)} €</td>
                   </tr>
+
+                  {/* Consommables */}
                   {selectedConsumables.length > 0 && (
                     <tr>
                       <td className="p-3 text-slate-600 pl-6 border-l-2 border-slate-200">
@@ -307,6 +367,8 @@ export function ScreenRecap({
                       <td className="p-3 text-right font-medium">{consumablesCost.toFixed(2)} €</td>
                     </tr>
                   )}
+
+                  {/* Conditionnement */}
                   <tr>
                     <td className="p-3">Conditionnement</td>
                     <td className="p-3 text-right text-slate-500 italic text-xs">
@@ -314,6 +376,8 @@ export function ScreenRecap({
                     </td>
                     <td className="p-3 text-right font-medium">{packagingCost.toFixed(2)} €</td>
                   </tr>
+
+                  {/* Accessoires */}
                   {accessoriesCost > 0 && (
                     <tr>
                       <td className="p-3">Accessoires</td>
@@ -323,7 +387,8 @@ export function ScreenRecap({
                       <td className="p-3 text-right font-medium">{accessoriesCost.toFixed(2)} €</td>
                     </tr>
                   )}
-                  {/* ✅ Ligne emballage */}
+
+                  {/* Emballage */}
                   {hasPackaging && packagingTotalCost > 0 && (
                     <tr>
                       <td className="p-3">Emballage</td>

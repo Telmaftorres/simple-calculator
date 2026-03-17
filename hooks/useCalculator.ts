@@ -5,7 +5,7 @@ import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
-import { CUTTING_SETUP_SECONDS, ASSEMBLY_NOTICE_COST_PER_PIECE } from '@/lib/constants'
+import { ASSEMBLY_NOTICE_COST_PER_PIECE } from '@/lib/constants'
 import { useCostCalculation } from './useCostCalculation'
 import { useCalculatorForm } from './useCalculatorForm'
 import type {
@@ -70,6 +70,8 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds,
     packagingWidth,
     packagingHeight,
+    hasPrintSetup,
+    hasCuttingSetup,
   } = formState
 
   // ── Initialization from initialQuote ──
@@ -97,6 +99,8 @@ export function useCalculator(
       setField('packagingCuttingTimePerPoseSeconds', initialQuote.packagingCuttingTimePerPoseSeconds || 20)
       setField('packagingWidth', initialQuote.packagingWidth || 0)
       setField('packagingHeight', initialQuote.packagingHeight || 0)
+      setField('hasPrintSetup', initialQuote.hasPrintSetup ?? true)
+      setField('hasCuttingSetup', initialQuote.hasCuttingSetup ?? true)
 
       if (initialQuote.accessories) {
         const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => {
@@ -161,6 +165,10 @@ export function useCalculator(
     printingCostData,
     printingCost,
     cuttingCost,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    cuttingSetupTimeMin,
+    cuttingMachineTimeMin,
     assemblyCost,
     packagingCost,
     accessoriesCost,
@@ -181,6 +189,8 @@ export function useCalculator(
     isRectoVerso,
     hasVarnish,
     hasFlatColor,
+    hasPrintSetup,
+    hasCuttingSetup,
     cuttingTimePerPoseSeconds,
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
@@ -198,9 +208,8 @@ export function useCalculator(
 
   // ── Detail helpers ──
   const getCuttingDetails = () => {
-    const totalSeconds = cuttingTimePerPoseSeconds * quantity + CUTTING_SETUP_SECONDS
-    const totalMinutes = totalSeconds / 60
-    return `${formatMinutes(totalMinutes)} (${formatTimeSeconds(cuttingTimePerPoseSeconds)}/pose + ${CUTTING_SETUP_SECONDS / 60} min calage)`
+    const totalMin = cuttingMachineTimeMin + (hasCuttingSetup ? cuttingSetupTimeMin : 0)
+    return `${formatMinutes(totalMin)} (${formatTimeSeconds(cuttingTimePerPoseSeconds)}/pose${hasCuttingSetup ? ` + ${cuttingSetupTimeMin} min calage` : ''})`
   }
 
   const getAssemblyDetails = () => {
@@ -331,6 +340,8 @@ export function useCalculator(
         packagingCuttingTimePerPoseSeconds,
         packagingWidth: packagingWidth || null,
         packagingHeight: packagingHeight || null,
+        hasPrintSetup,
+        hasCuttingSetup,
         elements:
           selectedProductType?.elements.map((el: PLVElement) => ({
             name: el.name,
@@ -411,11 +422,19 @@ export function useCalculator(
     printingCostData,
     printingCost,
     inkVolumeL,
+    hasPrintSetup,
+    setHasPrintSetup: (v: boolean) => setField('hasPrintSetup', v),
 
     // Découpe
     cuttingTimePerPoseSeconds,
     setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
     cuttingCost,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    cuttingSetupTimeMin,
+    cuttingMachineTimeMin,
+    hasCuttingSetup,
+    setHasCuttingSetup: (v: boolean) => setField('hasCuttingSetup', v),
 
     // Façonnage
     assemblyTimePerPieceSeconds,

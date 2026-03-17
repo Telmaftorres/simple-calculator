@@ -8,18 +8,18 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import type { CalculatorProps } from '@/types/calculator'
-import { useCalculator, formatTimeSeconds } from '@/hooks/useCalculator'
-import { GaugeSlider } from '../components/GaugeSlider'
-import { SectionDisplay } from './shared'
+import { useCalculator } from '@/hooks/useCalculator'
 import { ScreenSuccess } from './screens/ScreenSuccess'
 import { ScreenRecap } from './screens/ScreenRecap'
 import { SectionPresentation } from './sections/SectionPresentation'
 import { SectionImpression } from './sections/SectionImpression'
+import { SectionDecoupe } from './sections/SectionDecoupe'
 import { SectionAccessoires } from './sections/SectionAccessoires'
 import { SectionFaconnage } from './sections/SectionFaconnage'
 import { SectionConditionnement } from './sections/SectionConditionnement'
 import { SectionEmballage } from './sections/SectionEmballage'
 import { RecapSidebar } from './sections/RecapSidebar'
+import { SectionDisplay } from './shared'
 
 export default function Calculator({
   productTypes: initialProductTypes,
@@ -77,9 +77,17 @@ export default function Calculator({
     setHasFlatColor,
     printingCostData,
     inkVolumeL,
+    hasPrintSetup,
+    setHasPrintSetup,
     cuttingTimePerPoseSeconds,
     setCuttingTimePerPoseSeconds,
     cuttingCost,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    cuttingSetupTimeMin,
+    cuttingMachineTimeMin,
+    hasCuttingSetup,
+    setHasCuttingSetup,
     assemblyTimePerPieceSeconds,
     setAssemblyTimePerPieceSeconds,
     assemblyCost,
@@ -152,7 +160,13 @@ export default function Calculator({
         cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
         printingCostData={printingCostData}
         inkVolumeL={inkVolumeL}
+        hasPrintSetup={hasPrintSetup}
         cuttingCost={cuttingCost}
+        cuttingMachineCost={cuttingMachineCost}
+        cuttingSetupCost={cuttingSetupCost}
+        cuttingSetupTimeMin={cuttingSetupTimeMin}
+        cuttingMachineTimeMin={cuttingMachineTimeMin}
+        hasCuttingSetup={hasCuttingSetup}
         assemblyTimePerPieceSeconds={assemblyTimePerPieceSeconds}
         assemblyCost={assemblyCost}
         packTimePerPieceSeconds={packTimePerPieceSeconds}
@@ -272,21 +286,21 @@ export default function Calculator({
             printingCostData={printingCostData}
             impositionResult={impositionResult || undefined}
             selectedPlate={selectedPlate}
+            hasPrintSetup={hasPrintSetup}
+            setHasPrintSetup={setHasPrintSetup}
           />
 
           {/* 4. Découpe */}
-          <SectionDisplay number="4" title="Découpe" color="orange">
-            <GaugeSlider
-              label="Temps par Pose"
-              value={cuttingTimePerPoseSeconds}
-              min={20}
-              max={300}
-              unit="sec"
-              onChange={setCuttingTimePerPoseSeconds}
-              formatValue={formatTimeSeconds}
-              gradientColors="from-yellow-300 to-orange-600"
-            />
-          </SectionDisplay>
+          <SectionDecoupe
+            cuttingTimePerPoseSeconds={cuttingTimePerPoseSeconds}
+            setCuttingTimePerPoseSeconds={setCuttingTimePerPoseSeconds}
+            hasCuttingSetup={hasCuttingSetup}
+            setHasCuttingSetup={setHasCuttingSetup}
+            cuttingSetupTimeMin={cuttingSetupTimeMin}
+            cuttingMachineTimeMin={cuttingMachineTimeMin}
+            cuttingMachineCost={cuttingMachineCost}
+            cuttingSetupCost={cuttingSetupCost}
+          />
 
           {/* 5. Façonnage */}
           <SectionFaconnage
@@ -353,7 +367,13 @@ export default function Calculator({
           selectedPlate={selectedPlate}
           printingCostData={printingCostData}
           inkVolumeL={inkVolumeL}
+          hasPrintSetup={hasPrintSetup}
           cuttingCost={cuttingCost}
+          cuttingMachineCost={cuttingMachineCost}
+          cuttingSetupCost={cuttingSetupCost}
+          cuttingSetupTimeMin={cuttingSetupTimeMin}
+          cuttingMachineTimeMin={cuttingMachineTimeMin}
+          hasCuttingSetup={hasCuttingSetup}
           getCuttingDetails={getCuttingDetails}
           assemblyCost={assemblyCost}
           getAssemblyDetails={getAssemblyDetails}

@@ -42,6 +42,10 @@ export interface PrintingCostData {
   inkCost: number
   laborCost: number
   inkVolumeL: number
+  setupCost: number
+  machineCost: number
+  setupTimeMin: number
+  machineTimeMin: number
 }
 
 export interface Quote {
@@ -75,6 +79,8 @@ export interface Quote {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number | null
   packagingHeight: number | null
+  hasPrintSetup: boolean   // ✅
+  hasCuttingSetup: boolean // ✅
   study: { number: string } | null
   productType: { name: string; elements: { name: string; quantity: number }[] } | null
   plate: { name: string } | null

@@ -9,8 +9,14 @@ interface RecapSidebarProps {
   impositionResult: ImpositionResult | undefined
   selectedPlate: Plate | undefined
   printingCostData: PrintingCostData
-  inkVolumeL: number                    // ✅ remplace le / 40 hardcodé
+  inkVolumeL: number
+  hasPrintSetup: boolean
   cuttingCost: number
+  cuttingMachineCost: number
+  cuttingSetupCost: number
+  cuttingSetupTimeMin: number
+  cuttingMachineTimeMin: number
+  hasCuttingSetup: boolean
   getCuttingDetails: () => string
   assemblyCost: number
   getAssemblyDetails: () => string
@@ -20,7 +26,6 @@ interface RecapSidebarProps {
   selectedAccessories: SelectedAccessory[]
   consumablesCost: number
   selectedConsumables: SelectedConsumable[]
-  // ✅ Emballage
   hasPackaging: boolean
   packagingTotalCost: number
   totalCost: number
@@ -34,7 +39,13 @@ export function RecapSidebar({
   selectedPlate,
   printingCostData,
   inkVolumeL,
+  hasPrintSetup,
   cuttingCost,
+  cuttingMachineCost,
+  cuttingSetupCost,
+  cuttingSetupTimeMin,
+  cuttingMachineTimeMin,
+  hasCuttingSetup,
   getCuttingDetails,
   assemblyCost,
   getAssemblyDetails,
@@ -59,6 +70,8 @@ export function RecapSidebar({
           <CardDescription>Coût Total Estimé</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
+
+          {/* Matière */}
           <CostRow
             label="Matière"
             value={impositionResult?.materialCost || 0}
@@ -69,32 +82,64 @@ export function RecapSidebar({
             }
           />
 
+          {/* Impression encre */}
           <CostRow
             label="Impression (Encre)"
             value={printingCostData.inkCost}
             details={
               printingCostData.inkCost > 0
-                ? `${inkVolumeL.toFixed(3)} L`  // ✅ corrigé
+                ? `${inkVolumeL.toFixed(3)} L`
                 : undefined
             }
           />
 
+          {/* Impression temps machine */}
           <CostRow
-            label="Impression (Temps)"
-            value={printingCostData.laborCost}
+            label="Impression (temps machine)"
+            value={printingCostData.machineCost}
             details={
-              printingCostData.laborCost > 0
-                ? `${formatMinutes(printingCostData.timeMin)} (incl. 15min calage)`
+              printingCostData.machineTimeMin > 0
+                ? formatMinutes(printingCostData.machineTimeMin)
                 : undefined
             }
           />
 
-          <CostRow label="Découpe" value={cuttingCost} details={getCuttingDetails()} />
+          {/* ✅ Calage impression — uniquement si activé */}
+          {hasPrintSetup && printingCostData.setupCost > 0 && (
+            <CostRow
+              label="Calage impression"
+              value={printingCostData.setupCost}
+              details={`${printingCostData.setupTimeMin} min`}
+            />
+          )}
 
+          {/* Découpe temps machine */}
+          <CostRow
+            label="Découpe (temps machine)"
+            value={cuttingMachineCost}
+            details={
+              cuttingMachineTimeMin > 0
+                ? formatMinutes(cuttingMachineTimeMin)
+                : undefined
+            }
+          />
+
+          {/* ✅ Calage découpe — uniquement si activé */}
+          {hasCuttingSetup && cuttingSetupCost > 0 && (
+            <CostRow
+              label="Calage découpe"
+              value={cuttingSetupCost}
+              details={`${cuttingSetupTimeMin} min`}
+            />
+          )}
+
+          {/* Façonnage */}
           <CostRow label="Façonnage" value={assemblyCost} details={getAssemblyDetails()} />
 
+          {/* Conditionnement */}
           <CostRow label="Conditionnement" value={packagingCost} details={getPackDetails()} />
 
+          {/* Accessoires */}
           <CostRow
             label="Accessoires"
             value={accessoriesCost}
@@ -103,6 +148,7 @@ export function RecapSidebar({
             }
           />
 
+          {/* Consommables */}
           <CostRow
             label="Consommables"
             value={consumablesCost}
@@ -111,7 +157,7 @@ export function RecapSidebar({
             }
           />
 
-          {/* ✅ Ligne emballage — visible uniquement si activé */}
+          {/* Emballage */}
           {hasPackaging && (
             <CostRow
               label="Emballage"
@@ -120,6 +166,7 @@ export function RecapSidebar({
             />
           )}
 
+          {/* Total */}
           <div className="pt-4 border-t border-slate-200 mt-4">
             <div className="flex justify-between items-end">
               <div className="text-sm font-medium text-slate-500">Total HT</div>
