@@ -73,6 +73,8 @@ export interface Quote {
   packagingPlateId: number | null
   packagingQuantity: number | null
   packagingCuttingTimePerPoseSeconds: number
+  packagingWidth: number | null
+  packagingHeight: number | null
   study: { number: string } | null
   productType: { name: string; elements: { name: string; quantity: number }[] } | null
   plate: { name: string } | null

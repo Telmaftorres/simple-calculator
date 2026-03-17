@@ -33,14 +33,14 @@ model Element {
 }
 
 model Plate {
-  id       Int     @id @default(autoincrement())
-  name     String  @unique
-  width    Int
-  height   Int
-  cost     Float
-  material String
+  id              Int     @id @default(autoincrement())
+  name            String  @unique
+  width           Int
+  height          Int
+  cost            Float
+  material        String
+  quotes          Quote[]
   packagingQuotes Quote[] @relation("PackagingPlate")
-  quotes   Quote[]
 }
 
 model Accessory {
@@ -54,72 +54,74 @@ model Accessory {
 }
 
 model Quote {
-  id              Int              @id @default(autoincrement())
-  reference       String?          @unique
-  studyId         Int
-  productTypeId   Int
-  quantity        Int
-  width           Int
-  height          Int
-  flatWidth       Int?
-  flatHeight      Int?
-  printSurface    Int?
-  printMode       String           @default("production")
-  isRectoVerso    Boolean          @default(false)
-  rectoVersoType  String?
-  hasVarnish      Boolean          @default(false)
-  hasFlatColor    Boolean          @default(false)
-  cuttingMinutes  Int?
-  cuttingTimePerPoseSeconds Int     @default(20)
-  assemblySeconds Int?
-  assemblyTimePerPieceSeconds Int   @default(0)
-  packSeconds     Int?
-  packTimePerPieceSeconds Int       @default(0)
-  hasAssemblyNotice Boolean         @default(false)
-  plateId         Int?
-  itemsPerPlate   Int?
-  platesCount     Int?
-  totalCost       Float?
-  hasPackaging                       Boolean  @default(false)
+  id                                 Int               @id @default(autoincrement())
+  reference                          String?           @unique
+  studyId                            Int
+  productTypeId                      Int
+  quantity                           Int
+  width                              Int
+  height                             Int
+  flatWidth                          Int?
+  flatHeight                         Int?
+  printSurface                       Int?
+  printMode                          String            @default("production")
+  isRectoVerso                       Boolean           @default(false)
+  rectoVersoType                     String?
+  hasVarnish                         Boolean           @default(false)
+  hasFlatColor                       Boolean           @default(false)
+  cuttingMinutes                     Int?
+  cuttingTimePerPoseSeconds          Int               @default(20)
+  assemblySeconds                    Int?
+  assemblyTimePerPieceSeconds        Int               @default(0)
+  packSeconds                        Int?
+  packTimePerPieceSeconds            Int               @default(0)
+  hasAssemblyNotice                  Boolean           @default(false)
+  plateId                            Int?
+  itemsPerPlate                      Int?
+  platesCount                        Int?
+  totalCost                          Float?
+  hasPackaging                       Boolean           @default(false)
   packagingPlateId                   Int?
   packagingQuantity                  Int?
-  packagingCuttingTimePerPoseSeconds Int      @default(20)
-  packagingPlate                     Plate?   @relation("PackagingPlate", fields: [packagingPlateId], references: [id])
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
-  userId          String?
-  plate           Plate?           @relation(fields: [plateId], references: [id])
-  productType     ProductType      @relation(fields: [productTypeId], references: [id])
-  study           Study            @relation(fields: [studyId], references: [id])
-  user            User?            @relation(fields: [userId], references: [id])
-  accessories     QuoteAccessory[]
-  consumables     QuoteConsumable[]
-  elements        QuoteElement[]
+  packagingCuttingTimePerPoseSeconds Int               @default(20)
+  packagingWidth                     Int?
+  packagingHeight                    Int?
+  createdAt                          DateTime          @default(now())
+  updatedAt                          DateTime          @updatedAt
+  userId                             String?
+  plate                              Plate?            @relation(fields: [plateId], references: [id])
+  packagingPlate                     Plate?            @relation("PackagingPlate", fields: [packagingPlateId], references: [id])
+  productType                        ProductType       @relation(fields: [productTypeId], references: [id])
+  study                              Study             @relation(fields: [studyId], references: [id])
+  user                               User?             @relation(fields: [userId], references: [id])
+  accessories                        QuoteAccessory[]
+  consumables                        QuoteConsumable[]
+  elements                           QuoteElement[]
 }
 
 model Consumable {
-  id              Int               @id @default(autoincrement())
-  name            String
-  price           Float
-  size            Float
+  id               Int               @id @default(autoincrement())
+  name             String
+  price            Float
+  size             Float
   quoteConsumables QuoteConsumable[]
 }
 
 model QuoteConsumable {
-  id             Int        @id @default(autoincrement())
-  quoteId        Int
-  consumableId   Int
-  sizePerItem    Float
-  consumable     Consumable @relation(fields: [consumableId], references: [id])
-  quote          Quote      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  id           Int        @id @default(autoincrement())
+  quoteId      Int
+  consumableId Int
+  sizePerItem  Float
+  consumable   Consumable @relation(fields: [consumableId], references: [id])
+  quote        Quote      @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model QuoteElement {
-  id       Int    @id @default(autoincrement())
-  quoteId  Int
-  name     String
+  id      Int    @id @default(autoincrement())
+  quoteId Int
+  name    String
   quantity Int
-  quote    Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote   Quote  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model QuoteAccessory {

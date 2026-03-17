@@ -18,7 +18,7 @@ import { SectionImpression } from './sections/SectionImpression'
 import { SectionAccessoires } from './sections/SectionAccessoires'
 import { SectionFaconnage } from './sections/SectionFaconnage'
 import { SectionConditionnement } from './sections/SectionConditionnement'
-import { SectionEmballage } from './sections/SectionEmballage' // ✅
+import { SectionEmballage } from './sections/SectionEmballage'
 import { RecapSidebar } from './sections/RecapSidebar'
 
 export default function Calculator({
@@ -110,7 +110,6 @@ export default function Calculator({
     getCuttingDetails,
     getAssemblyDetails,
     getPackDetails,
-    // ✅ Emballage
     hasPackaging,
     setHasPackaging,
     packagingPlateId,
@@ -119,9 +118,15 @@ export default function Calculator({
     setPackagingQuantity,
     packagingCuttingTimePerPoseSeconds,
     setPackagingCuttingTimePerPoseSeconds,
+    packagingWidth,
+    setPackagingWidth,
+    packagingHeight,
+    setPackagingHeight,
     packagingMaterialCost,
     packagingCuttingCost,
     packagingTotalCost,
+    packagingItemsPerPlate,
+    packagingPlatesNeeded,
   } = calc
 
   if (screenState === 'success') {
@@ -319,7 +324,7 @@ export default function Calculator({
             accessoriesCost={accessoriesCost}
           />
 
-          {/* 8. Emballage ✅ */}
+          {/* 8. Emballage */}
           <SectionEmballage
             hasPackaging={hasPackaging}
             setHasPackaging={setHasPackaging}
@@ -327,12 +332,18 @@ export default function Calculator({
             setPackagingPlateId={setPackagingPlateId}
             packagingQuantity={packagingQuantity}
             setPackagingQuantity={setPackagingQuantity}
+            packagingWidth={packagingWidth}
+            setPackagingWidth={setPackagingWidth}
+            packagingHeight={packagingHeight}
+            setPackagingHeight={setPackagingHeight}
             packagingCuttingTimePerPoseSeconds={packagingCuttingTimePerPoseSeconds}
             setPackagingCuttingTimePerPoseSeconds={setPackagingCuttingTimePerPoseSeconds}
             plates={plates}
             packagingMaterialCost={packagingMaterialCost}
             packagingCuttingCost={packagingCuttingCost}
             packagingTotalCost={packagingTotalCost}
+            packagingItemsPerPlate={packagingItemsPerPlate}
+            packagingPlatesNeeded={packagingPlatesNeeded}
           />
         </div>
 

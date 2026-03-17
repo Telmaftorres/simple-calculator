@@ -24,11 +24,12 @@ export interface CalculatorFormState {
   currentAccessoryQty: number
   currentConsumableId: string
   currentConsumableSize: number
-  // ✅ Emballage
   hasPackaging: boolean
   packagingPlateId: string
   packagingQuantity: number
   packagingCuttingTimePerPoseSeconds: number
+  packagingWidth: number
+  packagingHeight: number
 }
 
 export const initialFormState: CalculatorFormState = {
@@ -54,11 +55,12 @@ export const initialFormState: CalculatorFormState = {
   currentAccessoryQty: 0,
   currentConsumableId: '',
   currentConsumableSize: 0,
-  // ✅ Emballage
   hasPackaging: false,
   packagingPlateId: '',
   packagingQuantity: 0,
   packagingCuttingTimePerPoseSeconds: 20,
+  packagingWidth: 0,
+  packagingHeight: 0,
 }
 
 export type CalculatorFormAction =
