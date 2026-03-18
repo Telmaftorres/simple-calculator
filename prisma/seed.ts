@@ -7,14 +7,133 @@ const prisma = new PrismaClient({
 
 async function seedSettings() {
   const settings = [
-    { key: 'HOURLY_RATE_PRINT', value: '65', label: 'Taux horaire impression/découpe', unit: '€/h' },
-    { key: 'HOURLY_RATE_ASSEMBLY', value: '45', label: 'Taux horaire façonnage/conditionnement', unit: '€/h' },
-    { key: 'INK_COST_PER_LITER', value: '40', label: "Coût de l'encre", unit: '€/L' },
-    { key: 'INK_BASE_ML_PER_PLATE', value: '20', label: "Volume d'encre de base par plaque", unit: 'ml' },
-    { key: 'PRINT_SETUP_TIME_MIN', value: '15', label: 'Temps de calage impression', unit: 'min' },
-    { key: 'CUTTING_SETUP_SECONDS', value: '900', label: 'Temps de calage découpe', unit: 's' },
-    { key: 'FINISHING_SURCHARGE_PERCENT', value: '0.05', label: 'Supplément finitions (vernis, aplat)', unit: '%' },
-    { key: 'ASSEMBLY_NOTICE_COST_PER_PIECE', value: '0.10', label: 'Coût notice de montage', unit: '€/pce' },
+    // ── Impression ──
+    {
+      key: 'HOURLY_RATE_PRINT',
+      value: '65',
+      label: 'Taux horaire impression',
+      unit: '€/h',
+    },
+    {
+      key: 'PRINT_SETUP_TIME_MIN',
+      value: '15',
+      label: 'Calage impression',
+      unit: 'min',
+    },
+    {
+      key: 'PRINT_SPEED_PRODUCTION',
+      value: '60',
+      label: 'Vitesse impression production',
+      unit: 'm²/h',
+    },
+    {
+      key: 'PRINT_SPEED_QUALITY',
+      value: '30',
+      label: 'Vitesse impression qualité',
+      unit: 'm²/h',
+    },
+    {
+      key: 'INK_COST_PER_LITER',
+      value: '40',
+      label: "Coût de l'encre",
+      unit: '€/L',
+    },
+    {
+      key: 'INK_BASE_ML_PER_PLATE',
+      value: '20',
+      label: "Encre de base par plaque",
+      unit: 'ml',
+    },
+    {
+      key: 'FINISHING_SURCHARGE_PERCENT',
+      value: '0.05',
+      label: 'Supplément finitions (vernis, aplat)',
+      unit: '%',
+    },
+
+    // ── Découpe ──
+    {
+      key: 'CUTTING_SETUP_MINUTES',
+      value: '15',
+      label: 'Calage découpe',
+      unit: 'min',
+    },
+
+    // ── Façonnage ──
+    {
+      key: 'HOURLY_RATE_ASSEMBLY',
+      value: '45',
+      label: 'Taux horaire façonnage',
+      unit: '€/h',
+    },
+
+    // ── Conditionnement ──
+    {
+      key: 'ASSEMBLY_NOTICE_COST_PER_PIECE',
+      value: '0.10',
+      label: 'Coût notice de montage',
+      unit: '€/pce',
+    },
+
+    // ── Imposition ──
+    {
+      key: 'POSE_SPACING_MM',
+      value: '10',
+      label: 'Espacement entre poses',
+      unit: 'mm',
+    },
+
+    // ── Emballage ──
+    {
+      key: 'HOURLY_RATE_PACKAGING',
+      value: '45',
+      label: 'Taux horaire emballage',
+      unit: '€/h',
+    },
+    {
+      key: 'PACKAGING_SETUP_MINUTES',
+      value: '15',
+      label: 'Calage emballage',
+      unit: 'min',
+    },
+
+    // ── Marges (réservé — non fonctionnel) ──
+    {
+      key: 'MARGIN_IMPRESSION',
+      value: '0',
+      label: 'Marge impression',
+      unit: '%',
+    },
+    {
+      key: 'MARGIN_DECOUPE',
+      value: '0',
+      label: 'Marge découpe',
+      unit: '%',
+    },
+    {
+      key: 'MARGIN_FACONNAGE',
+      value: '0',
+      label: 'Marge façonnage',
+      unit: '%',
+    },
+    {
+      key: 'MARGIN_CONDITIONNEMENT',
+      value: '0',
+      label: 'Marge conditionnement',
+      unit: '%',
+    },
+    {
+      key: 'MARGIN_MATERIAUX',
+      value: '0',
+      label: 'Marge matériaux',
+      unit: '%',
+    },
+    {
+      key: 'MARGIN_EMBALLAGE',
+      value: '0',
+      label: 'Marge emballage',
+      unit: '%',
+    },
   ]
 
   for (const setting of settings) {
@@ -33,7 +152,7 @@ async function main() {
   const seedPassword = process.env.SEED_ADMIN_PASSWORD
   if (!seedPassword) throw new Error('SEED_ADMIN_PASSWORD non défini dans .env')
 
-  // 1. Create Studies
+  // 1. Studies
   const study1 = await prisma.study.upsert({
     where: { number: 'E-2024-001' },
     update: {},
@@ -43,7 +162,7 @@ async function main() {
     },
   })
 
-  // 2. Create PLV Types (Product Types)
+  // 2. Product Types
   const productType1 = await prisma.productType.upsert({
     where: { name: 'PRESENTOIR DE COMPTOIR' },
     update: {
@@ -85,7 +204,7 @@ async function main() {
     },
   })
 
-  // 3. Create Plates (Materials)
+  // 3. Plates
   const akylux = await prisma.plate.upsert({
     where: { name: 'Akylux 3mm 1200x1600' },
     update: {},
@@ -209,7 +328,7 @@ async function main() {
     pvc700,
   })
 
-  // 4. Create Admin User
+  // 4. Admin User
   const passwordHash = await bcrypt.hash(seedPassword, 10)
 
   const admin = await prisma.user.upsert({
@@ -231,7 +350,7 @@ async function main() {
 
   console.log({ admin })
 
-  // 5. Seed Settings
+  // 5. Settings
   await seedSettings()
 }
 

@@ -1,12 +1,17 @@
 import {
   HOURLY_RATE_PRINT,
   HOURLY_RATE_ASSEMBLY,
+  HOURLY_RATE_PACKAGING,
   INK_COST_PER_LITER,
   INK_BASE_ML_PER_PLATE,
   PRINT_SETUP_TIME_MIN,
+  PRINT_SPEED_PRODUCTION,
+  PRINT_SPEED_QUALITY,
   CUTTING_SETUP_MINUTES,
   FINISHING_SURCHARGE_PERCENT,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
+  POSE_SPACING_MM,
+  PACKAGING_SETUP_MINUTES,
 } from '@/lib/constants'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
@@ -42,6 +47,7 @@ export interface CostCalculationParams {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number
   packagingHeight: number
+  poseSpacingMm?: number
 }
 
 export function useCostCalculation(params: CostCalculationParams) {
@@ -71,14 +77,20 @@ export function useCostCalculation(params: CostCalculationParams) {
     packagingHeight,
   } = params
 
+  // ── Résolution des constantes depuis DB ou fallback ──
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
   const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
+  const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkBaseMlPerPlate = settings?.INK_BASE_ML_PER_PLATE ?? INK_BASE_ML_PER_PLATE
   const printSetupTimeMin = settings?.PRINT_SETUP_TIME_MIN ?? PRINT_SETUP_TIME_MIN
+  const printSpeedProduction = settings?.PRINT_SPEED_PRODUCTION ?? PRINT_SPEED_PRODUCTION
+  const printSpeedQuality = settings?.PRINT_SPEED_QUALITY ?? PRINT_SPEED_QUALITY
   const cuttingSetupMinutes = settings?.CUTTING_SETUP_MINUTES ?? CUTTING_SETUP_MINUTES
   const finishingSurchargePercent = settings?.FINISHING_SURCHARGE_PERCENT ?? FINISHING_SURCHARGE_PERCENT
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
+  const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
+  const packagingSetupMinutes = settings?.PACKAGING_SETUP_MINUTES ?? PACKAGING_SETUP_MINUTES
 
   // ── Impression ──
   const printingCostData: PrintingCostData = (() => {
@@ -109,8 +121,12 @@ export function useCostCalculation(params: CostCalculationParams) {
 
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
-    const pace = printMode === 'production' ? 1 : 2
-    const machineTimeMin = printedAreaM2 * pace * multiplier * impositionResult.platesNeeded
+
+    // ✅ Vitesse depuis settings (m²/h) → temps en minutes
+    const printSpeed = printMode === 'production' ? printSpeedProduction : printSpeedQuality
+    const machineTimeMin = printSpeed > 0
+      ? (printedAreaM2 / printSpeed) * 60 * multiplier * impositionResult.platesNeeded
+      : 0
 
     const setupTimeMin = hasPrintSetup && printSurfacePercent > 0 ? printSetupTimeMin : 0
 
@@ -179,7 +195,7 @@ export function useCostCalculation(params: CostCalculationParams) {
     const imp = calculateImposition(
       { width: packagingWidth, height: packagingHeight },
       { width: packagingPlate.width, height: packagingPlate.height },
-      10
+      poseSpacingMm // ✅ depuis settings
     )
     return imp.itemsPerPlate
   })()
@@ -200,8 +216,8 @@ export function useCostCalculation(params: CostCalculationParams) {
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
     const totalMinutes =
-      (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60 + cuttingSetupMinutes
-    return (totalMinutes / 60) * hourlyRatePrint
+      (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60 + packagingSetupMinutes // ✅
+    return (totalMinutes / 60) * hourlyRatePackaging // ✅
   })()
 
   const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
@@ -236,5 +252,6 @@ export function useCostCalculation(params: CostCalculationParams) {
     packagingTotalCost,
     packagingItemsPerPlate,
     packagingPlatesNeeded,
+    poseSpacingMm, // ✅ exposé pour useCalculator
   }
 }

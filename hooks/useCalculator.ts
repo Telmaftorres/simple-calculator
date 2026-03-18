@@ -5,7 +5,7 @@ import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
-import { ASSEMBLY_NOTICE_COST_PER_PIECE } from '@/lib/constants'
+import { ASSEMBLY_NOTICE_COST_PER_PIECE, POSE_SPACING_MM } from '@/lib/constants'
 import { useCostCalculation } from './useCostCalculation'
 import { useCalculatorForm } from './useCalculatorForm'
 import type {
@@ -137,13 +137,16 @@ export function useCalculator(
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
 
+  const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
+
   // ── Imposition calculation ──
   useEffect(() => {
     if (selectedPlate && flatWidth > 0 && flatHeight > 0 && quantity > 0) {
       const imp = calculateImposition(
+        
         { width: flatWidth, height: flatHeight },
         { width: selectedPlate.width, height: selectedPlate.height },
-        10
+        poseSpacingMm 
       )
       const platesNeeded = Math.ceil(quantity / imp.itemsPerPlate) || 0
       const materialCost = platesNeeded * selectedPlate.cost
