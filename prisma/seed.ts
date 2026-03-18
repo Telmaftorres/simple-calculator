@@ -22,15 +22,15 @@ async function seedSettings() {
     },
     {
       key: 'PRINT_SPEED_PRODUCTION',
-      value: '60',
-      label: 'Vitesse impression production',
-      unit: 'm²/h',
+      value: '1',
+      label: 'Temps impression production',
+      unit: 'min/m²',
     },
     {
       key: 'PRINT_SPEED_QUALITY',
-      value: '30',
-      label: 'Vitesse impression qualité',
-      unit: 'm²/h',
+      value: '2',
+      label: 'Temps impression qualité',
+      unit: 'min/m²',
     },
     {
       key: 'INK_COST_PER_LITER',

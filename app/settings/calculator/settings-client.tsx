@@ -43,26 +43,24 @@ const FORMULAS: Record<string, {
   },
   PRINT_SPEED_PRODUCTION: {
     usedIn: ['Impression (temps machine) — mode Production'],
-    formula: 'temps_machine_min = (surface_m² × % imprimé / vitesse_m²h) × 60 × nb_plaques',
+    formula: 'temps_machine_min = min_par_m² × surface_plaque_m² × multiplicateur × nb_plaques',
     getExample: (v) => {
-      const speed = parseFloat(v.PRINT_SPEED_PRODUCTION) || 1
-      const surfaceM2 = 1.92
-      const printPct = 0.80
+      const pace = parseFloat(v.PRINT_SPEED_PRODUCTION) || 0
+      const plateM2 = 1.92
       const nbPlates = 10
-      const result = (surfaceM2 * printPct / speed) * 60 * nbPlates
-      return `(${surfaceM2} m² × 0.80 / ${speed}) × 60 × ${nbPlates} plaques = ${result.toFixed(2)} min`
+      const result = pace * plateM2 * 1 * nbPlates
+      return `${pace} min/m² × ${plateM2} m² × 1 × ${nbPlates} plaques = ${result.toFixed(2)} min`
     },
   },
   PRINT_SPEED_QUALITY: {
     usedIn: ['Impression (temps machine) — mode Qualité'],
-    formula: 'temps_machine_min = (surface_m² × % imprimé / vitesse_m²h) × 60 × nb_plaques',
+    formula: 'temps_machine_min = min_par_m² × surface_plaque_m² × multiplicateur × nb_plaques',
     getExample: (v) => {
-      const speed = parseFloat(v.PRINT_SPEED_QUALITY) || 1
-      const surfaceM2 = 1.92
-      const printPct = 0.80
+      const pace = parseFloat(v.PRINT_SPEED_QUALITY) || 0
+      const plateM2 = 1.92
       const nbPlates = 10
-      const result = (surfaceM2 * printPct / speed) * 60 * nbPlates
-      return `(${surfaceM2} m² × 0.80 / ${speed}) × 60 × ${nbPlates} plaques = ${result.toFixed(2)} min`
+      const result = pace * plateM2 * 1 * nbPlates
+      return `${pace} min/m² × ${plateM2} m² × 1 × ${nbPlates} plaques = ${result.toFixed(2)} min`
     },
   },
   INK_COST_PER_LITER: {

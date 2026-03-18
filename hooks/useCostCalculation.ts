@@ -122,11 +122,8 @@ export function useCostCalculation(params: CostCalculationParams) {
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
 
-    // ✅ Vitesse depuis settings (m²/h) → temps en minutes
-    const printSpeed = printMode === 'production' ? printSpeedProduction : printSpeedQuality
-    const machineTimeMin = printSpeed > 0
-      ? (printedAreaM2 / printSpeed) * 60 * multiplier * impositionResult.platesNeeded
-      : 0
+    const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
+    const machineTimeMin = plateAreaM2 * pace * multiplier * impositionResult.platesNeeded
 
     const setupTimeMin = hasPrintSetup && printSurfacePercent > 0 ? printSetupTimeMin : 0
 
