@@ -99,6 +99,10 @@ model Quote {
   elements                           QuoteElement[]
   hasPrintSetup                      Boolean           @default(true)
   hasCuttingSetup                    Boolean           @default(true)
+  hasImpression      Boolean @default(true)
+  hasFaconnage       Boolean @default(true)
+  hasConditionnement Boolean @default(true)
+  hasAccessoires     Boolean @default(false)
 }
 
 model Consumable {

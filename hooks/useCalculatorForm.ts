@@ -1,6 +1,6 @@
 import { useReducer } from 'react'
 import type { PrintMode } from '@/types/calculator'
-
+import { QUOTE_DEFAULTS } from '@/lib/quote-defaults'
 export interface CalculatorFormState {
   studyNumber: string
   selectedProductTypeId: string
@@ -30,8 +30,12 @@ export interface CalculatorFormState {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number
   packagingHeight: number
-  hasPrintSetup: boolean   // ✅
-  hasCuttingSetup: boolean // ✅
+  hasPrintSetup: boolean
+  hasCuttingSetup: boolean
+  hasImpression: boolean
+  hasFaconnage: boolean
+  hasConditionnement: boolean
+  hasAccessoires: boolean
 }
 
 export const initialFormState: CalculatorFormState = {
@@ -39,32 +43,22 @@ export const initialFormState: CalculatorFormState = {
   selectedProductTypeId: '',
   productSearch: '',
   isProductDropdownOpen: false,
-  quantity: 0,
+  quantity: 100,
   selectedPlateId: '',
   flatWidth: 0,
   flatHeight: 0,
   printSurfacePercent: 0,
-  printMode: 'production',
-  isRectoVerso: false,
-  hasVarnish: false,
-  hasFlatColor: false,
   rectoVersoType: null,
-  cuttingTimePerPoseSeconds: 0,
-  assemblyTimePerPieceSeconds: 0,
-  packTimePerPieceSeconds: 0,
-  hasAssemblyNotice: false,
   currentAccessoryId: '',
   currentAccessoryQty: 0,
   currentConsumableId: '',
   currentConsumableSize: 0,
-  hasPackaging: false,
   packagingPlateId: '',
   packagingQuantity: 0,
-  packagingCuttingTimePerPoseSeconds: 0,
   packagingWidth: 0,
   packagingHeight: 0,
-  hasPrintSetup: true,   
-  hasCuttingSetup: true, 
+  // ✅ Valeurs par défaut depuis la source unique
+  ...QUOTE_DEFAULTS,
 }
 
 export type CalculatorFormAction =

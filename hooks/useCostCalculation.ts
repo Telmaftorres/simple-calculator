@@ -34,6 +34,10 @@ export interface CostCalculationParams {
   hasFlatColor: boolean
   hasPrintSetup: boolean
   hasCuttingSetup: boolean
+  hasImpression: boolean
+  hasFaconnage: boolean
+  hasConditionnement: boolean
+  hasAccessoires: boolean
   cuttingTimePerPoseSeconds: number
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
@@ -47,7 +51,6 @@ export interface CostCalculationParams {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number
   packagingHeight: number
-  poseSpacingMm?: number
 }
 
 export function useCostCalculation(params: CostCalculationParams) {
@@ -62,6 +65,10 @@ export function useCostCalculation(params: CostCalculationParams) {
     hasFlatColor,
     hasPrintSetup,
     hasCuttingSetup,
+    hasImpression,
+    hasFaconnage,
+    hasConditionnement,
+    hasAccessoires,
     cuttingTimePerPoseSeconds,
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
@@ -77,7 +84,6 @@ export function useCostCalculation(params: CostCalculationParams) {
     packagingHeight,
   } = params
 
-  // ── Résolution des constantes depuis DB ou fallback ──
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
   const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
   const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
@@ -94,7 +100,7 @@ export function useCostCalculation(params: CostCalculationParams) {
 
   // ── Impression ──
   const printingCostData: PrintingCostData = (() => {
-    if (!impositionResult || !selectedPlate)
+    if (!hasImpression || !impositionResult || !selectedPlate)
       return {
         cost: 0,
         timeMin: 0,
@@ -120,8 +126,6 @@ export function useCostCalculation(params: CostCalculationParams) {
     const inkCost = inkVolumeL * inkCostPerLiter * finishingMultiplier
 
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
-    const printedAreaM2 = plateAreaM2 * (printSurfacePercent / 100)
-
     const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
     const machineTimeMin = plateAreaM2 * pace * multiplier * impositionResult.platesNeeded
 
@@ -162,12 +166,14 @@ export function useCostCalculation(params: CostCalculationParams) {
 
   // ── Façonnage ──
   const assemblyCost = (() => {
+    if (!hasFaconnage) return 0
     const totalHours = (assemblyTimePerPieceSeconds * quantity) / 3600
     return totalHours * hourlyRateAssembly
   })()
 
   // ── Conditionnement ──
   const packagingCost = (() => {
+    if (!hasConditionnement) return 0
     const totalHours = (packTimePerPieceSeconds * quantity) / 3600
     const timeCost = totalHours * hourlyRateAssembly
     const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
@@ -175,16 +181,17 @@ export function useCostCalculation(params: CostCalculationParams) {
   })()
 
   // ── Accessoires ──
-  const accessoriesCost = selectedAccessories.reduce(
-    (sum, item) => sum + item.price * item.quantity,
-    0
-  )
+  const accessoriesCost = hasAccessoires
+    ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    : 0
 
-  // ── Consommables ──
-  const consumablesCost = selectedConsumables.reduce(
-    (sum, item) => sum + ((item.sizePerItem * item.quantity) / item.size) * item.price,
-    0
-  )
+  // ── Consommables (liés au façonnage) ──
+  const consumablesCost = hasFaconnage
+    ? selectedConsumables.reduce(
+        (sum, item) => sum + ((item.sizePerItem * item.quantity) / item.size) * item.price,
+        0
+      )
+    : 0
 
   // ── Emballage — imposition ──
   const packagingItemsPerPlate = (() => {
@@ -192,7 +199,7 @@ export function useCostCalculation(params: CostCalculationParams) {
     const imp = calculateImposition(
       { width: packagingWidth, height: packagingHeight },
       { width: packagingPlate.width, height: packagingPlate.height },
-      poseSpacingMm // ✅ depuis settings
+      poseSpacingMm
     )
     return imp.itemsPerPlate
   })()
@@ -213,8 +220,8 @@ export function useCostCalculation(params: CostCalculationParams) {
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
     const totalMinutes =
-      (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60 + packagingSetupMinutes // ✅
-    return (totalMinutes / 60) * hourlyRatePackaging // ✅
+      (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60 + packagingSetupMinutes
+    return (totalMinutes / 60) * hourlyRatePackaging
   })()
 
   const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
@@ -249,6 +256,6 @@ export function useCostCalculation(params: CostCalculationParams) {
     packagingTotalCost,
     packagingItemsPerPlate,
     packagingPlatesNeeded,
-    poseSpacingMm, // ✅ exposé pour useCalculator
+    poseSpacingMm,
   }
 }

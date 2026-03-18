@@ -4,28 +4,16 @@ import { Label } from '@/components/ui/label'
 import { GaugeSlider } from '../../components/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds, formatMinutes } from '@/hooks/useCalculator'
+import { useCalculatorContext } from '../context/CalculatorContext'
 
-interface SectionDecoupeProps {
-  cuttingTimePerPoseSeconds: number
-  setCuttingTimePerPoseSeconds: (v: number) => void
-  hasCuttingSetup: boolean
-  setHasCuttingSetup: (v: boolean) => void
-  cuttingSetupTimeMin: number
-  cuttingMachineTimeMin: number
-  cuttingMachineCost: number
-  cuttingSetupCost: number
-}
+export function SectionDecoupe() {
+  const {
+    cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds,
+    hasCuttingSetup, setHasCuttingSetup,
+    cuttingSetupTimeMin, cuttingMachineTimeMin,
+    cuttingMachineCost, cuttingSetupCost,
+  } = useCalculatorContext()
 
-export function SectionDecoupe({
-  cuttingTimePerPoseSeconds,
-  setCuttingTimePerPoseSeconds,
-  hasCuttingSetup,
-  setHasCuttingSetup,
-  cuttingSetupTimeMin,
-  cuttingMachineTimeMin,
-  cuttingMachineCost,
-  cuttingSetupCost,
-}: SectionDecoupeProps) {
   return (
     <SectionDisplay number="4" title="Découpe" color="orange">
       <GaugeSlider
@@ -39,7 +27,6 @@ export function SectionDecoupe({
         gradientColors="from-yellow-300 to-orange-600"
       />
 
-      {/* ✅ Toggle calage découpe */}
       <div className="mt-4 flex items-center space-x-2 bg-orange-50 p-3 rounded-lg border border-orange-100">
         <input
           type="checkbox"
@@ -53,7 +40,6 @@ export function SectionDecoupe({
         </Label>
       </div>
 
-      {/* ✅ Détail des temps */}
       <div className="mt-3 bg-orange-50 p-3 rounded-lg border border-orange-100 text-xs text-orange-800 space-y-1">
         <div className="flex justify-between">
           <span>Temps machine</span>

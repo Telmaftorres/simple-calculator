@@ -1,56 +1,25 @@
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
+  Select, SelectContent, SelectItem, SelectTrigger, SelectValue,
 } from '@/components/ui/select'
-import { ProductType, Plate } from '@/types/calculator'
 import { SectionDisplay } from '../shared'
+import { useCalculatorContext } from '../context/CalculatorContext'
 
-interface SectionPresentationProps {
-  studyNumber: string
-  setStudyNumber: (value: string) => void
-  productSearch: string
-  setProductSearch: (value: string) => void
-  isProductDropdownOpen: boolean
-  setIsProductDropdownOpen: (value: boolean) => void
-  productTypes: ProductType[]
-  setSelectedProductTypeId: (value: string) => void
-  handleCreateProductType: () => void
-  quantity: number
-  setQuantity: (value: number) => void
-  selectedPlateId: string
-  setSelectedPlateId: (value: string) => void
-  plates: Plate[]
-  flatWidth: number
-  setFlatWidth: (value: number) => void
-  flatHeight: number
-  setFlatHeight: (value: number) => void
-}
+export function SectionPresentation() {
+  const {
+    studyNumber, setStudyNumber,
+    productSearch, setProductSearch,
+    isProductDropdownOpen, setIsProductDropdownOpen,
+    productTypes, setSelectedProductTypeId,
+    handleCreateProductType,
+    quantity, setQuantity,
+    selectedPlateId, setSelectedPlateId,
+    plates,
+    flatWidth, setFlatWidth,
+    flatHeight, setFlatHeight,
+  } = useCalculatorContext()
 
-export function SectionPresentation({
-  studyNumber,
-  setStudyNumber,
-  productSearch,
-  setProductSearch,
-  isProductDropdownOpen,
-  setIsProductDropdownOpen,
-  productTypes,
-  setSelectedProductTypeId,
-  handleCreateProductType,
-  quantity,
-  setQuantity,
-  selectedPlateId,
-  setSelectedPlateId,
-  plates,
-  flatWidth,
-  setFlatWidth,
-  flatHeight,
-  setFlatHeight,
-}: SectionPresentationProps) {
   return (
     <SectionDisplay number="1" title="Présentation & Matière" color="emerald">
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -67,10 +36,7 @@ export function SectionPresentation({
           <Label>Type de PLV</Label>
           <Input
             value={productSearch}
-            onChange={(e) => {
-              setProductSearch(e.target.value)
-              setIsProductDropdownOpen(true)
-            }}
+            onChange={(e) => { setProductSearch(e.target.value); setIsProductDropdownOpen(true) }}
             onFocus={() => setIsProductDropdownOpen(true)}
             placeholder="Rechercher..."
           />
