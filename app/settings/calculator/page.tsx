@@ -12,7 +12,7 @@ export default async function CalculatorSettingsPage() {
   const settings = await getSettings()
 
   return (
-    <div className="max-w-2xl mx-auto space-y-6">
+<div className="max-w-4xl mx-auto space-y-6 px-4">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Paramètres du Calculateur</h1>
         <p className="text-slate-500 mt-1">
