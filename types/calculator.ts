@@ -4,9 +4,11 @@ import type {
   Accessory as PrismaAccessory,
   Consumable as PrismaConsumable,
   Element as PrismaElement,
+  Prisma,
 } from '@prisma/client'
 import type { ImpositionResult as BaseImpositionResult } from '@/lib/calculation/imposition'
 
+// ── Types Prisma simplifiés ──
 export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost' | 'material'>
 export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'>
 export type Consumable = Pick<PrismaConsumable, 'id' | 'name' | 'price' | 'size'>
@@ -15,11 +17,13 @@ export type ProductType = Pick<PrismaProductType, 'id' | 'name' | 'flatWidthForm
   elements: PLVElement[]
 }
 
+// ── ImpositionResult étendu ──
 export interface ImpositionResult extends BaseImpositionResult {
   platesNeeded: number
   materialCost: number
 }
 
+// ── Types métier calculateur ──
 export interface SelectedAccessory {
   id: number
   name: string
@@ -48,46 +52,24 @@ export interface PrintingCostData {
   machineTimeMin: number
 }
 
-export interface Quote {
-  id: number
-  reference: string | null
-  studyId: number
-  productTypeId: number
-  quantity: number
-  width: number
-  height: number
-  flatWidth: number | null
-  flatHeight: number | null
-  printSurface: number | null
-  printMode: string
-  isRectoVerso: boolean
-  rectoVersoType: string | null
-  hasVarnish: boolean
-  hasFlatColor: boolean
-  cuttingTimePerPoseSeconds: number
-  assemblyTimePerPieceSeconds: number
-  packTimePerPieceSeconds: number
-  hasAssemblyNotice: boolean
-  plateId: number | null
-  itemsPerPlate: number | null
-  platesCount: number | null
-  totalCost: number | null
-  createdAt: Date
-  hasPackaging: boolean
-  packagingPlateId: number | null
-  packagingQuantity: number | null
-  packagingCuttingTimePerPoseSeconds: number
-  packagingWidth: number | null
-  packagingHeight: number | null
-  hasPrintSetup: boolean   // ✅
-  hasCuttingSetup: boolean // ✅
-  study: { number: string } | null
-  productType: { name: string; elements: { name: string; quantity: number }[] } | null
-  plate: { name: string } | null
-  accessories?: { accessoryId: number; quantity: number }[]
-  consumables?: { consumableId: number; sizePerItem: number }[]
-  elements: { name: string; quantity: number }[]
-}
+// ✅ Quote inféré depuis Prisma — plus jamais à mettre à jour manuellement
+// Quand tu ajoutes une colonne + prisma generate, ce type se met à jour automatiquement
+export type Quote = Prisma.QuoteGetPayload<{
+  include: {
+    study: true
+    productType: {
+      include: { elements: true }
+    }
+    plate: true
+    accessories: {
+      include: { accessory: true } 
+    }
+    consumables: {
+      include: { consumable: true }
+    }
+    elements: true
+  }
+}>
 
 export interface CalculatorProps {
   productTypes: ProductType[]

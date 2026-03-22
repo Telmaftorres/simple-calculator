@@ -59,21 +59,16 @@ model Quote {
   studyId                            Int
   productTypeId                      Int
   quantity                           Int
-  width                              Int
-  height                             Int
-  flatWidth                          Int?
-  flatHeight                         Int?
+  flatWidth                          Int
+  flatHeight                         Int
   printSurface                       Int?
   printMode                          String            @default("production")
   isRectoVerso                       Boolean           @default(false)
   rectoVersoType                     String?
   hasVarnish                         Boolean           @default(false)
   hasFlatColor                       Boolean           @default(false)
-  cuttingMinutes                     Int?
-  cuttingTimePerPoseSeconds          Int               @default(20)
-  assemblySeconds                    Int?
+  cuttingTimePerPoseSeconds          Int               @default(0)
   assemblyTimePerPieceSeconds        Int               @default(0)
-  packSeconds                        Int?
   packTimePerPieceSeconds            Int               @default(0)
   hasAssemblyNotice                  Boolean           @default(false)
   plateId                            Int?
@@ -99,6 +94,10 @@ model Quote {
   elements                           QuoteElement[]
   hasPrintSetup                      Boolean           @default(true)
   hasCuttingSetup                    Boolean           @default(true)
+  hasImpression      Boolean @default(true)
+  hasFaconnage       Boolean @default(true)
+  hasConditionnement Boolean @default(true)
+  hasAccessoires     Boolean @default(false)
 }
 
 model Consumable {
@@ -132,7 +131,7 @@ model QuoteAccessory {
   accessoryId Int
   quantity    Int
   accessory   Accessory @relation(fields: [accessoryId], references: [id])
-  quote       Quote     @relation(fields: [quoteId], references: [id])
+  quote       Quote     @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model User {

@@ -1,54 +1,34 @@
 import { Label } from '@/components/ui/label'
-import { ImpositionResult, PrintingCostData, Plate, PrintMode } from '@/types/calculator'
 import { SectionDisplay } from '../shared'
 import { GaugeSlider } from '../../components/GaugeSlider'
 import { PlateVisualizer } from '../../components/PlateVisualizer'
-import { formatMinutes } from '@/hooks/useCalculator'
+import { formatMinutes } from '@/lib/format'
+import { useCalculatorContext } from '../context/CalculatorContext'
 
-interface SectionImpressionProps {
-  printMode: PrintMode
-  setPrintMode: (mode: PrintMode) => void
-  isRectoVerso: boolean
-  setIsRectoVerso: (value: boolean) => void
-  rectoVersoType: string | null
-  setRectoVersoType: (value: 'identical' | 'different' | null) => void
-  hasVarnish: boolean
-  setHasVarnish: (value: boolean) => void
-  hasFlatColor: boolean
-  setHasFlatColor: (value: boolean) => void
-  printSurfacePercent: number
-  setPrintSurfacePercent: (value: number) => void
-  printingCostData: PrintingCostData
-  impositionResult: ImpositionResult | undefined
-  selectedPlate: Plate | undefined
-  hasPrintSetup: boolean          // ✅
-  setHasPrintSetup: (v: boolean) => void // ✅
-}
+export function SectionImpression() {
+  const {
+    hasImpression, setHasImpression,
+    printMode, setPrintMode,
+    isRectoVerso, setIsRectoVerso,
+    rectoVersoType, setRectoVersoType,
+    hasVarnish, setHasVarnish,
+    hasFlatColor, setHasFlatColor,
+    printSurfacePercent, setPrintSurfacePercent,
+    hasPrintSetup, setHasPrintSetup,
+    printingCostData,
+    impositionResult,
+    selectedPlate,
+  } = useCalculatorContext()
 
-export function SectionImpression({
-  printMode,
-  setPrintMode,
-  isRectoVerso,
-  setIsRectoVerso,
-  rectoVersoType,
-  setRectoVersoType,
-  hasVarnish,
-  setHasVarnish,
-  hasFlatColor,
-  setHasFlatColor,
-  printSurfacePercent,
-  setPrintSurfacePercent,
-  printingCostData,
-  impositionResult,
-  selectedPlate,
-  hasPrintSetup,
-  setHasPrintSetup,
-}: SectionImpressionProps) {
   return (
-    <SectionDisplay number="3" title="Impression" color="purple">
+    <SectionDisplay
+      number="3"
+      title="Impression"
+      color="purple"
+      enabled={hasImpression}
+      onToggle={setHasImpression}
+    >
       <div className="space-y-4">
-
-        {/* Mode d'impression */}
         <div className="flex justify-between items-center">
           <Label>Mode d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -67,7 +47,6 @@ export function SectionImpression({
           </div>
         </div>
 
-        {/* Type d'impression */}
         <div className="flex justify-between items-center">
           <Label>Type d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -86,7 +65,6 @@ export function SectionImpression({
           </div>
         </div>
 
-        {/* Identique / Différent */}
         {isRectoVerso && (
           <div>
             <Label className="mb-2 block">Visuel Recto / Verso</Label>
@@ -107,7 +85,6 @@ export function SectionImpression({
           </div>
         )}
 
-        {/* Finitions */}
         <div>
           <Label className="mb-2 block">Finitions</Label>
           <div className="flex gap-2">
@@ -131,7 +108,6 @@ export function SectionImpression({
           )}
         </div>
 
-        {/* Surface imprimée */}
         <GaugeSlider
           label="Surface Imprimée"
           value={printSurfacePercent}
@@ -141,7 +117,6 @@ export function SectionImpression({
           gradientColors="from-indigo-300 to-purple-600"
         />
 
-        {/* ✅ Toggle calage impression */}
         <div className="flex items-center space-x-2 bg-purple-50 p-3 rounded-lg border border-purple-100">
           <input
             type="checkbox"
@@ -155,7 +130,6 @@ export function SectionImpression({
           </Label>
         </div>
 
-        {/* Temps estimé */}
         <div className="flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800">
           <span>Temps machine :</span>
           <span className="font-bold text-sm">{formatMinutes(printingCostData.machineTimeMin)}</span>

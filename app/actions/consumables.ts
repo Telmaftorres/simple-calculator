@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
+import { unstable_cache } from 'next/cache'
 
 const consumableSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -12,11 +13,11 @@ const consumableSchema = z.object({
   size: z.number().positive('La taille doit être positive'),
 })
 
-export const getConsumables = async () => {
-  return await prisma.consumable.findMany({
-    orderBy: { name: 'asc' },
-  })
-}
+export const getConsumables = unstable_cache(
+  async () => prisma.consumable.findMany({ orderBy: { name: 'asc' } }),
+  ['consumables'],
+  { tags: ['consumables'] }
+)
 
 export async function createConsumable(data: z.infer<typeof consumableSchema>) {
   await requireAuth()

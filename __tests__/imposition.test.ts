@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest'
-import { calculateImposition, calculateQuote } from '@/lib/calculation/imposition'
+import { calculateImposition } from '@/lib/calculation/imposition'
 
 describe('calculateImposition', () => {
   it('calculates normal orientation fit correctly', () => {
@@ -55,39 +55,5 @@ describe('calculateImposition', () => {
     const result = calculateImposition({ width: 400, height: 300 }, { width: 400, height: 300 }, 0)
     expect(result.itemsPerPlate).toBe(1)
     expect(result.layout).toHaveLength(1)
-  })
-})
-
-describe('calculateQuote', () => {
-  it('calculates plates needed and cost correctly', () => {
-    // 100 items, 10 per plate, 5€ per plate
-    const result = calculateQuote(100, 10, 5)
-    expect(result.platesNeeded).toBe(10)
-    expect(result.totalCost).toBe(50)
-  })
-
-  it('rounds up partial plates', () => {
-    // 15 items, 10 per plate → 2 plates
-    const result = calculateQuote(15, 10, 5)
-    expect(result.platesNeeded).toBe(2)
-    expect(result.totalCost).toBe(10)
-  })
-
-  it('handles itemsPerPlate of 0', () => {
-    const result = calculateQuote(100, 0, 5)
-    expect(result.platesNeeded).toBe(0)
-    expect(result.totalCost).toBe(0)
-  })
-
-  it('handles quantity of 1', () => {
-    const result = calculateQuote(1, 10, 5)
-    expect(result.platesNeeded).toBe(1)
-    expect(result.totalCost).toBe(5)
-  })
-
-  it('handles exact fit (no waste)', () => {
-    const result = calculateQuote(50, 25, 10)
-    expect(result.platesNeeded).toBe(2)
-    expect(result.totalCost).toBe(20)
   })
 })

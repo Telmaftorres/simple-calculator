@@ -1,14 +1,14 @@
 import { auth } from '@/auth'
+import { redirect } from 'next/navigation'
 
 export async function requireAuth() {
   const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
+  if (!session?.user?.id) redirect('/login')
   return session
 }
 
 export async function requireAdmin() {
-  const session = await auth()
-  if (!session?.user) throw new Error('Non autorisé')
-  if (session.user.role !== 'ADMIN') throw new Error('Accès refusé')
+  const session = await requireAuth()
+  if (session.user.role !== 'ADMIN') redirect('/login')
   return session
 }

@@ -27,33 +27,12 @@ const styles = StyleSheet.create({
     borderBottomWidth: 2,
     borderBottomColor: '#0f172a',
   },
-  logo: {
-    width: 120,
-    height: 40,
-    objectFit: 'contain',
-  },
-  headerRight: {
-    alignItems: 'flex-end',
-  },
-  headerTitle: {
-    fontSize: 20,
-    fontFamily: 'Helvetica-Bold',
-    color: '#0f172a',
-  },
-  headerSubtitle: {
-    fontSize: 10,
-    color: '#64748b',
-    marginTop: 2,
-  },
-  reference: {
-    fontSize: 12,
-    fontFamily: 'Helvetica-Bold',
-    color: '#10b981',
-    marginTop: 4,
-  },
-  section: {
-    marginBottom: 16,
-  },
+  logo: { width: 120, height: 40, objectFit: 'contain' },
+  headerRight: { alignItems: 'flex-end' },
+  headerTitle: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: '#0f172a' },
+  headerSubtitle: { fontSize: 10, color: '#64748b', marginTop: 2 },
+  reference: { fontSize: 12, fontFamily: 'Helvetica-Bold', color: '#10b981', marginTop: 4 },
+  section: { marginBottom: 16 },
   sectionTitle: {
     fontSize: 11,
     fontFamily: 'Helvetica-Bold',
@@ -62,11 +41,7 @@ const styles = StyleSheet.create({
     padding: '6 10',
     marginBottom: 8,
   },
-  grid: {
-    flexDirection: 'row',
-    gap: 12,
-    marginBottom: 16,
-  },
+  grid: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   gridItem: {
     flex: 1,
     backgroundColor: '#f8fafc',
@@ -82,93 +57,22 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#f1f5f9',
   },
-  rowLast: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    paddingVertical: 4,
-  },
-  label: {
-    color: '#64748b',
-    flex: 1,
-  },
-  value: {
-    fontFamily: 'Helvetica-Bold',
-    textAlign: 'right',
-  },
-  table: {
-    borderWidth: 1,
-    borderColor: '#e2e8f0',
-    borderRadius: 4,
-    overflow: 'hidden',
-  },
-  tableHeader: {
-    flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    padding: '6 10',
-  },
-  tableHeaderText: {
-    color: '#ffffff',
-    fontFamily: 'Helvetica-Bold',
-    flex: 1,
-  },
-  tableHeaderTextRight: {
-    color: '#ffffff',
-    fontFamily: 'Helvetica-Bold',
-    textAlign: 'right',
-    width: 80,
-  },
-  tableRow: {
-    flexDirection: 'row',
-    padding: '5 10',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-  },
-  tableRowAlt: {
-    flexDirection: 'row',
-    padding: '5 10',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    backgroundColor: '#f8fafc',
-  },
-  tableRowSub: {
-    flexDirection: 'row',
-    padding: '4 10 4 20',
-    borderBottomWidth: 1,
-    borderBottomColor: '#f1f5f9',
-    backgroundColor: '#f8fafc',
-  },
-  tableCell: {
-    flex: 1,
-    color: '#1e293b',
-  },
-  tableCellSub: {
-    flex: 1,
-    color: '#64748b',
-    fontSize: 9,
-  },
-  tableCellRight: {
-    width: 80,
-    textAlign: 'right',
-    fontFamily: 'Helvetica-Bold',
-    color: '#1e293b',
-  },
-  tableFooter: {
-    flexDirection: 'row',
-    backgroundColor: '#0f172a',
-    padding: '8 10',
-  },
-  tableFooterLabel: {
-    flex: 1,
-    color: '#ffffff',
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 12,
-  },
-  tableFooterValue: {
-    color: '#10b981',
-    fontFamily: 'Helvetica-Bold',
-    fontSize: 14,
-    textAlign: 'right',
-  },
+  rowLast: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4 },
+  label: { color: '#64748b', flex: 1 },
+  value: { fontFamily: 'Helvetica-Bold', textAlign: 'right' },
+  table: { borderWidth: 1, borderColor: '#e2e8f0', borderRadius: 4, overflow: 'hidden' },
+  tableHeader: { flexDirection: 'row', backgroundColor: '#0f172a', padding: '6 10' },
+  tableHeaderText: { color: '#ffffff', fontFamily: 'Helvetica-Bold', flex: 1 },
+  tableHeaderTextRight: { color: '#ffffff', fontFamily: 'Helvetica-Bold', textAlign: 'right', width: 80 },
+  tableRow: { flexDirection: 'row', padding: '5 10', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  tableRowAlt: { flexDirection: 'row', padding: '5 10', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: '#f8fafc' },
+  tableRowSub: { flexDirection: 'row', padding: '4 10 4 20', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: '#f8fafc' },
+  tableCell: { flex: 1, color: '#1e293b' },
+  tableCellSub: { flex: 1, color: '#64748b', fontSize: 9 },
+  tableCellRight: { width: 80, textAlign: 'right', fontFamily: 'Helvetica-Bold', color: '#1e293b' },
+  tableFooter: { flexDirection: 'row', backgroundColor: '#0f172a', padding: '8 10' },
+  tableFooterLabel: { flex: 1, color: '#ffffff', fontFamily: 'Helvetica-Bold', fontSize: 12 },
+  tableFooterValue: { color: '#10b981', fontFamily: 'Helvetica-Bold', fontSize: 14, textAlign: 'right' },
   footer: {
     position: 'absolute',
     bottom: 30,
@@ -180,10 +84,7 @@ const styles = StyleSheet.create({
     borderTopColor: '#e2e8f0',
     paddingTop: 8,
   },
-  footerText: {
-    fontSize: 8,
-    color: '#94a3b8',
-  },
+  footerText: { fontSize: 8, color: '#94a3b8' },
 })
 
 interface QuotePDFProps {
@@ -208,6 +109,7 @@ interface QuotePDFProps {
   printingCostData: PrintingCostData
   inkVolumeL: number
   hasPrintSetup: boolean
+  hasImpression: boolean
   cuttingCost: number
   cuttingMachineCost: number
   cuttingSetupCost: number
@@ -215,8 +117,11 @@ interface QuotePDFProps {
   cuttingMachineTimeMin: number
   hasCuttingSetup: boolean
   assemblyCost: number
+  hasFaconnage: boolean
   packagingCost: number
+  hasConditionnement: boolean
   accessoriesCost: number
+  hasAccessoires: boolean
   consumablesCost: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
@@ -249,6 +154,7 @@ export function QuotePDF({
   printingCostData,
   inkVolumeL,
   hasPrintSetup,
+  hasImpression,
   cuttingCost,
   cuttingMachineCost,
   cuttingSetupCost,
@@ -256,8 +162,11 @@ export function QuotePDF({
   cuttingMachineTimeMin,
   hasCuttingSetup,
   assemblyCost,
+  hasFaconnage,
   packagingCost,
+  hasConditionnement,
   accessoriesCost,
+  hasAccessoires,
   consumablesCost,
   selectedAccessories,
   selectedConsumables,
@@ -268,10 +177,40 @@ export function QuotePDF({
   totalCost,
 }: QuotePDFProps) {
   const date = new Date().toLocaleDateString('fr-FR', {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
+    day: '2-digit', month: '2-digit', year: 'numeric',
   })
+
+  // ── Lignes de coûts dynamiques ──
+  type CostRow = { label: string; detail: string; value: number; sub?: boolean }
+  const costRows: CostRow[] = [
+    { label: 'Matière', detail: `${impositionResult?.platesNeeded} plaque(s) × ${selectedPlate?.cost}€`, value: impositionResult?.materialCost || 0 },
+    ...(hasImpression ? [
+      { label: 'Impression (Encre)', detail: `${inkVolumeL.toFixed(3)} L`, value: printingCostData.inkCost },
+      { label: 'Impression (temps machine)', detail: `${Math.round(printingCostData.machineTimeMin)} min`, value: printingCostData.machineCost },
+      ...(hasPrintSetup && printingCostData.setupCost > 0 ? [
+        { label: '↳ Calage impression', detail: `${printingCostData.setupTimeMin} min`, value: printingCostData.setupCost, sub: true },
+      ] : []),
+    ] : []),
+    { label: 'Découpe (temps machine)', detail: `${Math.round(cuttingMachineTimeMin)} min`, value: cuttingMachineCost },
+    ...(hasCuttingSetup && cuttingSetupCost > 0 ? [
+      { label: '↳ Calage découpe', detail: `${cuttingSetupTimeMin} min`, value: cuttingSetupCost, sub: true },
+    ] : []),
+    ...(hasFaconnage ? [
+      { label: 'Façonnage', detail: `${assemblyTimePerPieceSeconds}s/pce`, value: assemblyCost },
+      ...(selectedConsumables.length > 0 ? [
+        { label: '↳ Consommables', detail: `${selectedConsumables.length} type(s)`, value: consumablesCost, sub: true },
+      ] : []),
+    ] : []),
+    ...(hasConditionnement ? [
+      { label: 'Conditionnement', detail: hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`, value: packagingCost },
+    ] : []),
+    ...(hasAccessoires && accessoriesCost > 0 ? [
+      { label: 'Accessoires', detail: `${selectedAccessories.length} réf.`, value: accessoriesCost },
+    ] : []),
+    ...(hasPackaging && packagingTotalCost > 0 ? [
+      { label: 'Emballage', detail: `Mat. ${packagingMaterialCost.toFixed(2)}€ + Déc. ${packagingCuttingCost.toFixed(2)}€`, value: packagingTotalCost },
+    ] : []),
+  ]
 
   return (
     <Document>
@@ -291,90 +230,45 @@ export function QuotePDF({
         {/* Informations générales */}
         <View style={styles.grid}>
           <View style={styles.gridItem}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>
-              Informations
-            </Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Dossier</Text>
-              <Text style={styles.value}>{studyNumber}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Produit</Text>
-              <Text style={styles.value}>{productName}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Quantité</Text>
-              <Text style={styles.value}>{quantity} pcs</Text>
-            </View>
-            <View style={styles.rowLast}>
-              <Text style={styles.label}>Matière</Text>
-              <Text style={styles.value}>{selectedPlate?.name || '-'}</Text>
-            </View>
+            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Informations</Text>
+            <View style={styles.row}><Text style={styles.label}>Dossier</Text><Text style={styles.value}>{studyNumber}</Text></View>
+            <View style={styles.row}><Text style={styles.label}>Produit</Text><Text style={styles.value}>{productName}</Text></View>
+            <View style={styles.row}><Text style={styles.label}>Quantité</Text><Text style={styles.value}>{quantity} pcs</Text></View>
+            <View style={styles.rowLast}><Text style={styles.label}>Matière</Text><Text style={styles.value}>{selectedPlate?.name || '-'}</Text></View>
           </View>
 
           <View style={styles.gridItem}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>
-              Technique
-            </Text>
-            <View style={styles.row}>
-              <Text style={styles.label}>Format à plat</Text>
-              <Text style={styles.value}>{flatWidth} × {flatHeight} mm</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Poses / plaque</Text>
-              <Text style={styles.value}>{impositionResult?.itemsPerPlate || 0}</Text>
-            </View>
-            <View style={styles.row}>
-              <Text style={styles.label}>Plaques nécessaires</Text>
-              <Text style={styles.value}>{impositionResult?.platesNeeded || 0}</Text>
-            </View>
-            <View style={styles.rowLast}>
-              <Text style={styles.label}>Orientation</Text>
-              <Text style={styles.value}>{impositionResult?.orientation || '-'}</Text>
-            </View>
+            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Technique</Text>
+            <View style={styles.row}><Text style={styles.label}>Format à plat</Text><Text style={styles.value}>{flatWidth} × {flatHeight} mm</Text></View>
+            <View style={styles.row}><Text style={styles.label}>Poses / plaque</Text><Text style={styles.value}>{impositionResult?.itemsPerPlate || 0}</Text></View>
+            <View style={styles.row}><Text style={styles.label}>Plaques nécessaires</Text><Text style={styles.value}>{impositionResult?.platesNeeded || 0}</Text></View>
+            <View style={styles.rowLast}><Text style={styles.label}>Orientation</Text><Text style={styles.value}>{impositionResult?.orientation || '-'}</Text></View>
           </View>
         </View>
 
-        {/* Impression */}
-        <View style={styles.section}>
-          <Text style={styles.sectionTitle}>Impression</Text>
-          <View style={styles.grid}>
-            <View style={styles.gridItem}>
-              <View style={styles.row}>
-                <Text style={styles.label}>Mode</Text>
-                <Text style={styles.value}>
-                  {printMode === 'production' ? 'Production' : 'Qualité'}
-                </Text>
+        {/* Impression — si activée */}
+        {hasImpression && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Impression</Text>
+            <View style={styles.grid}>
+              <View style={styles.gridItem}>
+                <View style={styles.row}><Text style={styles.label}>Mode</Text><Text style={styles.value}>{printMode === 'production' ? 'Production' : 'Qualité'}</Text></View>
+                <View style={styles.row}><Text style={styles.label}>Surface imprimée</Text><Text style={styles.value}>{printSurfacePercent}%</Text></View>
+                <View style={styles.rowLast}>
+                  <Text style={styles.label}>Type</Text>
+                  <Text style={styles.value}>
+                    {isRectoVerso ? `Recto/Verso — ${rectoVersoType === 'identical' ? 'Identique' : 'Différent'}` : 'Recto seul'}
+                  </Text>
+                </View>
               </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>Surface imprimée</Text>
-                <Text style={styles.value}>{printSurfacePercent}%</Text>
-              </View>
-              <View style={styles.rowLast}>
-                <Text style={styles.label}>Type</Text>
-                <Text style={styles.value}>
-                  {isRectoVerso
-                    ? `Recto/Verso — ${rectoVersoType === 'identical' ? 'Identique' : 'Différent'}`
-                    : 'Recto seul'}
-                </Text>
-              </View>
-            </View>
-            <View style={styles.gridItem}>
-              <View style={styles.row}>
-                <Text style={styles.label}>Vernis</Text>
-                <Text style={styles.value}>{hasVarnish ? 'Oui (+5%)' : 'Non'}</Text>
-              </View>
-              <View style={styles.row}>
-                <Text style={styles.label}>Aplat</Text>
-                <Text style={styles.value}>{hasFlatColor ? 'Oui (+5%)' : 'Non'}</Text>
-              </View>
-              <View style={styles.rowLast}>
-                <Text style={styles.label}>Temps machine</Text>
-                <Text style={styles.value}>{Math.round(printingCostData.machineTimeMin)} min</Text>
+              <View style={styles.gridItem}>
+                <View style={styles.row}><Text style={styles.label}>Vernis</Text><Text style={styles.value}>{hasVarnish ? 'Oui (+5%)' : 'Non'}</Text></View>
+                <View style={styles.row}><Text style={styles.label}>Aplat</Text><Text style={styles.value}>{hasFlatColor ? 'Oui (+5%)' : 'Non'}</Text></View>
+                <View style={styles.rowLast}><Text style={styles.label}>Temps machine</Text><Text style={styles.value}>{Math.round(printingCostData.machineTimeMin)} min</Text></View>
               </View>
             </View>
           </View>
-        </View>
+        )}
 
         {/* Tableau des coûts */}
         <View style={styles.section}>
@@ -385,131 +279,20 @@ export function QuotePDF({
               <Text style={{ ...styles.tableHeaderText, textAlign: 'center' }}>Détail</Text>
               <Text style={styles.tableHeaderTextRight}>Montant</Text>
             </View>
-
-            {/* Matière */}
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>Matière</Text>
-              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                {impositionResult?.platesNeeded} plaque(s) × {selectedPlate?.cost}€
-              </Text>
-              <Text style={styles.tableCellRight}>
-                {(impositionResult?.materialCost || 0).toFixed(2)} €
-              </Text>
-            </View>
-
-            {/* Impression encre */}
-            <View style={styles.tableRowAlt}>
-              <Text style={styles.tableCell}>Impression (Encre)</Text>
-              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                {inkVolumeL.toFixed(3)} L
-              </Text>
-              <Text style={styles.tableCellRight}>
-                {printingCostData.inkCost.toFixed(2)} €
-              </Text>
-            </View>
-
-            {/* Impression temps machine */}
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>Impression (temps machine)</Text>
-              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                {Math.round(printingCostData.machineTimeMin)} min
-              </Text>
-              <Text style={styles.tableCellRight}>
-                {printingCostData.machineCost.toFixed(2)} €
-              </Text>
-            </View>
-
-            {/* ✅ Calage impression */}
-            {hasPrintSetup && printingCostData.setupCost > 0 && (
-              <View style={styles.tableRowSub}>
-                <Text style={styles.tableCellSub}>↳ Calage impression</Text>
-                <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
-                  {printingCostData.setupTimeMin} min
+            {costRows.map((row, i) => (
+              <View key={i} style={row.sub ? styles.tableRowSub : i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+                <Text style={row.sub ? styles.tableCellSub : styles.tableCell}>{row.label}</Text>
+                <Text style={{ ...(row.sub ? styles.tableCellSub : styles.tableCell), color: '#64748b', textAlign: 'center' }}>
+                  {row.detail}
                 </Text>
-                <Text style={{ ...styles.tableCellRight, color: '#64748b', fontSize: 9 }}>
-                  {printingCostData.setupCost.toFixed(2)} €
+                <Text style={row.sub
+                  ? { ...styles.tableCellRight, color: '#64748b', fontSize: 9 }
+                  : styles.tableCellRight
+                }>
+                  {row.value.toFixed(2)} €
                 </Text>
               </View>
-            )}
-
-            {/* Découpe temps machine */}
-            <View style={styles.tableRowAlt}>
-              <Text style={styles.tableCell}>Découpe (temps machine)</Text>
-              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                {Math.round(cuttingMachineTimeMin)} min
-              </Text>
-              <Text style={styles.tableCellRight}>
-                {cuttingMachineCost.toFixed(2)} €
-              </Text>
-            </View>
-
-            {/* ✅ Calage découpe */}
-            {hasCuttingSetup && cuttingSetupCost > 0 && (
-              <View style={styles.tableRowSub}>
-                <Text style={styles.tableCellSub}>↳ Calage découpe</Text>
-                <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
-                  {cuttingSetupTimeMin} min
-                </Text>
-                <Text style={{ ...styles.tableCellRight, color: '#64748b', fontSize: 9 }}>
-                  {cuttingSetupCost.toFixed(2)} €
-                </Text>
-              </View>
-            )}
-
-            {/* Façonnage */}
-            <View style={styles.tableRow}>
-              <Text style={styles.tableCell}>Façonnage</Text>
-              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                {assemblyTimePerPieceSeconds}s/pce
-              </Text>
-              <Text style={styles.tableCellRight}>{assemblyCost.toFixed(2)} €</Text>
-            </View>
-
-            {/* Consommables */}
-            {selectedConsumables.length > 0 && (
-              <View style={styles.tableRowSub}>
-                <Text style={styles.tableCellSub}>↳ Consommables</Text>
-                <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
-                  {selectedConsumables.length} type(s)
-                </Text>
-                <Text style={{ ...styles.tableCellRight, color: '#64748b', fontSize: 9 }}>
-                  {consumablesCost.toFixed(2)} €
-                </Text>
-              </View>
-            )}
-
-            {/* Conditionnement */}
-            <View style={styles.tableRowAlt}>
-              <Text style={styles.tableCell}>Conditionnement</Text>
-              <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                {hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`}
-              </Text>
-              <Text style={styles.tableCellRight}>{packagingCost.toFixed(2)} €</Text>
-            </View>
-
-            {/* Accessoires */}
-            {accessoriesCost > 0 && (
-              <View style={styles.tableRow}>
-                <Text style={styles.tableCell}>Accessoires</Text>
-                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                  {selectedAccessories.length} réf.
-                </Text>
-                <Text style={styles.tableCellRight}>{accessoriesCost.toFixed(2)} €</Text>
-              </View>
-            )}
-
-            {/* Emballage */}
-            {hasPackaging && packagingTotalCost > 0 && (
-              <View style={styles.tableRowAlt}>
-                <Text style={styles.tableCell}>Emballage</Text>
-                <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                  Mat. {packagingMaterialCost.toFixed(2)}€ + Déc. {packagingCuttingCost.toFixed(2)}€
-                </Text>
-                <Text style={styles.tableCellRight}>{packagingTotalCost.toFixed(2)} €</Text>
-              </View>
-            )}
-
-            {/* Total */}
+            ))}
             <View style={styles.tableFooter}>
               <Text style={styles.tableFooterLabel}>Total HT</Text>
               <View>
@@ -523,7 +306,7 @@ export function QuotePDF({
         </View>
 
         {/* Accessoires détail */}
-        {selectedAccessories.length > 0 && (
+        {hasAccessoires && selectedAccessories.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Accessoires</Text>
             <View style={styles.table}>
@@ -531,9 +314,7 @@ export function QuotePDF({
                 <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                   <Text style={styles.tableCell}>{acc.name}</Text>
                   <Text style={{ ...styles.tableCell, textAlign: 'center' }}>× {acc.quantity}</Text>
-                  <Text style={styles.tableCellRight}>
-                    {(acc.price * acc.quantity).toFixed(2)} €
-                  </Text>
+                  <Text style={styles.tableCellRight}>{(acc.price * acc.quantity).toFixed(2)} €</Text>
                 </View>
               ))}
             </View>
@@ -541,16 +322,14 @@ export function QuotePDF({
         )}
 
         {/* Consommables détail */}
-        {selectedConsumables.length > 0 && (
+        {hasFaconnage && selectedConsumables.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Consommables</Text>
             <View style={styles.table}>
               {selectedConsumables.map((sc, i) => (
                 <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                   <Text style={styles.tableCell}>{sc.name}</Text>
-                  <Text style={{ ...styles.tableCell, textAlign: 'center' }}>
-                    {sc.sizePerItem} m/pose
-                  </Text>
+                  <Text style={{ ...styles.tableCell, textAlign: 'center' }}>{sc.sizePerItem} m/pose</Text>
                   <Text style={styles.tableCellRight}>
                     {(((sc.sizePerItem * quantity) / sc.size) * sc.price).toFixed(2)} €
                   </Text>
@@ -562,9 +341,7 @@ export function QuotePDF({
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>
-            © {new Date().getFullYear()} Kontfeel — Document généré automatiquement
-          </Text>
+          <Text style={styles.footerText}>© {new Date().getFullYear()} Kontfeel — Document généré automatiquement</Text>
           <Text style={styles.footerText}>Dossier : {studyNumber} — {date}</Text>
         </View>
 

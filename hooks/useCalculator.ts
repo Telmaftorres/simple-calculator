@@ -6,8 +6,9 @@ import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
 import { ASSEMBLY_NOTICE_COST_PER_PIECE, POSE_SPACING_MM } from '@/lib/constants'
-import { useCostCalculation } from './useCostCalculation'
+import { calculateCosts } from '@/lib/calculation/costs'
 import { useCalculatorForm } from './useCalculatorForm'
+import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import type {
   ProductType,
   Plate,
@@ -18,7 +19,6 @@ import type {
   ImpositionResult,
   ScreenState,
   Quote,
-  PLVElement,
 } from '@/types/calculator'
 
 export function useCalculator(
@@ -30,7 +30,6 @@ export function useCalculator(
   isViewOnly?: boolean,
   settings?: Record<string, number>
 ) {
-  // ── UI State ──
   const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
@@ -38,7 +37,6 @@ export function useCalculator(
   const [selectedConsumables, setSelectedConsumables] = useState<SelectedConsumable[]>([])
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
 
-  // ── Form State (useReducer) ──
   const { formState, setField, resetForm } = useCalculatorForm()
 
   const {
@@ -72,24 +70,26 @@ export function useCalculator(
     packagingHeight,
     hasPrintSetup,
     hasCuttingSetup,
+    hasImpression,
+    hasFaconnage,
+    hasConditionnement,
+    hasAccessoires,
   } = formState
 
-  // ── Initialization from initialQuote ──
   useEffect(() => {
     if (initialQuote) {
       setField('studyNumber', initialQuote.study?.number || 'ET')
-      setField('selectedProductTypeId', initialQuote.productTypeId.toString())
       setField('quantity', initialQuote.quantity)
       setField('selectedPlateId', initialQuote.plateId?.toString() || '')
-      setField('flatWidth', initialQuote.width)
-      setField('flatHeight', initialQuote.height)
+      setField('flatWidth', initialQuote.flatWidth || 0)
+      setField('flatHeight', initialQuote.flatHeight || 0)
       setField('printSurfacePercent', initialQuote.printSurface || 0)
       setField('printMode', (initialQuote.printMode as 'production' | 'quality') || 'production')
       setField('isRectoVerso', initialQuote.isRectoVerso || false)
       setField('rectoVersoType', initialQuote.rectoVersoType || null)
       setField('hasVarnish', initialQuote.hasVarnish || false)
       setField('hasFlatColor', initialQuote.hasFlatColor || false)
-      setField('cuttingTimePerPoseSeconds', initialQuote.cuttingTimePerPoseSeconds || 20)
+      setField('cuttingTimePerPoseSeconds', initialQuote.cuttingTimePerPoseSeconds || 0)
       setField('assemblyTimePerPieceSeconds', initialQuote.assemblyTimePerPieceSeconds || 0)
       setField('packTimePerPieceSeconds', initialQuote.packTimePerPieceSeconds || 0)
       setField('hasAssemblyNotice', initialQuote.hasAssemblyNotice || false)
@@ -101,52 +101,47 @@ export function useCalculator(
       setField('packagingHeight', initialQuote.packagingHeight || 0)
       setField('hasPrintSetup', initialQuote.hasPrintSetup ?? true)
       setField('hasCuttingSetup', initialQuote.hasCuttingSetup ?? true)
+      setField('hasImpression', initialQuote.hasImpression ?? true)
+      setField('hasFaconnage', initialQuote.hasFaconnage ?? true)
+      setField('hasConditionnement', initialQuote.hasConditionnement ?? true)
+      setField('hasAccessoires', initialQuote.hasAccessoires ?? false)
 
+      // ✅ Après — utilise les relations incluses par Prisma directement
       if (initialQuote.accessories) {
-        const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => {
-          const acc = accessories.find((a) => a.id === qa.accessoryId)
-          return {
-            id: qa.accessoryId,
-            name: acc?.name || 'Inconnu',
-            price: acc?.price || 0,
-            quantity: qa.quantity,
-          }
-        })
+        const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => ({
+          id: qa.accessoryId,
+          name: qa.accessory?.name || 'Inconnu',
+          price: qa.accessory?.price || 0,
+          quantity: qa.quantity,
+        }))
         setSelectedAccessories(loadedAccs)
       }
 
       if (initialQuote.consumables) {
-        const loadedCons: SelectedConsumable[] = initialQuote.consumables.map((qc) => {
-          const c = consumables.find((x) => x.id === qc.consumableId)
-          return {
-            id: qc.consumableId,
-            name: c?.name || 'Inconnu',
-            price: c?.price || 0,
-            size: c?.size || 1,
-            sizePerItem: qc.sizePerItem,
-            quantity: initialQuote.quantity,
-          }
-        })
+        const loadedCons: SelectedConsumable[] = initialQuote.consumables.map((qc) => ({
+          id: qc.consumableId,
+          name: qc.consumable?.name || 'Inconnu',
+          price: qc.consumable?.price || 0,
+          size: qc.consumable?.size || 1,
+          sizePerItem: qc.sizePerItem,
+          quantity: initialQuote.quantity,
+        }))
         setSelectedConsumables(loadedCons)
       }
     }
   }, [initialQuote, accessories, consumables])
 
-  // ── Derived values ──
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
-
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
 
-  // ── Imposition calculation ──
   useEffect(() => {
     if (selectedPlate && flatWidth > 0 && flatHeight > 0 && quantity > 0) {
       const imp = calculateImposition(
-        
         { width: flatWidth, height: flatHeight },
         { width: selectedPlate.width, height: selectedPlate.height },
-        poseSpacingMm 
+        poseSpacingMm
       )
       const platesNeeded = Math.ceil(quantity / imp.itemsPerPlate) || 0
       const materialCost = platesNeeded * selectedPlate.cost
@@ -161,9 +156,8 @@ export function useCalculator(
     } else {
       setImpositionResult(null)
     }
-  }, [flatWidth, flatHeight, quantity, selectedPlate])
+  }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm])
 
-  // ── Cost calculations ──
   const {
     printingCostData,
     printingCost,
@@ -183,7 +177,7 @@ export function useCalculator(
     packagingTotalCost,
     packagingItemsPerPlate,
     packagingPlatesNeeded,
-  } = useCostCalculation({
+  } = calculateCosts({
     quantity,
     impositionResult,
     selectedPlate,
@@ -194,6 +188,10 @@ export function useCalculator(
     hasFlatColor,
     hasPrintSetup,
     hasCuttingSetup,
+    hasImpression,
+    hasFaconnage,
+    hasConditionnement,
+    hasAccessoires,
     cuttingTimePerPoseSeconds,
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
@@ -209,7 +207,6 @@ export function useCalculator(
     packagingHeight,
   })
 
-  // ── Detail helpers ──
   const getCuttingDetails = () => {
     const totalMin = cuttingMachineTimeMin + (hasCuttingSetup ? cuttingSetupTimeMin : 0)
     return `${formatMinutes(totalMin)} (${formatTimeSeconds(cuttingTimePerPoseSeconds)}/pose${hasCuttingSetup ? ` + ${cuttingSetupTimeMin} min calage` : ''})`
@@ -224,18 +221,17 @@ export function useCalculator(
     const totalMinutes = (packTimePerPieceSeconds * quantity) / 60
     let details = `${formatMinutes(totalMinutes)} (${formatTimeSeconds(packTimePerPieceSeconds)}/pce)`
     if (hasAssemblyNotice) {
-      const noticeCost = ASSEMBLY_NOTICE_COST_PER_PIECE * quantity
+      const noticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
+      const noticeCost = noticeCostPerPiece * quantity
       details += ` + Notice: ${noticeCost.toFixed(2)}€`
     }
     return details
   }
 
-  // ── Actions ──
   const handleAddAccessory = () => {
     if (!currentAccessoryId || currentAccessoryQty <= 0) return
     const acc = accessories.find((a) => a.id.toString() === currentAccessoryId)
     if (!acc) return
-
     const existing = selectedAccessories.find((sa) => sa.id === acc.id)
     if (existing) {
       setSelectedAccessories(
@@ -260,7 +256,6 @@ export function useCalculator(
     if (!currentConsumableId || currentConsumableSize <= 0) return
     const c = consumables.find((x) => x.id.toString() === currentConsumableId)
     if (!c) return
-
     const existing = selectedConsumables.find((sc) => sc.id === c.id)
     if (existing) {
       setSelectedConsumables(
@@ -271,14 +266,7 @@ export function useCalculator(
     } else {
       setSelectedConsumables([
         ...selectedConsumables,
-        {
-          id: c.id,
-          name: c.name,
-          price: c.price,
-          size: c.size,
-          sizePerItem: currentConsumableSize,
-          quantity,
-        },
+        { id: c.id, name: c.name, price: c.price, size: c.size, sizePerItem: currentConsumableSize, quantity },
       ])
     }
     setField('currentConsumableSize', 0)
@@ -319,8 +307,6 @@ export function useCalculator(
         studyNumber,
         productTypeId: parsedProductId,
         quantity,
-        width: flatWidth,
-        height: flatHeight,
         plateId: parseInt(selectedPlateId),
         itemsPerPlate: impositionResult.itemsPerPlate,
         platesCount: impositionResult.platesNeeded,
@@ -345,8 +331,12 @@ export function useCalculator(
         packagingHeight: packagingHeight || null,
         hasPrintSetup,
         hasCuttingSetup,
+        hasImpression,
+        hasFaconnage,
+        hasConditionnement,
+        hasAccessoires,
         elements:
-          selectedProductType?.elements.map((el: PLVElement) => ({
+          selectedProductType?.elements.map((el) => ({
             name: el.name,
             quantity: el.quantity,
           })) || [],
@@ -362,10 +352,13 @@ export function useCalculator(
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
     } catch (error: unknown) {
-      console.error('Save error:', error)
-      toast.error((error as Error)?.message || 'Erreur lors de la sauvegarde.')
-    } finally {
-      setIsServing(false)
+      const knownMessages: Record<string, string> = {
+        'Non autorisé': 'Vous devez être connecté pour enregistrer un devis.',
+        'Le type de PLV sélectionné n\'existe plus.': 'Le type de PLV sélectionné n\'existe plus.',
+      }
+      const rawMessage = (error as Error)?.message || ''
+      const displayMessage = knownMessages[rawMessage] || 'Erreur lors de la sauvegarde. Veuillez réessayer.'
+      toast.error(displayMessage)
     }
   }
 
@@ -378,147 +371,58 @@ export function useCalculator(
   }
 
   return {
-    // UI state
-    screenState,
-    setScreenState,
-    isServing,
-
-    // Product types
+    screenState, setScreenState, isServing,
     productTypes,
-
-    // Form state
-    studyNumber,
-    setStudyNumber: (v: string) => setField('studyNumber', v),
-    productSearch,
-    setProductSearch: (v: string) => setField('productSearch', v),
-    isProductDropdownOpen,
-    setIsProductDropdownOpen: (v: boolean) => setField('isProductDropdownOpen', v),
-    selectedProductTypeId,
-    setSelectedProductTypeId: (v: string) => setField('selectedProductTypeId', v),
-    quantity,
-    setQuantity: (v: number) => setField('quantity', v),
-    selectedPlateId,
-    setSelectedPlateId: (v: string) => setField('selectedPlateId', v),
-    flatWidth,
-    setFlatWidth: (v: number) => setField('flatWidth', v),
-    flatHeight,
-    setFlatHeight: (v: number) => setField('flatHeight', v),
-    selectedPlate,
-    selectedProductType,
-
-    // Imposition
+    studyNumber, setStudyNumber: (v: string) => setField('studyNumber', v),
+    productSearch, setProductSearch: (v: string) => setField('productSearch', v),
+    isProductDropdownOpen, setIsProductDropdownOpen: (v: boolean) => setField('isProductDropdownOpen', v),
+    selectedProductTypeId, setSelectedProductTypeId: (v: string) => setField('selectedProductTypeId', v),
+    quantity, setQuantity: (v: number) => setField('quantity', v),
+    selectedPlateId, setSelectedPlateId: (v: string) => setField('selectedPlateId', v),
+    flatWidth, setFlatWidth: (v: number) => setField('flatWidth', v),
+    flatHeight, setFlatHeight: (v: number) => setField('flatHeight', v),
+    selectedPlate, selectedProductType,
     impositionResult,
-
-    // Impression
-    printSurfacePercent,
-    setPrintSurfacePercent: (v: number) => setField('printSurfacePercent', v),
-    printMode,
-    setPrintMode: (v: 'production' | 'quality') => setField('printMode', v),
-    isRectoVerso,
-    setIsRectoVerso: (v: boolean) => setField('isRectoVerso', v),
-    hasVarnish,
-    setHasVarnish: (v: boolean) => setField('hasVarnish', v),
-    hasFlatColor,
-    setHasFlatColor: (v: boolean) => setField('hasFlatColor', v),
-    rectoVersoType,
-    setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
-    printingCostData,
-    printingCost,
-    inkVolumeL,
-    hasPrintSetup,
-    setHasPrintSetup: (v: boolean) => setField('hasPrintSetup', v),
-
-    // Découpe
-    cuttingTimePerPoseSeconds,
-    setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
-    cuttingCost,
-    cuttingMachineCost,
-    cuttingSetupCost,
-    cuttingSetupTimeMin,
-    cuttingMachineTimeMin,
-    hasCuttingSetup,
-    setHasCuttingSetup: (v: boolean) => setField('hasCuttingSetup', v),
-
-    // Façonnage
-    assemblyTimePerPieceSeconds,
-    setAssemblyTimePerPieceSeconds: (v: number) => setField('assemblyTimePerPieceSeconds', v),
+    printSurfacePercent, setPrintSurfacePercent: (v: number) => setField('printSurfacePercent', v),
+    printMode, setPrintMode: (v: 'production' | 'quality') => setField('printMode', v),
+    isRectoVerso, setIsRectoVerso: (v: boolean) => setField('isRectoVerso', v),
+    hasVarnish, setHasVarnish: (v: boolean) => setField('hasVarnish', v),
+    hasFlatColor, setHasFlatColor: (v: boolean) => setField('hasFlatColor', v),
+    rectoVersoType, setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
+    printingCostData, printingCost, inkVolumeL,
+    hasPrintSetup, setHasPrintSetup: (v: boolean) => setField('hasPrintSetup', v),
+    hasImpression, setHasImpression: (v: boolean) => setField('hasImpression', v),
+    cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
+    cuttingCost, cuttingMachineCost, cuttingSetupCost, cuttingSetupTimeMin, cuttingMachineTimeMin,
+    hasCuttingSetup, setHasCuttingSetup: (v: boolean) => setField('hasCuttingSetup', v),
+    assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds: (v: number) => setField('assemblyTimePerPieceSeconds', v),
     assemblyCost,
-
-    // Conditionnement
-    packTimePerPieceSeconds,
-    setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
-    hasAssemblyNotice,
-    setHasAssemblyNotice: (v: boolean) => setField('hasAssemblyNotice', v),
+    hasFaconnage, setHasFaconnage: (v: boolean) => setField('hasFaconnage', v),
+    packTimePerPieceSeconds, setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
+    hasAssemblyNotice, setHasAssemblyNotice: (v: boolean) => setField('hasAssemblyNotice', v),
     packagingCost,
-
-    // Accessoires
+    hasConditionnement, setHasConditionnement: (v: boolean) => setField('hasConditionnement', v),
     selectedAccessories,
-    currentAccessoryId,
-    setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),
-    currentAccessoryQty,
-    setCurrentAccessoryQty: (v: number) => setField('currentAccessoryQty', v),
+    currentAccessoryId, setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),
+    currentAccessoryQty, setCurrentAccessoryQty: (v: number) => setField('currentAccessoryQty', v),
     accessoriesCost,
-
-    // Consommables
+    hasAccessoires, setHasAccessoires: (v: boolean) => setField('hasAccessoires', v),
     selectedConsumables,
-    currentConsumableId,
-    setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
-    currentConsumableSize,
-    setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),
+    currentConsumableId, setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
+    currentConsumableSize, setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),
     consumablesCost,
-
-    // Coûts
     totalCost,
-
-    // Emballage
-    hasPackaging,
-    setHasPackaging: (v: boolean) => setField('hasPackaging', v),
-    packagingPlateId,
-    setPackagingPlateId: (v: string) => setField('packagingPlateId', v),
-    packagingQuantity,
-    setPackagingQuantity: (v: number) => setField('packagingQuantity', v),
-    packagingCuttingTimePerPoseSeconds,
-    setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
-    packagingWidth,
-    setPackagingWidth: (v: number) => setField('packagingWidth', v),
-    packagingHeight,
-    setPackagingHeight: (v: number) => setField('packagingHeight', v),
-    packagingMaterialCost,
-    packagingCuttingCost,
-    packagingTotalCost,
-    packagingItemsPerPlate,
-    packagingPlatesNeeded,
-
-    // Actions
-    handleAddAccessory,
-    handleRemoveAccessory,
-    handleAddConsumable,
-    handleRemoveConsumable,
-    handleCreateProductType,
-    handleSave,
-    handleReset,
-
-    // Helpers
-    getCuttingDetails,
-    getAssemblyDetails,
-    getPackDetails,
+    hasPackaging, setHasPackaging: (v: boolean) => setField('hasPackaging', v),
+    packagingPlateId, setPackagingPlateId: (v: string) => setField('packagingPlateId', v),
+    packagingQuantity, setPackagingQuantity: (v: number) => setField('packagingQuantity', v),
+    packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
+    packagingWidth, setPackagingWidth: (v: number) => setField('packagingWidth', v),
+    packagingHeight, setPackagingHeight: (v: number) => setField('packagingHeight', v),
+    packagingMaterialCost, packagingCuttingCost, packagingTotalCost,
+    packagingItemsPerPlate, packagingPlatesNeeded,
+    handleAddAccessory, handleRemoveAccessory,
+    handleAddConsumable, handleRemoveConsumable,
+    handleCreateProductType, handleSave, handleReset,
+    getCuttingDetails, getAssemblyDetails, getPackDetails,
   }
-}
-
-// ── Formatting utilities ──
-
-export function formatTimeSeconds(seconds: number): string {
-  if (seconds === 0) return '0 sec'
-  if (seconds < 60) return `${seconds} sec`
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return secs > 0 ? `${mins} min ${secs} sec` : `${mins} min`
-}
-
-export function formatMinutes(mins: number): string {
-  if (mins === 0) return '0 min'
-  if (mins < 1) return `${Math.ceil(mins * 60)} sec`
-  const wholeMins = Math.floor(mins)
-  const seconds = Math.round((mins - wholeMins) * 60)
-  return seconds > 0 ? `${wholeMins} min ${seconds} sec` : `${wholeMins} min`
 }
