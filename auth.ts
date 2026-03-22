@@ -6,15 +6,7 @@ import { prisma } from '@/lib/prisma'
 import { authConfig } from './auth.config'
 
 async function getUser(email: string) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { email },
-    })
-    return user
-  } catch (error) {
-    console.error('Failed to fetch user:', error)
-    throw new Error('Failed to fetch user.')
-  }
+  return await prisma.user.findUnique({ where: { email } })
 }
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
@@ -30,27 +22,16 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
           .object({ email: z.string().email(), password: z.string().min(8) })
           .safeParse(credentials)
 
-        if (!parsedCredentials.success) {
-          console.log('Invalid credentials format')
-          return null
-        }
+        if (!parsedCredentials.success) return null
 
         const { email, password } = parsedCredentials.data
         const user = await getUser(email)
 
-        if (!user) {
-          console.log('User not found:', email)
-          return null
-        }
+        if (!user) return null
 
         const passwordsMatch = await bcrypt.compare(password, user.password)
+        if (!passwordsMatch) return null
 
-        if (!passwordsMatch) {
-          console.log('Password mismatch for user:', email)
-          return null
-        }
-
-        // Return user object - Auth.js v5 handles serialization
         return {
           id: user.id,
           email: user.email,

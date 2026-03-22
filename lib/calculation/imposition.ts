@@ -168,18 +168,3 @@ export function calculateImposition(
     layout: generateLayout(rowsNormal, colsNormal, iW, iH),
   }
 }
-
-/**
- * Calculates the total cost and number of plates required based on quote quantity.
- */
-export function calculateQuote(quantity: number, itemsPerPlate: number, plateCost: number) {
-  if (itemsPerPlate <= 0) return { platesNeeded: 0, totalCost: 0 }
-
-  const platesNeeded = Math.ceil(quantity / itemsPerPlate)
-  const totalCost = platesNeeded * plateCost
-
-  return {
-    platesNeeded,
-    totalCost,
-  }
-}

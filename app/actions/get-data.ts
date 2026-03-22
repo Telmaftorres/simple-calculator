@@ -19,8 +19,6 @@ function buildQuoteData(
     userId: extra.userId,
     productTypeId: validated.productTypeId,
     quantity: validated.quantity,
-    width: validated.width,
-    height: validated.height,
     plateId: validated.plateId,
     itemsPerPlate: validated.itemsPerPlate,
     platesCount: validated.platesCount,
@@ -83,25 +81,29 @@ export async function createQuote(data: CreateQuoteInput) {
   const session = await requireAuth()
   const validated = createQuoteSchema.parse(data)
 
-  let study = await prisma.study.findUnique({ where: { number: validated.studyNumber } })
-  if (!study) {
-    study = await prisma.study.create({
-      data: { number: validated.studyNumber, name: `Etude ${validated.studyNumber}` },
-    })
-  }
+  // ✅ upsert atomique — plus de race condition
+  const study = await prisma.study.upsert({
+    where: { number: validated.studyNumber },
+    update: {},
+    create: {
+      number: validated.studyNumber,
+      name: `Etude ${validated.studyNumber}`,
+    },
+  })
 
   const productTypeExists = await prisma.productType.findUnique({
     where: { id: validated.productTypeId },
     select: { id: true },
   })
   if (!productTypeExists) {
-    throw new Error(`Le type de PLV sélectionné (ID: ${validated.productTypeId}) n'existe plus.`)
+    throw new Error('Le type de PLV sélectionné n\'existe plus.')
+    // ✅ ID interne supprimé du message
   }
 
   const reference = await generateReference()
-  revalidateCache('quotes')
 
-  return await prisma.quote.create({
+  // ✅ revalidateCache APRÈS la création
+  const quote = await prisma.quote.create({
     data: {
       ...buildQuoteData(validated, {
         reference,
@@ -128,6 +130,9 @@ export async function createQuote(data: CreateQuoteInput) {
       },
     },
   })
+
+  revalidateCache('quotes')
+  return quote
 }
 
 export async function getUserQuotes() {

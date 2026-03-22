@@ -4,16 +4,12 @@ export const quoteFieldsSchema = z.object({
   // Identité
   productTypeId: z.number().int().positive(),
   quantity: z.number().int().positive(),
-  width: z.number().int().positive(),
-  height: z.number().int().positive(),
+  flatWidth: z.number().int().positive(),
+  flatHeight: z.number().int().positive(),
   plateId: z.number().int().positive(),
   itemsPerPlate: z.number().int().positive(),
   platesCount: z.number().int().positive(),
   totalCost: z.number().min(0),
-
-  // Format
-  flatWidth: z.number().int().optional(),
-  flatHeight: z.number().int().optional(),
 
   // Impression
   printSurface: z.number().min(0).max(100).optional(),

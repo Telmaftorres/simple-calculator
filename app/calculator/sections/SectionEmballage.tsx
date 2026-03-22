@@ -3,7 +3,7 @@
 import { Label } from '@/components/ui/label'
 import { GaugeSlider } from '../../components/GaugeSlider'
 import { SectionDisplay } from '../shared'
-import { formatTimeSeconds } from '@/hooks/useCalculator'
+import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
 export function SectionEmballage() {

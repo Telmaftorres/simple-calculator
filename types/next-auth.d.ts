@@ -6,7 +6,7 @@ declare module 'next-auth' {
     mustChangePassword?: boolean
     firstName?: string | null
     lastName?: string | null
-    role?: 'ADMIN' | 'USER'
+    role: 'ADMIN' | 'USER'        // ✅ non-optionnel
     permissions?: string[]
   }
 
@@ -16,7 +16,7 @@ declare module 'next-auth' {
       mustChangePassword?: boolean
       firstName?: string | null
       lastName?: string | null
-      role?: 'ADMIN' | 'USER'
+      role: 'ADMIN' | 'USER'      // ✅ non-optionnel
       permissions?: string[]
     } & DefaultSession['user']
   }
@@ -28,7 +28,7 @@ declare module 'next-auth/jwt' {
     mustChangePassword?: boolean
     firstName?: string | null
     lastName?: string | null
-    role?: 'ADMIN' | 'USER'
+    role?: 'ADMIN' | 'USER'       // reste optionnel dans le JWT — normal
     permissions?: string[]
   }
 }

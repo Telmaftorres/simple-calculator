@@ -1,10 +1,16 @@
-'use server'
+import { revalidateTag } from 'next/cache'
 
-import { revalidateTag as nextRevalidateTag } from 'next/cache'
+export type CacheTag =
+  | 'studies'
+  | 'plates'
+  | 'quotes'
+  | 'settings'
+  | 'dashboard-stats'
+  | 'product-types'
+  | 'consumables'
+  | 'accessories'
 
-/**
- * Wrapper typé pour revalidateTag afin d'éviter les @ts-expect-error répétés.
- */
-export async function revalidateCache(tag: string) {
-  ;(nextRevalidateTag as (tag: string) => void)(tag)
+export function revalidateCache(tag: CacheTag) {
+  // @ts-expect-error - Next.js type mismatch sur revalidateTag
+  revalidateTag(tag)
 }

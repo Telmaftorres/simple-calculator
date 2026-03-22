@@ -2,7 +2,7 @@ import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/com
 import { Button } from '@/components/ui/button'
 import { Loader2 } from 'lucide-react'
 import { CostRow } from '../shared'
-import { formatMinutes } from '@/hooks/useCalculator'
+import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
 export function RecapSidebar() {

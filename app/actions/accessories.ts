@@ -5,6 +5,7 @@ import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
+import { unstable_cache } from 'next/cache'
 
 const accessorySchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -14,11 +15,11 @@ const accessorySchema = z.object({
   weight: z.number().positive().optional(),
 })
 
-export const getAccessories = async () => {
-  return await prisma.accessory.findMany({
-    orderBy: { name: 'asc' },
-  })
-}
+export const getAccessories = unstable_cache(
+  async () => prisma.accessory.findMany({ orderBy: { name: 'asc' } }),
+  ['accessories'],
+  { tags: ['accessories'] }
+)
 
 export async function createAccessory(data: z.infer<typeof accessorySchema>) {
   await requireAuth()

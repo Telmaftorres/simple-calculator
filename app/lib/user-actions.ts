@@ -8,7 +8,6 @@ import { requireAdmin } from '@/lib/auth-helpers'
 
 export async function getUsers() {
   await requireAdmin()
-
   return await prisma.user.findMany({
     orderBy: { createdAt: 'desc' },
     select: {
@@ -36,7 +35,7 @@ export async function createUser(formData: FormData) {
   const name = (formData.get('name') as string) || `${firstName} ${lastName}`.trim()
   const role = (formData.get('role') as 'ADMIN' | 'USER') || 'USER'
 
-  if (!email || !password) return { error: 'Email and password required' }
+  if (!email || !password) return { error: 'Email et mot de passe requis' }
   if (password.length < 8) return { error: 'Le mot de passe doit faire au moins 8 caractères' }
 
   const hashedPassword = await bcrypt.hash(password, 10)
@@ -99,10 +98,7 @@ export async function updateUser(formData: FormData) {
   }
 
   try {
-    await prisma.user.update({
-      where: { id: userId },
-      data,
-    })
+    await prisma.user.update({ where: { id: userId }, data })
     revalidatePath('/settings/users')
     return { success: true }
   } catch {
@@ -122,12 +118,13 @@ export async function deleteUser(userId: string) {
     await prisma.user.delete({ where: { id: userId } })
     revalidatePath('/settings/users')
     return { success: true }
-  } catch (e) {
-    console.error('deleteUser error:', e)
+  } catch {
     return { error: 'Erreur lors de la suppression' }
   }
 }
 
+// ── Changement de mot de passe forcé (premier login) ──
+// Pas de vérification de l'ancien mot de passe — c'est voulu
 export async function updatePassword(formData: FormData) {
   const session = await auth()
   if (!session?.user || !session.user.email) throw new Error('Non autorisé')
@@ -147,12 +144,38 @@ export async function updatePassword(formData: FormData) {
 
   await prisma.user.update({
     where: { email: session.user.email },
-    data: {
-      password: hashedPassword,
-      mustChangePassword: false,
-    },
+    data: { password: hashedPassword, mustChangePassword: false },
   })
 
   await authSignOut({ redirectTo: '/login' })
+  return { success: true }
+}
+
+// ── Changement de mot de passe volontaire (page profil) ──
+// Vérifie l'ancien mot de passe — protection contre session volée
+export async function updatePasswordWithVerification(data: {
+  currentPassword: string
+  newPassword: string
+}) {
+  const session = await auth()
+  if (!session?.user || !session.user.email) throw new Error('Non autorisé')
+
+  if (data.newPassword.length < 8) {
+    return { error: 'Le mot de passe doit faire au moins 8 caractères' }
+  }
+
+  const user = await prisma.user.findUnique({ where: { email: session.user.email } })
+  if (!user) return { error: 'Utilisateur introuvable' }
+
+  const passwordsMatch = await bcrypt.compare(data.currentPassword, user.password)
+  if (!passwordsMatch) return { error: 'Mot de passe actuel incorrect' }
+
+  const hashedPassword = await bcrypt.hash(data.newPassword, 10)
+
+  await prisma.user.update({
+    where: { email: session.user.email },
+    data: { password: hashedPassword },
+  })
+
   return { success: true }
 }

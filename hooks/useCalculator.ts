@@ -6,8 +6,9 @@ import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
 import { ASSEMBLY_NOTICE_COST_PER_PIECE, POSE_SPACING_MM } from '@/lib/constants'
-import { useCostCalculation } from './useCostCalculation'
+import { calculateCosts } from '@/lib/calculation/costs'
 import { useCalculatorForm } from './useCalculatorForm'
+import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import type {
   ProductType,
   Plate,
@@ -80,8 +81,8 @@ export function useCalculator(
       setField('studyNumber', initialQuote.study?.number || 'ET')
       setField('quantity', initialQuote.quantity)
       setField('selectedPlateId', initialQuote.plateId?.toString() || '')
-      setField('flatWidth', initialQuote.width)
-      setField('flatHeight', initialQuote.height)
+      setField('flatWidth', initialQuote.flatWidth || 0)
+      setField('flatHeight', initialQuote.flatHeight || 0)
       setField('printSurfacePercent', initialQuote.printSurface || 0)
       setField('printMode', (initialQuote.printMode as 'production' | 'quality') || 'production')
       setField('isRectoVerso', initialQuote.isRectoVerso || false)
@@ -176,7 +177,7 @@ export function useCalculator(
     packagingTotalCost,
     packagingItemsPerPlate,
     packagingPlatesNeeded,
-  } = useCostCalculation({
+  } = calculateCosts({
     quantity,
     impositionResult,
     selectedPlate,
@@ -220,7 +221,8 @@ export function useCalculator(
     const totalMinutes = (packTimePerPieceSeconds * quantity) / 60
     let details = `${formatMinutes(totalMinutes)} (${formatTimeSeconds(packTimePerPieceSeconds)}/pce)`
     if (hasAssemblyNotice) {
-      const noticeCost = ASSEMBLY_NOTICE_COST_PER_PIECE * quantity
+      const noticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
+      const noticeCost = noticeCostPerPiece * quantity
       details += ` + Notice: ${noticeCost.toFixed(2)}€`
     }
     return details
@@ -305,8 +307,6 @@ export function useCalculator(
         studyNumber,
         productTypeId: parsedProductId,
         quantity,
-        width: flatWidth,
-        height: flatHeight,
         plateId: parseInt(selectedPlateId),
         itemsPerPlate: impositionResult.itemsPerPlate,
         platesCount: impositionResult.platesNeeded,
@@ -352,10 +352,13 @@ export function useCalculator(
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
     } catch (error: unknown) {
-      console.error('Save error:', error)
-      toast.error((error as Error)?.message || 'Erreur lors de la sauvegarde.')
-    } finally {
-      setIsServing(false)
+      const knownMessages: Record<string, string> = {
+        'Non autorisé': 'Vous devez être connecté pour enregistrer un devis.',
+        'Le type de PLV sélectionné n\'existe plus.': 'Le type de PLV sélectionné n\'existe plus.',
+      }
+      const rawMessage = (error as Error)?.message || ''
+      const displayMessage = knownMessages[rawMessage] || 'Erreur lors de la sauvegarde. Veuillez réessayer.'
+      toast.error(displayMessage)
     }
   }
 
@@ -422,20 +425,4 @@ export function useCalculator(
     handleCreateProductType, handleSave, handleReset,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
   }
-}
-
-export function formatTimeSeconds(seconds: number): string {
-  if (seconds === 0) return '0 sec'
-  if (seconds < 60) return `${seconds} sec`
-  const mins = Math.floor(seconds / 60)
-  const secs = seconds % 60
-  return secs > 0 ? `${mins} min ${secs} sec` : `${mins} min`
-}
-
-export function formatMinutes(mins: number): string {
-  if (mins === 0) return '0 min'
-  if (mins < 1) return `${Math.ceil(mins * 60)} sec`
-  const wholeMins = Math.floor(mins)
-  const seconds = Math.round((mins - wholeMins) * 60)
-  return seconds > 0 ? `${wholeMins} min ${seconds} sec` : `${wholeMins} min`
 }

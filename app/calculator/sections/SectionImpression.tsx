@@ -2,7 +2,7 @@ import { Label } from '@/components/ui/label'
 import { SectionDisplay } from '../shared'
 import { GaugeSlider } from '../../components/GaugeSlider'
 import { PlateVisualizer } from '../../components/PlateVisualizer'
-import { formatMinutes } from '@/hooks/useCalculator'
+import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
 export function SectionImpression() {

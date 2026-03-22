@@ -23,7 +23,7 @@ import type {
   PrintMode,
 } from '@/types/calculator'
 
-export interface CostCalculationParams {
+export function calculateCosts(params: {
   quantity: number
   impositionResult: ImpositionResult | null
   selectedPlate: Plate | undefined
@@ -51,9 +51,7 @@ export interface CostCalculationParams {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number
   packagingHeight: number
-}
-
-export function useCostCalculation(params: CostCalculationParams) {
+}) {
   const {
     quantity,
     impositionResult,
@@ -185,10 +183,12 @@ export function useCostCalculation(params: CostCalculationParams) {
     ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0)
     : 0
 
-  // ── Consommables (liés au façonnage) ──
   const consumablesCost = hasFaconnage
     ? selectedConsumables.reduce(
-        (sum, item) => sum + ((item.sizePerItem * item.quantity) / item.size) * item.price,
+        (sum, item) => {
+          if (item.size <= 0) return sum
+          return sum + ((item.sizePerItem * item.quantity) / item.size) * item.price
+        },
         0
       )
     : 0
@@ -259,3 +259,6 @@ export function useCostCalculation(params: CostCalculationParams) {
     poseSpacingMm,
   }
 }
+
+// ✅ Type inféré depuis la signature — zéro maintenance
+export type CostCalculationParams = Parameters<typeof calculateCosts>[0]

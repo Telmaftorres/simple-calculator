@@ -6,10 +6,6 @@ import { requireAuth } from '@/lib/auth-helpers'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/cache'
 
-// ────────────────────────────────────────────────────
-// Schemas de validation Zod
-// ────────────────────────────────────────────────────
-
 const plateSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
   width: z.number().int().positive('La largeur doit être positive'),
@@ -30,9 +26,7 @@ const elementSchema = z.object({
   quantity: z.number().int().positive('La quantité doit être positive'),
 })
 
-// ────────────────────────────────────────────────────
-// PLATES
-// ────────────────────────────────────────────────────
+// ── PLATES ──
 
 export async function createPlate(data: z.infer<typeof plateSchema>) {
   await requireAuth()
@@ -61,9 +55,7 @@ export async function deletePlate(id: number) {
   revalidateCache('plates')
 }
 
-// ────────────────────────────────────────────────────
-// PRODUCT TYPES
-// ────────────────────────────────────────────────────
+// ── PRODUCT TYPES ──
 
 export async function createProductType(
   name: string,
@@ -115,9 +107,7 @@ export async function deleteProductType(id: number) {
   revalidateCache('product-types')
 }
 
-// ────────────────────────────────────────────────────
-// ELEMENTS
-// ────────────────────────────────────────────────────
+// ── ELEMENTS ──
 
 export async function createElement(data: z.infer<typeof elementSchema>) {
   await requireAuth()
@@ -134,9 +124,14 @@ export async function updateElement(
   data: { name: string; quantity: number }
 ) {
   await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const validProductTypeId = z.number().int().positive().parse(productTypeId)
   const validated = elementSchema.omit({ productTypeId: true }).parse(data)
-  await prisma.element.update({ where: { id }, data: validated })
-  revalidatePath(`/dashboard/products/${productTypeId}`)
+  await prisma.element.update({
+    where: { id: validId, productTypeId: validProductTypeId },
+    data: validated,
+  })
+  revalidatePath(`/dashboard/products/${validProductTypeId}`)
   revalidatePath('/dashboard/products')
   revalidateCache('product-types')
 }
@@ -144,8 +139,11 @@ export async function updateElement(
 export async function deleteElement(id: number, productTypeId: number) {
   await requireAuth()
   const validId = z.number().int().positive().parse(id)
-  await prisma.element.delete({ where: { id: validId } })
-  revalidatePath(`/dashboard/products/${productTypeId}`)
+  const validProductTypeId = z.number().int().positive().parse(productTypeId)
+  await prisma.element.delete({
+    where: { id: validId, productTypeId: validProductTypeId },
+  })
+  revalidatePath(`/dashboard/products/${validProductTypeId}`)
   revalidatePath('/dashboard/products')
   revalidateCache('product-types')
 }

@@ -66,7 +66,7 @@ export const authConfig = {
         session.user.mustChangePassword = token.mustChangePassword
         session.user.firstName = token.firstName
         session.user.lastName = token.lastName
-        session.user.role = token.role
+        session.user.role = token.role ?? 'USER'
         session.user.permissions = token.permissions
       }
       return session

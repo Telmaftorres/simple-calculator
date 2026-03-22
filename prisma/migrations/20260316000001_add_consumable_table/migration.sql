@@ -18,8 +18,5 @@ CREATE TABLE IF NOT EXISTS "QuoteConsumable" (
     CONSTRAINT "QuoteConsumable_pkey" PRIMARY KEY ("id")
 );
 
--- AddForeignKey
-ALTER TABLE "QuoteConsumable" ADD CONSTRAINT IF NOT EXISTS "QuoteConsumable_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE;
-
--- AddForeignKey
-ALTER TABLE "QuoteConsumable" ADD CONSTRAINT IF NOT EXISTS "QuoteConsumable_consumableId_fkey" FOREIGN KEY ("consumableId") REFERENCES "Consumable"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "QuoteConsumable" ADD CONSTRAINT "QuoteConsumable_quoteId_fkey" FOREIGN KEY ("quoteId") REFERENCES "Quote"("id") ON DELETE CASCADE ON UPDATE CASCADE;
+ALTER TABLE "QuoteConsumable" ADD CONSTRAINT "QuoteConsumable_consumableId_fkey" FOREIGN KEY ("consumableId") REFERENCES "Consumable"("id") ON DELETE CASCADE ON UPDATE CASCADE;

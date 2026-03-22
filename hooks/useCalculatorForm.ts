@@ -1,68 +1,33 @@
 import { useReducer } from 'react'
-import type { PrintMode } from '@/types/calculator'
 import { QUOTE_DEFAULTS } from '@/lib/quote-defaults'
-export interface CalculatorFormState {
-  studyNumber: string
-  selectedProductTypeId: string
-  productSearch: string
-  isProductDropdownOpen: boolean
-  quantity: number
-  selectedPlateId: string
-  flatWidth: number
-  flatHeight: number
-  printSurfacePercent: number
-  printMode: PrintMode
-  isRectoVerso: boolean
-  hasVarnish: boolean
-  hasFlatColor: boolean
-  rectoVersoType: string | null
-  cuttingTimePerPoseSeconds: number
-  assemblyTimePerPieceSeconds: number
-  packTimePerPieceSeconds: number
-  hasAssemblyNotice: boolean
-  currentAccessoryId: string
-  currentAccessoryQty: number
-  currentConsumableId: string
-  currentConsumableSize: number
-  hasPackaging: boolean
-  packagingPlateId: string
-  packagingQuantity: number
-  packagingCuttingTimePerPoseSeconds: number
-  packagingWidth: number
-  packagingHeight: number
-  hasPrintSetup: boolean
-  hasCuttingSetup: boolean
-  hasImpression: boolean
-  hasFaconnage: boolean
-  hasConditionnement: boolean
-  hasAccessoires: boolean
-}
 
-export const initialFormState: CalculatorFormState = {
-  studyNumber: 'ET',
-  selectedProductTypeId: '',
-  productSearch: '',
-  isProductDropdownOpen: false,
-  quantity: 100,
-  selectedPlateId: '',
-  flatWidth: 0,
-  flatHeight: 0,
-  printSurfacePercent: 0,
-  rectoVersoType: null,
-  currentAccessoryId: '',
-  currentAccessoryQty: 0,
-  currentConsumableId: '',
-  currentConsumableSize: 0,
-  packagingPlateId: '',
-  packagingQuantity: 0,
-  packagingWidth: 0,
-  packagingHeight: 0,
-  // ✅ Valeurs par défaut depuis la source unique
+export const initialFormState = {
+  studyNumber: 'ET' as string,
+  selectedProductTypeId: '' as string,
+  productSearch: '' as string,
+  isProductDropdownOpen: false as boolean,
+  quantity: 100 as number,
+  selectedPlateId: '' as string,
+  flatWidth: 0 as number,
+  flatHeight: 0 as number,
+  printSurfacePercent: 0 as number,
+  rectoVersoType: null as string | null,
+  currentAccessoryId: '' as string,
+  currentAccessoryQty: 0 as number,
+  currentConsumableId: '' as string,
+  currentConsumableSize: 0 as number,
+  packagingPlateId: '' as string,
+  packagingQuantity: 0 as number,
+  packagingWidth: 0 as number,
+  packagingHeight: 0 as number,
   ...QUOTE_DEFAULTS,
 }
 
+export type CalculatorFormState = typeof initialFormState
+
 export type CalculatorFormAction =
   | { type: 'SET_FIELD'; field: keyof CalculatorFormState; value: CalculatorFormState[keyof CalculatorFormState] }
+  | { type: 'LOAD_QUOTE'; payload: Partial<CalculatorFormState> }  // ✅ nouvelle action
   | { type: 'RESET' }
 
 export function calculatorFormReducer(
@@ -72,15 +37,17 @@ export function calculatorFormReducer(
   switch (action.type) {
     case 'SET_FIELD':
       return { ...state, [action.field]: action.value }
+    case 'LOAD_QUOTE':
+      return { ...initialFormState, ...action.payload }  // ✅ un seul re-render
     case 'RESET':
-      return initialFormState
+      return { ...initialFormState }
     default:
       return state
   }
 }
 
 export function useCalculatorForm() {
-  const [formState, dispatch] = useReducer(calculatorFormReducer, initialFormState)
+  const [formState, dispatch] = useReducer(calculatorFormReducer, { ...initialFormState })
 
   const setField = <K extends keyof CalculatorFormState>(
     field: K,
@@ -89,9 +56,11 @@ export function useCalculatorForm() {
     dispatch({ type: 'SET_FIELD', field, value })
   }
 
-  const resetForm = () => {
-    dispatch({ type: 'RESET' })
+  const loadQuote = (payload: Partial<CalculatorFormState>) => {
+    dispatch({ type: 'LOAD_QUOTE', payload })  // ✅ nouvelle fonction exposée
   }
 
-  return { formState, setField, resetForm }
+  const resetForm = () => dispatch({ type: 'RESET' })
+
+  return { formState, setField, loadQuote, resetForm }
 }
