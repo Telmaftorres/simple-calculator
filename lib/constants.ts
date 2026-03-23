@@ -4,8 +4,10 @@ export const PRINT_SETUP_TIME_MIN = 15
 export const PRINT_SPEED_PRODUCTION = 1
 export const PRINT_SPEED_QUALITY = 2
 export const INK_COST_PER_LITER = 95
-export const INK_BASE_ML_PER_PLATE = 20
-export const FINISHING_SURCHARGE_PERCENT = 0.05
+export const INK_COST_VARNISH_PER_LITER = 120    // ✅ remplace INK_COST_FINISHING_PER_LITER
+export const INK_COST_FLAT_COLOR_PER_LITER = 120 // ✅ nouveau
+// INK_BASE_ML_PER_PLATE supprimé ✅
+// INK_COST_FINISHING_PER_LITER supprimé ✅
 
 // ── Découpe ──
 export const CUTTING_SETUP_MINUTES = 15

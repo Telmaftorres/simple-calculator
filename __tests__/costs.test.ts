@@ -4,10 +4,10 @@ import {
   HOURLY_RATE_PRINT,
   HOURLY_RATE_ASSEMBLY,
   INK_COST_PER_LITER,
-  INK_BASE_ML_PER_PLATE,
+  INK_COST_VARNISH_PER_LITER,
+  INK_COST_FLAT_COLOR_PER_LITER,
   PRINT_SETUP_TIME_MIN,
   CUTTING_SETUP_MINUTES,
-  FINISHING_SURCHARGE_PERCENT,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
 } from '@/lib/constants'
 
@@ -32,7 +32,9 @@ const defaultParams = {
   quantity: 100,
   impositionResult: mockImpositionResult,
   selectedPlate: mockPlate,
-  printSurfacePercent: 50,
+  inkMlPerPlate: 20,
+  varnishSurfacePercent: 0,
+  flatColorSurfacePercent: 0,
   printMode: 'production' as const,
   isRectoVerso: false,
   hasVarnish: false,
@@ -108,7 +110,7 @@ describe('calculateCosts', () => {
     })
 
     it('calcule correctement le coût de façonnage', () => {
-      const result = calculateCosts({ ...defaultParams, hasFaconnage: true,assemblyTimePerPieceSeconds: 60 })
+      const result = calculateCosts({ ...defaultParams, hasFaconnage: true, assemblyTimePerPieceSeconds: 60 })
       const expected = (60 * 100 / 3600) * HOURLY_RATE_ASSEMBLY
       expect(result.assemblyCost).toBeCloseTo(expected, 2)
     })
@@ -139,43 +141,119 @@ describe('calculateCosts', () => {
   })
 
   describe('printingCostData', () => {
-    it('retourne coûts à 0 si surface = 0', () => {
-      const result = calculateCosts({ ...defaultParams, printSurfacePercent: 0 })
+    it('retourne coûts à 0 si inkMlPerPlate = 0', () => {
+      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 0 })
       expect(result.printingCostData.inkCost).toBe(0)
-      expect(result.printingCostData.setupCost).toBe(0) 
+      expect(result.printingCostData.setupCost).toBe(0)
     })
 
-    it('double le coût si recto/verso', () => {
+    it('double le coût encre si recto/verso', () => {
       const recto = calculateCosts({ ...defaultParams, isRectoVerso: false })
       const rectoVerso = calculateCosts({ ...defaultParams, isRectoVerso: true })
-      expect(rectoVerso.printingCostData.inkCost).toBeGreaterThan(recto.printingCostData.inkCost)
+      expect(rectoVerso.printingCostData.inkCost).toBeCloseTo(
+        recto.printingCostData.inkCost * 2, 2
+      )
     })
 
-    it('applique le surcoût vernis', () => {
-      const sans = calculateCosts({ ...defaultParams, hasVarnish: false })
-      const avec = calculateCosts({ ...defaultParams, hasVarnish: true })
-      const ratio = avec.printingCostData.inkCost / sans.printingCostData.inkCost
-      expect(ratio).toBeCloseTo(1 + FINISHING_SURCHARGE_PERCENT, 5)
+    it('calcule encre standard seule sans finition', () => {
+      // 20 ml × 5 plaques = 100 ml = 0.1 L × 95 €/L = 9.50 €
+      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 20 })
+      const expectedInkCost = (20 * 5 / 1000) * INK_COST_PER_LITER
+      expect(result.printingCostData.inkCost).toBeCloseTo(expectedInkCost, 2)
     })
 
-    it('applique le surcoût aplat', () => {
-      const sans = calculateCosts({ ...defaultParams, hasFlatColor: false })
-      const avec = calculateCosts({ ...defaultParams, hasFlatColor: true })
-      const ratio = avec.printingCostData.inkCost / sans.printingCostData.inkCost
-      expect(ratio).toBeCloseTo(1 + FINISHING_SURCHARGE_PERCENT, 5)
+    it('vernis redirige une partie de l\'encre vers INK_COST_VARNISH_PER_LITER', () => {
+      // Avec vernis 30% : standard 70% × 95€/L + vernis 30% × INK_COST_VARNISH_PER_LITER
+      const sans = calculateCosts({ ...defaultParams, inkMlPerPlate: 20, hasVarnish: false })
+      const avec = calculateCosts({
+        ...defaultParams,
+        inkMlPerPlate: 20,
+        hasVarnish: true,
+        varnishSurfacePercent: 30,
+      })
+      const standardVolumeL = (20 * 0.70 * 5) / 1000
+      const varnishVolumeL = (20 * 0.30 * 5) / 1000
+      const expected = standardVolumeL * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
+      expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
+      expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
     })
 
-    it('cumule vernis + aplat', () => {
-      const sans = calculateCosts({ ...defaultParams, hasVarnish: false, hasFlatColor: false })
-      const avec = calculateCosts({ ...defaultParams, hasVarnish: true, hasFlatColor: true })
-      const ratio = avec.printingCostData.inkCost / sans.printingCostData.inkCost
-      expect(ratio).toBeCloseTo(1 + FINISHING_SURCHARGE_PERCENT * 2, 5)
+    it('aplat redirige une partie de l\'encre vers INK_COST_FLAT_COLOR_PER_LITER', () => {
+      const sans = calculateCosts({ ...defaultParams, inkMlPerPlate: 20, hasFlatColor: false })
+      const avec = calculateCosts({
+        ...defaultParams,
+        inkMlPerPlate: 20,
+        hasFlatColor: true,
+        flatColorSurfacePercent: 25,
+      })
+      const standardVolumeL = (20 * 0.75 * 5) / 1000
+      const flatColorVolumeL = (20 * 0.25 * 5) / 1000
+      const expected = standardVolumeL * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+      expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
+      expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
     })
 
-    it('ajoute le temps de calage si surface > 0', () => {
-      const result = calculateCosts({ ...defaultParams, printSurfacePercent: 50 })
+    it('vernis et aplat peuvent avoir des coûts différents', () => {
+      // Vérifie que les deux constantes sont bien utilisées séparément
+      const avecVernis = calculateCosts({
+        ...defaultParams,
+        inkMlPerPlate: 20,
+        hasVarnish: true, varnishSurfacePercent: 50,
+        hasFlatColor: false,
+      })
+      const avecAplat = calculateCosts({
+        ...defaultParams,
+        inkMlPerPlate: 20,
+        hasVarnish: false,
+        hasFlatColor: true, flatColorSurfacePercent: 50,
+      })
+      const varnishVolumeL = (20 * 0.50 * 5) / 1000
+      const flatColorVolumeL = (20 * 0.50 * 5) / 1000
+      const expectedVernis = (20 * 0.50 * 5 / 1000) * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
+      const expectedAplat = (20 * 0.50 * 5 / 1000) * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+      expect(avecVernis.printingCostData.inkCost).toBeCloseTo(expectedVernis, 2)
+      expect(avecAplat.printingCostData.inkCost).toBeCloseTo(expectedAplat, 2)
+    })
+
+    it('cumule vernis + aplat — volume total conservé, coût calculé séparément', () => {
+      // Vernis 30% + aplat 20% → standard 50%
+      // Volume total = 20 ml × 5 plaques = 100 ml dans tous les cas
+      const sans = calculateCosts({
+        ...defaultParams,
+        inkMlPerPlate: 20,
+        hasVarnish: false,
+        hasFlatColor: false,
+      })
+      const avec = calculateCosts({
+        ...defaultParams,
+        inkMlPerPlate: 20,
+        hasVarnish: true, varnishSurfacePercent: 30,
+        hasFlatColor: true, flatColorSurfacePercent: 20,
+      })
+      const standardVolumeL = (20 * 0.50 * 5) / 1000
+      const varnishVolumeL = (20 * 0.30 * 5) / 1000
+      const flatColorVolumeL = (20 * 0.20 * 5) / 1000
+      const expected =
+        standardVolumeL * INK_COST_PER_LITER +
+        varnishVolumeL * INK_COST_VARNISH_PER_LITER +
+        flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+      expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
+      // Volume total identique
+      expect(avec.inkVolumeL).toBeCloseTo(sans.inkVolumeL, 3)
+      // Coût plus élevé car finitions > encre standard
+      expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
+    })
+
+    it('ajoute le calage si inkMlPerPlate > 0', () => {
+      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 20 })
       const setupCost = (PRINT_SETUP_TIME_MIN / 60) * HOURLY_RATE_PRINT
       expect(result.printingCostData.laborCost).toBeGreaterThanOrEqual(setupCost)
+    })
+
+    it('pas de calage si inkMlPerPlate = 0', () => {
+      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 0 })
+      expect(result.printingCostData.setupCost).toBe(0)
+      expect(result.printingCostData.setupTimeMin).toBe(0)
     })
   })
 
@@ -190,7 +268,7 @@ describe('calculateCosts', () => {
         { id: 1, name: 'Grip', price: 2, quantity: 10 },
         { id: 2, name: 'Potence', price: 3, quantity: 5 },
       ]
-      const result = calculateCosts({ ...defaultParams, hasAccessoires: true,selectedAccessories: accessories })
+      const result = calculateCosts({ ...defaultParams, hasAccessoires: true, selectedAccessories: accessories })
       expect(result.accessoriesCost).toBe(2 * 10 + 3 * 5)
     })
   })

@@ -61,10 +61,12 @@ model Quote {
   quantity                           Int
   flatWidth                          Int
   flatHeight                         Int
-  printSurface                       Int?
   printMode                          String            @default("production")
   isRectoVerso                       Boolean           @default(false)
   rectoVersoType                     String?
+  inkMlPerPlate                      Int?              @default(0)
+  varnishSurfacePercent              Int               @default(0)
+  flatColorSurfacePercent            Int               @default(0)
   hasVarnish                         Boolean           @default(false)
   hasFlatColor                       Boolean           @default(false)
   cuttingTimePerPoseSeconds          Int               @default(0)

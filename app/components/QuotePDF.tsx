@@ -96,7 +96,9 @@ interface QuotePDFProps {
   flatWidth: number
   flatHeight: number
   impositionResult: ImpositionResult | undefined
-  printSurfacePercent: number
+  inkMlPerPlate: number              // ✅ renommé
+  varnishSurfacePercent: number      // ✅ nouveau
+  flatColorSurfacePercent: number    // ✅ nouveau
   isRectoVerso: boolean
   rectoVersoType: string | null
   hasVarnish: boolean
@@ -141,7 +143,9 @@ export function QuotePDF({
   flatWidth,
   flatHeight,
   impositionResult,
-  printSurfacePercent,
+  inkMlPerPlate,
+  varnishSurfacePercent,
+  flatColorSurfacePercent,
   isRectoVerso,
   rectoVersoType,
   hasVarnish,
@@ -179,6 +183,11 @@ export function QuotePDF({
   const date = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   })
+
+  // Répartition encre pour l'affichage PDF
+  const varnishRatio = hasVarnish ? varnishSurfacePercent / 100 : 0
+  const flatColorRatio = hasFlatColor ? flatColorSurfacePercent / 100 : 0
+  const standardPercent = Math.round(Math.max(0, 1 - varnishRatio - flatColorRatio) * 100)
 
   // ── Lignes de coûts dynamiques ──
   type CostRow = { label: string; detail: string; value: number; sub?: boolean }
@@ -252,19 +261,41 @@ export function QuotePDF({
             <Text style={styles.sectionTitle}>Impression</Text>
             <View style={styles.grid}>
               <View style={styles.gridItem}>
-                <View style={styles.row}><Text style={styles.label}>Mode</Text><Text style={styles.value}>{printMode === 'production' ? 'Production' : 'Qualité'}</Text></View>
-                <View style={styles.row}><Text style={styles.label}>Surface imprimée</Text><Text style={styles.value}>{printSurfacePercent}%</Text></View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Mode</Text>
+                  <Text style={styles.value}>{printMode === 'production' ? 'Production' : 'Qualité'}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Encre totale</Text>
+                  <Text style={styles.value}>{inkMlPerPlate} ml/plaque</Text>
+                </View>
                 <View style={styles.rowLast}>
                   <Text style={styles.label}>Type</Text>
                   <Text style={styles.value}>
-                    {isRectoVerso ? `Recto/Verso — ${rectoVersoType === 'identical' ? 'Identique' : 'Différent'}` : 'Recto seul'}
+                    {isRectoVerso
+                      ? `Recto/Verso — ${rectoVersoType === 'identical' ? 'Identique' : 'Différent'}`
+                      : 'Recto seul'}
                   </Text>
                 </View>
               </View>
               <View style={styles.gridItem}>
-                <View style={styles.row}><Text style={styles.label}>Vernis</Text><Text style={styles.value}>{hasVarnish ? 'Oui (+5%)' : 'Non'}</Text></View>
-                <View style={styles.row}><Text style={styles.label}>Aplat</Text><Text style={styles.value}>{hasFlatColor ? 'Oui (+5%)' : 'Non'}</Text></View>
-                <View style={styles.rowLast}><Text style={styles.label}>Temps machine</Text><Text style={styles.value}>{Math.round(printingCostData.machineTimeMin)} min</Text></View>
+                {/* Répartition encre */}
+                <View style={styles.row}>
+                  <Text style={styles.label}>Encre standard</Text>
+                  <Text style={styles.value}>{standardPercent}%</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Vernis (120 €/L)</Text>
+                  <Text style={styles.value}>{hasVarnish ? `${varnishSurfacePercent}%` : '—'}</Text>
+                </View>
+                <View style={styles.row}>
+                  <Text style={styles.label}>Aplat (120 €/L)</Text>
+                  <Text style={styles.value}>{hasFlatColor ? `${flatColorSurfacePercent}%` : '—'}</Text>
+                </View>
+                <View style={styles.rowLast}>
+                  <Text style={styles.label}>Temps machine</Text>
+                  <Text style={styles.value}>{Math.round(printingCostData.machineTimeMin)} min</Text>
+                </View>
               </View>
             </View>
           </View>

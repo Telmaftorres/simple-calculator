@@ -10,9 +10,10 @@ export default async function CalculatorSettingsPage() {
   }
 
   const settings = await getSettings()
+  console.log('Settings keys:', settings.map(s => s.key))
 
   return (
-<div className="max-w-4xl mx-auto space-y-6 px-4">
+    <div className="max-w-5xl mx-auto space-y-6 px-6 py-8">
       <div>
         <h1 className="text-2xl font-bold text-slate-900">Paramètres du Calculateur</h1>
         <p className="text-slate-500 mt-1">

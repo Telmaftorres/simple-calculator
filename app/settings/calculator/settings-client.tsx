@@ -74,26 +74,32 @@ const FORMULAS: Record<string, {
       return `${volumeL} L × ${cost} €/L × ${surcharge} (vernis) = ${result.toFixed(2)} €`
     },
   },
-  INK_BASE_ML_PER_PLATE: {
-    usedIn: ['Impression (encre)'],
-    formula: 'volume_L = (nb_plaques × encre_base_ml × % imprimé / 1000) × multiplicateur_rv',
+  INK_COST_VARNISH_PER_LITER: {
+    usedIn: ['Impression (encre) — vernis'],
+    formula: 'coût_vernis = volume_vernis_L × coût_vernis_par_litre',
     getExample: (v) => {
-      const ml = parseFloat(v.INK_BASE_ML_PER_PLATE) || 0
+      const cost = parseFloat(v.INK_COST_VARNISH_PER_LITER) || 0
+      const stdCost = parseFloat(v.INK_COST_PER_LITER) || 0
+      const inkMl = 20
       const nbPlates = 10
-      const printPct = 0.80
-      const result = (nbPlates * ml * printPct) / 1000
-      return `(${nbPlates} plaques × ${ml} ml × 0.80 / 1000) × 1 = ${result.toFixed(3)} L`
+      const varnishPct = 0.30
+      const varnishVolumeL = (inkMl * varnishPct * nbPlates) / 1000
+      const result = varnishVolumeL * cost
+      return `vernis 30% → 20 ml × 30% × ${nbPlates} plaques / 1000 = ${varnishVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(varnishVolumeL * stdCost).toFixed(2)} € en encre standard)`
     },
   },
-  FINISHING_SURCHARGE_PERCENT: {
-    usedIn: ['Impression (encre) — vernis et/ou aplat'],
-    formula: 'multiplicateur = 1 + (vernis ? surcharge : 0) + (aplat ? surcharge : 0)',
+  INK_COST_FLAT_COLOR_PER_LITER: {
+    usedIn: ['Impression (encre) — aplat'],
+    formula: 'coût_aplat = volume_aplat_L × coût_aplat_par_litre',
     getExample: (v) => {
-      const pct = parseFloat(v.FINISHING_SURCHARGE_PERCENT) || 0
-      const multiplier = 1 + pct + pct
-      const inkCost = 13.0
-      const result = inkCost * multiplier
-      return `vernis + aplat → 1 + ${pct} + ${pct} = ${multiplier.toFixed(2)} → ${inkCost} € × ${multiplier.toFixed(2)} = ${result.toFixed(2)} €`
+      const cost = parseFloat(v.INK_COST_FLAT_COLOR_PER_LITER) || 0
+      const stdCost = parseFloat(v.INK_COST_PER_LITER) || 0
+      const inkMl = 20
+      const nbPlates = 10
+      const flatPct = 0.20
+      const flatVolumeL = (inkMl * flatPct * nbPlates) / 1000
+      const result = flatVolumeL * cost
+      return `aplat 20% → 20 ml × 20% × ${nbPlates} plaques / 1000 = ${flatVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(flatVolumeL * stdCost).toFixed(2)} € en encre standard)`
     },
   },
   CUTTING_SETUP_MINUTES: {
@@ -240,8 +246,8 @@ const CATEGORIES: {
       'PRINT_SPEED_PRODUCTION',
       'PRINT_SPEED_QUALITY',
       'INK_COST_PER_LITER',
-      'INK_BASE_ML_PER_PLATE',
-      'FINISHING_SURCHARGE_PERCENT',
+      'INK_COST_VARNISH_PER_LITER',
+      'INK_COST_FLAT_COLOR_PER_LITER',
     ],
   },
   {
@@ -438,7 +444,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
     .filter(Boolean)
 
   return (
-    <div className="flex gap-6">
+    <div className="flex gap-6 pb-8">
 
       {/* ── Sidebar ── */}
       <div className="w-52 shrink-0">

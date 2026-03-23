@@ -3,12 +3,12 @@ import {
   HOURLY_RATE_ASSEMBLY,
   HOURLY_RATE_PACKAGING,
   INK_COST_PER_LITER,
-  INK_BASE_ML_PER_PLATE,
+  INK_COST_VARNISH_PER_LITER,
+  INK_COST_FLAT_COLOR_PER_LITER,
   PRINT_SETUP_TIME_MIN,
   PRINT_SPEED_PRODUCTION,
   PRINT_SPEED_QUALITY,
   CUTTING_SETUP_MINUTES,
-  FINISHING_SURCHARGE_PERCENT,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   POSE_SPACING_MM,
   PACKAGING_SETUP_MINUTES,
@@ -27,7 +27,9 @@ export function calculateCosts(params: {
   quantity: number
   impositionResult: ImpositionResult | null
   selectedPlate: Plate | undefined
-  printSurfacePercent: number
+  inkMlPerPlate: number               // ✅ renommé (était printSurfacePercent)
+  varnishSurfacePercent: number       // ✅ nouveau
+  flatColorSurfacePercent: number     // ✅ nouveau
   printMode: PrintMode
   isRectoVerso: boolean
   hasVarnish: boolean
@@ -56,7 +58,9 @@ export function calculateCosts(params: {
     quantity,
     impositionResult,
     selectedPlate,
-    printSurfacePercent,
+    inkMlPerPlate,
+    varnishSurfacePercent,
+    flatColorSurfacePercent,
     printMode,
     isRectoVerso,
     hasVarnish,
@@ -86,12 +90,12 @@ export function calculateCosts(params: {
   const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
   const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
-  const inkBaseMlPerPlate = settings?.INK_BASE_ML_PER_PLATE ?? INK_BASE_ML_PER_PLATE
+  const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
+  const inkCostFlatColorPerLiter = settings?.INK_COST_FLAT_COLOR_PER_LITER ?? INK_COST_FLAT_COLOR_PER_LITER
   const printSetupTimeMin = settings?.PRINT_SETUP_TIME_MIN ?? PRINT_SETUP_TIME_MIN
   const printSpeedProduction = settings?.PRINT_SPEED_PRODUCTION ?? PRINT_SPEED_PRODUCTION
   const printSpeedQuality = settings?.PRINT_SPEED_QUALITY ?? PRINT_SPEED_QUALITY
   const cuttingSetupMinutes = settings?.CUTTING_SETUP_MINUTES ?? CUTTING_SETUP_MINUTES
-  const finishingSurchargePercent = settings?.FINISHING_SURCHARGE_PERCENT ?? FINISHING_SURCHARGE_PERCENT
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const packagingSetupMinutes = settings?.PACKAGING_SETUP_MINUTES ?? PACKAGING_SETUP_MINUTES
@@ -112,22 +116,37 @@ export function calculateCosts(params: {
       }
 
     const multiplier = isRectoVerso ? 2 : 1
+    const platesNeeded = impositionResult.platesNeeded
 
-    const inkVolumeL =
-      ((impositionResult.platesNeeded * inkBaseMlPerPlate * (printSurfacePercent / 100)) / 1000)
-      * multiplier
+    // ── Calcul encre standard ──
+    // inkMlPerPlate = volume TOTAL par plaque
+    // On soustrait la part couverte par vernis et aplat
+    const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
+    const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
+    const standardRatio = Math.max(0, 1 - varnishRatio - flatColorRatio)
 
-    const finishingMultiplier =
-      1 +
-      (hasVarnish ? finishingSurchargePercent : 0) +
-      (hasFlatColor ? finishingSurchargePercent : 0)
-    const inkCost = inkVolumeL * inkCostPerLiter * finishingMultiplier
+    const standardMlPerPlate = inkMlPerPlate * standardRatio
+    const varnishMlPerPlate = inkMlPerPlate * varnishRatio
+    const flatColorMlPerPlate = inkMlPerPlate * flatColorRatio
 
+    // Volumes en litres × recto/verso
+    const standardVolumeL = (standardMlPerPlate * platesNeeded * multiplier) / 1000
+    const varnishVolumeL = (varnishMlPerPlate * platesNeeded * multiplier) / 1000
+    const flatColorVolumeL = (flatColorMlPerPlate * platesNeeded * multiplier) / 1000
+    const totalInkVolumeL = standardVolumeL + varnishVolumeL + flatColorVolumeL
+
+    // Coûts encre
+    const standardInkCost = standardVolumeL * inkCostPerLiter
+    const varnishInkCost = varnishVolumeL * inkCostVarnishPerLiter
+    const flatColorInkCost = flatColorVolumeL * inkCostFlatColorPerLiter
+    const inkCost = standardInkCost + varnishInkCost + flatColorInkCost
+
+    // ── Temps machine ──
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
-    const machineTimeMin = plateAreaM2 * pace * multiplier * impositionResult.platesNeeded
+    const machineTimeMin = plateAreaM2 * pace * multiplier * platesNeeded
 
-    const setupTimeMin = hasPrintSetup && printSurfacePercent > 0 ? printSetupTimeMin : 0
+    const setupTimeMin = hasPrintSetup && inkMlPerPlate > 0 ? printSetupTimeMin : 0
 
     const totalTimeMin = machineTimeMin + setupTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
@@ -139,7 +158,7 @@ export function calculateCosts(params: {
       timeMin: totalTimeMin,
       inkCost,
       laborCost,
-      inkVolumeL,
+      inkVolumeL: totalInkVolumeL,
       setupCost,
       machineCost,
       setupTimeMin,
@@ -260,5 +279,4 @@ export function calculateCosts(params: {
   }
 }
 
-// ✅ Type inféré depuis la signature — zéro maintenance
 export type CostCalculationParams = Parameters<typeof calculateCosts>[0]

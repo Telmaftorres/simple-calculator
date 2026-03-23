@@ -10,7 +10,7 @@ export const initialFormState = {
   selectedPlateId: '' as string,
   flatWidth: 0 as number,
   flatHeight: 0 as number,
-  printSurfacePercent: 0 as number,
+  inkMlPerPlate: 20 as number,          // ✅ renommé, défaut 20 ml
   rectoVersoType: null as string | null,
   currentAccessoryId: '' as string,
   currentAccessoryQty: 0 as number,
@@ -27,7 +27,7 @@ export type CalculatorFormState = typeof initialFormState
 
 export type CalculatorFormAction =
   | { type: 'SET_FIELD'; field: keyof CalculatorFormState; value: CalculatorFormState[keyof CalculatorFormState] }
-  | { type: 'LOAD_QUOTE'; payload: Partial<CalculatorFormState> }  // ✅ nouvelle action
+  | { type: 'LOAD_QUOTE'; payload: Partial<CalculatorFormState> }
   | { type: 'RESET' }
 
 export function calculatorFormReducer(
@@ -38,7 +38,7 @@ export function calculatorFormReducer(
     case 'SET_FIELD':
       return { ...state, [action.field]: action.value }
     case 'LOAD_QUOTE':
-      return { ...initialFormState, ...action.payload }  // ✅ un seul re-render
+      return { ...initialFormState, ...action.payload }
     case 'RESET':
       return { ...initialFormState }
     default:
@@ -57,7 +57,7 @@ export function useCalculatorForm() {
   }
 
   const loadQuote = (payload: Partial<CalculatorFormState>) => {
-    dispatch({ type: 'LOAD_QUOTE', payload })  // ✅ nouvelle fonction exposée
+    dispatch({ type: 'LOAD_QUOTE', payload })
   }
 
   const resetForm = () => dispatch({ type: 'RESET' })
