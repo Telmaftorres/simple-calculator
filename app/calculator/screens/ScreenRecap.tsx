@@ -14,7 +14,8 @@ export function ScreenRecap() {
     studyNumber, productSearch, quantity,
     selectedPlate, flatWidth, flatHeight,
     impositionResult,
-    printSurfacePercent, isRectoVerso, rectoVersoType,
+    inkMlPerPlate, varnishSurfacePercent, flatColorSurfacePercent,
+    isRectoVerso, rectoVersoType,
     hasVarnish, hasFlatColor, printMode,
     cuttingTimePerPoseSeconds,
     printingCostData, inkVolumeL,
@@ -55,7 +56,9 @@ export function ScreenRecap() {
                 flatWidth={flatWidth}
                 flatHeight={flatHeight}
                 impositionResult={impositionResult || undefined}
-                printSurfacePercent={printSurfacePercent}
+                inkMlPerPlate={inkMlPerPlate}
+                varnishSurfacePercent={varnishSurfacePercent}
+                flatColorSurfacePercent={flatColorSurfacePercent}
                 isRectoVerso={isRectoVerso}
                 rectoVersoType={rectoVersoType}
                 hasVarnish={hasVarnish}
@@ -137,7 +140,20 @@ export function ScreenRecap() {
               <dl className="space-y-2 text-sm">
                 <div className="flex justify-between"><dt className="text-slate-500">Poses / Plaque</dt><dd className="font-medium">{impositionResult?.itemsPerPlate}</dd></div>
                 <div className="flex justify-between"><dt className="text-slate-500">Plaques Nécessaires</dt><dd className="font-medium">{impositionResult?.platesNeeded}</dd></div>
-                <div className="flex justify-between"><dt className="text-slate-500">Surface Imprimée</dt><dd className="font-medium">{printSurfacePercent}%</dd></div>
+                <div className="flex justify-between">
+                  <dt className="text-slate-500">Encre</dt>
+                  <dd className="font-medium">{inkMlPerPlate} ml/plaque</dd>
+                </div>
+                {(hasVarnish || hasFlatColor) && (
+                  <div className="flex justify-between">
+                    <dt className="text-slate-500">Finitions</dt>
+                    <dd className="font-medium text-right">
+                      {hasVarnish && <span className="text-purple-700">Vernis {varnishSurfacePercent}%</span>}
+                      {hasVarnish && hasFlatColor && <span> · </span>}
+                      {hasFlatColor && <span className="text-violet-700">Aplat {flatColorSurfacePercent}%</span>}
+                    </dd>
+                  </div>
+                )}                
                 <div className="flex justify-between">
                   <dt className="text-slate-500">Impression</dt>
                   <dd className="font-medium">

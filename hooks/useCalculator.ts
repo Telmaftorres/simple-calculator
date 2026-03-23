@@ -48,7 +48,9 @@ export function useCalculator(
     selectedPlateId,
     flatWidth,
     flatHeight,
-    printSurfacePercent,
+    inkMlPerPlate,               // ✅ renommé
+    varnishSurfacePercent,        // ✅ nouveau
+    flatColorSurfacePercent,      // ✅ nouveau
     printMode,
     isRectoVerso,
     hasVarnish,
@@ -83,7 +85,9 @@ export function useCalculator(
       setField('selectedPlateId', initialQuote.plateId?.toString() || '')
       setField('flatWidth', initialQuote.flatWidth || 0)
       setField('flatHeight', initialQuote.flatHeight || 0)
-      setField('printSurfacePercent', initialQuote.printSurface || 0)
+      setField('inkMlPerPlate', initialQuote.inkMlPerPlate ?? 20)             // ✅ renommé
+      setField('varnishSurfacePercent', initialQuote.varnishSurfacePercent ?? 0)  // ✅ nouveau
+      setField('flatColorSurfacePercent', initialQuote.flatColorSurfacePercent ?? 0) // ✅ nouveau
       setField('printMode', (initialQuote.printMode as 'production' | 'quality') || 'production')
       setField('isRectoVerso', initialQuote.isRectoVerso || false)
       setField('rectoVersoType', initialQuote.rectoVersoType || null)
@@ -106,7 +110,6 @@ export function useCalculator(
       setField('hasConditionnement', initialQuote.hasConditionnement ?? true)
       setField('hasAccessoires', initialQuote.hasAccessoires ?? false)
 
-      // ✅ Après — utilise les relations incluses par Prisma directement
       if (initialQuote.accessories) {
         const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => ({
           id: qa.accessoryId,
@@ -181,7 +184,9 @@ export function useCalculator(
     quantity,
     impositionResult,
     selectedPlate,
-    printSurfacePercent,
+    inkMlPerPlate,               // ✅ renommé
+    varnishSurfacePercent,        // ✅ nouveau
+    flatColorSurfacePercent,      // ✅ nouveau
     printMode,
     isRectoVerso,
     hasVarnish,
@@ -313,7 +318,9 @@ export function useCalculator(
         totalCost,
         flatWidth,
         flatHeight,
-        printSurface: printSurfacePercent,
+        inkMlPerPlate,              
+        varnishSurfacePercent,         
+        flatColorSurfacePercent,      
         printMode,
         isRectoVerso,
         rectoVersoType,
@@ -359,6 +366,8 @@ export function useCalculator(
       const rawMessage = (error as Error)?.message || ''
       const displayMessage = knownMessages[rawMessage] || 'Erreur lors de la sauvegarde. Veuillez réessayer.'
       toast.error(displayMessage)
+    } finally {
+      setIsServing(false)
     }
   }
 
@@ -383,7 +392,9 @@ export function useCalculator(
     flatHeight, setFlatHeight: (v: number) => setField('flatHeight', v),
     selectedPlate, selectedProductType,
     impositionResult,
-    printSurfacePercent, setPrintSurfacePercent: (v: number) => setField('printSurfacePercent', v),
+    inkMlPerPlate, setInkMlPerPlate: (v: number) => setField('inkMlPerPlate', v),               // ✅ renommé
+    varnishSurfacePercent, setVarnishSurfacePercent: (v: number) => setField('varnishSurfacePercent', v), // ✅ nouveau
+    flatColorSurfacePercent, setFlatColorSurfacePercent: (v: number) => setField('flatColorSurfacePercent', v), // ✅ nouveau
     printMode, setPrintMode: (v: 'production' | 'quality') => setField('printMode', v),
     isRectoVerso, setIsRectoVerso: (v: boolean) => setField('isRectoVerso', v),
     hasVarnish, setHasVarnish: (v: boolean) => setField('hasVarnish', v),
