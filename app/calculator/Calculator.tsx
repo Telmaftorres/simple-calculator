@@ -45,7 +45,7 @@ export default function Calculator({
     <CalculatorContext.Provider value={{
       ...calc,
       plates,
-      accessories,
+      accessories: calc.accessoriesList,
       consumables,
     }}>
       {calc.screenState === 'recap' ? (

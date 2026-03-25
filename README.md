@@ -304,7 +304,7 @@ Tous les calculs sont centralisés dans `lib/calculation/costs.ts` et utilisent 
 | **Matière** | `plaquesNécessaires × coût/plaque` |
 | **Impression (encre standard)** | `(inkMlPerPlate × standardRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_PER_LITER` |
 | **Impression (encre vernis)** | `(inkMlPerPlate × varnishRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_VARNISH_PER_LITER` |
-| **Impression (encre aplat)** | `(inkMlPerPlate × flatColorRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_FLAT_COLOR_PER_LITER` |
+| **Impression (encre blanc)** | `(inkMlPerPlate × flatColorRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_FLAT_COLOR_PER_LITER` |
 | **Impression (temps machine)** | `surface_plaque_m² × min/m² × multiplicateur_rv × nb_plaques × taux_horaire` |
 | **Calage impression** | `calage_min / 60 × taux_horaire` (si activé) |
 | **Découpe (temps machine)** | `temps_par_pose_sec × quantité / 3600 × taux_horaire` |
@@ -525,6 +525,15 @@ ALTER SEQUENCE quote_reference_seq RESTART WITH 1;
 - ✅ **Nettoyage Build** : Suppression des résidus de configuration `dist/` dans `tsconfig.json`
 - ✅ **Branding** : Correction du favicon pointant sur le logo officiel
 - ✅ **Performance** : Optimisation du chargement d'un devis existant (`loadQuote` en un seul re-render)
+
+### Sprint 6 — Fonctionnalités avancées & Refonte Encre (mars 2026)
+- ✅ **Versionning des devis** : Modifier un devis `REF` renomme l'original en `REF-A` et crée une nouvelle version `REF-B` (incrémentée automatiquement).
+- ✅ **Création d'accessoires inline** : Nouveau formulaire intégré directement dans le calculateur pour créer un accessoire à la volée sans recharger la page.
+- ✅ **Pré-remplissage Devis** : Lors de la modification d'un devis, le type de PLV est désormais correctement pré-sélectionné et le bouton de création est masqué pour éviter les doublons.
+- ✅ **Refonte logique Encre (Blanc)** : 
+  - "Aplat" renommé en **"Blanc"** dans toute l'interface et le PDF.
+  - L'encre standard (95€/L) est désormais **toujours calculée à 100%** de sa base.
+  - Les pourcentages de Vernis et de Blanc s'ajoutent en surplus (à 120€/L) au lieu de réduire la part d'encre standard.
 
 ---
 

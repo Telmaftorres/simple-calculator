@@ -26,8 +26,7 @@ export function SectionImpression() {
 
   const varnishRatio = hasVarnish ? varnishSurfacePercent : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent : 0
-  const standardPercent = Math.max(0, 100 - varnishRatio - flatColorRatio)
-  const finishingOverflow = varnishRatio + flatColorRatio > 100
+  const standardPercent = 100
 
   return (
     <SectionDisplay
@@ -135,7 +134,7 @@ export function SectionImpression() {
               onClick={() => setHasFlatColor(!hasFlatColor)}
               className={`flex-1 px-4 py-2 text-sm font-semibold rounded-lg border transition-all ${hasFlatColor ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}
             >
-              Aplat
+              Blanc
             </button>
           </div>
 
@@ -171,7 +170,7 @@ export function SectionImpression() {
           {hasFlatColor && (
             <div className="mt-3 space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-100">
               <GaugeSlider
-                label="Surface Aplat"
+                label="Surface Blanc"
                 value={flatColorSurfacePercent}
                 max={100}
                 min={0}
@@ -211,14 +210,9 @@ export function SectionImpression() {
               )}
               {hasFlatColor && (
                 <div className="flex justify-between text-violet-700">
-                  <span>Aplat (120 €/L)</span>
+                  <span>Blanc (120 €/L)</span>
                   <span className="font-semibold">{flatColorSurfacePercent}%</span>
                 </div>
-              )}
-              {finishingOverflow && (
-                <p className="text-red-500 font-semibold pt-1">
-                  ⚠️ Total finitions dépasse 100% — réduire vernis ou aplat
-                </p>
               )}
             </div>
           )}

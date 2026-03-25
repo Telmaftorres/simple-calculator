@@ -1,1 +1,0 @@
-CREATE SEQUENCE IF NOT EXISTS quote_reference_seq START WITH 1;

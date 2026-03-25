@@ -119,11 +119,11 @@ export function calculateCosts(params: {
     const platesNeeded = impositionResult.platesNeeded
 
     // ── Calcul encre standard ──
-    // inkMlPerPlate = volume TOTAL par plaque
-    // On soustrait la part couverte par vernis et aplat
+    // inkMlPerPlate = volume TOTAL par plaque pour l'encre standard (toujours 100%)
+    // Le vernis et le blanc s'ajoutent par-dessus
     const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
     const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
-    const standardRatio = Math.max(0, 1 - varnishRatio - flatColorRatio)
+    const standardRatio = 1 // Toujours 100% d'encre standard
 
     const standardMlPerPlate = inkMlPerPlate * standardRatio
     const varnishMlPerPlate = inkMlPerPlate * varnishRatio

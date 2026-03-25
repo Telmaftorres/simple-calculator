@@ -57,12 +57,14 @@ export function SectionPresentation() {
                     {pt.name}
                   </div>
                 ))}
-              <div
-                className="p-2 text-emerald-600 font-medium cursor-pointer border-t hover:bg-emerald-50"
-                onClick={handleCreateProductType}
-              >
-                + Créer &quot;{productSearch}&quot;
-              </div>
+              {productSearch.trim() && !productTypes.some((pt) => pt.name.toLowerCase() === productSearch.toLowerCase()) && (
+                <div
+                  className="p-2 text-emerald-600 font-medium cursor-pointer border-t hover:bg-emerald-50"
+                  onClick={handleCreateProductType}
+                >
+                  + Créer &quot;{productSearch}&quot;
+                </div>
+              )}
             </div>
           )}
         </div>

@@ -162,8 +162,8 @@ describe('calculateCosts', () => {
       expect(result.printingCostData.inkCost).toBeCloseTo(expectedInkCost, 2)
     })
 
-    it('vernis redirige une partie de l\'encre vers INK_COST_VARNISH_PER_LITER', () => {
-      // Avec vernis 30% : standard 70% × 95€/L + vernis 30% × INK_COST_VARNISH_PER_LITER
+    it('vernis ajoute une couche supplémentaire d\'encre vers INK_COST_VARNISH_PER_LITER', () => {
+      // Avec vernis 30% : standard 100% × 95€/L + vernis 30% × INK_COST_VARNISH_PER_LITER
       const sans = calculateCosts({ ...defaultParams, inkMlPerPlate: 20, hasVarnish: false })
       const avec = calculateCosts({
         ...defaultParams,
@@ -171,14 +171,14 @@ describe('calculateCosts', () => {
         hasVarnish: true,
         varnishSurfacePercent: 30,
       })
-      const standardVolumeL = (20 * 0.70 * 5) / 1000
+      const standardVolumeL = (20 * 1 * 5) / 1000
       const varnishVolumeL = (20 * 0.30 * 5) / 1000
       const expected = standardVolumeL * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
       expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
       expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
     })
 
-    it('aplat redirige une partie de l\'encre vers INK_COST_FLAT_COLOR_PER_LITER', () => {
+    it('blanc ajoute une couche d\'encre vers INK_COST_FLAT_COLOR_PER_LITER', () => {
       const sans = calculateCosts({ ...defaultParams, inkMlPerPlate: 20, hasFlatColor: false })
       const avec = calculateCosts({
         ...defaultParams,
@@ -186,7 +186,7 @@ describe('calculateCosts', () => {
         hasFlatColor: true,
         flatColorSurfacePercent: 25,
       })
-      const standardVolumeL = (20 * 0.75 * 5) / 1000
+      const standardVolumeL = (20 * 1 * 5) / 1000
       const flatColorVolumeL = (20 * 0.25 * 5) / 1000
       const expected = standardVolumeL * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
       expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
@@ -209,15 +209,15 @@ describe('calculateCosts', () => {
       })
       const varnishVolumeL = (20 * 0.50 * 5) / 1000
       const flatColorVolumeL = (20 * 0.50 * 5) / 1000
-      const expectedVernis = (20 * 0.50 * 5 / 1000) * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
-      const expectedAplat = (20 * 0.50 * 5 / 1000) * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+      const expectedVernis = (20 * 1 * 5 / 1000) * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
+      const expectedAplat = (20 * 1 * 5 / 1000) * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
       expect(avecVernis.printingCostData.inkCost).toBeCloseTo(expectedVernis, 2)
       expect(avecAplat.printingCostData.inkCost).toBeCloseTo(expectedAplat, 2)
     })
 
-    it('cumule vernis + aplat — volume total conservé, coût calculé séparément', () => {
-      // Vernis 30% + aplat 20% → standard 50%
-      // Volume total = 20 ml × 5 plaques = 100 ml dans tous les cas
+    it('cumule vernis + blanc — base standard conservée avec ajout de volume', () => {
+      // Vernis 30% + blanc 20% → base standard reste à 100%
+      // Volume = encre standard + encre extra 
       const sans = calculateCosts({
         ...defaultParams,
         inkMlPerPlate: 20,
@@ -230,7 +230,7 @@ describe('calculateCosts', () => {
         hasVarnish: true, varnishSurfacePercent: 30,
         hasFlatColor: true, flatColorSurfacePercent: 20,
       })
-      const standardVolumeL = (20 * 0.50 * 5) / 1000
+      const standardVolumeL = (20 * 1 * 5) / 1000
       const varnishVolumeL = (20 * 0.30 * 5) / 1000
       const flatColorVolumeL = (20 * 0.20 * 5) / 1000
       const expected =
@@ -238,8 +238,8 @@ describe('calculateCosts', () => {
         varnishVolumeL * INK_COST_VARNISH_PER_LITER +
         flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
       expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
-      // Volume total identique
-      expect(avec.inkVolumeL).toBeCloseTo(sans.inkVolumeL, 3)
+      // Volume est plus grand
+      expect(avec.inkVolumeL).toBeGreaterThan(sans.inkVolumeL)
       // Coût plus élevé car finitions > encre standard
       expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
     })
