@@ -534,15 +534,14 @@ ALTER SEQUENCE quote_reference_seq RESTART WITH 1;
   - "Aplat" renommé en **"Blanc"** dans toute l'interface et le PDF.
   - L'encre standard (95€/L) est désormais **toujours calculée à 100%** de sa base.
   - Les pourcentages de Vernis et de Blanc s'ajoutent en surplus (à 120€/L) au lieu de réduire la part d'encre standard.
+  - **Temps machine séparé** : l'ajout de Vernis ou de Blanc augmente le temps de production (1.5 min/m² paramétrable) sans impacter la vitesse de base de l'encre standard.
+- ✅ **Boutons raccourcis** : ajout sur toutes les jauges de l'application (pas seulement l'encre standard, mais aussi le vernis et le blanc).
+- ✅ **Comportement Emballage** : masquage du calcul du nombre de plaques tant que la quantité n'est pas encore renseignée.
+- ✅ **Connexions utilisateurs** : tests de `first login policy` et validation de la séparation stricte des droits ADMIN vs USER (qui peuvent tout CRUD pour le métier).
 
 ---
 
 ## 🗺 Roadmap (à venir)
-
-### Corrections & petites améliorations
-- [ ] Section emballage — masquer le calcul plaques tant que la quantité n'est pas renseignée
-- [ ] Boutons raccourcis sur toutes les jauges du calculateur (pas seulement encre)
-- [ ] Tests de connexion comptes utilisateurs standards (first login policy, séparation droits)
 
 ### Nouvelles fonctionnalités
 - [ ] Devis multi-produits — intégrer plusieurs types de PLV dans un même devis avec récapitulatif global (évolution structurante)

@@ -63,6 +63,28 @@ const FORMULAS: Record<string, {
       return `${pace} min/m² × ${plateM2} m² × 1 × ${nbPlates} plaques = ${result.toFixed(2)} min`
     },
   },
+  PRINT_SPEED_VARNISH: {
+    usedIn: ['Impression (temps machine) — Vernis'],
+    formula: 'temps_vernis_min = min_par_m² × surface_plaque_m² × multiplicateur × nb_plaques',
+    getExample: (v) => {
+      const pace = parseFloat(v.PRINT_SPEED_VARNISH) || 0
+      const plateM2 = 1.92
+      const nbPlates = 10
+      const result = pace * plateM2 * 1 * nbPlates
+      return `${pace} min/m² × ${plateM2} m² × 1 × ${nbPlates} plaques = ${result.toFixed(2)} min (ajout au temps de base)`
+    },
+  },
+  PRINT_SPEED_FLAT_COLOR: {
+    usedIn: ['Impression (temps machine) — Blanc'],
+    formula: 'temps_blanc_min = min_par_m² × surface_plaque_m² × multiplicateur × nb_plaques',
+    getExample: (v) => {
+      const pace = parseFloat(v.PRINT_SPEED_FLAT_COLOR) || 0
+      const plateM2 = 1.92
+      const nbPlates = 10
+      const result = pace * plateM2 * 1 * nbPlates
+      return `${pace} min/m² × ${plateM2} m² × 1 × ${nbPlates} plaques = ${result.toFixed(2)} min (ajout au temps de base)`
+    },
+  },
   INK_COST_PER_LITER: {
     usedIn: ['Impression (encre)'],
     formula: 'coût_encre = volume_L × coût_par_litre × (1 + surcharges_finitions)',
@@ -245,6 +267,8 @@ const CATEGORIES: {
       'PRINT_SETUP_TIME_MIN',
       'PRINT_SPEED_PRODUCTION',
       'PRINT_SPEED_QUALITY',
+      'PRINT_SPEED_VARNISH',
+      'PRINT_SPEED_FLAT_COLOR',
       'INK_COST_PER_LITER',
       'INK_COST_VARNISH_PER_LITER',
       'INK_COST_FLAT_COLOR_PER_LITER',
