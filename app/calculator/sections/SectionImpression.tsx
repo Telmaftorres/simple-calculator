@@ -1,7 +1,6 @@
 import { Label } from '@/components/ui/label'
 import { SectionDisplay } from '../shared'
-import { GaugeSlider } from '../../components/GaugeSlider'
-// import { PlateVisualizer } from '../../components/PlateVisualizer' // ✅ commenté — désactivé temporairement
+import { GaugeSlider } from '@/components/GaugeSlider'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
@@ -20,10 +19,11 @@ export function SectionImpression() {
     varnishSurfacePercent, setVarnishSurfacePercent,
     flatColorSurfacePercent, setFlatColorSurfacePercent,
     hasPrintSetup, setHasPrintSetup,
-    printingCostData,
+    costResult,
   } = useCalculatorContext()
 
-  // Part d'encre standard restante après finitions
+  const { printingCostData } = costResult
+
   const varnishRatio = hasVarnish ? varnishSurfacePercent : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent : 0
   const standardPercent = Math.max(0, 100 - varnishRatio - flatColorRatio)
@@ -39,7 +39,6 @@ export function SectionImpression() {
     >
       <div className="space-y-4">
 
-        {/* Mode d'impression */}
         <div className="flex justify-between items-center">
           <Label>Mode d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -58,7 +57,6 @@ export function SectionImpression() {
           </div>
         </div>
 
-        {/* Type d'impression */}
         <div className="flex justify-between items-center">
           <Label>Type d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -77,7 +75,6 @@ export function SectionImpression() {
           </div>
         </div>
 
-        {/* Visuel Recto/Verso */}
         {isRectoVerso && (
           <div>
             <Label className="mb-2 block">Visuel Recto / Verso</Label>
@@ -98,7 +95,6 @@ export function SectionImpression() {
           </div>
         )}
 
-        {/* ── Encre standard ── */}
         <div className="space-y-2">
           <GaugeSlider
             label="Encre (ml / plaque)"
@@ -109,7 +105,6 @@ export function SectionImpression() {
             onChange={setInkMlPerPlate}
             gradientColors="from-indigo-300 to-purple-600"
           />
-          {/* Raccourcis encre */}
           <div className="flex gap-2">
             {INK_SHORTCUTS.map((val) => (
               <button
@@ -127,7 +122,6 @@ export function SectionImpression() {
           </div>
         </div>
 
-        {/* ── Finitions ── */}
         <div>
           <Label className="mb-2 block">Finitions</Label>
           <div className="flex gap-2">
@@ -145,7 +139,6 @@ export function SectionImpression() {
             </button>
           </div>
 
-          {/* Jauge vernis */}
           {hasVarnish && (
             <div className="mt-3 space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-100">
               <GaugeSlider
@@ -175,7 +168,6 @@ export function SectionImpression() {
             </div>
           )}
 
-          {/* Jauge aplat */}
           {hasFlatColor && (
             <div className="mt-3 space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-100">
               <GaugeSlider
@@ -205,7 +197,6 @@ export function SectionImpression() {
             </div>
           )}
 
-          {/* Récap répartition encre */}
           {(hasVarnish || hasFlatColor) && (
             <div className="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
               <div className="flex justify-between text-slate-600">
@@ -233,7 +224,6 @@ export function SectionImpression() {
           )}
         </div>
 
-        {/* Calage */}
         <div className="flex items-center space-x-2 bg-purple-50 p-3 rounded-lg border border-purple-100">
           <input
             type="checkbox"
@@ -247,7 +237,6 @@ export function SectionImpression() {
           </Label>
         </div>
 
-        {/* Temps */}
         <div className="flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800">
           <span>Temps machine :</span>
           <span className="font-bold text-sm">{formatMinutes(printingCostData.machineTimeMin)}</span>
@@ -258,18 +247,6 @@ export function SectionImpression() {
             <span className="font-bold text-sm">{printingCostData.setupTimeMin} min</span>
           </div>
         )}
-
-        {/* PlateVisualizer — désactivé temporairement */}
-        {/* {impositionResult && selectedPlate && (
-          <div className="mt-4">
-            <PlateVisualizer
-              plate={selectedPlate}
-              layout={impositionResult.layout}
-              itemsPerPlate={impositionResult.itemsPerPlate}
-              printSurfacePercent={inkMlPerPlate}
-            />
-          </div>
-        )} */}
 
       </div>
     </SectionDisplay>

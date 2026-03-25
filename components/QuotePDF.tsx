@@ -1,14 +1,14 @@
 'use client'
 
 import {
-  Document,
-  Page,
-  Text,
-  View,
-  Image,
-  StyleSheet,
+  Document, Page, Text, View, Image, StyleSheet,
 } from '@react-pdf/renderer'
-import type { ImpositionResult, PrintingCostData, SelectedAccessory, SelectedConsumable, Plate } from '@/types/calculator'
+import { buildCostRows } from '@/lib/quote-cost-rows'
+import { calculateCosts } from '@/lib/calculation/costs'
+import type { CalculatorFormState } from '@/hooks/useCalculatorForm'
+import type { ImpositionResult, SelectedAccessory, SelectedConsumable, Plate } from '@/types/calculator'
+
+type CostResult = ReturnType<typeof calculateCosts>
 
 const styles = StyleSheet.create({
   page: {
@@ -88,139 +88,110 @@ const styles = StyleSheet.create({
 })
 
 interface QuotePDFProps {
-  studyNumber: string
-  reference?: string | null
-  productName: string
-  quantity: number
+  quoteInfo: {
+    studyNumber: string
+    reference?: string | null
+    productName: string
+    quantity: number
+  }
+  formValues: CalculatorFormState
+  costResult: CostResult
   selectedPlate: Plate | undefined
-  flatWidth: number
-  flatHeight: number
   impositionResult: ImpositionResult | undefined
-  inkMlPerPlate: number              // ✅ renommé
-  varnishSurfacePercent: number      // ✅ nouveau
-  flatColorSurfacePercent: number    // ✅ nouveau
-  isRectoVerso: boolean
-  rectoVersoType: string | null
-  hasVarnish: boolean
-  hasFlatColor: boolean
-  printMode: string
-  cuttingTimePerPoseSeconds: number
-  assemblyTimePerPieceSeconds: number
-  packTimePerPieceSeconds: number
-  hasAssemblyNotice: boolean
-  printingCostData: PrintingCostData
-  inkVolumeL: number
-  hasPrintSetup: boolean
-  hasImpression: boolean
-  cuttingCost: number
-  cuttingMachineCost: number
-  cuttingSetupCost: number
-  cuttingSetupTimeMin: number
-  cuttingMachineTimeMin: number
-  hasCuttingSetup: boolean
-  assemblyCost: number
-  hasFaconnage: boolean
-  packagingCost: number
-  hasConditionnement: boolean
-  accessoriesCost: number
-  hasAccessoires: boolean
-  consumablesCost: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
-  hasPackaging: boolean
-  packagingTotalCost: number
-  packagingMaterialCost: number
-  packagingCuttingCost: number
-  totalCost: number
 }
 
 export function QuotePDF({
-  studyNumber,
-  reference,
-  productName,
-  quantity,
+  quoteInfo,
+  formValues,
+  costResult,
   selectedPlate,
-  flatWidth,
-  flatHeight,
   impositionResult,
-  inkMlPerPlate,
-  varnishSurfacePercent,
-  flatColorSurfacePercent,
-  isRectoVerso,
-  rectoVersoType,
-  hasVarnish,
-  hasFlatColor,
-  printMode,
-  cuttingTimePerPoseSeconds,
-  assemblyTimePerPieceSeconds,
-  packTimePerPieceSeconds,
-  hasAssemblyNotice,
-  printingCostData,
-  inkVolumeL,
-  hasPrintSetup,
-  hasImpression,
-  cuttingCost,
-  cuttingMachineCost,
-  cuttingSetupCost,
-  cuttingSetupTimeMin,
-  cuttingMachineTimeMin,
-  hasCuttingSetup,
-  assemblyCost,
-  hasFaconnage,
-  packagingCost,
-  hasConditionnement,
-  accessoriesCost,
-  hasAccessoires,
-  consumablesCost,
   selectedAccessories,
   selectedConsumables,
-  hasPackaging,
-  packagingTotalCost,
-  packagingMaterialCost,
-  packagingCuttingCost,
-  totalCost,
 }: QuotePDFProps) {
+
+  const { studyNumber, reference, productName, quantity } = quoteInfo
+
+  const {
+    inkMlPerPlate,
+    varnishSurfacePercent,
+    flatColorSurfacePercent,
+    flatWidth,
+    flatHeight,
+    printMode,
+    isRectoVerso,
+    rectoVersoType,
+    hasVarnish,
+    hasFlatColor,
+    hasImpression,
+    hasPrintSetup,
+    hasCuttingSetup,
+    hasFaconnage,
+    hasConditionnement,
+    hasAccessoires,
+    hasPackaging,
+    hasAssemblyNotice,
+    assemblyTimePerPieceSeconds,
+    packTimePerPieceSeconds,
+  } = formValues
+
+  const {
+    printingCostData,
+    inkVolumeL,
+    cuttingCost,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    cuttingSetupTimeMin,
+    cuttingMachineTimeMin,
+    assemblyCost,
+    packagingCost,
+    accessoriesCost,
+    consumablesCost,
+    totalCost,
+    packagingTotalCost,
+    packagingMaterialCost,
+    packagingCuttingCost,
+  } = costResult
+
   const date = new Date().toLocaleDateString('fr-FR', {
     day: '2-digit', month: '2-digit', year: 'numeric',
   })
 
-  // Répartition encre pour l'affichage PDF
   const varnishRatio = hasVarnish ? varnishSurfacePercent / 100 : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent / 100 : 0
   const standardPercent = Math.round(Math.max(0, 1 - varnishRatio - flatColorRatio) * 100)
 
-  // ── Lignes de coûts dynamiques ──
-  type CostRow = { label: string; detail: string; value: number; sub?: boolean }
-  const costRows: CostRow[] = [
-    { label: 'Matière', detail: `${impositionResult?.platesNeeded} plaque(s) × ${selectedPlate?.cost}€`, value: impositionResult?.materialCost || 0 },
-    ...(hasImpression ? [
-      { label: 'Impression (Encre)', detail: `${inkVolumeL.toFixed(3)} L`, value: printingCostData.inkCost },
-      { label: 'Impression (temps machine)', detail: `${Math.round(printingCostData.machineTimeMin)} min`, value: printingCostData.machineCost },
-      ...(hasPrintSetup && printingCostData.setupCost > 0 ? [
-        { label: '↳ Calage impression', detail: `${printingCostData.setupTimeMin} min`, value: printingCostData.setupCost, sub: true },
-      ] : []),
-    ] : []),
-    { label: 'Découpe (temps machine)', detail: `${Math.round(cuttingMachineTimeMin)} min`, value: cuttingMachineCost },
-    ...(hasCuttingSetup && cuttingSetupCost > 0 ? [
-      { label: '↳ Calage découpe', detail: `${cuttingSetupTimeMin} min`, value: cuttingSetupCost, sub: true },
-    ] : []),
-    ...(hasFaconnage ? [
-      { label: 'Façonnage', detail: `${assemblyTimePerPieceSeconds}s/pce`, value: assemblyCost },
-      ...(selectedConsumables.length > 0 ? [
-        { label: '↳ Consommables', detail: `${selectedConsumables.length} type(s)`, value: consumablesCost, sub: true },
-      ] : []),
-    ] : []),
-    ...(hasConditionnement ? [
-      { label: 'Conditionnement', detail: hasAssemblyNotice ? 'Avec notice' : `${packTimePerPieceSeconds}s/pce`, value: packagingCost },
-    ] : []),
-    ...(hasAccessoires && accessoriesCost > 0 ? [
-      { label: 'Accessoires', detail: `${selectedAccessories.length} réf.`, value: accessoriesCost },
-    ] : []),
-    ...(hasPackaging && packagingTotalCost > 0 ? [
-      { label: 'Emballage', detail: `Mat. ${packagingMaterialCost.toFixed(2)}€ + Déc. ${packagingCuttingCost.toFixed(2)}€`, value: packagingTotalCost },
-    ] : []),
-  ]
-
+  const costRows = buildCostRows({
+    impositionResult,
+    selectedPlate,
+    hasImpression,
+    inkVolumeL,
+    printingCostData,
+    hasPrintSetup,
+    cuttingMachineTimeMin,
+    cuttingMachineCost,
+    hasCuttingSetup,
+    cuttingSetupTimeMin,
+    cuttingSetupCost,
+    hasFaconnage,
+    assemblyTimePerPieceSeconds,
+    assemblyCost,
+    selectedConsumables,
+    consumablesCost,
+    hasConditionnement,
+    hasAssemblyNotice,
+    packTimePerPieceSeconds,
+    packagingCost,
+    hasAccessoires,
+    accessoriesCost,
+    selectedAccessories,
+    hasPackaging,
+    packagingTotalCost,
+    packagingMaterialCost,
+    packagingCuttingCost,
+  })
   return (
     <Document>
       <Page size="A4" style={styles.page}>

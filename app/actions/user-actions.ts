@@ -5,6 +5,17 @@ import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import { auth, signOut as authSignOut } from '@/auth'
 import { requireAdmin } from '@/lib/auth-helpers'
+import { z } from 'zod'
+
+const userRoleSchema = z.enum(['ADMIN', 'USER'])
+
+const createUserSchema = z.object({
+  email: z.string().email('Format d\'email invalide'),
+  password: z.string().min(8, 'Le mot de passe doit faire au moins 8 caractères'),
+  firstName: z.string().min(1, 'Le prénom est requis'),
+  lastName: z.string().min(1, 'Le nom est requis'),
+  role: userRoleSchema.default('USER'),
+})
 
 export async function getUsers() {
   await requireAdmin()
@@ -28,16 +39,21 @@ export async function getUsers() {
 export async function createUser(formData: FormData) {
   await requireAdmin()
 
-  const email = formData.get('email') as string
-  const password = formData.get('password') as string
-  const firstName = formData.get('firstName') as string
-  const lastName = formData.get('lastName') as string
-  const name = (formData.get('name') as string) || `${firstName} ${lastName}`.trim()
-  const role = (formData.get('role') as 'ADMIN' | 'USER') || 'USER'
+  const rawData = {
+    email: formData.get('email'),
+    password: formData.get('password'),
+    firstName: formData.get('firstName'),
+    lastName: formData.get('lastName'),
+    role: formData.get('role'),
+  }
 
-  if (!email || !password) return { error: 'Email et mot de passe requis' }
-  if (password.length < 8) return { error: 'Le mot de passe doit faire au moins 8 caractères' }
+  const parseResult = createUserSchema.safeParse(rawData)
+  if (!parseResult.success) {
+    return { error: parseResult.error.issues[0].message }
+  }
 
+  const { email, password, firstName, lastName, role } = parseResult.data
+  const name = `${firstName} ${lastName}`.trim()
   const hashedPassword = await bcrypt.hash(password, 10)
 
   try {
@@ -63,18 +79,35 @@ export async function createUser(formData: FormData) {
   }
 }
 
+const updateUserSchema = z.object({
+  id: z.string().min(1, 'ID requis'),
+  email: z.string().email('Format d\'email invalide'),
+  firstName: z.string().min(1, 'Le prénom est requis'),
+  lastName: z.string().min(1, 'Le nom est requis'),
+  password: z.string().optional().or(z.literal('')),
+  role: userRoleSchema.default('USER'),
+  permissions: z.array(z.string()).default([]),
+})
+
 export async function updateUser(formData: FormData) {
   await requireAdmin()
 
-  const userId = formData.get('id') as string
-  const email = formData.get('email') as string
-  const firstName = formData.get('firstName') as string
-  const lastName = formData.get('lastName') as string
-  const password = formData.get('password') as string
-  const role = formData.get('role') as 'ADMIN' | 'USER'
-  const permissions = formData.getAll('permissions') as string[]
+  const rawData = {
+    id: formData.get('id'),
+    email: formData.get('email'),
+    firstName: formData.get('firstName'),
+    lastName: formData.get('lastName'),
+    password: formData.get('password'),
+    role: formData.get('role'),
+    permissions: formData.getAll('permissions'),
+  }
 
-  if (!userId || !email) return { error: 'ID et Email requis' }
+  const parseResult = updateUserSchema.safeParse(rawData)
+  if (!parseResult.success) {
+    return { error: parseResult.error.issues[0].message }
+  }
+
+  const { id, email, firstName, lastName, password, role, permissions } = parseResult.data
 
   const data: {
     email: string
@@ -93,12 +126,13 @@ export async function updateUser(formData: FormData) {
     permissions,
   }
 
-  if (password && password.length >= 8) {
+  if (password && password.length > 0) {
+    if (password.length < 8) return { error: 'Le mot de passe doit faire au moins 8 caractères' }
     data.password = await bcrypt.hash(password, 10)
   }
 
   try {
-    await prisma.user.update({ where: { id: userId }, data })
+    await prisma.user.update({ where: { id }, data })
     revalidatePath('/settings/users')
     return { success: true }
   } catch {

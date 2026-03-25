@@ -37,6 +37,8 @@ export default function ConsumablesClient({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingConsumable, setEditingConsumable] = useState<Consumable | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
   
   const [name, setName] = useState('')
   const [price, setPrice] = useState('')
@@ -59,6 +61,7 @@ export default function ConsumablesClient({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
     try {
       const payload = {
         name,
@@ -68,24 +71,31 @@ export default function ConsumablesClient({
 
       if (editingConsumable) {
         await updateConsumable(editingConsumable.id, payload)
+        toast.success('Consommable modifié avec succès')
       } else {
         await createConsumable(payload)
+        toast.success('Consommable créé avec succès')
       }
       setIsDialogOpen(false)
     } catch (error) {
       console.error('Failed to save consumable', error)
       toast.error("Erreur lors de l'enregistrement du consommable. Vérifiez les champs.")
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer ce consommable ?')) {
-      try {
-        await deleteConsumable(id)
-      } catch (error) {
-        console.error('Failed to delete consumable', error)
-        toast.error('Erreur lors de la suppression')
-      }
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce consommable ?')) return
+    setDeletingId(id)
+    try {
+      await deleteConsumable(id)
+      toast.success('Consommable supprimé')
+    } catch (error) {
+      console.error('Failed to delete consumable', error)
+      toast.error('Erreur lors de la suppression')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -121,8 +131,8 @@ export default function ConsumablesClient({
                   <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(item)}>
                     <Pencil className="h-4 w-4 text-blue-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} disabled={deletingId === item.id}>
+                    <Trash2 className={`h-4 w-4 text-red-500 ${deletingId === item.id ? 'animate-pulse' : ''}`} />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -193,7 +203,7 @@ export default function ConsumablesClient({
               <Button type="button" variant="outline" onClick={() => setIsDialogOpen(false)}>
                 Annuler
               </Button>
-              <Button type="submit" className="bg-blue-600 hover:bg-blue-700">Enregistrer</Button>
+              <Button type="submit" className="bg-blue-600 hover:bg-blue-700" disabled={isSaving}>{isSaving ? 'Enregistrement...' : 'Enregistrer'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

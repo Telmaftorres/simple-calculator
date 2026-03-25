@@ -8,19 +8,33 @@ import { useCalculatorContext } from '../context/CalculatorContext'
 export function RecapSidebar() {
   const {
     impositionResult, selectedPlate,
-    printingCostData, inkVolumeL,
     hasPrintSetup, hasImpression,
-    cuttingMachineCost, cuttingSetupCost,
-    cuttingSetupTimeMin, cuttingMachineTimeMin, hasCuttingSetup,
+    hasCuttingSetup,
     getCuttingDetails,
-    assemblyCost, hasFaconnage, getAssemblyDetails,
-    packagingCost, hasConditionnement, getPackDetails,
-    accessoriesCost, hasAccessoires, selectedAccessories,
-    consumablesCost, selectedConsumables,
-    hasPackaging, packagingTotalCost,
-    totalCost, quantity,
+    hasFaconnage, getAssemblyDetails,
+    hasConditionnement, getPackDetails,
+    hasAccessoires, selectedAccessories,
+    selectedConsumables,
+    hasPackaging,
+    quantity,
     handleSave, isServing,
+    costResult,
   } = useCalculatorContext()
+
+  const {
+    printingCostData,
+    inkVolumeL,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    cuttingSetupTimeMin,
+    cuttingMachineTimeMin,
+    assemblyCost,
+    packagingCost,
+    accessoriesCost,
+    consumablesCost,
+    packagingTotalCost,
+    totalCost,
+  } = costResult
 
   return (
     <div className="lg:col-span-1">

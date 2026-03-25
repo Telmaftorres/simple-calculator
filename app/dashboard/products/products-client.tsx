@@ -46,6 +46,8 @@ export default function ProductsClient({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingProduct, setEditingProduct] = useState<ProductType | null>(null)
   const [name, setName] = useState('')
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   const handleOpenDialog = (product?: ProductType) => {
     if (product) {
@@ -60,6 +62,7 @@ export default function ProductsClient({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
     try {
       if (editingProduct) {
         await updateProductType(
@@ -68,23 +71,31 @@ export default function ProductsClient({
           editingProduct.flatWidthFormula || 'l',
           editingProduct.flatHeightFormula || 'L'
         )
+        toast.success('Type de PLV modifié avec succès')
       } else {
         await createProductType(name)
+        toast.success('Type de PLV créé avec succès')
       }
       setIsDialogOpen(false)
     } catch (error) {
       console.error('Failed to save product type', error)
       toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (
-      confirm(
-        'Êtes-vous sûr de vouloir supprimer ce type de PLV ? Cela supprimera également tous ses éléments.'
-      )
-    ) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer ce type de PLV ? Cela supprimera également tous ses éléments.')) return
+    setDeletingId(id)
+    try {
       await deleteProductType(Number(id))
+      toast.success('Type de PLV supprimé')
+    } catch (error) {
+      console.error('Failed to delete product type', error)
+      toast.error('Erreur lors de la suppression')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -120,8 +131,8 @@ export default function ProductsClient({
                   <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(product)}>
                     <Pencil className="h-4 w-4 text-blue-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(product.id)} disabled={deletingId === product.id}>
+                    <Trash2 className={`h-4 w-4 text-red-500 ${deletingId === product.id ? 'animate-pulse' : ''}`} />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -154,7 +165,7 @@ export default function ProductsClient({
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Enregistrer</Button>
+              <Button type="submit" disabled={isSaving}>{isSaving ? 'Enregistrement...' : 'Enregistrer'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

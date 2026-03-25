@@ -1,31 +1,50 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '../../components/GaugeSlider'
+import { GaugeSlider } from '@/components/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
+const CUTTING_SHORTCUTS = [30, 45, 60, 90, 120]
 export function SectionDecoupe() {
   const {
     cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds,
     hasCuttingSetup, setHasCuttingSetup,
-    cuttingSetupTimeMin, cuttingMachineTimeMin,
-    cuttingMachineCost, cuttingSetupCost,
+    costResult,
   } = useCalculatorContext()
+
+  const { cuttingSetupTimeMin, cuttingMachineTimeMin, cuttingMachineCost, cuttingSetupCost } = costResult
 
   return (
     <SectionDisplay number="4" title="Découpe" color="orange">
-      <GaugeSlider
-        label="Temps par Pose"
-        value={cuttingTimePerPoseSeconds}
-        min={0}
-        max={300}
-        unit="sec"
-        onChange={setCuttingTimePerPoseSeconds}
-        formatValue={formatTimeSeconds}
-        gradientColors="from-yellow-300 to-orange-600"
-      />
+      <div className="space-y-2">
+        <GaugeSlider
+          label="Temps par Pose"
+          value={cuttingTimePerPoseSeconds}
+          min={0}
+          max={300}
+          unit="sec"
+          onChange={setCuttingTimePerPoseSeconds}
+          formatValue={formatTimeSeconds}
+          gradientColors="from-yellow-300 to-orange-600"
+        />
+        <div className="flex gap-2">
+          {CUTTING_SHORTCUTS.map((val) => (
+            <button
+              key={val}
+              onClick={() => setCuttingTimePerPoseSeconds(val)}
+              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                cuttingTimePerPoseSeconds === val
+                  ? 'bg-orange-500 text-white border-orange-500'
+                  : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+              }`}
+            >
+              {val === 0 ? '0s' : formatTimeSeconds(val)}
+            </button>
+          ))}
+        </div>
+      </div>
 
       <div className="mt-4 flex items-center space-x-2 bg-orange-50 p-3 rounded-lg border border-orange-100">
         <input

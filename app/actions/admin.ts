@@ -1,10 +1,9 @@
 'use server'
 
-import { z } from 'zod'
 import { prisma } from '@/lib/prisma'
 import { requireAuth } from '@/lib/auth-helpers'
-import { revalidatePath } from 'next/cache'
-import { revalidateCache } from '@/lib/cache'
+import { z } from 'zod'
+import { revalidateEntity } from '@/lib/cache'
 
 const plateSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -32,27 +31,21 @@ export async function createPlate(data: z.infer<typeof plateSchema>) {
   await requireAuth()
   const validated = plateSchema.parse(data)
   await prisma.plate.create({ data: validated })
-  revalidatePath('/dashboard/plates')
-  revalidatePath('/')
-  revalidateCache('plates')
+  revalidateEntity('plates', '/dashboard/plates', '/')
 }
 
 export async function updatePlate(id: number, data: z.infer<typeof plateSchema>) {
   await requireAuth()
   const validated = plateSchema.parse(data)
   await prisma.plate.update({ where: { id }, data: validated })
-  revalidatePath('/dashboard/plates')
-  revalidatePath('/')
-  revalidateCache('plates')
+  revalidateEntity('plates', '/dashboard/plates', '/')
 }
 
 export async function deletePlate(id: number) {
   await requireAuth()
   const validId = z.number().int().positive().parse(id)
   await prisma.plate.delete({ where: { id: validId } })
-  revalidatePath('/dashboard/plates')
-  revalidatePath('/')
-  revalidateCache('plates')
+  revalidateEntity('plates', '/dashboard/plates', '/')
 }
 
 // ── PRODUCT TYPES ──
@@ -71,9 +64,7 @@ export async function createProductType(
       flatHeightFormula: validated.flatHeightFormula || 'L',
     },
   })
-  revalidatePath('/dashboard/products')
-  revalidatePath('/')
-  revalidateCache('product-types')
+  revalidateEntity('product-types', '/dashboard/products', '/')
   return result
 }
 
@@ -93,18 +84,14 @@ export async function updateProductType(
       flatHeightFormula: validated.flatHeightFormula || undefined,
     },
   })
-  revalidatePath('/dashboard/products')
-  revalidatePath('/')
-  revalidateCache('product-types')
+  revalidateEntity('product-types', '/dashboard/products', '/')
 }
 
 export async function deleteProductType(id: number) {
   await requireAuth()
   const validId = z.number().int().positive().parse(id)
   await prisma.productType.delete({ where: { id: validId } })
-  revalidatePath('/dashboard/products')
-  revalidatePath('/')
-  revalidateCache('product-types')
+  revalidateEntity('product-types', '/dashboard/products', '/')
 }
 
 // ── ELEMENTS ──
@@ -113,9 +100,7 @@ export async function createElement(data: z.infer<typeof elementSchema>) {
   await requireAuth()
   const validated = elementSchema.parse(data)
   await prisma.element.create({ data: validated })
-  revalidatePath(`/dashboard/products/${validated.productTypeId}`)
-  revalidatePath('/dashboard/products')
-  revalidateCache('product-types')
+  revalidateEntity('product-types', `/dashboard/products/${validated.productTypeId}`, '/dashboard/products')
 }
 
 export async function updateElement(
@@ -131,9 +116,7 @@ export async function updateElement(
     where: { id: validId, productTypeId: validProductTypeId },
     data: validated,
   })
-  revalidatePath(`/dashboard/products/${validProductTypeId}`)
-  revalidatePath('/dashboard/products')
-  revalidateCache('product-types')
+  revalidateEntity('product-types', `/dashboard/products/${validProductTypeId}`, '/dashboard/products')
 }
 
 export async function deleteElement(id: number, productTypeId: number) {
@@ -143,7 +126,5 @@ export async function deleteElement(id: number, productTypeId: number) {
   await prisma.element.delete({
     where: { id: validId, productTypeId: validProductTypeId },
   })
-  revalidatePath(`/dashboard/products/${validProductTypeId}`)
-  revalidatePath('/dashboard/products')
-  revalidateCache('product-types')
+  revalidateEntity('product-types', `/dashboard/products/${validProductTypeId}`, '/dashboard/products')
 }

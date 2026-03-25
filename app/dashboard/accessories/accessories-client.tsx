@@ -39,6 +39,8 @@ export default function AccessoriesClient({
 }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingItem, setEditingItem] = useState<Accessory | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -72,6 +74,7 @@ export default function AccessoriesClient({
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
 
     const payload = {
       name: formData.name,
@@ -84,19 +87,31 @@ export default function AccessoriesClient({
     try {
       if (editingItem) {
         await updateAccessory(editingItem.id, payload)
+        toast.success('Accessoire modifié avec succès')
       } else {
         await createAccessory(payload)
+        toast.success('Accessoire créé avec succès')
       }
       setIsDialogOpen(false)
     } catch (error) {
       console.error('Failed to save accessory', error)
       toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cet accessoire ?')) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cet accessoire ?')) return
+    setDeletingId(id)
+    try {
       await deleteAccessory(id)
+      toast.success('Accessoire supprimé')
+    } catch (error) {
+      console.error('Failed to delete accessory', error)
+      toast.error('Erreur lors de la suppression')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -143,8 +158,8 @@ export default function AccessoriesClient({
                   <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(item)}>
                     <Pencil className="h-4 w-4 text-blue-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(item.id)} disabled={deletingId === item.id}>
+                    <Trash2 className={`h-4 w-4 text-red-500 ${deletingId === item.id ? 'animate-pulse' : ''}`} />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -223,8 +238,8 @@ export default function AccessoriesClient({
               />
             </div>
             <DialogFooter>
-              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700">
-                Enregistrer
+              <Button type="submit" className="bg-indigo-600 hover:bg-indigo-700" disabled={isSaving}>
+                {isSaving ? 'Enregistrement...' : 'Enregistrer'}
               </Button>
             </DialogFooter>
           </form>

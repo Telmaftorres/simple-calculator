@@ -276,6 +276,7 @@ export function calculateCosts(params: {
     packagingItemsPerPlate,
     packagingPlatesNeeded,
     poseSpacingMm,
+    assemblyNoticeCostPerPiece,
   }
 }
 
