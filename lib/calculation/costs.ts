@@ -144,7 +144,15 @@ export function calculateCosts(params: {
     // ── Temps machine ──
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
-    const machineTimeMin = plateAreaM2 * pace * multiplier * platesNeeded
+    const baseMachineTimeMin = plateAreaM2 * pace * multiplier * platesNeeded
+    
+    // Temps pour les finitions (passe distincte)
+    const printSpeedVarnish = settings?.PRINT_SPEED_VARNISH ?? 1.5
+    const printSpeedFlatColor = settings?.PRINT_SPEED_FLAT_COLOR ?? 1.5
+    const varnishTimeMin = hasVarnish ? (plateAreaM2 * printSpeedVarnish * multiplier * platesNeeded) : 0
+    const flatColorTimeMin = hasFlatColor ? (plateAreaM2 * printSpeedFlatColor * multiplier * platesNeeded) : 0
+    
+    const machineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
 
     const setupTimeMin = hasPrintSetup && inkMlPerPlate > 0 ? printSetupTimeMin : 0
 
