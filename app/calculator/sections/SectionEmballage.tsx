@@ -1,10 +1,12 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '../../components/GaugeSlider'
+import { GaugeSlider } from '@/components/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
+
+const CUTTING_SHORTCUTS = [30, 45, 60, 90, 120]
 
 export function SectionEmballage() {
   const {
@@ -15,9 +17,16 @@ export function SectionEmballage() {
     packagingHeight, setPackagingHeight,
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds,
     plates,
-    packagingMaterialCost, packagingCuttingCost, packagingTotalCost,
-    packagingItemsPerPlate, packagingPlatesNeeded,
+    costResult,
   } = useCalculatorContext()
+
+  const {
+    packagingMaterialCost,
+    packagingCuttingCost,
+    packagingTotalCost,
+    packagingItemsPerPlate,
+    packagingPlatesNeeded,
+  } = costResult
 
   const packagingPlates = plates.filter((p) =>
     p.material.toLowerCase().includes('bc') ||
@@ -83,19 +92,7 @@ export function SectionEmballage() {
             </div>
           </div>
 
-          {packagingItemsPerPlate > 0 && (
-            <div className="flex justify-between items-center bg-amber-50 p-3 rounded-lg border border-amber-100 text-sm">
-              <div className="text-center">
-                <div className="text-xl font-bold text-amber-700">{packagingItemsPerPlate}</div>
-                <div className="text-xs text-amber-500 uppercase">Cartons / Plaque</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-slate-700">{packagingPlatesNeeded}</div>
-                <div className="text-xs text-slate-400 uppercase">Plaques nécessaires</div>
-              </div>
-            </div>
-          )}
-
+          {/* ── Quantité ── */}
           <div className="space-y-2">
             <Label>Quantité d&apos;emballages</Label>
             <input
@@ -108,17 +105,50 @@ export function SectionEmballage() {
             />
           </div>
 
-          <GaugeSlider
-            label="Temps de découpe par pose"
-            value={packagingCuttingTimePerPoseSeconds}
-            min={20}
-            max={300}
-            unit="sec"
-            onChange={setPackagingCuttingTimePerPoseSeconds}
-            formatValue={formatTimeSeconds}
-            gradientColors="from-amber-300 to-orange-500"
-          />
+          {/* ── Résultat imposition ── */}
+          {packagingItemsPerPlate > 0 && packagingQuantity > 0 && (
+            <div className="flex justify-between items-center bg-amber-50 p-3 rounded-lg border border-amber-100 text-sm">
+              <div className="text-center">
+                <div className="text-xl font-bold text-amber-700">{packagingItemsPerPlate}</div>
+                <div className="text-xs text-amber-500 uppercase">Cartons / Plaque</div>
+              </div>
+              <div className="text-center">
+                <div className="text-xl font-bold text-slate-700">{packagingPlatesNeeded}</div>
+                <div className="text-xs text-slate-400 uppercase">Plaques nécessaires</div>
+              </div>
+            </div>
+          )}
 
+          {/* ── Jauge découpe + raccourcis ── */}
+          <div className="space-y-2">
+            <GaugeSlider
+              label="Temps de découpe par pose"
+              value={packagingCuttingTimePerPoseSeconds}
+              min={0}
+              max={300}
+              unit="sec"
+              onChange={setPackagingCuttingTimePerPoseSeconds}
+              formatValue={formatTimeSeconds}
+              gradientColors="from-amber-300 to-orange-500"
+            />
+            <div className="flex gap-2">
+              {CUTTING_SHORTCUTS.map((val) => (
+                <button
+                  key={val}
+                  onClick={() => setPackagingCuttingTimePerPoseSeconds(val)}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                    packagingCuttingTimePerPoseSeconds === val
+                      ? 'bg-amber-500 text-white border-amber-500'
+                      : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {val === 0 ? '0s' : formatTimeSeconds(val)}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* ── Récap coûts ── */}
           {packagingPlateId && packagingQuantity > 0 && packagingItemsPerPlate > 0 && (
             <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 space-y-2 text-sm">
               <div className="flex justify-between">

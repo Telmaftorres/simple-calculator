@@ -2,7 +2,6 @@
 
 import { createContext, useContext } from 'react'
 import type { useCalculator } from '@/hooks/useCalculator'
-import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import type { Plate, Accessory, Consumable } from '@/types/calculator'
 
 // ✅ Type inféré automatiquement depuis useCalculator

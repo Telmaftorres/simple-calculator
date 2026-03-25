@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { createUser, deleteUser, updateUser } from '@/app/lib/user-actions'
+import { toast } from 'sonner'
+import { createUser, deleteUser, updateUser } from '@/app/actions/user-actions'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -42,6 +43,9 @@ export function UserManagement({ users }: { users: User[] }) {
   const [editingUser, setEditingUser] = useState<User | null>(null)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState(false)
+  const [isCreating, setIsCreating] = useState(false)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<string | null>(null)
 
   const formatDate = (date: Date) => {
     return new Intl.DateTimeFormat('fr-FR', {
@@ -73,12 +77,18 @@ export function UserManagement({ users }: { users: User[] }) {
               action={async (formData) => {
                 setCreateError(null)
                 setCreateSuccess(false)
-                const result = await createUser(formData)
-                if (result?.error) {
-                  setCreateError(result.error)
-                } else {
-                  setCreateSuccess(true)
-                  setTimeout(() => setCreateSuccess(false), 3000)
+                setIsCreating(true)
+                try {
+                  const result = await createUser(formData)
+                  if (result?.error) {
+                    setCreateError(result.error)
+                  } else {
+                    setCreateSuccess(true)
+                    setTimeout(() => setCreateSuccess(false), 3000)
+                    // Reset form fields logic could go here if needed
+                  }
+                } finally {
+                  setIsCreating(false)
                 }
               }}
               className="space-y-4"
@@ -140,8 +150,8 @@ export function UserManagement({ users }: { users: User[] }) {
                 </p>
               )}
 
-              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700">
-                Créer
+              <Button type="submit" className="w-full bg-emerald-600 hover:bg-emerald-700" disabled={isCreating}>
+                {isCreating ? 'Création...' : 'Créer'}
               </Button>
             </form>
           </CardContent>
@@ -213,10 +223,23 @@ export function UserManagement({ users }: { users: User[] }) {
                           className="text-red-500 hover:text-red-700 hover:bg-red-50"
                           onClick={async () => {
                             if (!confirm(`Supprimer définitivement ${user.firstName || user.email} ?`)) return
-                            await deleteUser(user.id)
+                            setDeletingId(user.id)
+                            try {
+                              const result = await deleteUser(user.id)
+                              if (result?.error) {
+                                toast.error(result.error)
+                              } else {
+                                toast.success('Utilisateur supprimé')
+                              }
+                            } catch {
+                              toast.error('Erreur lors de la suppression')
+                            } finally {
+                              setDeletingId(null)
+                            }
                           }}
+                          disabled={deletingId === user.id}
                         >
-                          <Trash2 className="h-4 w-4" />
+                          <Trash2 className={`h-4 w-4 ${deletingId === user.id ? 'animate-pulse' : ''}`} />
                         </Button>
                       </div>
                     </TableCell>
@@ -241,8 +264,20 @@ export function UserManagement({ users }: { users: User[] }) {
           {editingUser && (
             <form
               action={async (formData) => {
-                await updateUser(formData)
-                setIsEditOpen(false)
+                setIsSaving(true)
+                try {
+                  const result = await updateUser(formData)
+                  if (result?.error) {
+                    toast.error(result.error)
+                    return
+                  }
+                  toast.success('Utilisateur modifié avec succès')
+                  setIsEditOpen(false)
+                } catch {
+                  toast.error('Erreur lors de la mise à jour')
+                } finally {
+                  setIsSaving(false)
+                }
               }}
               className="space-y-4"
             >
@@ -325,8 +360,8 @@ export function UserManagement({ users }: { users: User[] }) {
                 </div>
               </div>
               <DialogFooter>
-                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700">
-                  Sauvegarder
+                <Button type="submit" className="bg-emerald-600 hover:bg-emerald-700" disabled={isSaving}>
+                  {isSaving ? 'Sauvegarde...' : 'Sauvegarder'}
                 </Button>
               </DialogFooter>
             </form>

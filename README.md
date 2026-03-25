@@ -2,6 +2,8 @@
 
 Application web de calcul de devis pour la PLV (Publicité sur Lieu de Vente), développée pour Kontfeel.
 
+> **Note :** Le ton informel dans l'interface (« Coucou », tutoiement) est volontaire — c'est un outil interne à l'entreprise avec une ambiance décontractée.
+
 ---
 
 ## 🛠 Stack technique
@@ -42,7 +44,53 @@ Pour ajouter un champ au calculateur (ex : `hasGloss`), il suffit de modifier **
 4. `hooks/useCalculatorForm.ts` — ajouter dans `initialFormState`
 5. `lib/calculation/costs.ts` — utiliser dans le calcul
 
-Les fichiers `get-data.ts`, `types/calculator.ts` et `CalculatorContext.tsx` **ne sont jamais à modifier** lors de l'ajout d'un champ.
+Les fichiers `get-data.ts`, `types/calculator.ts`, `CalculatorContext.tsx`, `QuotePDF.tsx` et `ScreenRecap.tsx` **ne sont jamais à modifier** lors de l'ajout d'un champ.
+
+Pour ajouter un nouveau **poste de coût** dans le récapitulatif et le PDF, modifier uniquement `lib/quote-cost-rows.ts`.
+
+### Architecture des données de calcul
+
+#### `costResult` — source de vérité unique
+
+`calculateCosts()` retourne un objet `costResult` complet. Cet objet est calculé **une seule fois** dans `useCalculator`, puis exposé via le contexte. Tous les composants (`ScreenRecap`, `QuotePDF`) le consomment directement — personne ne reconstruit les coûts manuellement.
+```
+calculateCosts() → costResult
+      ↓
+useCalculator (expose costResult dans le return)
+      ↓
+CalculatorContext (inféré automatiquement — zéro maintenance)
+      ↓
+ScreenRecap / QuotePDF (consomment costResult directement)
+```
+
+#### `QuotePDF` — props groupées
+
+`QuotePDF` ne reçoit plus de longue liste de props unitaires. Il reçoit 7 objets groupés :
+
+| Prop | Contenu |
+|---|---|
+| `quoteInfo` | studyNumber, reference, productName, quantity |
+| `formValues` | tout le `formState` du calculateur |
+| `costResult` | tout ce que retourne `calculateCosts()` |
+| `selectedPlate` | la plaque sélectionnée |
+| `impositionResult` | résultat du calepinage |
+| `selectedAccessories` | accessoires sélectionnés |
+| `selectedConsumables` | consommables sélectionnés |
+
+Ajouter un nouveau champ au calculateur n'impacte plus `QuotePDF` — il suffit d'utiliser `formValues.monChamp` dans le JSX.
+
+#### Invalidation cache factorisée
+
+`lib/cache.ts` expose `revalidateEntity()` qui regroupe `revalidateCache()` + `revalidatePath()` en un seul appel :
+```typescript
+// Avant — 3 lignes répétées dans chaque action
+revalidatePath('/dashboard/plates')
+revalidatePath('/')
+revalidateCache('plates')
+
+// Après — 1 ligne
+revalidateEntity('plates', '/dashboard/plates', '/')
+```
 
 ---
 
@@ -53,12 +101,11 @@ Les fichiers `get-data.ts`, `types/calculator.ts` et `CalculatorContext.tsx` **n
 │   │   ├── admin.ts              # CRUD Plates, ProductTypes, Elements (requireAuth)
 │   │   ├── accessories.ts        # CRUD Accessories (requireAuth — ouvert à tous, voulu)
 │   │   ├── consumables.ts        # CRUD Consumables (requireAuth — ouvert à tous, voulu)
+│   │   ├── user-actions.ts       # CRUD utilisateurs (requireAdmin sauf updatePassword)
 │   │   ├── get-data.ts           # Lectures + createQuote (Zod + buildQuoteData) + deleteQuote
 │   │   ├── settings.ts           # Lecture/modification constantes métier
 │   │   ├── stats.ts              # Stats dashboard (USER voit son CA, ADMIN voit tout)
 │   │   └── auth.ts               # Action de connexion (signIn)
-│   ├── lib/
-│   │   └── user-actions.ts       # CRUD utilisateurs (requireAdmin sauf updatePassword)
 │   ├── calculator/
 │   │   ├── calculator.tsx
 │   │   ├── shared.tsx
@@ -76,11 +123,6 @@ Les fichiers `get-data.ts`, `types/calculator.ts` et `CalculatorContext.tsx` **n
 │   │   └── screens/
 │   │       ├── ScreenSuccess.tsx
 │   │       └── ScreenRecap.tsx
-│   ├── components/
-│   │   ├── QuotePDF.tsx
-│   │   ├── GaugeSlider.tsx
-│   │   ├── PlateVisualizer.tsx
-│   │   └── LogoutButton.tsx
 │   ├── dashboard/
 │   │   ├── layout.tsx
 │   │   ├── page.tsx
@@ -96,20 +138,28 @@ Les fichiers `get-data.ts`, `types/calculator.ts` et `CalculatorContext.tsx` **n
 │   ├── login/
 │   ├── change-password/
 │   └── page.tsx
+├── components/
+│   ├── ui/                       # Composants shadcn/ui
+│   ├── QuotePDF.tsx              # Props groupées : quoteInfo, formValues, costResult
+│   ├── GaugeSlider.tsx
+│   ├── PlateVisualizer.tsx
+│   ├── LogoutButton.tsx
+│   └── MobileSidebar.tsx         # Navigation mobile
 ├── hooks/
-│   ├── useCalculator.ts
+│   ├── useCalculator.ts          # Expose costResult complet via le contexte
 │   └── useCalculatorForm.ts
 ├── lib/
 │   ├── auth-helpers.ts
-│   ├── cache.ts                  # revalidateCache() avec CacheTag typé
+│   ├── cache.ts                  # revalidateCache() + revalidateEntity() avec CacheTag typé
 │   ├── constants.ts
-│   ├── format.ts                 # formatTimeSeconds, formatMinutes
+│   ├── format.ts                 # formatCuttingDetails, formatAssemblyDetails, formatPackDetails
 │   ├── quote-schema.ts
 │   ├── quote-defaults.ts
+│   ├── quote-cost-rows.ts        # buildCostRows() — lignes coûts partagées ScreenRecap + PDF
 │   ├── prisma.ts
 │   └── calculation/
 │       ├── imposition.ts         # Moteur calepinage 2D
-│       └── costs.ts              # Calculs de coûts (ex useCostCalculation)
+│       └── costs.ts              # Calculs de coûts — retourne assemblyNoticeCostPerPiece résolu
 ├── prisma/
 │   ├── schema.prisma
 │   ├── seed.ts
@@ -123,7 +173,11 @@ Les fichiers `get-data.ts`, `types/calculator.ts` et `CalculatorContext.tsx` **n
 │       ├── 20260317000001_add_packaging_to_quote/
 │       ├── 20260318000001_add_cascade_delete_quote_accessory/
 │       ├── 20260320093909_remove_width_height_use_flatwidth/
-│       └── 20260320000003_add_quote_reference_seq/
+│       ├── 20260320000003_add_quote_reference_seq/
+│       ├── 20260323000001_ink_ml_and_finishing_percent/
+│       ├── 20260323000002_split_ink_costs/
+│       ├── 20260323150147_ink_ml_and_finishing_percent/
+│       └── 20260324000001_fix_quote_sequence/
 ├── scripts/
 │   ├── seed-admin.js
 │   └── seed-accessories.js
@@ -155,11 +209,14 @@ Setting (constantes métier modifiables en DB)
 ```
 
 **Règles métier :**
+> 🛡️ **Note de sécurité (Audit) :** Il est parfaitement normal et **voulu** que TOUS les utilisateurs identifiés puissent effectuer des opérations CRUD complètes (Créer, Modifier, Supprimer) sur l'ensemble de la base de données métier (Matières, Modèles PLV, Éléments, Accessoires, Consommables). Les Server Actions correspondantes n'ont volontairement pas de `requireAdmin()`. Ce n'est **pas** une faille.
+
 - `Consumable` = matériaux de façonnage vendus au mètre. `size` = taille totale du rouleau, `sizePerItem` = consommation par pièce.
-- `Accessory`, `Plate`, `ProductType`, `Consumable` = créables par tous les utilisateurs connectés (voulu).
+- `Accessory`, `Plate`, `ProductType`, `Consumable` = créables par tous les utilisateurs connectés.
 - `Setting` = constantes métier modifiables depuis l'interface admin sans redéploiement. Fallback sur `lib/constants.ts` si DB indisponible.
-- Référence devis générée via une **séquence PostgreSQL atomique** (`quote_reference_seq`) pour éviter les doublons en concurrence.
+- Référence devis générée via une **séquence PostgreSQL atomique** (`quote_reference_seq`, START WITH 1) pour éviter les doublons en concurrence.
 - `flatWidth`/`flatHeight` = dimensions de l'objet à plat (objet déplié). Source de vérité unique pour les dimensions.
+- `inkMlPerPlate` = volume total d'encre par plaque en ml (0–100). La part revenant au vernis et à l'aplat est calculée via `varnishSurfacePercent` et `flatColorSurfacePercent` (0–100%).
 
 ---
 
@@ -240,12 +297,14 @@ L'espacement entre les poses est configurable via le setting `POSE_SPACING_MM` (
 
 ### Calcul des coûts
 
-Tous les calculs sont centralisés dans `lib/calculation/costs.ts` et utilisent les constantes depuis la DB (`Setting`) avec fallback sur `lib/constants.ts` :
+Tous les calculs sont centralisés dans `lib/calculation/costs.ts` et utilisent les constantes depuis la DB (`Setting`) avec fallback sur `lib/constants.ts`. La fonction retourne un objet `costResult` complet, incluant `assemblyNoticeCostPerPiece` résolu (plus besoin de le recalculer en dehors).
 
 | Poste | Formule |
 |---|---|
 | **Matière** | `plaquesNécessaires × coût/plaque` |
-| **Impression (encre)** | `(nb_plaques × encre_base_ml × % imprimé / 1000) × multiplicateur_rv × coût/L × (1 + surcharges_finitions)` |
+| **Impression (encre standard)** | `(inkMlPerPlate × standardRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_PER_LITER` |
+| **Impression (encre vernis)** | `(inkMlPerPlate × varnishRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_VARNISH_PER_LITER` |
+| **Impression (encre aplat)** | `(inkMlPerPlate × flatColorRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_FLAT_COLOR_PER_LITER` |
 | **Impression (temps machine)** | `surface_plaque_m² × min/m² × multiplicateur_rv × nb_plaques × taux_horaire` |
 | **Calage impression** | `calage_min / 60 × taux_horaire` (si activé) |
 | **Découpe (temps machine)** | `temps_par_pose_sec × quantité / 3600 × taux_horaire` |
@@ -255,6 +314,11 @@ Tous les calculs sont centralisés dans `lib/calculation/costs.ts` et utilisent 
 | **Accessoires** | `Σ (prix × quantité)` |
 | **Consommables** | `Σ (sizePerItem × quantité / size_rouleau × prix_rouleau)` |
 | **Emballage** | `plaques_carton × coût_plaque + (temps_découpe_sec × quantité / 60 + calage_min) / 60 × taux_horaire_emballage` |
+
+**Logique encre :**
+- `inkMlPerPlate` = volume total par plaque (saisi par l'utilisateur, 0–100 ml)
+- `standardRatio = max(0, 1 - varnishRatio - flatColorRatio)`
+- Le volume total est toujours conservé, réparti entre les trois encres selon les pourcentages de finitions
 
 ### Sections du calculateur
 
@@ -267,11 +331,13 @@ Tous les calculs sont centralisés dans `lib/calculation/costs.ts` et utilisent 
 | Accessoires | ✓ | OFF |
 | Emballage | ✓ | OFF |
 
+Le calage impression et le calage découpe sont chacun activables/désactivables indépendamment.
+
 ---
 
 ## 📋 Constantes métier (`Setting` en DB)
 
-Modifiables depuis `/settings/calculator` sans redéploiement.
+Modifiables depuis `/settings/calculator` sans redéploiement. Chaque constante dispose d'un panneau dépliable "Voir le calcul" avec formule et exemple chiffré.
 
 | Clé | Valeur par défaut | Description |
 |---|---|---|
@@ -279,9 +345,9 @@ Modifiables depuis `/settings/calculator` sans redéploiement.
 | `PRINT_SETUP_TIME_MIN` | 15 min | Calage impression |
 | `PRINT_SPEED_PRODUCTION` | 1 min/m² | Temps machine mode Production |
 | `PRINT_SPEED_QUALITY` | 2 min/m² | Temps machine mode Qualité |
-| `INK_COST_PER_LITER` | 95 €/L | Coût de l'encre |
-| `INK_BASE_ML_PER_PLATE` | 20 ml | Volume d'encre de base par plaque |
-| `FINISHING_SURCHARGE_PERCENT` | 0.05 | Supplément par option (vernis, aplat) |
+| `INK_COST_PER_LITER` | 95 €/L | Coût de l'encre standard |
+| `INK_COST_VARNISH_PER_LITER` | 120 €/L | Coût de l'encre vernis |
+| `INK_COST_FLAT_COLOR_PER_LITER` | 120 €/L | Coût de l'encre aplat |
 | `CUTTING_SETUP_MINUTES` | 15 min | Calage découpe |
 | `HOURLY_RATE_ASSEMBLY` | 45 €/h | Taux horaire façonnage et conditionnement |
 | `ASSEMBLY_NOTICE_COST_PER_PIECE` | 0.10 €/pce | Coût notice de montage par pièce |
@@ -302,7 +368,7 @@ npm run format      # Prettier
 
 **Couverture actuelle : 33 tests, 33 passés ✅**
 - Moteur d'imposition (`lib/calculation/imposition.ts`) : 7 tests ✓
-- Calculs de coût (`lib/calculation/costs.ts`) : 24 tests ✓
+- Calculs de coût (`lib/calculation/costs.ts`) : 26 tests ✓
 - Actions : 2 tests ✓
 
 ---
@@ -333,8 +399,10 @@ npm install
 npx prisma generate
 npm run build
 npx prisma migrate deploy
-pm2 restart kontfeel-calculator --update-env
+pm2 reload kontfeel-calculator --update-env
 ```
+
+> `pm2 reload` (redémarrage progressif sans coupure) remplace `pm2 restart`.
 
 **Workflow Git :**
 ```bash
@@ -346,7 +414,7 @@ git push origin dev
 # Mise en production
 git checkout main
 git merge dev
-git push origin main  # déclenche le déploiement automatique
+git push origin main
 git checkout dev
 ```
 
@@ -373,7 +441,14 @@ location /api/auth {
 **Après chaque ajout de settings en DB (seed) :**
 ```bash
 rm -rf .next/cache
-pm2 restart kontfeel-calculator --update-env
+pm2 reload kontfeel-calculator --update-env
+```
+
+**Réinitialisation manuelle de la séquence de référence (si besoin) :**
+```bash
+sudo -u postgres psql -d kontfeel
+ALTER SEQUENCE quote_reference_seq RESTART WITH 1;
+\q
 ```
 
 ---
@@ -391,7 +466,7 @@ pm2 restart kontfeel-calculator --update-env
 - ✅ `ASSEMBLY_NOTICE_COST_PER_PIECE` dans `getPackDetails` → utilise `settings`
 - ✅ `unstable_cache` sorti de `getDashboardStats` — cache effectif
 - ✅ `revalidateCache('settings')` ajouté dans `updateSetting`
-- ✅ Séquence `quote_reference_seq` ajoutée dans les migrations
+- ✅ Séquence `quote_reference_seq` ajoutée dans les migrations (START WITH 1 — corrigé depuis 1000)
 - ✅ Tests corrigés : `CUTTING_SETUP_SECONDS` → `CUTTING_SETUP_MINUTES`, `defaultParams` complet
 
 ### Sprint 2 — Sécurité
@@ -414,35 +489,64 @@ pm2 restart kontfeel-calculator --update-env
 - ✅ `getConsumables`/`getAccessories` mis en cache
 - ✅ `width`/`height` supprimés — `flatWidth`/`flatHeight` source de vérité unique
 - ✅ Couverture de tests améliorée — 33 tests passés ✅
+- ✅ `QuotePDF` refactorisé — 35 props unitaires → 7 objets groupés (`quoteInfo`, `formValues`, `costResult`, `selectedPlate`, `impositionResult`, `selectedAccessories`, `selectedConsumables`)
+- ✅ `costResult` centralisé dans `useCalculator` et exposé via le contexte — `ScreenRecap` ne reconstruit plus les coûts manuellement
+- ✅ `assemblyNoticeCostPerPiece` retourné directement par `calculateCosts` — suppression du doublon dans `useCalculator`
+- ✅ `revalidateEntity()` ajouté dans `lib/cache.ts` — factorise `revalidatePath()` + `revalidateCache()` dans toutes les actions `admin.ts`
 
-### Corrections antérieures (sprint mars 2026)
-- ✅ `NEXTAUTH_SECRET` régénéré, `.env` jamais commité
-- ✅ Bug `'admin'` → `'ADMIN'` dans `app/page.tsx`
-- ✅ `getUsers` et `deleteUser` sécurisés ADMIN only
-- ✅ `deleteQuote` avec vérification propriétaire
-- ✅ `getQuoteById` avec vérification propriétaire
-- ✅ Confirmation avant suppression utilisateur
-- ✅ `debug-quote.ts` supprimé
-- ✅ Mot de passe seed via `SEED_ADMIN_PASSWORD`
-- ✅ Routes `/settings/*` et `/admin/*` protégées dans `auth.config.ts`
-- ✅ Race condition `generateReference` → séquence PostgreSQL atomique
-- ✅ Stats par utilisateur (USER voit son CA, ADMIN voit tout)
-- ✅ Validation Zod sur `createQuote`
-- ✅ Export PDF réel avec `@react-pdf/renderer`
-- ✅ Page admin `/settings/calculator` pour modifier les constantes métier
-- ✅ Context React global — suppression du prop drilling
-- ✅ 22 `useState` → `useReducer` dans `useCalculatorForm.ts`
-- ✅ Déploiement automatique via webhook GitHub → VPS opérationnel
+### Sprint 4 — Refonte impression (mars 2026)
+- ✅ `printSurface` (%) → `inkMlPerPlate` (ml) — migration DB + renommage complet
+- ✅ `varnishSurfacePercent` + `flatColorSurfacePercent` ajoutés en DB
+- ✅ `FINISHING_SURCHARGE_PERCENT` supprimé — remplacé par `INK_COST_VARNISH_PER_LITER` + `INK_COST_FLAT_COLOR_PER_LITER`
+- ✅ `INK_BASE_ML_PER_PLATE` supprimé — le volume est désormais saisi directement par l'utilisateur
+- ✅ Jauge encre 0–100 ml avec boutons raccourcis (10 / 25 / 50 / 75 ml)
+- ✅ Jauges vernis et aplat 0–100% avec boutons raccourcis — apparaissent à l'activation
+- ✅ Récap répartition encre en temps réel (standard% / vernis% / aplat%)
+- ✅ Alerte si total finitions dépasse 100%
+- ✅ Calage impression et calage découpe activables/désactivables indépendamment
+- ✅ `PlateVisualizer` commenté (désactivé temporairement)
+- ✅ `buildCostRows()` extrait dans `lib/quote-cost-rows.ts` — partagé entre `ScreenRecap` et `QuotePDF`
+- ✅ `ScreenRecap` : bouton Dashboard ajouté en haut à droite du header
+- ✅ `settings/calculator/page.tsx` : bouton Retour ajouté + `console.log` supprimé
+- ✅ Tests mis à jour : nouvelle logique encre varnish/flatColor séparés — 33 tests passés ✅
+- ✅ Séquence `quote_reference_seq` corrigée (START WITH 1000 → 1) — références format `C0001-032026`
+- ✅ Seed mis à jour : suppression automatique des clés obsolètes (`FINISHING_SURCHARGE_PERCENT`, `INK_BASE_ML_PER_PLATE`, `INK_COST_FINISHING_PER_LITER`)
+- ✅ `pm2 reload` remplace `pm2 restart` dans `deploy.sh` (zero-downtime)
+
+### Sprint 5 — UX & Modernisation (mars 2026)
+- ✅ **Mode Sombre** : Support complet du dark mode via `next-themes` et Tailwind v4
+- ✅ **Sidebar Responsive** : Navigation mobile via un composant `MobileSidebar` (Sheet shadcn)
+- ✅ **Feedback Utilisateur** : Standardisation des toasts de succès/erreur (`Sonner`) sur toutes les actions CRUD
+- ✅ **Validation Stricte** : Schémas Zod ajoutés pour la gestion des utilisateurs (`createUser`, `updateUser`)
+- ✅ **Restructuration** :
+  - Déplacement `app/components` → `components/` (standard Next.js)
+  - Colocation `login-form.tsx` dans `app/login/`
+  - Déplacement `user-actions.ts` vers `app/actions/` pour cohérence
+- ✅ **Nettoyage Build** : Suppression des résidus de configuration `dist/` dans `tsconfig.json`
+- ✅ **Branding** : Correction du favicon pointant sur le logo officiel
+- ✅ **Performance** : Optimisation du chargement d'un devis existant (`loadQuote` en un seul re-render)
 
 ---
 
 ## 🗺 Roadmap (à venir)
 
-- [ ] Révocation session JWT si rôle change en base — limitation connue : le rôle est stocké dans le JWT à la connexion et ne se met pas à jour tant que l'utilisateur ne se reconnecte pas. Solution envisagée : passer à une stratégie de session DB dans Auth.js v5.
+### Corrections & petites améliorations
+- [ ] Section emballage — masquer le calcul plaques tant que la quantité n'est pas renseignée
+- [ ] Boutons raccourcis sur toutes les jauges du calculateur (pas seulement encre)
+- [ ] Tests de connexion comptes utilisateurs standards (first login policy, séparation droits)
+
+### Nouvelles fonctionnalités
+- [ ] Devis multi-produits — intégrer plusieurs types de PLV dans un même devis avec récapitulatif global (évolution structurante)
+- [ ] Bloc bureau d'études — section dédiée pour les frais d'étude technique
 - [ ] Historique & comparaison de devis
 - [ ] Export Excel
 - [ ] Marge commerciale configurable (structure prévue, non fonctionnelle)
 - [ ] Dashboard analytique avancé (graphiques CA, produits top)
+
+### Chantiers à réfléchir
+- [ ] Transport — module de calcul des coûts de transport (cartons, poids, destination, tarifs)
+- [ ] Section découpe plus précise — paramètres réels de production (type machine, vitesse de coupe, complexité tracé)
+- [ ] Révocation session JWT si rôle change en base — passer à une stratégie de session DB dans Auth.js v5
 - [ ] UX mobile (sidebar cachée sans alternative)
 
 ---

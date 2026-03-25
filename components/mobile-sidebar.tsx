@@ -1,30 +1,54 @@
+'use client'
+
+import React, { useState } from 'react'
 import Link from 'next/link'
-import { LayoutDashboard, Layers, Box, Settings, FileText, Package, Calculator, FlaskConical } from 'lucide-react'
+import {
+  Menu,
+  LayoutDashboard,
+  Layers,
+  Box,
+  Settings,
+  FileText,
+  Package,
+  Calculator,
+  FlaskConical,
+} from 'lucide-react'
+import { Button } from '@/components/ui/button'
+import {
+  Sheet,
+  SheetContent,
+  SheetHeader,
+  SheetTitle,
+  SheetTrigger,
+} from '@/components/ui/sheet'
 import LogoutButton from '@/components/LogoutButton'
 import { ModeToggle } from '@/components/mode-toggle'
-import { MobileSidebar } from '@/components/mobile-sidebar'
-import { auth } from '@/auth'
 
-export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
-  const session = await auth()
-  const isAdmin = session?.user?.role === 'ADMIN'
+export function MobileSidebar({ isAdmin }: { isAdmin: boolean }) {
+  const [open, setOpen] = useState(false)
+
+  const close = () => setOpen(false)
 
   return (
-    <div className="min-h-screen flex bg-slate-50">
-      {/* Sidebar */}
-      <aside className="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
-        <div className="p-6 border-b border-slate-800">
-          <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
-            <h1 className="text-xl font-bold flex items-center gap-2">
-              <LayoutDashboard className="h-6 w-6 text-emerald-400" />
-              <span>Panneau Administrateur</span>
-            </h1>
-          </Link>
-        </div>
+    <Sheet open={open} onOpenChange={setOpen}>
+      <SheetTrigger asChild>
+        <Button variant="ghost" size="icon" className="text-white hover:bg-slate-800">
+          <Menu className="h-6 w-6" />
+          <span className="sr-only">Menu</span>
+        </Button>
+      </SheetTrigger>
+      <SheetContent side="left" className="w-[280px] bg-slate-900 text-white p-0 border-r-slate-800 flex flex-col">
+        <SheetHeader className="p-6 border-b border-slate-800 text-left">
+          <SheetTitle className="text-xl font-bold flex items-center gap-2 text-white">
+            <LayoutDashboard className="h-6 w-6 text-emerald-400" />
+            <span>Menu Admin</span>
+          </SheetTitle>
+        </SheetHeader>
 
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-auto">
           <Link
             href="/"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <Calculator className="h-5 w-5" />
@@ -33,6 +57,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           <Link
             href="/dashboard/my-quotes"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <FileText className="h-5 w-5" />
@@ -45,6 +70,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           <Link
             href="/dashboard/plates"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <Layers className="h-5 w-5" />
@@ -53,6 +79,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           <Link
             href="/dashboard/accessories"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <Package className="h-5 w-5" />
@@ -61,6 +88,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           <Link
             href="/dashboard/consumables"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <FlaskConical className="h-5 w-5" />
@@ -69,6 +97,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           <Link
             href="/dashboard/products"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <Box className="h-5 w-5" />
@@ -77,6 +106,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
           <Link
             href="/dashboard/formulas"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <Calculator className="h-5 w-5" />
@@ -87,6 +117,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
         {isAdmin && (
           <Link
             href="/settings/calculator"
+            onClick={close}
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <Settings className="h-5 w-5" />
@@ -98,6 +129,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           {isAdmin && (
             <Link
               href="/settings"
+              onClick={close}
               className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
             >
               <Settings className="h-5 w-5" />
@@ -109,22 +141,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             <LogoutButton />
           </div>
         </div>
-      </aside>
-
-      {/* Main Content Area */}
-      <div className="flex-1 flex flex-col h-screen overflow-hidden">
-        {/* Mobile Header */}
-        <header className="md:hidden flex items-center justify-between p-4 bg-slate-900 border-b border-slate-800 text-white flex-shrink-0">
-          <div className="font-bold flex items-center gap-2">
-            <LayoutDashboard className="h-5 w-5 text-emerald-400" />
-            <span className="text-lg">Admin</span>
-          </div>
-          <MobileSidebar isAdmin={isAdmin} />
-        </header>
-
-        {/* Scrollable Content */}
-        <main className="flex-1 p-4 sm:p-6 md:p-8 overflow-auto">{children}</main>
-      </div>
-    </div>
+      </SheetContent>
+    </Sheet>
   )
 }

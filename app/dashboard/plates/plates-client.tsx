@@ -35,6 +35,8 @@ type Plate = {
 export default function PlatesClient({ initialPlates }: { initialPlates: Plate[] }) {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingPlate, setEditingPlate] = useState<Plate | null>(null)
+  const [isSaving, setIsSaving] = useState(false)
+  const [deletingId, setDeletingId] = useState<number | null>(null)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -68,6 +70,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
+    setIsSaving(true)
 
     const payload = {
       name: formData.name,
@@ -80,23 +83,31 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
     try {
       if (editingPlate) {
         await updatePlate(editingPlate.id, payload)
+        toast.success('Plaque modifiée avec succès')
       } else {
         await createPlate(payload)
+        toast.success('Plaque créée avec succès')
       }
       setIsDialogOpen(false)
-      // Optimistic update or refresh ? For now relying on server revalidate + reload or simple props update if parent re-renders.
-      // ideally we should update local state to reflect change immediately or wait for server action return.
-      // Since page is server component, router.refresh() might be needed in a real app,
-      // but server actions revalidatePath SHOULD trigger a refresh of the server component data passed down.
     } catch (error) {
       console.error('Failed to save plate', error)
       toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setIsSaving(false)
     }
   }
 
   const handleDelete = async (id: number) => {
-    if (confirm('Êtes-vous sûr de vouloir supprimer cette plaque ?')) {
+    if (!confirm('Êtes-vous sûr de vouloir supprimer cette plaque ?')) return
+    setDeletingId(id)
+    try {
       await deletePlate(id)
+      toast.success('Plaque supprimée')
+    } catch (error) {
+      console.error('Failed to delete plate', error)
+      toast.error('Erreur lors de la suppression')
+    } finally {
+      setDeletingId(null)
     }
   }
 
@@ -133,8 +144,8 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
                   <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(plate)}>
                     <Pencil className="h-4 w-4 text-blue-500" />
                   </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(plate.id)}>
-                    <Trash2 className="h-4 w-4 text-red-500" />
+                  <Button variant="ghost" size="icon" onClick={() => handleDelete(plate.id)} disabled={deletingId === plate.id}>
+                    <Trash2 className={`h-4 w-4 text-red-500 ${deletingId === plate.id ? 'animate-pulse' : ''}`} />
                   </Button>
                 </TableCell>
               </TableRow>
@@ -210,7 +221,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
               />
             </div>
             <DialogFooter>
-              <Button type="submit">Enregistrer</Button>
+              <Button type="submit" disabled={isSaving}>{isSaving ? 'Enregistrement...' : 'Enregistrer'}</Button>
             </DialogFooter>
           </form>
         </DialogContent>

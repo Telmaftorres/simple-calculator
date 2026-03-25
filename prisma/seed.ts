@@ -126,11 +126,26 @@ async function main() {
   const admin = await prisma.user.upsert({
     where: { email: 'admin@kontfeel.fr' },
     update: { password: passwordHash, role: 'ADMIN', permissions: ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'] },
-    create: { email: 'admin@kontfeel.fr', name: 'Admin', password: passwordHash, mustChangePassword: true, role: 'ADMIN', permissions: ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'] },
+    create: { email: 'admin@kontfeel.fr', name: 'Admin', firstName: 'Admin', lastName: 'System', password: passwordHash, mustChangePassword: true, role: 'ADMIN', permissions: ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'] },
   })
   console.log({ admin })
 
-  // 5. Settings
+  // 5. Accessories
+  const accessories = [
+    { name: 'Grip Magnétique', description: '75mm', price: 1.82, supplier: 'Caractères', weight: 76 },
+    { name: 'Potence magnétique', description: '250mm / 2 crochets mobiles', price: 1.85, supplier: 'Caractères', weight: 155 },
+  ]
+  for (const acc of accessories) {
+    const existing = await prisma.accessory.findFirst({
+      where: { name: acc.name },
+    })
+    if (!existing) {
+      await prisma.accessory.create({ data: acc })
+    }
+  }
+  console.log('Seeded accessories:', accessories.map(a => a.name))
+
+  // 6. Settings
   await seedSettings()
 
   console.log('✅ Seed terminé avec succès !')

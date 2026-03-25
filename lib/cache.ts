@@ -1,4 +1,4 @@
-import { revalidateTag } from 'next/cache'
+import { revalidateTag, revalidatePath } from 'next/cache'
 
 export type CacheTag =
   | 'studies'
@@ -13,4 +13,9 @@ export type CacheTag =
 export function revalidateCache(tag: CacheTag) {
   // @ts-expect-error - Next.js type mismatch sur revalidateTag
   revalidateTag(tag)
+}
+
+export function revalidateEntity(tag: CacheTag, ...paths: string[]) {
+  revalidateCache(tag)
+  paths.forEach(p => revalidatePath(p))
 }

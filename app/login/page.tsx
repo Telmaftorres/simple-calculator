@@ -1,4 +1,4 @@
-import LoginForm from '@/app/ui/login-form'
+import LoginForm from '@/app/login/login-form'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Calculator } from 'lucide-react'
 

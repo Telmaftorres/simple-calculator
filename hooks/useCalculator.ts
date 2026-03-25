@@ -5,21 +5,13 @@ import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
-import { ASSEMBLY_NOTICE_COST_PER_PIECE, POSE_SPACING_MM } from '@/lib/constants'
+import { POSE_SPACING_MM } from '@/lib/constants'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { useCalculatorForm } from './useCalculatorForm'
-import { formatTimeSeconds, formatMinutes } from '@/lib/format'
-import type {
-  ProductType,
-  Plate,
-  Accessory,
-  Consumable,
-  SelectedAccessory,
-  SelectedConsumable,
-  ImpositionResult,
-  ScreenState,
-  Quote,
-} from '@/types/calculator'
+import { useAccessories } from './useAccessories'
+import { useConsumables } from './useConsumables'
+import { formatCuttingDetails, formatAssemblyDetails, formatPackDetails } from '@/lib/format'
+import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote } from '@/types/calculator'
 
 export function useCalculator(
   initialProductTypes: ProductType[],
@@ -33,11 +25,9 @@ export function useCalculator(
   const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
-  const [selectedAccessories, setSelectedAccessories] = useState<SelectedAccessory[]>([])
-  const [selectedConsumables, setSelectedConsumables] = useState<SelectedConsumable[]>([])
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
 
-  const { formState, setField, resetForm } = useCalculatorForm()
+  const { formState, setField, loadQuote, resetForm } = useCalculatorForm()
 
   const {
     studyNumber,
@@ -48,9 +38,9 @@ export function useCalculator(
     selectedPlateId,
     flatWidth,
     flatHeight,
-    inkMlPerPlate,               // ✅ renommé
-    varnishSurfacePercent,        // ✅ nouveau
-    flatColorSurfacePercent,      // ✅ nouveau
+    inkMlPerPlate,
+    varnishSurfacePercent,
+    flatColorSurfacePercent,
     printMode,
     isRectoVerso,
     hasVarnish,
@@ -78,62 +68,95 @@ export function useCalculator(
     hasAccessoires,
   } = formState
 
+  // ── Accessoires ──
+  const {
+    selectedAccessories,
+    setSelectedAccessories,
+    handleAddAccessory,
+    handleRemoveAccessory,
+    resetAccessories,
+  } = useAccessories(
+    accessories,
+    currentAccessoryId,
+    currentAccessoryQty,
+    (v) => setField('currentAccessoryId', v),
+    (v) => setField('currentAccessoryQty', v),
+  )
+
+  // ── Consommables ──
+  const {
+    selectedConsumables,
+    setSelectedConsumables,
+    handleAddConsumable,
+    handleRemoveConsumable,
+    resetConsumables,
+  } = useConsumables(
+    consumables,
+    quantity,
+    currentConsumableId,
+    currentConsumableSize,
+    (v) => setField('currentConsumableId', v),
+    (v) => setField('currentConsumableSize', v),
+  )
+
+  // ── Chargement d'un devis existant ──
   useEffect(() => {
     if (initialQuote) {
-      setField('studyNumber', initialQuote.study?.number || 'ET')
-      setField('quantity', initialQuote.quantity)
-      setField('selectedPlateId', initialQuote.plateId?.toString() || '')
-      setField('flatWidth', initialQuote.flatWidth || 0)
-      setField('flatHeight', initialQuote.flatHeight || 0)
-      setField('inkMlPerPlate', initialQuote.inkMlPerPlate ?? 20)             // ✅ renommé
-      setField('varnishSurfacePercent', initialQuote.varnishSurfacePercent ?? 0)  // ✅ nouveau
-      setField('flatColorSurfacePercent', initialQuote.flatColorSurfacePercent ?? 0) // ✅ nouveau
-      setField('printMode', (initialQuote.printMode as 'production' | 'quality') || 'production')
-      setField('isRectoVerso', initialQuote.isRectoVerso || false)
-      setField('rectoVersoType', initialQuote.rectoVersoType || null)
-      setField('hasVarnish', initialQuote.hasVarnish || false)
-      setField('hasFlatColor', initialQuote.hasFlatColor || false)
-      setField('cuttingTimePerPoseSeconds', initialQuote.cuttingTimePerPoseSeconds || 0)
-      setField('assemblyTimePerPieceSeconds', initialQuote.assemblyTimePerPieceSeconds || 0)
-      setField('packTimePerPieceSeconds', initialQuote.packTimePerPieceSeconds || 0)
-      setField('hasAssemblyNotice', initialQuote.hasAssemblyNotice || false)
-      setField('hasPackaging', initialQuote.hasPackaging || false)
-      setField('packagingPlateId', initialQuote.packagingPlateId?.toString() || '')
-      setField('packagingQuantity', initialQuote.packagingQuantity || 0)
-      setField('packagingCuttingTimePerPoseSeconds', initialQuote.packagingCuttingTimePerPoseSeconds || 20)
-      setField('packagingWidth', initialQuote.packagingWidth || 0)
-      setField('packagingHeight', initialQuote.packagingHeight || 0)
-      setField('hasPrintSetup', initialQuote.hasPrintSetup ?? true)
-      setField('hasCuttingSetup', initialQuote.hasCuttingSetup ?? true)
-      setField('hasImpression', initialQuote.hasImpression ?? true)
-      setField('hasFaconnage', initialQuote.hasFaconnage ?? true)
-      setField('hasConditionnement', initialQuote.hasConditionnement ?? true)
-      setField('hasAccessoires', initialQuote.hasAccessoires ?? false)
+      loadQuote({
+        studyNumber: initialQuote.study?.number || 'ET',
+        quantity: initialQuote.quantity,
+        selectedPlateId: initialQuote.plateId?.toString() || '',
+        flatWidth: initialQuote.flatWidth || 0,
+        flatHeight: initialQuote.flatHeight || 0,
+        inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
+        varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
+        flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
+        printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
+        isRectoVerso: initialQuote.isRectoVerso || false,
+        rectoVersoType: initialQuote.rectoVersoType || null,
+        hasVarnish: initialQuote.hasVarnish || false,
+        hasFlatColor: initialQuote.hasFlatColor || false,
+        cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
+        assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
+        packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
+        hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
+        hasPackaging: initialQuote.hasPackaging || false,
+        packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
+        packagingQuantity: initialQuote.packagingQuantity || 0,
+        packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
+        packagingWidth: initialQuote.packagingWidth || 0,
+        packagingHeight: initialQuote.packagingHeight || 0,
+        hasPrintSetup: initialQuote.hasPrintSetup ?? true,
+        hasCuttingSetup: initialQuote.hasCuttingSetup ?? true,
+        hasImpression: initialQuote.hasImpression ?? true,
+        hasFaconnage: initialQuote.hasFaconnage ?? true,
+        hasConditionnement: initialQuote.hasConditionnement ?? true,
+        hasAccessoires: initialQuote.hasAccessoires ?? false,
+      })
 
       if (initialQuote.accessories) {
-        const loadedAccs: SelectedAccessory[] = initialQuote.accessories.map((qa) => ({
+        setSelectedAccessories(initialQuote.accessories.map((qa) => ({
           id: qa.accessoryId,
           name: qa.accessory?.name || 'Inconnu',
           price: qa.accessory?.price || 0,
           quantity: qa.quantity,
-        }))
-        setSelectedAccessories(loadedAccs)
+        })))
       }
 
       if (initialQuote.consumables) {
-        const loadedCons: SelectedConsumable[] = initialQuote.consumables.map((qc) => ({
+        setSelectedConsumables(initialQuote.consumables.map((qc) => ({
           id: qc.consumableId,
           name: qc.consumable?.name || 'Inconnu',
           price: qc.consumable?.price || 0,
           size: qc.consumable?.size || 1,
           sizePerItem: qc.sizePerItem,
           quantity: initialQuote.quantity,
-        }))
-        setSelectedConsumables(loadedCons)
+        })))
       }
     }
-  }, [initialQuote, accessories, consumables])
+  }, [initialQuote, loadQuote, setSelectedAccessories, setSelectedConsumables])
 
+  // ── Imposition ──
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
@@ -147,12 +170,10 @@ export function useCalculator(
         poseSpacingMm
       )
       const platesNeeded = Math.ceil(quantity / imp.itemsPerPlate) || 0
-      const materialCost = platesNeeded * selectedPlate.cost
-
       setImpositionResult({
         itemsPerPlate: imp.itemsPerPlate,
         platesNeeded,
-        materialCost,
+        materialCost: platesNeeded * selectedPlate.cost,
         orientation: imp.orientation,
         layout: imp.layout,
       })
@@ -161,32 +182,14 @@ export function useCalculator(
     }
   }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm])
 
-  const {
-    printingCostData,
-    printingCost,
-    cuttingCost,
-    cuttingMachineCost,
-    cuttingSetupCost,
-    cuttingSetupTimeMin,
-    cuttingMachineTimeMin,
-    assemblyCost,
-    packagingCost,
-    accessoriesCost,
-    consumablesCost,
-    totalCost,
-    inkVolumeL,
-    packagingMaterialCost,
-    packagingCuttingCost,
-    packagingTotalCost,
-    packagingItemsPerPlate,
-    packagingPlatesNeeded,
-  } = calculateCosts({
+  // ── Calcul des coûts — objet entier conservé ──
+  const costResult = calculateCosts({
     quantity,
     impositionResult,
     selectedPlate,
-    inkMlPerPlate,               // ✅ renommé
-    varnishSurfacePercent,        // ✅ nouveau
-    flatColorSurfacePercent,      // ✅ nouveau
+    inkMlPerPlate,
+    varnishSurfacePercent,
+    flatColorSurfacePercent,
     printMode,
     isRectoVerso,
     hasVarnish,
@@ -212,75 +215,27 @@ export function useCalculator(
     packagingHeight,
   })
 
-  const getCuttingDetails = () => {
-    const totalMin = cuttingMachineTimeMin + (hasCuttingSetup ? cuttingSetupTimeMin : 0)
-    return `${formatMinutes(totalMin)} (${formatTimeSeconds(cuttingTimePerPoseSeconds)}/pose${hasCuttingSetup ? ` + ${cuttingSetupTimeMin} min calage` : ''})`
-  }
+  // ── Formatage détails sections ──
+  const getCuttingDetails = () => formatCuttingDetails({
+    cuttingMachineTimeMin: costResult.cuttingMachineTimeMin,
+    cuttingSetupTimeMin: costResult.cuttingSetupTimeMin,
+    hasCuttingSetup,
+    cuttingTimePerPoseSeconds,
+  })
 
-  const getAssemblyDetails = () => {
-    const totalMinutes = (assemblyTimePerPieceSeconds * quantity) / 60
-    return `${formatMinutes(totalMinutes)} (${formatTimeSeconds(assemblyTimePerPieceSeconds)}/pce)`
-  }
+  const getAssemblyDetails = () => formatAssemblyDetails({
+    assemblyTimePerPieceSeconds,
+    quantity,
+  })
 
-  const getPackDetails = () => {
-    const totalMinutes = (packTimePerPieceSeconds * quantity) / 60
-    let details = `${formatMinutes(totalMinutes)} (${formatTimeSeconds(packTimePerPieceSeconds)}/pce)`
-    if (hasAssemblyNotice) {
-      const noticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
-      const noticeCost = noticeCostPerPiece * quantity
-      details += ` + Notice: ${noticeCost.toFixed(2)}€`
-    }
-    return details
-  }
+  const getPackDetails = () => formatPackDetails({
+    packTimePerPieceSeconds,
+    quantity,
+    hasAssemblyNotice,
+    assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
+  })
 
-  const handleAddAccessory = () => {
-    if (!currentAccessoryId || currentAccessoryQty <= 0) return
-    const acc = accessories.find((a) => a.id.toString() === currentAccessoryId)
-    if (!acc) return
-    const existing = selectedAccessories.find((sa) => sa.id === acc.id)
-    if (existing) {
-      setSelectedAccessories(
-        selectedAccessories.map((sa) =>
-          sa.id === acc.id ? { ...sa, quantity: sa.quantity + currentAccessoryQty } : sa
-        )
-      )
-    } else {
-      setSelectedAccessories([
-        ...selectedAccessories,
-        { id: acc.id, name: acc.name, price: acc.price, quantity: currentAccessoryQty },
-      ])
-    }
-    setField('currentAccessoryQty', 0)
-  }
-
-  const handleRemoveAccessory = (id: number) => {
-    setSelectedAccessories(selectedAccessories.filter((sa) => sa.id !== id))
-  }
-
-  const handleAddConsumable = () => {
-    if (!currentConsumableId || currentConsumableSize <= 0) return
-    const c = consumables.find((x) => x.id.toString() === currentConsumableId)
-    if (!c) return
-    const existing = selectedConsumables.find((sc) => sc.id === c.id)
-    if (existing) {
-      setSelectedConsumables(
-        selectedConsumables.map((sc) =>
-          sc.id === c.id ? { ...sc, sizePerItem: sc.sizePerItem + currentConsumableSize } : sc
-        )
-      )
-    } else {
-      setSelectedConsumables([
-        ...selectedConsumables,
-        { id: c.id, name: c.name, price: c.price, size: c.size, sizePerItem: currentConsumableSize, quantity },
-      ])
-    }
-    setField('currentConsumableSize', 0)
-  }
-
-  const handleRemoveConsumable = (id: number) => {
-    setSelectedConsumables(selectedConsumables.filter((sc) => sc.id !== id))
-  }
-
+  // ── Création type PLV ──
   const handleCreateProductType = async () => {
     if (!productSearch) return
     try {
@@ -300,6 +255,7 @@ export function useCalculator(
     }
   }
 
+  // ── Sauvegarde ──
   const handleSave = async () => {
     const parsedProductId = parseInt(selectedProductTypeId)
     if (!impositionResult || !selectedPlateId || !selectedProductTypeId || isNaN(parsedProductId)) {
@@ -315,12 +271,12 @@ export function useCalculator(
         plateId: parseInt(selectedPlateId),
         itemsPerPlate: impositionResult.itemsPerPlate,
         platesCount: impositionResult.platesNeeded,
-        totalCost,
+        totalCost: costResult.totalCost,
         flatWidth,
         flatHeight,
-        inkMlPerPlate,              
-        varnishSurfacePercent,         
-        flatColorSurfacePercent,      
+        inkMlPerPlate,
+        varnishSurfacePercent,
+        flatColorSurfacePercent,
         printMode,
         isRectoVerso,
         rectoVersoType,
@@ -342,11 +298,10 @@ export function useCalculator(
         hasFaconnage,
         hasConditionnement,
         hasAccessoires,
-        elements:
-          selectedProductType?.elements.map((el) => ({
-            name: el.name,
-            quantity: el.quantity,
-          })) || [],
+        elements: selectedProductType?.elements.map((el) => ({
+          name: el.name,
+          quantity: el.quantity,
+        })) || [],
         accessories: selectedAccessories.map((sa) => ({
           id: sa.id,
           quantity: sa.quantity,
@@ -371,11 +326,12 @@ export function useCalculator(
     }
   }
 
+  // ── Reset ──
   const handleReset = () => {
     setScreenState('form')
     resetForm()
-    setSelectedAccessories([])
-    setSelectedConsumables([])
+    resetAccessories()
+    resetConsumables()
     setImpositionResult(null)
   }
 
@@ -392,48 +348,41 @@ export function useCalculator(
     flatHeight, setFlatHeight: (v: number) => setField('flatHeight', v),
     selectedPlate, selectedProductType,
     impositionResult,
-    inkMlPerPlate, setInkMlPerPlate: (v: number) => setField('inkMlPerPlate', v),               // ✅ renommé
-    varnishSurfacePercent, setVarnishSurfacePercent: (v: number) => setField('varnishSurfacePercent', v), // ✅ nouveau
-    flatColorSurfacePercent, setFlatColorSurfacePercent: (v: number) => setField('flatColorSurfacePercent', v), // ✅ nouveau
+    inkMlPerPlate, setInkMlPerPlate: (v: number) => setField('inkMlPerPlate', v),
+    varnishSurfacePercent, setVarnishSurfacePercent: (v: number) => setField('varnishSurfacePercent', v),
+    flatColorSurfacePercent, setFlatColorSurfacePercent: (v: number) => setField('flatColorSurfacePercent', v),
     printMode, setPrintMode: (v: 'production' | 'quality') => setField('printMode', v),
     isRectoVerso, setIsRectoVerso: (v: boolean) => setField('isRectoVerso', v),
     hasVarnish, setHasVarnish: (v: boolean) => setField('hasVarnish', v),
     hasFlatColor, setHasFlatColor: (v: boolean) => setField('hasFlatColor', v),
     rectoVersoType, setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
-    printingCostData, printingCost, inkVolumeL,
     hasPrintSetup, setHasPrintSetup: (v: boolean) => setField('hasPrintSetup', v),
     hasImpression, setHasImpression: (v: boolean) => setField('hasImpression', v),
     cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
-    cuttingCost, cuttingMachineCost, cuttingSetupCost, cuttingSetupTimeMin, cuttingMachineTimeMin,
     hasCuttingSetup, setHasCuttingSetup: (v: boolean) => setField('hasCuttingSetup', v),
     assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds: (v: number) => setField('assemblyTimePerPieceSeconds', v),
-    assemblyCost,
     hasFaconnage, setHasFaconnage: (v: boolean) => setField('hasFaconnage', v),
     packTimePerPieceSeconds, setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
     hasAssemblyNotice, setHasAssemblyNotice: (v: boolean) => setField('hasAssemblyNotice', v),
-    packagingCost,
     hasConditionnement, setHasConditionnement: (v: boolean) => setField('hasConditionnement', v),
     selectedAccessories,
     currentAccessoryId, setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),
     currentAccessoryQty, setCurrentAccessoryQty: (v: number) => setField('currentAccessoryQty', v),
-    accessoriesCost,
     hasAccessoires, setHasAccessoires: (v: boolean) => setField('hasAccessoires', v),
     selectedConsumables,
     currentConsumableId, setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
     currentConsumableSize, setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),
-    consumablesCost,
-    totalCost,
     hasPackaging, setHasPackaging: (v: boolean) => setField('hasPackaging', v),
     packagingPlateId, setPackagingPlateId: (v: string) => setField('packagingPlateId', v),
     packagingQuantity, setPackagingQuantity: (v: number) => setField('packagingQuantity', v),
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
     packagingWidth, setPackagingWidth: (v: number) => setField('packagingWidth', v),
     packagingHeight, setPackagingHeight: (v: number) => setField('packagingHeight', v),
-    packagingMaterialCost, packagingCuttingCost, packagingTotalCost,
-    packagingItemsPerPlate, packagingPlatesNeeded,
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
     handleCreateProductType, handleSave, handleReset,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
+    formState,
+    costResult, // ← un seul objet au lieu de 15 valeurs individuelles
   }
 }

@@ -4,6 +4,8 @@ import { getProductTypes, getPlates, getQuoteById } from './actions/get-data'
 import { getAccessories } from './actions/accessories'
 import { getConsumables } from './actions/consumables'
 import { getSettingsMap } from './actions/settings'
+import { version } from '@/package.json'
+import { ModeToggle } from '@/components/mode-toggle'
 
 export const dynamic = 'force-dynamic'
 
@@ -40,10 +42,15 @@ export default async function Home({
       <div className="max-w-6xl mx-auto space-y-8">
         <header className="flex items-center justify-between">
           <div>
-            <h1 className="text-3xl font-bold text-slate-900">Coucou {userName} !</h1>
-            <p className="text-slate-500">Outil de chiffrage PLV</p>
+            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Coucou {userName} !</h1>
+            <p className="text-slate-500 dark:text-slate-400">Outil de chiffrage PLV</p>
           </div>
-          <div className="text-sm text-right text-slate-400">v1.0.1</div>
+          <div className="flex flex-col items-end gap-2">
+            <div className="flex items-center gap-4">
+              <ModeToggle />
+            </div>
+            <div className="text-sm text-slate-400">v{version}</div>
+          </div>
         </header>
 
         <section>

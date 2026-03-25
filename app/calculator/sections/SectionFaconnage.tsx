@@ -2,21 +2,26 @@
 
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { GaugeSlider } from '../../components/GaugeSlider'
+import { GaugeSlider } from '@/components/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
+
+const ASSEMBLY_SHORTCUTS = [30, 45, 60, 90, 120]
 
 export function SectionFaconnage() {
   const {
     hasFaconnage, setHasFaconnage,
     assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds,
-    selectedConsumables, consumablesCost,
+    selectedConsumables,
     consumables,
     currentConsumableId, setCurrentConsumableId,
     currentConsumableSize, setCurrentConsumableSize,
     handleAddConsumable, handleRemoveConsumable,
+    costResult,
   } = useCalculatorContext()
+
+  const { consumablesCost } = costResult
 
   return (
     <SectionDisplay
@@ -27,16 +32,33 @@ export function SectionFaconnage() {
       onToggle={setHasFaconnage}
     >
       <div className="space-y-4">
-        <GaugeSlider
-          label="Temps par Pièce"
-          value={assemblyTimePerPieceSeconds}
-          min={0}
-          max={300}
-          unit="sec"
-          onChange={setAssemblyTimePerPieceSeconds}
-          formatValue={formatTimeSeconds}
-          gradientColors="from-pink-300 to-rose-600"
-        />
+        <div className="space-y-2">
+          <GaugeSlider
+            label="Temps par Pièce"
+            value={assemblyTimePerPieceSeconds}
+            min={0}
+            max={300}
+            unit="sec"
+            onChange={setAssemblyTimePerPieceSeconds}
+            formatValue={formatTimeSeconds}
+            gradientColors="from-pink-300 to-rose-600"
+          />
+          <div className="flex gap-2">
+            {ASSEMBLY_SHORTCUTS.map((val) => (
+              <button
+                key={val}
+                onClick={() => setAssemblyTimePerPieceSeconds(val)}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                  assemblyTimePerPieceSeconds === val
+                    ? 'bg-pink-500 text-white border-pink-500'
+                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {val === 0 ? '0s' : formatTimeSeconds(val)}
+              </button>
+            ))}
+          </div>
+        </div>
 
         <div className="mt-4 pt-4 border-t border-pink-100">
           <h4 className="text-sm font-semibold text-slate-700 mb-3 flex items-center justify-between">

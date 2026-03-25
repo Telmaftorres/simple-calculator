@@ -1,6 +1,7 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Toaster } from 'sonner'
+import { ThemeProvider } from '@/components/theme-provider'
 import './globals.css'
 
 const geistSans = Geist({
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
   },
   description: 'Application de calcul de prix et de matière pour la PLV.',
   icons: {
-    icon: '/icon.jpg',
+    icon: '/logo.png',
   },
 }
 
@@ -30,10 +31,17 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="fr">
+    <html lang="fr" suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
-        {children}
-        <Toaster richColors position="top-right" />
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="system"
+          enableSystem
+          disableTransitionOnChange
+        >
+          {children}
+          <Toaster richColors position="top-right" />
+        </ThemeProvider>
       </body>
     </html>
   )

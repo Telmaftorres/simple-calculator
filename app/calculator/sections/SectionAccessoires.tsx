@@ -14,8 +14,10 @@ export function SectionAccessoires() {
     currentAccessoryQty, setCurrentAccessoryQty,
     handleAddAccessory,
     selectedAccessories, handleRemoveAccessory,
-    accessoriesCost,
+    costResult,
   } = useCalculatorContext()
+
+  const { accessoriesCost } = costResult
 
   return (
     <SectionDisplay
