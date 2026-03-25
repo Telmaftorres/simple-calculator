@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
@@ -101,60 +101,61 @@ export function useCalculator(
 
   // ── Chargement d'un devis existant ──
   useEffect(() => {
-    if (initialQuote) {
-      loadQuote({
-        studyNumber: initialQuote.study?.number || 'ET',
-        quantity: initialQuote.quantity,
-        selectedPlateId: initialQuote.plateId?.toString() || '',
-        flatWidth: initialQuote.flatWidth || 0,
-        flatHeight: initialQuote.flatHeight || 0,
-        inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
-        varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
-        flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
-        printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
-        isRectoVerso: initialQuote.isRectoVerso || false,
-        rectoVersoType: initialQuote.rectoVersoType || null,
-        hasVarnish: initialQuote.hasVarnish || false,
-        hasFlatColor: initialQuote.hasFlatColor || false,
-        cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
-        assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
-        packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
-        hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
-        hasPackaging: initialQuote.hasPackaging || false,
-        packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
-        packagingQuantity: initialQuote.packagingQuantity || 0,
-        packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
-        packagingWidth: initialQuote.packagingWidth || 0,
-        packagingHeight: initialQuote.packagingHeight || 0,
-        hasPrintSetup: initialQuote.hasPrintSetup ?? true,
-        hasCuttingSetup: initialQuote.hasCuttingSetup ?? true,
-        hasImpression: initialQuote.hasImpression ?? true,
-        hasFaconnage: initialQuote.hasFaconnage ?? true,
-        hasConditionnement: initialQuote.hasConditionnement ?? true,
-        hasAccessoires: initialQuote.hasAccessoires ?? false,
-      })
+    if (!initialQuote) return
 
-      if (initialQuote.accessories) {
-        setSelectedAccessories(initialQuote.accessories.map((qa) => ({
-          id: qa.accessoryId,
-          name: qa.accessory?.name || 'Inconnu',
-          price: qa.accessory?.price || 0,
-          quantity: qa.quantity,
-        })))
-      }
+    loadQuote({
+      studyNumber: initialQuote.study?.number || 'ET',
+      quantity: initialQuote.quantity,
+      selectedPlateId: initialQuote.plateId?.toString() || '',
+      flatWidth: initialQuote.flatWidth || 0,
+      flatHeight: initialQuote.flatHeight || 0,
+      inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
+      varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
+      flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
+      printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
+      isRectoVerso: initialQuote.isRectoVerso || false,
+      rectoVersoType: initialQuote.rectoVersoType || null,
+      hasVarnish: initialQuote.hasVarnish || false,
+      hasFlatColor: initialQuote.hasFlatColor || false,
+      cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
+      assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
+      packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
+      hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
+      hasPackaging: initialQuote.hasPackaging || false,
+      packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
+      packagingQuantity: initialQuote.packagingQuantity || 0,
+      packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
+      packagingWidth: initialQuote.packagingWidth || 0,
+      packagingHeight: initialQuote.packagingHeight || 0,
+      hasPrintSetup: initialQuote.hasPrintSetup ?? true,
+      hasCuttingSetup: initialQuote.hasCuttingSetup ?? true,
+      hasImpression: initialQuote.hasImpression ?? true,
+      hasFaconnage: initialQuote.hasFaconnage ?? true,
+      hasConditionnement: initialQuote.hasConditionnement ?? true,
+      hasAccessoires: initialQuote.hasAccessoires ?? false,
+    })
 
-      if (initialQuote.consumables) {
-        setSelectedConsumables(initialQuote.consumables.map((qc) => ({
-          id: qc.consumableId,
-          name: qc.consumable?.name || 'Inconnu',
-          price: qc.consumable?.price || 0,
-          size: qc.consumable?.size || 1,
-          sizePerItem: qc.sizePerItem,
-          quantity: initialQuote.quantity,
-        })))
-      }
+    if (initialQuote.accessories) {
+      setSelectedAccessories(initialQuote.accessories.map((qa) => ({
+        id: qa.accessoryId,
+        name: qa.accessory?.name || 'Inconnu',
+        price: qa.accessory?.price || 0,
+        quantity: qa.quantity,
+      })))
     }
-  }, [initialQuote, loadQuote, setSelectedAccessories, setSelectedConsumables])
+
+    if (initialQuote.consumables) {
+      setSelectedConsumables(initialQuote.consumables.map((qc) => ({
+        id: qc.consumableId,
+        name: qc.consumable?.name || 'Inconnu',
+        price: qc.consumable?.price || 0,
+        size: qc.consumable?.size || 1,
+        sizePerItem: qc.sizePerItem,
+        quantity: initialQuote.quantity,
+      })))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialQuote])
 
   // ── Imposition ──
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
@@ -182,7 +183,7 @@ export function useCalculator(
     }
   }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm])
 
-  // ── Calcul des coûts — objet entier conservé ──
+  // ── Calcul des coûts ──
   const costResult = calculateCosts({
     quantity,
     impositionResult,
@@ -216,24 +217,24 @@ export function useCalculator(
   })
 
   // ── Formatage détails sections ──
-  const getCuttingDetails = () => formatCuttingDetails({
+  const getCuttingDetails = useCallback(() => formatCuttingDetails({
     cuttingMachineTimeMin: costResult.cuttingMachineTimeMin,
     cuttingSetupTimeMin: costResult.cuttingSetupTimeMin,
     hasCuttingSetup,
     cuttingTimePerPoseSeconds,
-  })
+  }), [costResult.cuttingMachineTimeMin, costResult.cuttingSetupTimeMin, hasCuttingSetup, cuttingTimePerPoseSeconds])
 
-  const getAssemblyDetails = () => formatAssemblyDetails({
+  const getAssemblyDetails = useCallback(() => formatAssemblyDetails({
     assemblyTimePerPieceSeconds,
     quantity,
-  })
+  }), [assemblyTimePerPieceSeconds, quantity])
 
-  const getPackDetails = () => formatPackDetails({
+  const getPackDetails = useCallback(() => formatPackDetails({
     packTimePerPieceSeconds,
     quantity,
     hasAssemblyNotice,
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
-  })
+  }), [packTimePerPieceSeconds, quantity, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece])
 
   // ── Création type PLV ──
   const handleCreateProductType = async () => {
@@ -383,6 +384,6 @@ export function useCalculator(
     handleCreateProductType, handleSave, handleReset,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState,
-    costResult, // ← un seul objet au lieu de 15 valeurs individuelles
+    costResult,
   }
 }
