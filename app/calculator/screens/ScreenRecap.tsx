@@ -1,10 +1,11 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download, Eye } from 'lucide-react'
 import Link from 'next/link'
-import { BlobProvider } from '@react-pdf/renderer'
+import { pdf } from '@react-pdf/renderer'
 import { QuotePDF } from '@/components/QuotePDF'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { buildCostRows } from '@/lib/quote-cost-rows'
@@ -33,6 +34,9 @@ export function ScreenRecap() {
     selectedAccessories,
     selectedConsumables,
   } = useCalculatorContext()
+
+  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [isGenerating, setIsGenerating] = useState(false)
 
   const reference = null
 
@@ -66,8 +70,52 @@ export function ScreenRecap() {
     packagingCuttingCost: costResult.packagingCuttingCost,
   })
 
+  const generatePdf = async () => {
+    if (pdfUrl) return
+    setIsGenerating(true)
+    try {
+      const blob = await pdf(
+        <QuotePDF
+          quoteInfo={{
+            studyNumber,
+            reference,
+            productName: productSearch,
+            quantity,
+          }}
+          formValues={formState}
+          costResult={costResult}
+          selectedPlate={selectedPlate}
+          impositionResult={impositionResult ?? undefined}
+          selectedAccessories={selectedAccessories}
+          selectedConsumables={selectedConsumables}
+        />
+      ).toBlob()
+      const url = URL.createObjectURL(blob)
+      setPdfUrl(url)
+    } catch (e) {
+      console.error('Erreur génération PDF:', e)
+    } finally {
+      setIsGenerating(false)
+    }
+  }
+
+  useEffect(() => {
+    generatePdf()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 animate-in slide-in-from-bottom duration-500">
+
+      {/* ── Bouton Dashboard au-dessus de la card ── */}
+      <div className="flex justify-end mb-4">
+        <Link href="/dashboard">
+          <Button variant="outline" className="border-slate-200">
+            <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+          </Button>
+        </Link>
+      </div>
+
       <Card className="shadow-2xl border-slate-200 overflow-hidden">
 
         {/* ── Header ── */}
@@ -77,46 +125,32 @@ export function ScreenRecap() {
             <p className="text-emerald-400 font-mono text-lg">{studyNumber}</p>
           </div>
 
-          <div className="absolute top-4 right-4 z-20 no-print flex flex-col gap-2 items-end">
-            <Link href="/dashboard">
-              <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
-                <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+          {/* ── Boutons PDF ── */}
+          <div className="absolute top-4 right-4 z-20 no-print flex gap-2 items-center">
+            {pdfUrl ? (
+              <>
+                <a href={pdfUrl} download={`devis-${studyNumber}.pdf`}>
+                  <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
+                    <Download className="mr-2 h-4 w-4" /> Télécharger PDF
+                  </Button>
+                </a>
+                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                  <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
+                    <Eye className="mr-2 h-4 w-4" /> Voir PDF
+                  </Button>
+                </a>
+              </>
+            ) : (
+              <Button
+                variant="secondary"
+                className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
+                onClick={generatePdf}
+                disabled={isGenerating}
+              >
+                <Download className="mr-2 h-4 w-4" />
+                {isGenerating ? 'Génération...' : 'Générer PDF'}
               </Button>
-            </Link>
-
-            <BlobProvider document={
-              <QuotePDF
-                quoteInfo={{
-                  studyNumber,
-                  reference,
-                  productName: productSearch,
-                  quantity,
-                }}
-                formValues={formState}
-                costResult={costResult}
-                selectedPlate={selectedPlate}
-                impositionResult={impositionResult ?? undefined}
-                selectedAccessories={selectedAccessories}
-                selectedConsumables={selectedConsumables}
-              />
-            }>
-              {({ url, loading }) => (
-                <div className="flex gap-2">
-                  <a href={url || '#'} download={`devis-${studyNumber}.pdf`}>
-                    <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm" disabled={loading}>
-                      <Download className="mr-2 h-4 w-4" />
-                      {loading ? 'Génération...' : 'Télécharger PDF'}
-                    </Button>
-                  </a>
-                  <a href={url || '#'} target="_blank" rel="noopener noreferrer">
-                    <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm" disabled={loading}>
-                      <Eye className="mr-2 h-4 w-4" />
-                      {loading ? '...' : 'Voir PDF'}
-                    </Button>
-                  </a>
-                </div>
-              )}
-            </BlobProvider>
+            )}
           </div>
 
           <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] z-0" />
