@@ -56,12 +56,37 @@ export const getPlates = unstable_cache(
   { tags: ['plates'] }
 )
 
-async function generateReference(): Promise<string> {
+async function generateReference(parentReference?: string): Promise<string> {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, '0')
-  const year = String(now.getFullYear())
+  const year = String(now.getFullYear()).slice(-2)
+
+  if (parentReference) {
+    // Extraire la base sans suffixe lettre (ex: C003-0226-A → C003-0226)
+    const base = parentReference.replace(/-[A-Z]$/, '')
+
+    // Si le parent n'a pas encore de suffixe lettre, le renommer en -A
+    if (!/\-[A-Z]$/.test(parentReference)) {
+      await prisma.quote.update({
+        where: { reference: parentReference },
+        data: { reference: `${base}-A` },
+      })
+    }
+
+    // Trouver toutes les versions existantes pour déterminer la prochaine lettre
+    const existing = await prisma.quote.findMany({
+      where: { reference: { startsWith: base } },
+      select: { reference: true },
+    })
+    const usedLetters = existing
+      .map((q) => q.reference?.split('-').pop() || '')
+      .filter((s) => /^[A-Z]$/.test(s))
+    const nextLetter = String.fromCharCode(65 + usedLetters.length)
+    return `${base}-${nextLetter}`
+  }
+
   const result = await prisma.$queryRaw<[{ nextval: bigint }]>`SELECT nextval('quote_reference_seq')`
-  const number = String(Number(result[0].nextval)).padStart(4, '0')
+  const number = String(Number(result[0].nextval)).padStart(3, '0')
   return `C${number}-${month}${year}`
 }
 
@@ -86,7 +111,7 @@ export async function createQuote(data: CreateQuoteInput) {
     throw new Error('Le type de PLV sélectionné n\'existe plus.')
   }
 
-  const reference = await generateReference()
+  const reference = await generateReference(validated.parentReference)
 
   const quote = await prisma.quote.create({
     data: {
@@ -95,6 +120,7 @@ export async function createQuote(data: CreateQuoteInput) {
         studyId: study.id,
         userId: session.user.id,
       }),
+      parentReference: validated.parentReference || null,
       accessories: {
         create: validated.accessories?.map((acc) => ({
           accessoryId: acc.id,

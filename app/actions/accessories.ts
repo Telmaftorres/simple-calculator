@@ -24,9 +24,10 @@ export const getAccessories = unstable_cache(
 export async function createAccessory(data: z.infer<typeof accessorySchema>) {
   await requireAuth()
   const validated = accessorySchema.parse(data)
-  await prisma.accessory.create({ data: validated })
+  const accessory = await prisma.accessory.create({ data: validated })
   revalidatePath('/dashboard/accessories')
   revalidateCache('accessories')
+  return accessory
 }
 
 export async function updateAccessory(id: number, data: z.infer<typeof accessorySchema>) {

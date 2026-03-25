@@ -89,8 +89,8 @@ const FORMULAS: Record<string, {
     },
   },
   INK_COST_FLAT_COLOR_PER_LITER: {
-    usedIn: ['Impression (encre) — aplat'],
-    formula: 'coût_aplat = volume_aplat_L × coût_aplat_par_litre',
+    usedIn: ['Impression (encre) — blanc'],
+    formula: 'coût_blanc = volume_blanc_L × coût_blanc_par_litre',
     getExample: (v) => {
       const cost = parseFloat(v.INK_COST_FLAT_COLOR_PER_LITER) || 0
       const stdCost = parseFloat(v.INK_COST_PER_LITER) || 0
@@ -99,7 +99,7 @@ const FORMULAS: Record<string, {
       const flatPct = 0.20
       const flatVolumeL = (inkMl * flatPct * nbPlates) / 1000
       const result = flatVolumeL * cost
-      return `aplat 20% → 20 ml × 20% × ${nbPlates} plaques / 1000 = ${flatVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(flatVolumeL * stdCost).toFixed(2)} € en encre standard)`
+      return `blanc 20% → 20 ml × 20% × ${nbPlates} plaques / 1000 = ${flatVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(flatVolumeL * stdCost).toFixed(2)} € en encre standard)`
     },
   },
   CUTTING_SETUP_MINUTES: {

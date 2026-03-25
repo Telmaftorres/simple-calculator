@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
+import { createAccessory } from '@/app/actions/accessories'
 import { toast } from 'sonner'
 import { POSE_SPACING_MM } from '@/lib/constants'
 import { calculateCosts } from '@/lib/calculation/costs'
@@ -25,6 +26,7 @@ export function useCalculator(
   const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
+  const [accessoriesList, setAccessoriesList] = useState(accessories)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
 
   const { formState, setField, loadQuote, resetForm } = useCalculatorForm()
@@ -76,7 +78,7 @@ export function useCalculator(
     handleRemoveAccessory,
     resetAccessories,
   } = useAccessories(
-    accessories,
+    accessoriesList,
     currentAccessoryId,
     currentAccessoryQty,
     (v) => setField('currentAccessoryId', v),
@@ -105,6 +107,8 @@ export function useCalculator(
 
     loadQuote({
       studyNumber: initialQuote.study?.number || 'ET',
+      selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
+      productSearch: initialQuote.productType?.name || '',
       quantity: initialQuote.quantity,
       selectedPlateId: initialQuote.plateId?.toString() || '',
       flatWidth: initialQuote.flatWidth || 0,
@@ -311,6 +315,7 @@ export function useCalculator(
           id: sc.id,
           sizePerItem: sc.sizePerItem,
         })),
+        parentReference: initialQuote?.reference || undefined,
       })
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
@@ -385,5 +390,18 @@ export function useCalculator(
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState,
     costResult,
+    accessoriesList,
+    handleCreateAccessory: async (name: string, price: number) => {
+      try {
+        const created = await createAccessory({ name, price })
+        const newAcc = { id: created.id, name: created.name, price: Number(created.price) }
+        setAccessoriesList((prev) => [...prev, newAcc].sort((a, b) => a.name.localeCompare(b.name)))
+        toast.success(`Accessoire "${name}" créé !`)
+        return newAcc
+      } catch {
+        toast.error('Erreur lors de la création de l\'accessoire')
+        return null
+      }
+    },
   }
 }

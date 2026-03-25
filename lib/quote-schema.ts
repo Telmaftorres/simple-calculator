@@ -51,6 +51,7 @@ export const quoteFieldsSchema = z.object({
 export const createQuoteSchema = quoteFieldsSchema.extend({
   // Champs spécifiques à la création
   studyNumber: z.string().min(1, 'Le numéro de dossier est requis'),
+  parentReference: z.string().optional(),
   elements: z.array(z.object({
     name: z.string().min(1),
     quantity: z.number().int().positive(),

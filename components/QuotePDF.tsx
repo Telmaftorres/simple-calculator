@@ -161,7 +161,7 @@ export function QuotePDF({
 
   const varnishRatio = hasVarnish ? varnishSurfacePercent / 100 : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent / 100 : 0
-  const standardPercent = Math.round(Math.max(0, 1 - varnishRatio - flatColorRatio) * 100)
+  const standardPercent = 100
 
   const costRows = buildCostRows({
     impositionResult,
@@ -260,7 +260,7 @@ export function QuotePDF({
                   <Text style={styles.value}>{hasVarnish ? `${varnishSurfacePercent}%` : '—'}</Text>
                 </View>
                 <View style={styles.row}>
-                  <Text style={styles.label}>Aplat (120 €/L)</Text>
+                  <Text style={styles.label}>Blanc (120 €/L)</Text>
                   <Text style={styles.value}>{hasFlatColor ? `${flatColorSurfacePercent}%` : '—'}</Text>
                 </View>
                 <View style={styles.rowLast}>

@@ -1,8 +1,9 @@
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select'
-import { Trash2, Plus } from 'lucide-react'
+import { Trash2, Plus, PlusCircle } from 'lucide-react'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
@@ -15,9 +16,28 @@ export function SectionAccessoires() {
     handleAddAccessory,
     selectedAccessories, handleRemoveAccessory,
     costResult,
+    handleCreateAccessory,
   } = useCalculatorContext()
 
   const { accessoriesCost } = costResult
+
+  const [showCreateForm, setShowCreateForm] = useState(false)
+  const [newName, setNewName] = useState('')
+  const [newPrice, setNewPrice] = useState('')
+  const [isCreating, setIsCreating] = useState(false)
+
+  const handleCreate = async () => {
+    const price = parseFloat(newPrice)
+    if (!newName.trim() || isNaN(price) || price <= 0) return
+    setIsCreating(true)
+    const result = await handleCreateAccessory(newName.trim(), price)
+    setIsCreating(false)
+    if (result) {
+      setNewName('')
+      setNewPrice('')
+      setShowCreateForm(false)
+    }
+  }
 
   return (
     <SectionDisplay
@@ -65,6 +85,60 @@ export function SectionAccessoires() {
             <Plus className="h-4 w-4" />
           </Button>
         </div>
+
+        {/* Bouton créer un accessoire */}
+        {!showCreateForm ? (
+          <button
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-800 font-medium"
+          >
+            <PlusCircle className="h-4 w-4" />
+            Créer un nouvel accessoire
+          </button>
+        ) : (
+          <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 space-y-3">
+            <div className="text-sm font-medium text-teal-800">Nouvel accessoire</div>
+            <div className="flex gap-3 items-end">
+              <div className="flex-1 space-y-1">
+                <Label className="text-xs">Nom</Label>
+                <Input
+                  value={newName}
+                  onChange={(e) => setNewName(e.target.value)}
+                  placeholder="Ex: Vis M4"
+                  className="h-8 text-sm"
+                />
+              </div>
+              <div className="w-28 space-y-1">
+                <Label className="text-xs">Prix (€)</Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  value={newPrice}
+                  onChange={(e) => setNewPrice(e.target.value)}
+                  placeholder="0.00"
+                  className="h-8 text-sm"
+                />
+              </div>
+            </div>
+            <div className="flex gap-2 justify-end">
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => { setShowCreateForm(false); setNewName(''); setNewPrice('') }}
+              >
+                Annuler
+              </Button>
+              <Button
+                size="sm"
+                className="bg-teal-600 hover:bg-teal-700"
+                onClick={handleCreate}
+                disabled={isCreating || !newName.trim() || !newPrice || parseFloat(newPrice) <= 0}
+              >
+                {isCreating ? 'Création...' : 'Créer'}
+              </Button>
+            </div>
+          </div>
+        )}
 
         {selectedAccessories.length > 0 && (
           <div className="bg-slate-50 rounded-lg p-3 space-y-2 border border-slate-100">

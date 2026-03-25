@@ -193,7 +193,7 @@ export function ScreenRecap() {
                     <dd className="font-medium text-right">
                       {hasVarnish && <span className="text-purple-700">Vernis {varnishSurfacePercent}%</span>}
                       {hasVarnish && hasFlatColor && <span> · </span>}
-                      {hasFlatColor && <span className="text-violet-700">Aplat {flatColorSurfacePercent}%</span>}
+                      {hasFlatColor && <span className="text-violet-700">Blanc {flatColorSurfacePercent}%</span>}
                     </dd>
                   </div>
                 )}
