@@ -122,6 +122,23 @@ async function main() {
   const pvc3mm = await prisma.plate.upsert({ where: { name: 'PVC 3mm 2440x1220' }, update: {}, create: { name: 'PVC 3mm 2440x1220', width: 2440, height: 1220, cost: 15.55, material: 'PVC 3mm' } })
   const pvc300 = await prisma.plate.upsert({ where: { name: 'PVC 300 microns 1000x1400' }, update: {}, create: { name: 'PVC 300 microns 1000x1400', width: 1000, height: 1400, cost: 3.42, material: 'PVC 300 microns' } })
   const pvc700 = await prisma.plate.upsert({ where: { name: 'PVC 700 microns 1000x1400' }, update: {}, create: { name: 'PVC 700 microns 1000x1400', width: 1000, height: 1400, cost: 8.2, material: 'PVC 700 microns' } })
+  
+  // Nouvelles matières ajoutées depuis l'audit
+  const bc30_2200 = await prisma.plate.upsert({ where: { name: 'BC 30 2 bruns (BCTT74A) 1700x2200' }, update: {}, create: { name: 'BC 30 2 bruns (BCTT74A) 1700x2200', width: 1700, height: 2200, cost: 2.48, material: 'BC 30 2 bruns (BCTT74A)' } })
+  const c5tt52a = await prisma.plate.upsert({ where: { name: 'C (C5TT52A) 1700x2100' }, update: {}, create: { name: 'C (C5TT52A) 1700x2100', width: 1700, height: 2100, cost: 1.91, material: 'C (C5TT52A)' } })
+  const carte300 = await prisma.plate.upsert({ where: { name: 'Carte 300 gr 720x1020' }, update: {}, create: { name: 'Carte 300 gr 720x1020', width: 720, height: 1020, cost: 0.69, material: 'Carte 300 gr' } })
+  const carte350 = await prisma.plate.upsert({ where: { name: 'Carte 350 gr couche 1 face 800x1200' }, update: {}, create: { name: 'Carte 350 gr couche 1 face 800x1200', width: 800, height: 1200, cost: 1.71, material: 'Carte 350 gr couche 1 face' } })
+  const carte400 = await prisma.plate.upsert({ where: { name: 'Carte 400 gr couché 2 blanc 800x1200' }, update: {}, create: { name: 'Carte 400 gr couché 2 blanc 800x1200', width: 800, height: 1200, cost: 1.23, material: 'Carte 400 gr couché 2 blanc' } })
+  const compact1019 = await prisma.plate.upsert({ where: { name: 'Compact 10/19 1200x1600' }, update: {}, create: { name: 'Compact 10/19 1200x1600', width: 1200, height: 1600, cost: 7.55, material: 'Compact 10/19' } })
+  const e1c1b11s1w = await prisma.plate.upsert({ where: { name: 'E 1C/1B (11S1W) 1700x2100' }, update: {}, create: { name: 'E 1C/1B (11S1W) 1700x2100', width: 1700, height: 2100, cost: 3.06, material: 'E 1C/1B (11S1W)' } })
+  const ee1kraft = await prisma.plate.upsert({ where: { name: 'EE 1 kraft brun / 1 brun 1700x2100' }, update: {}, create: { name: 'EE 1 kraft brun / 1 brun 1700x2100', width: 1700, height: 2100, cost: 4.19, material: 'EE 1 kraft brun / 1 brun' } })
+  const ee2c20w1g1w = await prisma.plate.upsert({ where: { name: 'EE 2C (20W1G1W) 1700x2100' }, update: {}, create: { name: 'EE 2C (20W1G1W) 1700x2100', width: 1700, height: 2100, cost: 5.62, material: 'EE 2C (20W1G1W)' } })
+  const pet05 = await prisma.plate.upsert({ where: { name: 'PET transparent 0,5mm 2050x1250' }, update: {}, create: { name: 'PET transparent 0,5mm 2050x1250', width: 2050, height: 1250, cost: 0.00, material: 'PET transparent 0,5mm' } })
+  const priplak = await prisma.plate.upsert({ where: { name: 'PRIPLAK blanc 1200 microns 800x1200' }, update: {}, create: { name: 'PRIPLAK blanc 1200 microns 800x1200', width: 800, height: 1200, cost: 2.00, material: 'PRIPLAK blanc 1200 microns' } })
+  const pvc1mm = await prisma.plate.upsert({ where: { name: 'PVC 1 mm 2440x1220' }, update: {}, create: { name: 'PVC 1 mm 2440x1220', width: 2440, height: 1220, cost: 15.62, material: 'PVC 1 mm' } })
+  const vinyladhesif = await prisma.plate.upsert({ where: { name: 'Vinyl adhesif transparent 1000x700' }, update: {}, create: { name: 'Vinyl adhesif transparent 1000x700', width: 1000, height: 700, cost: 1.70, material: 'Vinyl adhesif transparent' } })
+
+  console.log('Seeded new plates:', [bc30_2200, c5tt52a, carte300, carte350, carte400, compact1019, e1c1b11s1w, ee1kraft, ee2c20w1g1w, pet05, priplak, pvc1mm, vinyladhesif].map(p => p.name))
 
   console.log({ study1, productType1, productType2, akylux, bc30, ee1700, ee2000, pvc5mm, pvc500, pvc3mm, pvc300, pvc700 })
 
