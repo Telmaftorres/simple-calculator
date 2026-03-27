@@ -41,6 +41,7 @@ model Plate {
   material        String
   quotes          Quote[]
   packagingQuotes Quote[] @relation("PackagingPlate")
+  quoteProducts   QuoteProduct[]
 }
 
 model Accessory {
@@ -97,10 +98,12 @@ model Quote {
   elements                           QuoteElement[]
   hasPrintSetup                      Boolean           @default(true)
   hasCuttingSetup                    Boolean           @default(true)
-  hasImpression      Boolean @default(true)
-  hasFaconnage       Boolean @default(true)
-  hasConditionnement Boolean @default(true)
-  hasAccessoires     Boolean @default(false)
+  hasImpression                      Boolean           @default(true)
+  hasFaconnage                       Boolean           @default(true)
+  hasConditionnement                 Boolean           @default(true)
+  hasAccessoires                     Boolean           @default(false)
+  isMultiProduct                     Boolean           @default(false)
+  products                           QuoteProduct[]
 }
 
 model Consumable {
@@ -165,4 +168,33 @@ model Setting {
   unit      String?
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
+}
+
+model QuoteProduct {
+  id                        Int     @id @default(autoincrement())
+  quoteId                   Int
+  position                  Int     @default(0)
+  productTypeId             Int?
+  productTypeName           String?
+  flatWidth                 Int     @default(0)
+  flatHeight                Int     @default(0)
+  quantity                  Int     @default(0)
+  plateId                   Int?
+  itemsPerPlate             Int?
+  platesCount               Int?
+  printMode                 String  @default("production")
+  isRectoVerso              Boolean @default(false)
+  rectoVersoType            String?
+  inkMlPerPlate             Int     @default(0)
+  varnishSurfacePercent     Int     @default(0)
+  flatColorSurfacePercent   Int     @default(0)
+  hasVarnish                Boolean @default(false)
+  hasFlatColor              Boolean @default(false)
+  hasImpression             Boolean @default(true)
+  hasPrintSetup             Boolean @default(true)
+  cuttingTimePerPoseSeconds Int     @default(0)
+  hasCuttingSetup           Boolean @default(true)
+  totalCost                 Float?
+  quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  plate                     Plate?  @relation(fields: [plateId], references: [id])
 }

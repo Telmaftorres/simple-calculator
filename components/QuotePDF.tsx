@@ -6,7 +6,7 @@ import {
 import { buildCostRows } from '@/lib/quote-cost-rows'
 import { calculateCosts } from '@/lib/calculation/costs'
 import type { CalculatorFormState } from '@/hooks/useCalculatorForm'
-import type { ImpositionResult, SelectedAccessory, SelectedConsumable, Plate } from '@/types/calculator'
+import type { ImpositionResult, SelectedAccessory, SelectedConsumable, Plate, ProductSlotResult } from '@/types/calculator'
 
 type CostResult = ReturnType<typeof calculateCosts>
 
@@ -41,6 +41,15 @@ const styles = StyleSheet.create({
     padding: '6 10',
     marginBottom: 8,
   },
+  sectionTitleProduct: {
+    fontSize: 10,
+    fontFamily: 'Helvetica-Bold',
+    color: '#0f172a',
+    backgroundColor: '#e2e8f0',
+    padding: '4 10',
+    marginBottom: 4,
+    marginTop: 8,
+  },
   grid: { flexDirection: 'row', gap: 12, marginBottom: 16 },
   gridItem: {
     flex: 1,
@@ -67,9 +76,13 @@ const styles = StyleSheet.create({
   tableRow: { flexDirection: 'row', padding: '5 10', borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
   tableRowAlt: { flexDirection: 'row', padding: '5 10', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: '#f8fafc' },
   tableRowSub: { flexDirection: 'row', padding: '4 10 4 20', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: '#f8fafc' },
+  tableRowProduct: { flexDirection: 'row', padding: '4 10', backgroundColor: '#e2e8f0', borderBottomWidth: 1, borderBottomColor: '#cbd5e1' },
+  tableRowSubtotal: { flexDirection: 'row', padding: '5 10', backgroundColor: '#ecfdf5', borderBottomWidth: 1, borderBottomColor: '#6ee7b7' },
+  tableRowCommon: { flexDirection: 'row', padding: '4 10', backgroundColor: '#f8fafc', borderBottomWidth: 1, borderBottomColor: '#e2e8f0' },
   tableCell: { flex: 1, color: '#1e293b' },
   tableCellSub: { flex: 1, color: '#64748b', fontSize: 9 },
   tableCellRight: { width: 80, textAlign: 'right', fontFamily: 'Helvetica-Bold', color: '#1e293b' },
+  tableCellRightGreen: { width: 80, textAlign: 'right', fontFamily: 'Helvetica-Bold', color: '#059669' },
   tableFooter: { flexDirection: 'row', backgroundColor: '#0f172a', padding: '8 10' },
   tableFooterLabel: { flex: 1, color: '#ffffff', fontFamily: 'Helvetica-Bold', fontSize: 12 },
   tableFooterValue: { color: '#10b981', fontFamily: 'Helvetica-Bold', fontSize: 14, textAlign: 'right' },
@@ -85,6 +98,15 @@ const styles = StyleSheet.create({
     paddingTop: 8,
   },
   footerText: { fontSize: 8, color: '#94a3b8' },
+  badgeMulti: {
+    backgroundColor: '#ecfdf5',
+    borderWidth: 1,
+    borderColor: '#6ee7b7',
+    borderRadius: 4,
+    padding: '2 6',
+    marginTop: 4,
+  },
+  badgeMultiText: { fontSize: 9, color: '#059669', fontFamily: 'Helvetica-Bold' },
 })
 
 interface QuotePDFProps {
@@ -100,6 +122,9 @@ interface QuotePDFProps {
   impositionResult: ImpositionResult | undefined
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
+  isMultiProduct?: boolean
+  productSlotResults?: ProductSlotResult[]
+  totalCostMulti?: number
 }
 
 export function QuotePDF({
@@ -110,6 +135,9 @@ export function QuotePDF({
   impositionResult,
   selectedAccessories,
   selectedConsumables,
+  isMultiProduct = false,
+  productSlotResults = [],
+  totalCostMulti = 0,
 }: QuotePDFProps) {
 
   const { studyNumber, reference, productName, quantity } = quoteInfo
@@ -161,12 +189,18 @@ export function QuotePDF({
 
   const varnishRatio = hasVarnish ? varnishSurfacePercent / 100 : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent / 100 : 0
-  const standardPercent = 100
+  const standardPercent = Math.round(Math.max(0, 1 - varnishRatio - flatColorRatio) * 100)
 
-  const costRows = buildCostRows({
-    impositionResult,
-    selectedPlate,
-    hasImpression,
+  const displayTotal = isMultiProduct ? totalCostMulti : totalCost
+  const displayQuantity = isMultiProduct
+    ? productSlotResults.reduce((sum, r) => sum + r.slot.quantity, 0)
+    : quantity
+
+  // Lignes sections communes
+  const commonCostRows = buildCostRows({
+    impositionResult: isMultiProduct ? null : impositionResult,
+    selectedPlate: isMultiProduct ? undefined : selectedPlate,
+    hasImpression: isMultiProduct ? false : hasImpression,
     inkVolumeL,
     printingCostData,
     hasPrintSetup,
@@ -192,6 +226,7 @@ export function QuotePDF({
     packagingMaterialCost,
     packagingCuttingCost,
   })
+
   return (
     <Document>
       <Page size="A4" style={styles.page}>
@@ -203,6 +238,11 @@ export function QuotePDF({
             <Text style={styles.headerTitle}>Fiche de Devis</Text>
             <Text style={styles.headerSubtitle}>Calculateur PLV Kontfeel</Text>
             {reference && <Text style={styles.reference}>{reference}</Text>}
+            {isMultiProduct && (
+              <View style={styles.badgeMulti}>
+                <Text style={styles.badgeMultiText}>Devis multi-produits — {productSlotResults.length} produits</Text>
+              </View>
+            )}
             <Text style={styles.headerSubtitle}>{date}</Text>
           </View>
         </View>
@@ -212,22 +252,44 @@ export function QuotePDF({
           <View style={styles.gridItem}>
             <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Informations</Text>
             <View style={styles.row}><Text style={styles.label}>Dossier</Text><Text style={styles.value}>{studyNumber}</Text></View>
-            <View style={styles.row}><Text style={styles.label}>Produit</Text><Text style={styles.value}>{productName}</Text></View>
-            <View style={styles.row}><Text style={styles.label}>Quantité</Text><Text style={styles.value}>{quantity} pcs</Text></View>
-            <View style={styles.rowLast}><Text style={styles.label}>Matière</Text><Text style={styles.value}>{selectedPlate?.name || '-'}</Text></View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Produit</Text>
+              <Text style={styles.value}>{isMultiProduct ? `${productSlotResults.length} produits` : productName}</Text>
+            </View>
+            <View style={styles.row}>
+              <Text style={styles.label}>Quantité totale</Text>
+              <Text style={styles.value}>{displayQuantity} pcs</Text>
+            </View>
+            {!isMultiProduct && (
+              <View style={styles.rowLast}><Text style={styles.label}>Matière</Text><Text style={styles.value}>{selectedPlate?.name || '-'}</Text></View>
+            )}
           </View>
 
-          <View style={styles.gridItem}>
-            <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Technique</Text>
-            <View style={styles.row}><Text style={styles.label}>Format à plat</Text><Text style={styles.value}>{flatWidth} × {flatHeight} mm</Text></View>
-            <View style={styles.row}><Text style={styles.label}>Poses / plaque</Text><Text style={styles.value}>{impositionResult?.itemsPerPlate || 0}</Text></View>
-            <View style={styles.row}><Text style={styles.label}>Plaques nécessaires</Text><Text style={styles.value}>{impositionResult?.platesNeeded || 0}</Text></View>
-            <View style={styles.rowLast}><Text style={styles.label}>Orientation</Text><Text style={styles.value}>{impositionResult?.orientation || '-'}</Text></View>
-          </View>
+          {!isMultiProduct && (
+            <View style={styles.gridItem}>
+              <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Technique</Text>
+              <View style={styles.row}><Text style={styles.label}>Format à plat</Text><Text style={styles.value}>{flatWidth} × {flatHeight} mm</Text></View>
+              <View style={styles.row}><Text style={styles.label}>Poses / plaque</Text><Text style={styles.value}>{impositionResult?.itemsPerPlate || 0}</Text></View>
+              <View style={styles.row}><Text style={styles.label}>Plaques nécessaires</Text><Text style={styles.value}>{impositionResult?.platesNeeded || 0}</Text></View>
+              <View style={styles.rowLast}><Text style={styles.label}>Orientation</Text><Text style={styles.value}>{impositionResult?.orientation || '-'}</Text></View>
+            </View>
+          )}
+
+          {isMultiProduct && (
+            <View style={styles.gridItem}>
+              <Text style={{ fontFamily: 'Helvetica-Bold', marginBottom: 6, color: '#0f172a' }}>Produits</Text>
+              {productSlotResults.map((r, i) => (
+                <View key={i} style={i < productSlotResults.length - 1 ? styles.row : styles.rowLast}>
+                  <Text style={styles.label}>{r.slot.productSearch || `Produit ${i + 1}`}</Text>
+                  <Text style={styles.value}>{r.slot.quantity} pcs — {r.costResult.subtotal.toFixed(2)} €</Text>
+                </View>
+              ))}
+            </View>
+          )}
         </View>
 
-        {/* Impression — si activée */}
-        {hasImpression && (
+        {/* Impression mono — si activée */}
+        {!isMultiProduct && hasImpression && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Impression</Text>
             <View style={styles.grid}>
@@ -250,17 +312,16 @@ export function QuotePDF({
                 </View>
               </View>
               <View style={styles.gridItem}>
-                {/* Répartition encre */}
                 <View style={styles.row}>
                   <Text style={styles.label}>Encre standard</Text>
                   <Text style={styles.value}>{standardPercent}%</Text>
                 </View>
                 <View style={styles.row}>
-                  <Text style={styles.label}>Vernis (120 €/L)</Text>
+                  <Text style={styles.label}>Vernis</Text>
                   <Text style={styles.value}>{hasVarnish ? `${varnishSurfacePercent}%` : '—'}</Text>
                 </View>
                 <View style={styles.row}>
-                  <Text style={styles.label}>Blanc (120 €/L)</Text>
+                  <Text style={styles.label}>Aplat</Text>
                   <Text style={styles.value}>{hasFlatColor ? `${flatColorSurfacePercent}%` : '—'}</Text>
                 </View>
                 <View style={styles.rowLast}>
@@ -281,7 +342,83 @@ export function QuotePDF({
               <Text style={{ ...styles.tableHeaderText, textAlign: 'center' }}>Détail</Text>
               <Text style={styles.tableHeaderTextRight}>Montant</Text>
             </View>
-            {costRows.map((row, i) => (
+
+            {/* ── Mode multi : lignes par produit ── */}
+            {isMultiProduct && productSlotResults.map((result, i) => (
+              <View key={i}>
+                {/* En-tête produit */}
+                <View style={styles.tableRowProduct}>
+                  <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', fontSize: 9 }}>
+                    {result.slot.productSearch || `Produit ${i + 1}`} — {result.slot.quantity} pcs
+                  </Text>
+                  <Text style={{ color: '#64748b', textAlign: 'center', fontSize: 9 }}>
+                    {result.slot.flatWidth}×{result.slot.flatHeight} mm
+                  </Text>
+                  <Text style={{ ...styles.tableCellRight, color: '#475569', fontSize: 9 }}></Text>
+                </View>
+
+                {/* Matière */}
+                <View style={styles.tableRow}>
+                  <Text style={styles.tableCell}>Matière</Text>
+                  <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                    {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
+                  </Text>
+                  <Text style={styles.tableCellRight}>{result.costResult.materialCost.toFixed(2)} €</Text>
+                </View>
+
+                {/* Impression */}
+                {result.slot.hasImpression && (
+                  <>
+                    <View style={styles.tableRowAlt}>
+                      <Text style={styles.tableCell}>Impression (encre)</Text>
+                      <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                        {result.costResult.inkVolumeL.toFixed(3)} L
+                      </Text>
+                      <Text style={styles.tableCellRight}>{result.costResult.printingCostData.inkCost.toFixed(2)} €</Text>
+                    </View>
+                    <View style={styles.tableRow}>
+                      <Text style={styles.tableCell}>Impression (machine)</Text>
+                      <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                        {Math.round(result.costResult.printingCostData.machineTimeMin)} min
+                      </Text>
+                      <Text style={styles.tableCellRight}>{result.costResult.printingCostData.machineCost.toFixed(2)} €</Text>
+                    </View>
+                  </>
+                )}
+
+                {/* Découpe */}
+                <View style={styles.tableRowAlt}>
+                  <Text style={styles.tableCell}>Découpe</Text>
+                  <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                    {Math.round(result.costResult.cuttingMachineTimeMin)} min
+                  </Text>
+                  <Text style={styles.tableCellRight}>{result.costResult.cuttingCost.toFixed(2)} €</Text>
+                </View>
+
+                {/* Sous-total produit */}
+                <View style={styles.tableRowSubtotal}>
+                  <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', color: '#059669' }}>
+                    Sous-total {result.slot.productSearch || `Produit ${i + 1}`}
+                  </Text>
+                  <Text style={{ ...styles.tableCell, textAlign: 'center' }}></Text>
+                  <Text style={styles.tableCellRightGreen}>{result.costResult.subtotal.toFixed(2)} €</Text>
+                </View>
+              </View>
+            ))}
+
+            {/* Séparateur sections communes en mode multi */}
+            {isMultiProduct && commonCostRows.length > 0 && (
+              <View style={styles.tableRowCommon}>
+                <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', fontSize: 9, color: '#475569' }}>
+                  Sections communes
+                </Text>
+                <Text style={{ ...styles.tableCell, textAlign: 'center' }}></Text>
+                <Text style={styles.tableCellRight}></Text>
+              </View>
+            )}
+
+            {/* Lignes communes */}
+            {commonCostRows.map((row, i) => (
               <View key={i} style={row.sub ? styles.tableRowSub : i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
                 <Text style={row.sub ? styles.tableCellSub : styles.tableCell}>{row.label}</Text>
                 <Text style={{ ...(row.sub ? styles.tableCellSub : styles.tableCell), color: '#64748b', textAlign: 'center' }}>
@@ -295,19 +432,21 @@ export function QuotePDF({
                 </Text>
               </View>
             ))}
+
+            {/* Total */}
             <View style={styles.tableFooter}>
               <Text style={styles.tableFooterLabel}>Total HT</Text>
               <View>
-                <Text style={styles.tableFooterValue}>{totalCost.toFixed(2)} €</Text>
+                <Text style={styles.tableFooterValue}>{displayTotal.toFixed(2)} €</Text>
                 <Text style={{ ...styles.footerText, color: '#94a3b8', textAlign: 'right' }}>
-                  soit {(totalCost / quantity).toFixed(2)} € / pce
+                  soit {(displayTotal / (displayQuantity || 1)).toFixed(2)} € / pce
                 </Text>
               </View>
             </View>
           </View>
         </View>
 
-        {/* Accessoires détail */}
+        {/* Accessoires */}
         {hasAccessoires && selectedAccessories.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Accessoires</Text>
@@ -323,7 +462,7 @@ export function QuotePDF({
           </View>
         )}
 
-        {/* Consommables détail */}
+        {/* Consommables */}
         {hasFaconnage && selectedConsumables.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Consommables</Text>
@@ -333,7 +472,7 @@ export function QuotePDF({
                   <Text style={styles.tableCell}>{sc.name}</Text>
                   <Text style={{ ...styles.tableCell, textAlign: 'center' }}>{sc.sizePerItem} m/pose</Text>
                   <Text style={styles.tableCellRight}>
-                    {(((sc.sizePerItem * quantity) / sc.size) * sc.price).toFixed(2)} €
+                    {(((sc.sizePerItem * displayQuantity) / sc.size) * sc.price).toFixed(2)} €
                   </Text>
                 </View>
               ))}

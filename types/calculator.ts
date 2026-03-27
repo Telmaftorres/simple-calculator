@@ -52,8 +52,6 @@ export interface PrintingCostData {
   machineTimeMin: number
 }
 
-// ✅ Quote inféré depuis Prisma — plus jamais à mettre à jour manuellement
-// Quand tu ajoutes une colonne + prisma generate, ce type se met à jour automatiquement
 export type Quote = Prisma.QuoteGetPayload<{
   include: {
     study: true
@@ -62,12 +60,17 @@ export type Quote = Prisma.QuoteGetPayload<{
     }
     plate: true
     accessories: {
-      include: { accessory: true } 
+      include: { accessory: true }
     }
     consumables: {
       include: { consumable: true }
     }
     elements: true
+    products: {          // ← ajouter
+      include: {
+        plate: true
+      }
+    }
   }
 }>
 
@@ -84,3 +87,66 @@ export interface CalculatorProps {
 
 export type ScreenState = 'form' | 'success' | 'recap'
 export type PrintMode = 'production' | 'quality'
+
+// ── Multi-produits ──
+
+export interface ProductSlot {
+  id: string                          // identifiant local (uuid) — pas l'id DB
+  productTypeId: string
+  productSearch: string
+  flatWidth: number
+  flatHeight: number
+  quantity: number
+  selectedPlateId: string
+  printMode: 'production' | 'quality'
+  isRectoVerso: boolean
+  rectoVersoType: string | null
+  inkMlPerPlate: number
+  varnishSurfacePercent: number
+  flatColorSurfacePercent: number
+  hasVarnish: boolean
+  hasFlatColor: boolean
+  hasImpression: boolean
+  hasPrintSetup: boolean
+  cuttingTimePerPoseSeconds: number
+  hasCuttingSetup: boolean
+}
+
+export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
+  id: '',
+  productTypeId: '',
+  productSearch: '',
+  flatWidth: 0,
+  flatHeight: 0,
+  quantity: 100,
+  selectedPlateId: '',
+  printMode: 'production',
+  isRectoVerso: false,
+  rectoVersoType: null,
+  inkMlPerPlate: 20,
+  varnishSurfacePercent: 0,
+  flatColorSurfacePercent: 0,
+  hasVarnish: false,
+  hasFlatColor: false,
+  hasImpression: true,
+  hasPrintSetup: true,
+  cuttingTimePerPoseSeconds: 0,
+  hasCuttingSetup: true,
+}
+
+export interface ProductSlotResult {
+  slot: ProductSlot
+  impositionResult: ImpositionResult | null
+  costResult: {
+    materialCost: number
+    printingCost: number
+    printingCostData: PrintingCostData
+    cuttingCost: number
+    cuttingMachineCost: number
+    cuttingSetupCost: number
+    cuttingMachineTimeMin: number
+    cuttingSetupTimeMin: number
+    inkVolumeL: number
+    subtotal: number
+  }
+}

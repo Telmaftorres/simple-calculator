@@ -13,28 +13,25 @@ function buildQuoteData(
   validated: CreateQuoteInput,
   extra: { reference: string; studyId: number; userId: string }
 ): Omit<Prisma.QuoteUncheckedCreateInput, 'id' | 'createdAt' | 'updatedAt'> {
-  // ✅ Exclure les champs qui ne vont pas directement en DB
   const {
-    studyNumber,   // géré via upsert Study → studyId dans extra
-    elements,      // géré séparément dans prisma.quote.create
-    accessories,   // géré séparément dans prisma.quote.create
-    consumables,   // géré séparément dans prisma.quote.create
-    ...quoteFields // tout le reste correspond exactement aux colonnes Prisma
+    studyNumber,
+    elements,
+    accessories,
+    consumables,
+    products,
+    parentReference,
+    ...quoteFields
   } = validated
 
   return {
-    // ✅ Tous les champs scalaires alignés automatiquement
     ...quoteFields,
-
-    // ✅ Champs injectés depuis l'extérieur
     ...extra,
-
-    // ✅ Forcer null au lieu d'undefined pour les champs nullable
-    // Prisma accepte null mais pas undefined
+    parentReference: parentReference ?? null,
     packagingPlateId: validated.packagingPlateId ?? null,
     packagingQuantity: validated.packagingQuantity ?? null,
     packagingWidth: validated.packagingWidth ?? null,
     packagingHeight: validated.packagingHeight ?? null,
+    isMultiProduct: validated.isMultiProduct ?? false,
   }
 }
 
@@ -62,18 +59,7 @@ async function generateReference(parentReference?: string): Promise<string> {
   const year = String(now.getFullYear()).slice(-2)
 
   if (parentReference) {
-    // Extraire la base sans suffixe lettre (ex: C003-0226-A → C003-0226)
     const base = parentReference.replace(/-[A-Z]$/, '')
-
-    // Si le parent n'a pas encore de suffixe lettre, le renommer en -A
-    if (!/\-[A-Z]$/.test(parentReference)) {
-      await prisma.quote.update({
-        where: { reference: parentReference },
-        data: { reference: `${base}-A` },
-      })
-    }
-
-    // Trouver toutes les versions existantes pour déterminer la prochaine lettre
     const existing = await prisma.quote.findMany({
       where: { reference: { startsWith: base } },
       select: { reference: true },
@@ -120,7 +106,6 @@ export async function createQuote(data: CreateQuoteInput) {
         studyId: study.id,
         userId: session.user.id,
       }),
-      parentReference: validated.parentReference || null,
       accessories: {
         create: validated.accessories?.map((acc) => ({
           accessoryId: acc.id,
@@ -139,6 +124,32 @@ export async function createQuote(data: CreateQuoteInput) {
           quantity: el.quantity,
         })),
       },
+      products: validated.products && validated.products.length > 0 ? {
+        create: validated.products.map((p) => ({
+          position: p.position,
+          productTypeId: p.productTypeId ?? null,
+          productTypeName: p.productTypeName ?? null,
+          flatWidth: p.flatWidth,
+          flatHeight: p.flatHeight,
+          quantity: p.quantity,
+          plateId: p.plateId ?? null,
+          itemsPerPlate: p.itemsPerPlate ?? null,
+          platesCount: p.platesCount ?? null,
+          printMode: p.printMode ?? 'production',
+          isRectoVerso: p.isRectoVerso ?? false,
+          rectoVersoType: p.rectoVersoType ?? null,
+          inkMlPerPlate: p.inkMlPerPlate ?? 0,
+          varnishSurfacePercent: p.varnishSurfacePercent ?? 0,
+          flatColorSurfacePercent: p.flatColorSurfacePercent ?? 0,
+          hasVarnish: p.hasVarnish ?? false,
+          hasFlatColor: p.hasFlatColor ?? false,
+          hasImpression: p.hasImpression ?? true,
+          hasPrintSetup: p.hasPrintSetup ?? true,
+          cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds ?? 0,
+          hasCuttingSetup: p.hasCuttingSetup ?? true,
+          totalCost: p.totalCost ?? null,
+        })),
+      } : undefined,
     },
   })
 
@@ -177,6 +188,10 @@ export async function getQuoteById(id: number) {
       accessories: { include: { accessory: true } },
       consumables: { include: { consumable: true } },
       elements: true,
+      products: {
+        include: { plate: true },
+        orderBy: { position: 'asc' },
+      },
     },
   })
   if (!quote) return null

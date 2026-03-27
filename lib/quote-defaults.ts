@@ -17,4 +17,5 @@ export const QUOTE_DEFAULTS = {
   hasFaconnage: true as boolean,
   hasConditionnement: true as boolean,
   hasAccessoires: false as boolean,
+  isMultiProduct: false as boolean,
 }
