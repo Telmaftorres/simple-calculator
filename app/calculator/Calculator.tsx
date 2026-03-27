@@ -5,7 +5,6 @@ import { LayoutDashboard, Calculator as CalcIcon, Settings } from 'lucide-react'
 import Link from 'next/link'
 import type { CalculatorProps } from '@/types/calculator'
 import { useCalculator } from '@/hooks/useCalculator'
-import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import { CalculatorContext } from './context/CalculatorContext'
 import { ScreenSuccess } from './screens/ScreenSuccess'
 import { ScreenRecap } from './screens/ScreenRecap'
@@ -18,6 +17,7 @@ import { SectionConditionnement } from './sections/SectionConditionnement'
 import { SectionEmballage } from './sections/SectionEmballage'
 import { RecapSidebar } from './sections/RecapSidebar'
 import { SectionDisplay } from './shared'
+import { SectionMultiProduct } from './sections/SectionMultiProduct'
 
 export default function Calculator({
   productTypes: initialProductTypes,
@@ -45,7 +45,7 @@ export default function Calculator({
     <CalculatorContext.Provider value={{
       ...calc,
       plates,
-      accessories: calc.accessoriesList,
+      accessories,
       consumables,
     }}>
       {calc.screenState === 'recap' ? (
@@ -80,27 +80,36 @@ export default function Calculator({
             <div className="lg:col-span-2 space-y-8">
               <SectionPresentation />
 
-              {calc.impositionResult && (
-                <SectionDisplay number="2" title="Poses (Imposition)" color="blue">
-                  <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-blue-600">{calc.impositionResult.itemsPerPlate}</div>
-                      <div className="text-xs text-blue-400 uppercase">Poses / Plaque</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-sm font-medium">{calc.impositionResult.orientation}</div>
-                      <div className="text-xs text-slate-400">Orientation</div>
-                    </div>
-                    <div className="text-center">
-                      <div className="text-2xl font-bold text-slate-700">{calc.impositionResult.platesNeeded}</div>
-                      <div className="text-xs text-slate-400 uppercase">Plaques Nécessaires</div>
-                    </div>
-                  </div>
-                </SectionDisplay>
+              {/* ── Mode multi-produits ── */}
+              {calc.isMultiProduct ? (
+                <SectionMultiProduct />
+              ) : (
+                <>
+                  {calc.impositionResult && (
+                    <SectionDisplay number="2" title="Poses (Imposition)" color="blue">
+                      <div className="flex justify-between items-center bg-blue-50 p-4 rounded-lg">
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-blue-600">{calc.impositionResult.itemsPerPlate}</div>
+                          <div className="text-xs text-blue-400 uppercase">Poses / Plaque</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-sm font-medium">{calc.impositionResult.orientation}</div>
+                          <div className="text-xs text-slate-400">Orientation</div>
+                        </div>
+                        <div className="text-center">
+                          <div className="text-2xl font-bold text-slate-700">{calc.impositionResult.platesNeeded}</div>
+                          <div className="text-xs text-slate-400 uppercase">Plaques Nécessaires</div>
+                        </div>
+                      </div>
+                    </SectionDisplay>
+                  )}
+
+                  <SectionImpression />
+                  <SectionDecoupe />
+                </>
               )}
 
-              <SectionImpression />
-              <SectionDecoupe />
+              {/* ── Sections communes ── */}
               <SectionFaconnage />
               <SectionConditionnement />
               <SectionAccessoires />

@@ -1,7 +1,6 @@
 import { z } from 'zod'
 
 export const quoteFieldsSchema = z.object({
-  // Identité
   productTypeId: z.number().int().positive(),
   quantity: z.number().int().positive(),
   flatWidth: z.number().int().positive(),
@@ -11,10 +10,9 @@ export const quoteFieldsSchema = z.object({
   platesCount: z.number().int().positive(),
   totalCost: z.number().min(0),
 
-  // Impression
   inkMlPerPlate: z.number().min(0).max(100).optional(),
   varnishSurfacePercent: z.number().min(0).max(100).optional(),
-  flatColorSurfacePercent: z.number().min(0).max(100).optional(), 
+  flatColorSurfacePercent: z.number().min(0).max(100).optional(),
   printMode: z.string().optional(),
   isRectoVerso: z.boolean().optional(),
   rectoVersoType: z.string().nullable().optional(),
@@ -23,33 +21,54 @@ export const quoteFieldsSchema = z.object({
   hasImpression: z.boolean().optional(),
   hasPrintSetup: z.boolean().optional(),
 
-  // Découpe
   cuttingTimePerPoseSeconds: z.number().int().optional(),
   hasCuttingSetup: z.boolean().optional(),
 
-  // Façonnage
   assemblyTimePerPieceSeconds: z.number().int().optional(),
   hasFaconnage: z.boolean().optional(),
 
-  // Conditionnement
   packTimePerPieceSeconds: z.number().int().optional(),
   hasAssemblyNotice: z.boolean().optional(),
   hasConditionnement: z.boolean().optional(),
 
-  // Accessoires
   hasAccessoires: z.boolean().optional(),
 
-  // Emballage
   hasPackaging: z.boolean().optional(),
   packagingPlateId: z.number().int().positive().nullable().optional(),
   packagingQuantity: z.number().int().positive().nullable().optional(),
   packagingCuttingTimePerPoseSeconds: z.number().int().optional(),
   packagingWidth: z.number().int().positive().nullable().optional(),
   packagingHeight: z.number().int().positive().nullable().optional(),
+
+  isMultiProduct: z.boolean().optional(),
+})
+
+const quoteProductSchema = z.object({
+  position: z.number().int().min(0),
+  productTypeId: z.number().int().positive().nullable().optional(),
+  productTypeName: z.string().optional(),
+  flatWidth: z.number().int().min(0),
+  flatHeight: z.number().int().min(0),
+  quantity: z.number().int().min(0),
+  plateId: z.number().int().positive().nullable().optional(),
+  itemsPerPlate: z.number().int().positive().nullable().optional(),
+  platesCount: z.number().int().positive().nullable().optional(),
+  printMode: z.string().optional(),
+  isRectoVerso: z.boolean().optional(),
+  rectoVersoType: z.string().nullable().optional(),
+  inkMlPerPlate: z.number().min(0).max(100).optional(),
+  varnishSurfacePercent: z.number().min(0).max(100).optional(),
+  flatColorSurfacePercent: z.number().min(0).max(100).optional(),
+  hasVarnish: z.boolean().optional(),
+  hasFlatColor: z.boolean().optional(),
+  hasImpression: z.boolean().optional(),
+  hasPrintSetup: z.boolean().optional(),
+  cuttingTimePerPoseSeconds: z.number().int().optional(),
+  hasCuttingSetup: z.boolean().optional(),
+  totalCost: z.number().nullable().optional(),
 })
 
 export const createQuoteSchema = quoteFieldsSchema.extend({
-  // Champs spécifiques à la création
   studyNumber: z.string().min(1, 'Le numéro de dossier est requis'),
   parentReference: z.string().optional(),
   elements: z.array(z.object({
@@ -64,6 +83,7 @@ export const createQuoteSchema = quoteFieldsSchema.extend({
     id: z.number().int().positive(),
     sizePerItem: z.number().positive(),
   })).optional(),
+  products: z.array(quoteProductSchema).optional(),
 })
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>
