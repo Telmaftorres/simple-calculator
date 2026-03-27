@@ -13,6 +13,7 @@ import { useConsumables } from './useConsumables'
 import { formatCuttingDetails, formatAssemblyDetails, formatPackDetails } from '@/lib/format'
 import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlot, ProductSlotResult } from '@/types/calculator'
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
+import { createAccessory } from '@/app/actions/accessories'
 import { v4 as uuidv4 } from 'uuid'
 
 export function useCalculator(
@@ -378,6 +379,19 @@ export function useCalculator(
     }
   }
 
+  // ── Création accessoire depuis le calculateur ──
+  const handleCreateAccessory = async (name: string, price: number) => {
+    try {
+      const newAccessory = await createAccessory({ name, price })
+      toast.success(`Accessoire "${name}" créé`)
+      return newAccessory
+    } catch (e) {
+      console.error(e)
+      toast.error('Erreur lors de la création de l\'accessoire')
+      return null
+    }
+  }
+
   // ── Sauvegarde ──
   const handleSave = async () => {
     if (isMultiProduct) {
@@ -554,7 +568,7 @@ export function useCalculator(
     packagingHeight, setPackagingHeight: (v: number) => setField('packagingHeight', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
-    handleCreateProductType, handleSave, handleReset,
+    handleCreateProductType, handleCreateAccessory, handleSave, handleReset,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState,
     costResult,
