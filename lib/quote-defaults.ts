@@ -3,8 +3,8 @@ export const QUOTE_DEFAULTS = {
   isRectoVerso: false as boolean,
   hasVarnish: false as boolean,
   hasFlatColor: false as boolean,
-  varnishSurfacePercent: 0 as number,   // ✅ nouveau
-  flatColorSurfacePercent: 0 as number, // ✅ nouveau
+  varnishSurfacePercent: 0 as number,
+  flatColorSurfacePercent: 0 as number,
   cuttingTimePerPoseSeconds: 0 as number,
   assemblyTimePerPieceSeconds: 0 as number,
   packTimePerPieceSeconds: 0 as number,
@@ -18,4 +18,8 @@ export const QUOTE_DEFAULTS = {
   hasConditionnement: true as boolean,
   hasAccessoires: false as boolean,
   isMultiProduct: false as boolean,
+  // ── Bureau d'études ──
+  hasBE: false as boolean,
+  beTimeMinutes: 0 as number,
+  batTimeMinutes: 0 as number,
 }

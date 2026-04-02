@@ -15,6 +15,8 @@ import { SectionAccessoires } from './sections/SectionAccessoires'
 import { SectionFaconnage } from './sections/SectionFaconnage'
 import { SectionConditionnement } from './sections/SectionConditionnement'
 import { SectionEmballage } from './sections/SectionEmballage'
+import { SectionBureauEtudes } from './sections/SectionBureauEtudes'
+import { SectionTransport } from './sections/SectionTransport'
 import { RecapSidebar } from './sections/RecapSidebar'
 import { SectionDisplay } from './shared'
 import { SectionMultiProduct } from './sections/SectionMultiProduct'
@@ -57,7 +59,7 @@ export default function Calculator({
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
                 <CalcIcon className="h-6 w-6 text-emerald-400" />
-                Calculateur de ouf
+                Calculateur Kontfeel
               </h1>
             </div>
             <div className="flex gap-2">
@@ -103,7 +105,7 @@ export default function Calculator({
                       </div>
                     </SectionDisplay>
                   )}
-
+                  <SectionBureauEtudes />
                   <SectionImpression />
                   <SectionDecoupe />
                 </>
@@ -114,6 +116,7 @@ export default function Calculator({
               <SectionConditionnement />
               <SectionAccessoires />
               <SectionEmballage />
+              <SectionTransport />
             </div>
 
             <RecapSidebar />
