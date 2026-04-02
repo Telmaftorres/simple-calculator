@@ -2,6 +2,8 @@ import {
   HOURLY_RATE_PRINT,
   HOURLY_RATE_ASSEMBLY,
   HOURLY_RATE_PACKAGING,
+  HOURLY_RATE_BE,
+  HOURLY_RATE_BAT,
   INK_COST_PER_LITER,
   INK_COST_VARNISH_PER_LITER,
   INK_COST_FLAT_COLOR_PER_LITER,
@@ -27,9 +29,9 @@ export function calculateCosts(params: {
   quantity: number
   impositionResult: ImpositionResult | null
   selectedPlate: Plate | undefined
-  inkMlPerPlate: number               // ✅ renommé (était printSurfacePercent)
-  varnishSurfacePercent: number       // ✅ nouveau
-  flatColorSurfacePercent: number     // ✅ nouveau
+  inkMlPerPlate: number
+  varnishSurfacePercent: number
+  flatColorSurfacePercent: number
   printMode: PrintMode
   isRectoVerso: boolean
   hasVarnish: boolean
@@ -48,6 +50,9 @@ export function calculateCosts(params: {
   selectedConsumables: SelectedConsumable[]
   settings?: Record<string, number>
   hasPackaging: boolean
+  hasBE?: boolean
+  beTimeMinutes?: number
+  batTimeMinutes?: number
   packagingPlate: Plate | undefined
   packagingQuantity: number
   packagingCuttingTimePerPoseSeconds: number
@@ -79,6 +84,9 @@ export function calculateCosts(params: {
     selectedConsumables,
     settings,
     hasPackaging,
+    hasBE = false,
+    beTimeMinutes = 0,
+    batTimeMinutes = 0,
     packagingPlate,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
@@ -89,6 +97,8 @@ export function calculateCosts(params: {
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
   const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
   const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
+  const hourlyRateBE = settings?.HOURLY_RATE_BE ?? HOURLY_RATE_BE
+  const hourlyRateBAT = settings?.HOURLY_RATE_BAT ?? HOURLY_RATE_BAT
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
   const inkCostFlatColorPerLiter = settings?.INK_COST_FLAT_COLOR_PER_LITER ?? INK_COST_FLAT_COLOR_PER_LITER
@@ -118,44 +128,35 @@ export function calculateCosts(params: {
     const multiplier = isRectoVerso ? 2 : 1
     const platesNeeded = impositionResult.platesNeeded
 
-    // ── Calcul encre standard ──
-    // inkMlPerPlate = volume TOTAL par plaque pour l'encre standard (toujours 100%)
-    // Le vernis et le blanc s'ajoutent par-dessus
     const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
     const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
-    const standardRatio = 1 // Toujours 100% d'encre standard
+    const standardRatio = 1
 
     const standardMlPerPlate = inkMlPerPlate * standardRatio
     const varnishMlPerPlate = inkMlPerPlate * varnishRatio
     const flatColorMlPerPlate = inkMlPerPlate * flatColorRatio
 
-    // Volumes en litres × recto/verso
     const standardVolumeL = (standardMlPerPlate * platesNeeded * multiplier) / 1000
     const varnishVolumeL = (varnishMlPerPlate * platesNeeded * multiplier) / 1000
     const flatColorVolumeL = (flatColorMlPerPlate * platesNeeded * multiplier) / 1000
     const totalInkVolumeL = standardVolumeL + varnishVolumeL + flatColorVolumeL
 
-    // Coûts encre
     const standardInkCost = standardVolumeL * inkCostPerLiter
     const varnishInkCost = varnishVolumeL * inkCostVarnishPerLiter
     const flatColorInkCost = flatColorVolumeL * inkCostFlatColorPerLiter
     const inkCost = standardInkCost + varnishInkCost + flatColorInkCost
 
-    // ── Temps machine ──
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
     const baseMachineTimeMin = plateAreaM2 * pace * multiplier * platesNeeded
-    
-    // Temps pour les finitions (passe distincte)
+
     const printSpeedVarnish = settings?.PRINT_SPEED_VARNISH ?? 1.5
     const printSpeedFlatColor = settings?.PRINT_SPEED_FLAT_COLOR ?? 1.5
     const varnishTimeMin = hasVarnish ? (plateAreaM2 * printSpeedVarnish * multiplier * platesNeeded) : 0
     const flatColorTimeMin = hasFlatColor ? (plateAreaM2 * printSpeedFlatColor * multiplier * platesNeeded) : 0
-    
+
     const machineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
-
     const setupTimeMin = hasPrintSetup && inkMlPerPlate > 0 ? printSetupTimeMin : 0
-
     const totalTimeMin = machineTimeMin + setupTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
     const setupCost = (setupTimeMin / 60) * hourlyRatePrint
@@ -220,7 +221,7 @@ export function calculateCosts(params: {
       )
     : 0
 
-  // ── Emballage — imposition ──
+  // ── Emballage ──
   const packagingItemsPerPlate = (() => {
     if (!hasPackaging || !packagingPlate || packagingWidth <= 0 || packagingHeight <= 0) return 0
     const imp = calculateImposition(
@@ -236,14 +237,12 @@ export function calculateCosts(params: {
     return Math.ceil(packagingQuantity / packagingItemsPerPlate)
   })()
 
-  // ── Emballage — matière ──
   const packagingMaterialCost = (() => {
     if (!hasPackaging || !packagingPlate || packagingQuantity <= 0) return 0
     if (packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
     return packagingPlatesNeeded * packagingPlate.cost
   })()
 
-  // ── Emballage — découpe ──
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
     const totalMinutes =
@@ -252,6 +251,11 @@ export function calculateCosts(params: {
   })()
 
   const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
+
+  // ── Bureau d'études ──
+  const beCost = hasBE ? (beTimeMinutes / 60) * hourlyRateBE : 0
+  const batCost = hasBE ? (batTimeMinutes / 60) * hourlyRateBAT : 0
+  const beTotalCost = beCost + batCost
 
   // ── Total ──
   const totalCost =
@@ -262,7 +266,8 @@ export function calculateCosts(params: {
     packagingCost +
     accessoriesCost +
     consumablesCost +
-    packagingTotalCost
+    packagingTotalCost +
+    beTotalCost
 
   return {
     printingCostData,
@@ -285,6 +290,9 @@ export function calculateCosts(params: {
     packagingPlatesNeeded,
     poseSpacingMm,
     assemblyNoticeCostPerPiece,
+    beCost,
+    batCost,
+    beTotalCost,
   }
 }
 

@@ -104,7 +104,11 @@ model Quote {
   hasAccessoires                     Boolean           @default(false)
   isMultiProduct                     Boolean           @default(false)
   products                           QuoteProduct[]
+  hasBE                              Boolean           @default(false)
+  beTimeMinutes                      Int               @default(0)
+  batTimeMinutes                     Int               @default(0)
 }
+
 
 model Consumable {
   id               Int               @id @default(autoincrement())

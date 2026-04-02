@@ -35,6 +35,12 @@ export type QuoteCostRowsParams = {
   packagingTotalCost: number
   packagingMaterialCost: number
   packagingCuttingCost: number
+  hasBE?: boolean
+  beTimeMinutes?: number
+  batTimeMinutes?: number
+  beCost?: number
+  batCost?: number
+  beTotalCost?: number
 }
 
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
@@ -54,6 +60,12 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     { label: 'Découpe (temps machine)', detail: `${Math.round(p.cuttingMachineTimeMin)} min`, value: p.cuttingMachineCost },
     ...(p.hasCuttingSetup && p.cuttingSetupCost > 0 ? [
       { label: '↳ Calage découpe', detail: `${p.cuttingSetupTimeMin} min`, value: p.cuttingSetupCost, sub: true },
+    ] : []),
+    ...(p.hasBE && p.beTotalCost && p.beTotalCost > 0 ? [
+      { label: 'Bureau d\'études', detail: `${p.beTimeMinutes ?? 0} min`, value: p.beCost ?? 0 },
+      ...(p.batTimeMinutes && p.batTimeMinutes > 0 ? [
+        { label: '↳ BAT', detail: `${p.batTimeMinutes} min`, value: p.batCost ?? 0, sub: true },
+      ] : []),
     ] : []),
     ...(p.hasFaconnage ? [
       { label: 'Façonnage', detail: `${p.assemblyTimePerPieceSeconds}s/pce`, value: p.assemblyCost },

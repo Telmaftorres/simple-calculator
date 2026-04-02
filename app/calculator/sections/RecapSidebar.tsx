@@ -22,6 +22,7 @@ export function RecapSidebar() {
     productSlotResults,
     totalCostMulti,
     totalQuantityMulti,
+    formState,
   } = useCalculatorContext()
 
   const {
@@ -37,6 +38,9 @@ export function RecapSidebar() {
     consumablesCost,
     packagingTotalCost,
     totalCost,
+    beCost,
+    batCost,
+    beTotalCost,
   } = costResult
 
   const displayTotal = isMultiProduct ? totalCostMulti : totalCost
@@ -94,7 +98,6 @@ export function RecapSidebar() {
                 </div>
               ))}
 
-              {/* Séparateur sections communes */}
               {productSlotResults.length > 0 && (
                 <div className="border-t border-dashed border-slate-200 pt-3">
                   <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">
@@ -140,7 +143,25 @@ export function RecapSidebar() {
             </>
           )}
 
-          {/* ── Sections communes (toujours affichées) ── */}
+          {/* ── Bureau d'études ── */}
+          {formState.hasBE && beTotalCost > 0 && (
+            <>
+              <CostRow
+                label="Création / BE"
+                value={beCost}
+                details={formState.beTimeMinutes > 0 ? `${formState.beTimeMinutes} min` : undefined}
+              />
+              {formState.batTimeMinutes > 0 && (
+                <CostRow
+                  label="↳ BAT"
+                  value={batCost}
+                  details={`${formState.batTimeMinutes} min`}
+                />
+              )}
+            </>
+          )}
+
+          {/* ── Sections communes ── */}
           {hasFaconnage && (
             <>
               <CostRow label="Façonnage" value={assemblyCost} details={getAssemblyDetails()} />
