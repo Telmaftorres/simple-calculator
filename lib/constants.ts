@@ -1,5 +1,5 @@
 // ── Impression ──
-export const HOURLY_RATE_PRINT = 65
+export const HOURLY_RATE_PRINT = 50
 export const PRINT_SETUP_TIME_MIN = 15
 export const PRINT_SPEED_PRODUCTION = 1
 export const PRINT_SPEED_QUALITY = 2
@@ -10,6 +10,7 @@ export const INK_COST_VARNISH_PER_LITER = 120
 export const INK_COST_FLAT_COLOR_PER_LITER = 120
 
 // ── Découpe ──
+export const HOURLY_RATE_CUTTING = 50
 export const CUTTING_SETUP_MINUTES = 15
 
 // ── Façonnage ──

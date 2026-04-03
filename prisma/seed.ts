@@ -18,6 +18,7 @@ import {
   PACKAGING_SETUP_MINUTES,
   HOURLY_RATE_BAT,
   HOURLY_RATE_BE,
+  HOURLY_RATE_CUTTING,
 } from '../lib/constants'
 
 const prisma = new PrismaClient({
@@ -34,7 +35,8 @@ async function seedSettings() {
     { key: 'PRINT_SPEED_FLAT_COLOR', value: String(PRINT_SPEED_FLAT_COLOR), label: 'Temps impression blanc', unit: 'min/m²' },
     { key: 'INK_COST_PER_LITER', value: String(INK_COST_PER_LITER), label: "Coût de l'encre standard", unit: '€/L' },
     { key: 'INK_COST_VARNISH_PER_LITER', value: String(INK_COST_VARNISH_PER_LITER), label: 'Coût encre vernis', unit: '€/L' },
-    { key: 'INK_COST_FLAT_COLOR_PER_LITER', value: String(INK_COST_FLAT_COLOR_PER_LITER), label: 'Coût encre aplat', unit: '€/L' },
+    { key: 'INK_COST_FLAT_COLOR_PER_LITER', value: String(INK_COST_FLAT_COLOR_PER_LITER), label: 'Coût encre blanc', unit: '€/L' },
+    { key: 'HOURLY_RATE_CUTTING', value: String(HOURLY_RATE_CUTTING), label: 'Taux horaire découpe', unit: '€/h' },
     { key: 'CUTTING_SETUP_MINUTES', value: String(CUTTING_SETUP_MINUTES), label: 'Calage découpe', unit: 'min' },
     { key: 'HOURLY_RATE_ASSEMBLY', value: String(HOURLY_RATE_ASSEMBLY), label: 'Taux horaire façonnage', unit: '€/h' },
     { key: 'ASSEMBLY_NOTICE_COST_PER_PIECE', value: String(ASSEMBLY_NOTICE_COST_PER_PIECE), label: 'Coût notice de montage', unit: '€/pce' },
