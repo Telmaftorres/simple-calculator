@@ -4,6 +4,7 @@ import {
   HOURLY_RATE_PACKAGING,
   HOURLY_RATE_BE,
   HOURLY_RATE_BAT,
+  HOURLY_RATE_CUTTING,
   INK_COST_PER_LITER,
   INK_COST_VARNISH_PER_LITER,
   INK_COST_FLAT_COLOR_PER_LITER,
@@ -105,6 +106,7 @@ export function calculateCosts(params: {
   const printSetupTimeMin = settings?.PRINT_SETUP_TIME_MIN ?? PRINT_SETUP_TIME_MIN
   const printSpeedProduction = settings?.PRINT_SPEED_PRODUCTION ?? PRINT_SPEED_PRODUCTION
   const printSpeedQuality = settings?.PRINT_SPEED_QUALITY ?? PRINT_SPEED_QUALITY
+  const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
   const cuttingSetupMinutes = settings?.CUTTING_SETUP_MINUTES ?? CUTTING_SETUP_MINUTES
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
@@ -186,8 +188,8 @@ export function calculateCosts(params: {
     ? cuttingSetupMinutes
     : 0
 
-  const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRatePrint
-  const cuttingSetupCost = (cuttingSetupTimeMin / 60) * hourlyRatePrint
+  const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRateCutting
+  const cuttingSetupCost = (cuttingSetupTimeMin / 60) * hourlyRateCutting
   const cuttingCost = cuttingMachineCost + cuttingSetupCost
 
   // ── Façonnage ──

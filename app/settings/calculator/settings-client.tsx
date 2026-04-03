@@ -124,6 +124,15 @@ const FORMULAS: Record<string, {
       return `blanc 20% → 20 ml × 20% × ${nbPlates} plaques / 1000 = ${flatVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(flatVolumeL * stdCost).toFixed(2)} € en encre standard)`
     },
   },
+  HOURLY_RATE_CUTTING: {
+    usedIn: ['Découpe (temps machine)', 'Calage découpe'],
+    formula: '(temps_min / 60) × taux_horaire_découpe',
+    getExample: (v) => {
+      const rate = parseFloat(v.HOURLY_RATE_CUTTING) || 0
+      const result = (12 / 60) * rate
+      return `(12 min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
+    },
+  },
   CUTTING_SETUP_MINUTES: {
     usedIn: ['Calage découpe'],
     formula: 'si calage activé → calage_cost = (calage_min / 60) × taux_horaire_impression',
@@ -299,7 +308,7 @@ const CATEGORIES: {
     description: 'Calage découpe',
     color: 'orange',
     emoji: '✂️',
-    keys: ['CUTTING_SETUP_MINUTES'],
+    keys: ['HOURLY_RATE_CUTTING','CUTTING_SETUP_MINUTES'],
   },
   {
     label: 'Façonnage',
