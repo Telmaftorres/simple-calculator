@@ -2,20 +2,14 @@
 
 import { prisma } from '@/lib/prisma'
 import { requireAdmin } from '@/lib/auth-helpers'
-import { revalidateCache } from '@/lib/cache'
 import { revalidatePath } from 'next/cache'
-import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
 
-export const getSettings = unstable_cache(
-  async () => {
-    return await prisma.setting.findMany({
-      orderBy: { key: 'asc' },
-    })
-  },
-  ['settings'],
-  { tags: ['settings'] }
-)
+export async function getSettings() {
+  return await prisma.setting.findMany({
+    orderBy: { key: 'asc' },
+  })
+}
 
 export async function getSettingsMap(): Promise<Record<string, number>> {
   const settings = await getSettings()
@@ -43,6 +37,5 @@ export async function updateSetting(key: string, value: string) {
     },
   })
 
-  revalidateCache('settings') 
   revalidatePath('/settings/calculator')
 }

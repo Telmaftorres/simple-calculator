@@ -16,6 +16,8 @@ import {
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   POSE_SPACING_MM,
   PACKAGING_SETUP_MINUTES,
+  HOURLY_RATE_BAT,
+  HOURLY_RATE_BE,
 } from '../lib/constants'
 
 const prisma = new PrismaClient({
@@ -39,6 +41,8 @@ async function seedSettings() {
     { key: 'POSE_SPACING_MM', value: String(POSE_SPACING_MM), label: 'Espacement entre poses', unit: 'mm' },
     { key: 'HOURLY_RATE_PACKAGING', value: String(HOURLY_RATE_PACKAGING), label: 'Taux horaire emballage', unit: '€/h' },
     { key: 'PACKAGING_SETUP_MINUTES', value: String(PACKAGING_SETUP_MINUTES), label: 'Calage emballage', unit: 'min' },
+    { key: 'HOURLY_RATE_BE', value: String(HOURLY_RATE_BE), label: 'Taux horaire Bureau d\'études', unit: '€/h' },
+    { key: 'HOURLY_RATE_BAT', value: String(HOURLY_RATE_BAT), label: 'Taux horaire BAT', unit: '€/h' },
     { key: 'MARGIN_IMPRESSION', value: '0', label: 'Marge impression', unit: '%' },
     { key: 'MARGIN_DECOUPE', value: '0', label: 'Marge découpe', unit: '%' },
     { key: 'MARGIN_FACONNAGE', value: '0', label: 'Marge façonnage', unit: '%' },

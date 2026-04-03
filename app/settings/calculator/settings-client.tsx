@@ -188,6 +188,26 @@ const FORMULAS: Record<string, {
       return `(${secPerPose} sec × ${qty} / 60) + ${setup} min = ${machineMin.toFixed(2)} + ${setup} = ${total.toFixed(2)} min`
     },
   },
+  HOURLY_RATE_BE: {
+    usedIn: ['Bureau d\'études — Création/BE'],
+    formula: 'coût_BE = (temps_min / 60) × taux_horaire_BE',
+    getExample: (v) => {
+      const rate = parseFloat(v.HOURLY_RATE_BE) || 0
+      const timeMin = 60
+      const result = (timeMin / 60) * rate
+      return `(${timeMin} min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
+    },
+  },
+  HOURLY_RATE_BAT: {
+    usedIn: ['Bureau d\'études — BAT'],
+    formula: 'coût_BAT = (temps_min / 60) × taux_horaire_BAT',
+    getExample: (v) => {
+      const rate = parseFloat(v.HOURLY_RATE_BAT) || 0
+      const timeMin = 45
+      const result = (timeMin / 60) * rate
+      return `(${timeMin} min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
+    },
+  },
   MARGIN_IMPRESSION: {
     usedIn: ['Impression — à venir'],
     formula: 'prix_vente = coût_impression × (1 + marge / 100)',
@@ -308,6 +328,13 @@ const CATEGORIES: {
     color: 'amber',
     emoji: '🗂️',
     keys: ['HOURLY_RATE_PACKAGING', 'PACKAGING_SETUP_MINUTES'],
+  },
+  {
+    label: 'Bureau d\'études',
+    description: 'Taux horaires création/BE et BAT',
+    color: 'blue',
+    emoji: '📋',
+    keys: ['HOURLY_RATE_BE', 'HOURLY_RATE_BAT'],
   },
   {
     label: 'Marges',
@@ -564,7 +591,6 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
                       <label className="text-sm font-medium text-slate-700 block">
                         {setting.label}
                       </label>
-                      <p className="text-xs text-slate-400 font-mono mt-0.5">{setting.key}</p>
                     </div>
                     <div className="flex items-center gap-2 shrink-0">
                       {/* Bouton voir le calcul */}

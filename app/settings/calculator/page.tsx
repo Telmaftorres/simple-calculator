@@ -14,6 +14,7 @@ export default async function CalculatorSettingsPage() {
   }
 
   const settings = await getSettings()
+  console.log('Settings chargés:', settings.map(s => s.key))
 
   return (
     <div className="max-w-5xl mx-auto space-y-6 px-6 py-8">
