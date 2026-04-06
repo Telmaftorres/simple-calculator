@@ -133,6 +133,38 @@ const FORMULAS: Record<string, {
       return `(12 min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
     },
   },
+  PRINT_SETUP_STANDARD_COST: {
+    usedIn: ['Calage impression — standard'],
+    formula: 'forfait fixe ajouté au total si calage standard sélectionné',
+    getExample: (v) => {
+      const cost = parseFloat(v.PRINT_SETUP_STANDARD_COST) || 0
+      return `Calage standard impression = ${cost} € forfait fixe`
+    },
+  },
+  PRINT_SETUP_COMPLEX_COST: {
+    usedIn: ['Calage impression — complexe'],
+    formula: 'forfait fixe ajouté au total si calage complexe sélectionné',
+    getExample: (v) => {
+      const cost = parseFloat(v.PRINT_SETUP_COMPLEX_COST) || 0
+      return `Calage complexe impression = ${cost} € forfait fixe`
+    },
+  },
+  CUTTING_SETUP_STANDARD_COST: {
+    usedIn: ['Calage découpe — standard'],
+    formula: 'forfait fixe ajouté au total si calage standard sélectionné',
+    getExample: (v) => {
+      const cost = parseFloat(v.CUTTING_SETUP_STANDARD_COST) || 0
+      return `Calage standard découpe = ${cost} € forfait fixe`
+    },
+  },
+  CUTTING_SETUP_COMPLEX_COST: {
+    usedIn: ['Calage découpe — complexe'],
+    formula: 'forfait fixe ajouté au total si calage complexe sélectionné',
+    getExample: (v) => {
+      const cost = parseFloat(v.CUTTING_SETUP_COMPLEX_COST) || 0
+      return `Calage complexe découpe = ${cost} € forfait fixe`
+    },
+  },
   CUTTING_SETUP_MINUTES: {
     usedIn: ['Calage découpe'],
     formula: 'si calage activé → calage_cost = (calage_min / 60) × taux_horaire_impression',
@@ -288,12 +320,14 @@ const CATEGORIES: {
 }[] = [
   {
     label: 'Impression',
-    description: 'Taux horaires, vitesses, encre et calage impression',
+    description: 'Taux horaires, vitesses, encre et calages impression',
     color: 'purple',
     emoji: '🖨️',
     keys: [
       'HOURLY_RATE_PRINT',
       'PRINT_SETUP_TIME_MIN',
+      'PRINT_SETUP_STANDARD_COST',
+      'PRINT_SETUP_COMPLEX_COST',
       'PRINT_SPEED_PRODUCTION',
       'PRINT_SPEED_QUALITY',
       'PRINT_SPEED_VARNISH',
@@ -305,10 +339,14 @@ const CATEGORIES: {
   },
   {
     label: 'Découpe',
-    description: 'Calage découpe',
+    description: 'Taux horaire et calages découpe',
     color: 'orange',
     emoji: '✂️',
-    keys: ['HOURLY_RATE_CUTTING','CUTTING_SETUP_MINUTES'],
+    keys: [
+      'HOURLY_RATE_CUTTING',
+      'CUTTING_SETUP_STANDARD_COST',
+      'CUTTING_SETUP_COMPLEX_COST',
+    ],
   },
   {
     label: 'Façonnage',

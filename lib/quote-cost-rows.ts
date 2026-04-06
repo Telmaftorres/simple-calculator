@@ -13,12 +13,11 @@ export type QuoteCostRowsParams = {
   hasImpression: boolean
   inkVolumeL: number
   printingCostData: PrintingCostData
-  hasPrintSetup: boolean
+  printSetupType: 'none' | 'standard' | 'complexe'
+  cuttingSetupType: 'none' | 'standard' | 'complexe'
+  cuttingSetupCost: number
   cuttingMachineTimeMin: number
   cuttingMachineCost: number
-  hasCuttingSetup: boolean
-  cuttingSetupTimeMin: number
-  cuttingSetupCost: number
   hasFaconnage: boolean
   assemblyTimePerPieceSeconds: number
   assemblyCost: number
@@ -53,13 +52,13 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasImpression ? [
       { label: 'Impression (Encre)', detail: `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
       { label: 'Impression (temps machine)', detail: `${Math.round(p.printingCostData.machineTimeMin)} min`, value: p.printingCostData.machineCost },
-      ...(p.hasPrintSetup && p.printingCostData.setupCost > 0 ? [
-        { label: '↳ Calage impression', detail: `${p.printingCostData.setupTimeMin} min`, value: p.printingCostData.setupCost, sub: true },
+      ...(p.printSetupType !== 'none' && p.printingCostData.setupCost > 0 ? [
+        { label: `↳ Calage impression (${p.printSetupType})`, detail: 'forfait', value: p.printingCostData.setupCost, sub: true },
       ] : []),
     ] : []),
     { label: 'Découpe (temps machine)', detail: `${Math.round(p.cuttingMachineTimeMin)} min`, value: p.cuttingMachineCost },
-    ...(p.hasCuttingSetup && p.cuttingSetupCost > 0 ? [
-      { label: '↳ Calage découpe', detail: `${p.cuttingSetupTimeMin} min`, value: p.cuttingSetupCost, sub: true },
+    ...(p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
+      { label: `↳ Calage découpe (${p.cuttingSetupType})`, detail: 'forfait', value: p.cuttingSetupCost, sub: true },
     ] : []),
     ...(p.hasBE && p.beTotalCost && p.beTotalCost > 0 ? [
       { label: 'Bureau d\'études', detail: `${p.beTimeMinutes ?? 0} min`, value: p.beCost ?? 0 },

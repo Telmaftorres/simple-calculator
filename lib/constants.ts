@@ -1,3 +1,9 @@
+// ── Calage (forfaits fixes) ──
+export const PRINT_SETUP_STANDARD_COST = 15
+export const PRINT_SETUP_COMPLEX_COST = 25
+export const CUTTING_SETUP_STANDARD_COST = 15
+export const CUTTING_SETUP_COMPLEX_COST = 25
+
 // ── Impression ──
 export const HOURLY_RATE_PRINT = 50
 export const PRINT_SETUP_TIME_MIN = 15

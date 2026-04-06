@@ -7,6 +7,8 @@ import { useCalculatorContext } from '../context/CalculatorContext'
 const INK_SHORTCUTS = [10, 25, 50, 75]
 const FINISHING_SHORTCUTS = [10, 25, 50, 75]
 
+type SetupType = 'none' | 'standard' | 'complexe'
+
 export function SectionImpression() {
   const {
     hasImpression, setHasImpression,
@@ -18,12 +20,11 @@ export function SectionImpression() {
     inkMlPerPlate, setInkMlPerPlate,
     varnishSurfacePercent, setVarnishSurfacePercent,
     flatColorSurfacePercent, setFlatColorSurfacePercent,
-    hasPrintSetup, setHasPrintSetup,
+    printSetupType, setPrintSetupType,
     costResult,
   } = useCalculatorContext()
 
   const { printingCostData } = costResult
-
   const varnishRatio = hasVarnish ? varnishSurfacePercent : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent : 0
   const standardPercent = 100
@@ -38,6 +39,53 @@ export function SectionImpression() {
     >
       <div className="space-y-4">
 
+        {/* ── Calage impression ── */}
+        <div className="space-y-2">
+          <Label className="text-purple-900 font-medium">Calage impression</Label>
+          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl">
+            <button
+              onClick={() => setPrintSetupType('none')}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                printSetupType === 'none'
+                  ? 'bg-white shadow-sm text-slate-700 ring-1 ring-slate-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Aucun
+            </button>
+            <button
+              onClick={() => setPrintSetupType('standard')}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                printSetupType === 'standard'
+                  ? 'bg-white shadow-sm text-amber-700 ring-1 ring-amber-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Standard
+            </button>
+            <button
+              onClick={() => setPrintSetupType('complexe')}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                printSetupType === 'complexe'
+                  ? 'bg-white shadow-sm text-red-700 ring-1 ring-red-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Complexe
+            </button>
+          </div>
+          {printSetupType !== 'none' && (
+            <div className={`text-xs px-3 py-1.5 rounded-lg font-medium ${
+              printSetupType === 'standard'
+                ? 'bg-amber-50 text-amber-700'
+                : 'bg-red-50 text-red-700'
+            }`}>
+              + {printSetupType === 'standard' ? '15' : '25'} € forfait {printSetupType}
+            </div>
+          )}
+        </div>
+
+        {/* ── Mode impression ── */}
         <div className="flex justify-between items-center">
           <Label>Mode d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -56,6 +104,7 @@ export function SectionImpression() {
           </div>
         </div>
 
+        {/* ── Type impression ── */}
         <div className="flex justify-between items-center">
           <Label>Type d&apos;Impression</Label>
           <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl w-full">
@@ -94,6 +143,7 @@ export function SectionImpression() {
           </div>
         )}
 
+        {/* ── Encre ── */}
         <div className="space-y-2">
           <GaugeSlider
             label="Encre (ml / plaque)"
@@ -121,6 +171,7 @@ export function SectionImpression() {
           </div>
         </div>
 
+        {/* ── Finitions ── */}
         <div>
           <Label className="mb-2 block">Finitions</Label>
           <div className="flex gap-2">
@@ -218,29 +269,11 @@ export function SectionImpression() {
           )}
         </div>
 
-        <div className="flex items-center space-x-2 bg-purple-50 p-3 rounded-lg border border-purple-100">
-          <input
-            type="checkbox"
-            id="hasPrintSetup"
-            checked={hasPrintSetup}
-            onChange={(e) => setHasPrintSetup(e.target.checked)}
-            className="h-5 w-5 text-purple-600 rounded border-slate-300 focus:ring-purple-500"
-          />
-          <Label htmlFor="hasPrintSetup" className="text-purple-900 cursor-pointer font-medium">
-            Inclure calage impression (15 min)
-          </Label>
-        </div>
-
+        {/* ── Temps machine ── */}
         <div className="flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800">
           <span>Temps machine :</span>
           <span className="font-bold text-sm">{formatMinutes(printingCostData.machineTimeMin)}</span>
         </div>
-        {hasPrintSetup && printingCostData.setupTimeMin > 0 && (
-          <div className="flex justify-between items-center bg-purple-50 p-2 rounded text-xs text-purple-800 -mt-2">
-            <span>Calage :</span>
-            <span className="font-bold text-sm">{printingCostData.setupTimeMin} min</span>
-          </div>
-        )}
 
       </div>
     </SectionDisplay>

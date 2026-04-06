@@ -8,13 +8,15 @@ import {
   INK_COST_PER_LITER,
   INK_COST_VARNISH_PER_LITER,
   INK_COST_FLAT_COLOR_PER_LITER,
-  PRINT_SETUP_TIME_MIN,
   PRINT_SPEED_PRODUCTION,
   PRINT_SPEED_QUALITY,
-  CUTTING_SETUP_MINUTES,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   POSE_SPACING_MM,
   PACKAGING_SETUP_MINUTES,
+  PRINT_SETUP_STANDARD_COST,
+  PRINT_SETUP_COMPLEX_COST,
+  CUTTING_SETUP_STANDARD_COST,
+  CUTTING_SETUP_COMPLEX_COST,
 } from '@/lib/constants'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
@@ -37,8 +39,8 @@ export function calculateCosts(params: {
   isRectoVerso: boolean
   hasVarnish: boolean
   hasFlatColor: boolean
-  hasPrintSetup: boolean
-  hasCuttingSetup: boolean
+  printSetupType: 'none' | 'standard' | 'complexe'
+  cuttingSetupType: 'none' | 'standard' | 'complexe'
   hasImpression: boolean
   hasFaconnage: boolean
   hasConditionnement: boolean
@@ -71,8 +73,8 @@ export function calculateCosts(params: {
     isRectoVerso,
     hasVarnish,
     hasFlatColor,
-    hasPrintSetup,
-    hasCuttingSetup,
+    printSetupType,
+    cuttingSetupType,
     hasImpression,
     hasFaconnage,
     hasConditionnement,
@@ -100,14 +102,16 @@ export function calculateCosts(params: {
   const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
   const hourlyRateBE = settings?.HOURLY_RATE_BE ?? HOURLY_RATE_BE
   const hourlyRateBAT = settings?.HOURLY_RATE_BAT ?? HOURLY_RATE_BAT
+  const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
   const inkCostFlatColorPerLiter = settings?.INK_COST_FLAT_COLOR_PER_LITER ?? INK_COST_FLAT_COLOR_PER_LITER
-  const printSetupTimeMin = settings?.PRINT_SETUP_TIME_MIN ?? PRINT_SETUP_TIME_MIN
   const printSpeedProduction = settings?.PRINT_SPEED_PRODUCTION ?? PRINT_SPEED_PRODUCTION
   const printSpeedQuality = settings?.PRINT_SPEED_QUALITY ?? PRINT_SPEED_QUALITY
-  const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
-  const cuttingSetupMinutes = settings?.CUTTING_SETUP_MINUTES ?? CUTTING_SETUP_MINUTES
+  const printSetupStandardCost = settings?.PRINT_SETUP_STANDARD_COST ?? PRINT_SETUP_STANDARD_COST
+  const printSetupComplexCost = settings?.PRINT_SETUP_COMPLEX_COST ?? PRINT_SETUP_COMPLEX_COST
+  const cuttingSetupStandardCost = settings?.CUTTING_SETUP_STANDARD_COST ?? CUTTING_SETUP_STANDARD_COST
+  const cuttingSetupComplexCost = settings?.CUTTING_SETUP_COMPLEX_COST ?? CUTTING_SETUP_COMPLEX_COST
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const packagingSetupMinutes = settings?.PACKAGING_SETUP_MINUTES ?? PACKAGING_SETUP_MINUTES
@@ -132,9 +136,8 @@ export function calculateCosts(params: {
 
     const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
     const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
-    const standardRatio = 1
 
-    const standardMlPerPlate = inkMlPerPlate * standardRatio
+    const standardMlPerPlate = inkMlPerPlate * 1
     const varnishMlPerPlate = inkMlPerPlate * varnishRatio
     const flatColorMlPerPlate = inkMlPerPlate * flatColorRatio
 
@@ -158,21 +161,23 @@ export function calculateCosts(params: {
     const flatColorTimeMin = hasFlatColor ? (plateAreaM2 * printSpeedFlatColor * multiplier * platesNeeded) : 0
 
     const machineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
-    const setupTimeMin = hasPrintSetup && inkMlPerPlate > 0 ? printSetupTimeMin : 0
-    const totalTimeMin = machineTimeMin + setupTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
-    const setupCost = (setupTimeMin / 60) * hourlyRatePrint
-    const laborCost = machineCost + setupCost
+
+    const setupCost = (() => {
+      if (printSetupType === 'standard') return printSetupStandardCost
+      if (printSetupType === 'complexe') return printSetupComplexCost
+      return 0
+    })()
 
     return {
-      cost: inkCost + laborCost,
-      timeMin: totalTimeMin,
+      cost: inkCost + machineCost + setupCost,
+      timeMin: machineTimeMin,
       inkCost,
-      laborCost,
+      laborCost: machineCost,
       inkVolumeL: totalInkVolumeL,
       setupCost,
       machineCost,
-      setupTimeMin,
+      setupTimeMin: 0,
       machineTimeMin,
     }
   })()
@@ -184,12 +189,15 @@ export function calculateCosts(params: {
     ? (cuttingTimePerPoseSeconds * quantity) / 60
     : 0
 
-  const cuttingSetupTimeMin = (impositionResult && hasCuttingSetup)
-    ? cuttingSetupMinutes
-    : 0
+  const cuttingSetupCost = (() => {
+    if (!impositionResult) return 0
+    if (cuttingSetupType === 'standard') return cuttingSetupStandardCost
+    if (cuttingSetupType === 'complexe') return cuttingSetupComplexCost
+    return 0
+  })()
 
+  const cuttingSetupTimeMin = 0
   const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRateCutting
-  const cuttingSetupCost = (cuttingSetupTimeMin / 60) * hourlyRateCutting
   const cuttingCost = cuttingMachineCost + cuttingSetupCost
 
   // ── Façonnage ──
