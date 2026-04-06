@@ -340,17 +340,25 @@ export function SectionMultiProduct() {
                 </div>
 
                 {/* Calage impression */}
-                <div className="flex items-center gap-2 bg-white p-3 rounded-lg border border-purple-100">
-                  <input
-                    type="checkbox"
-                    id={`hasPrintSetup-${activeProductIndex}`}
-                    checked={activeSlot.hasPrintSetup}
-                    onChange={(e) => updateProduct(activeProductIndex, 'hasPrintSetup', e.target.checked)}
-                    className="h-4 w-4 text-purple-600 rounded"
-                  />
-                  <Label htmlFor={`hasPrintSetup-${activeProductIndex}`} className="text-sm cursor-pointer text-purple-900">
-                    Inclure calage impression (15 min)
-                  </Label>
+                <div className="space-y-2">
+                  <Label className="text-purple-900 font-medium text-xs">Calage impression</Label>
+                  <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                    {(['none', 'standard', 'complexe'] as const).map((type) => (
+                      <button
+                        key={type}
+                        onClick={() => updateProduct(activeProductIndex, 'printSetupType', type)}
+                        className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                          activeSlot.printSetupType === type
+                            ? type === 'none' ? 'bg-white text-slate-700 shadow-sm'
+                              : type === 'standard' ? 'bg-white text-amber-700 shadow-sm'
+                              : 'bg-white text-red-700 shadow-sm'
+                            : 'text-slate-400 hover:bg-slate-50'
+                        }`}
+                      >
+                        {type === 'none' ? 'Aucun' : type.charAt(0).toUpperCase() + type.slice(1)}
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {/* Temps machine */}
@@ -395,17 +403,25 @@ export function SectionMultiProduct() {
               </div>
             </div>
 
-            <div className="flex items-center gap-2 bg-orange-50 p-3 rounded-lg border border-orange-100">
-              <input
-                type="checkbox"
-                id={`hasCuttingSetup-${activeProductIndex}`}
-                checked={activeSlot.hasCuttingSetup}
-                onChange={(e) => updateProduct(activeProductIndex, 'hasCuttingSetup', e.target.checked)}
-                className="h-4 w-4 text-orange-600 rounded"
-              />
-              <Label htmlFor={`hasCuttingSetup-${activeProductIndex}`} className="text-sm cursor-pointer text-orange-900">
-                Inclure calage découpe (15 min)
-              </Label>
+            <div className="space-y-2">
+              <Label className="text-orange-900 font-medium text-xs">Calage découpe</Label>
+              <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                {(['none', 'standard', 'complexe'] as const).map((type) => (
+                  <button
+                    key={type}
+                    onClick={() => updateProduct(activeProductIndex, 'cuttingSetupType', type)}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${
+                      activeSlot.cuttingSetupType === type
+                        ? type === 'none' ? 'bg-white text-slate-700 shadow-sm'
+                          : type === 'standard' ? 'bg-white text-amber-700 shadow-sm'
+                          : 'bg-white text-red-700 shadow-sm'
+                        : 'text-slate-400 hover:bg-slate-50'
+                    }`}
+                  >
+                    {type === 'none' ? 'Aucun' : type.charAt(0).toUpperCase() + type.slice(1)}
+                  </button>
+                ))}
+              </div>
             </div>
           </div>
 

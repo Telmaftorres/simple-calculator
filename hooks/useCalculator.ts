@@ -72,8 +72,8 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds,
     packagingWidth,
     packagingHeight,
-    hasPrintSetup,
-    hasCuttingSetup,
+    printSetupType,
+    cuttingSetupType,
     hasImpression,
     hasFaconnage,
     hasConditionnement,
@@ -86,7 +86,6 @@ export function useCalculator(
     activeProductIndex,
   } = formState
 
-  // ── Accessoires ──
   const {
     selectedAccessories,
     setSelectedAccessories,
@@ -101,7 +100,6 @@ export function useCalculator(
     (v) => setField('currentAccessoryQty', v),
   )
 
-  // ── Consommables ──
   const {
     selectedConsumables,
     setSelectedConsumables,
@@ -117,7 +115,6 @@ export function useCalculator(
     (v) => setField('currentConsumableSize', v),
   )
 
-  // ── Chargement d'un devis existant ──
   useEffect(() => {
     if (!initialQuote) return
 
@@ -145,14 +142,13 @@ export function useCalculator(
       packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
       packagingWidth: initialQuote.packagingWidth || 0,
       packagingHeight: initialQuote.packagingHeight || 0,
-      hasPrintSetup: initialQuote.hasPrintSetup ?? true,
-      hasCuttingSetup: initialQuote.hasCuttingSetup ?? true,
+      printSetupType: (initialQuote.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+      cuttingSetupType: (initialQuote.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
       hasImpression: initialQuote.hasImpression ?? true,
       hasFaconnage: initialQuote.hasFaconnage ?? true,
       hasConditionnement: initialQuote.hasConditionnement ?? true,
       hasAccessoires: initialQuote.hasAccessoires ?? false,
       isMultiProduct: initialQuote.isMultiProduct ?? false,
-      // Charger les produits multi si existants
       products: initialQuote.products?.map((p) => ({
         id: uuidv4(),
         productTypeId: p.productTypeId?.toString() || '',
@@ -170,9 +166,9 @@ export function useCalculator(
         hasVarnish: p.hasVarnish || false,
         hasFlatColor: p.hasFlatColor || false,
         hasImpression: p.hasImpression ?? true,
-        hasPrintSetup: p.hasPrintSetup ?? true,
+        printSetupType: (p.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+        cuttingSetupType: (p.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
         cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds || 0,
-        hasCuttingSetup: p.hasCuttingSetup ?? true,
       })) || [],
     })
 
@@ -198,7 +194,6 @@ export function useCalculator(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuote])
 
-  // ── Imposition mono-produit ──
   const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
@@ -225,7 +220,6 @@ export function useCalculator(
     }
   }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm, isMultiProduct])
 
-  // ── Calcul imposition + coûts pour chaque produit (mode multi) ──
   const productSlotResults: ProductSlotResult[] = isMultiProduct
     ? products.map((slot) => {
         const plate = plates.find((p) => p.id.toString() === slot.selectedPlateId)
@@ -258,12 +252,12 @@ export function useCalculator(
           isRectoVerso: slot.isRectoVerso,
           hasVarnish: slot.hasVarnish,
           hasFlatColor: slot.hasFlatColor,
-          hasPrintSetup: slot.hasPrintSetup,
-          hasCuttingSetup: slot.hasCuttingSetup,
+          printSetupType: slot.printSetupType,
+          cuttingSetupType: slot.cuttingSetupType,
           hasImpression: slot.hasImpression,
-          hasFaconnage: false,        // commun — calculé séparément
-          hasConditionnement: false,  // commun — calculé séparément
-          hasAccessoires: false,      // commun — calculé séparément
+          hasFaconnage: false,
+          hasConditionnement: false,
+          hasAccessoires: false,
           cuttingTimePerPoseSeconds: slot.cuttingTimePerPoseSeconds,
           assemblyTimePerPieceSeconds: 0,
           packTimePerPieceSeconds: 0,
@@ -298,12 +292,10 @@ export function useCalculator(
       })
     : []
 
-  // ── Quantité totale (mode multi) ──
   const totalQuantityMulti = isMultiProduct
     ? products.reduce((sum, p) => sum + p.quantity, 0)
     : 0
 
-  // ── Calcul des coûts mono ──
   const costResult = calculateCosts({
     quantity: isMultiProduct ? totalQuantityMulti : quantity,
     impositionResult: isMultiProduct ? null : impositionResult,
@@ -315,8 +307,8 @@ export function useCalculator(
     isRectoVerso: isMultiProduct ? false : isRectoVerso,
     hasVarnish: isMultiProduct ? false : hasVarnish,
     hasFlatColor: isMultiProduct ? false : hasFlatColor,
-    hasPrintSetup: isMultiProduct ? false : hasPrintSetup,
-    hasCuttingSetup: isMultiProduct ? false : hasCuttingSetup,
+    printSetupType: isMultiProduct ? 'none' : printSetupType,
+    cuttingSetupType: isMultiProduct ? 'none' : cuttingSetupType,
     hasImpression: isMultiProduct ? false : hasImpression,
     hasFaconnage,
     hasConditionnement,
@@ -329,7 +321,7 @@ export function useCalculator(
     selectedConsumables,
     settings,
     hasPackaging,
-    hasBE,         
+    hasBE,
     beTimeMinutes,
     batTimeMinutes,
     packagingPlate,
@@ -339,19 +331,17 @@ export function useCalculator(
     packagingHeight,
   })
 
-  // ── Total multi-produits ──
   const multiProductsSubtotal = productSlotResults.reduce(
     (sum, r) => sum + r.costResult.subtotal, 0
   )
   const totalCostMulti = multiProductsSubtotal + costResult.totalCost
 
-  // ── Formatage détails sections ──
   const getCuttingDetails = useCallback(() => formatCuttingDetails({
     cuttingMachineTimeMin: costResult.cuttingMachineTimeMin,
     cuttingSetupTimeMin: costResult.cuttingSetupTimeMin,
-    hasCuttingSetup,
+    cuttingSetupType,
     cuttingTimePerPoseSeconds,
-  }), [costResult.cuttingMachineTimeMin, costResult.cuttingSetupTimeMin, hasCuttingSetup, cuttingTimePerPoseSeconds])
+  }), [costResult.cuttingMachineTimeMin, costResult.cuttingSetupTimeMin, cuttingSetupType, cuttingTimePerPoseSeconds])
 
   const getAssemblyDetails = useCallback(() => formatAssemblyDetails({
     assemblyTimePerPieceSeconds,
@@ -365,7 +355,6 @@ export function useCalculator(
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
   }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece])
 
-  // ── Création type PLV ──
   const handleCreateProductType = async () => {
     if (!productSearch) return
     try {
@@ -385,7 +374,6 @@ export function useCalculator(
     }
   }
 
-  // ── Création accessoire depuis le calculateur ──
   const handleCreateAccessory = async (name: string, price: number) => {
     try {
       const newAccessory = await createAccessory({ name, price })
@@ -398,7 +386,6 @@ export function useCalculator(
     }
   }
 
-  // ── Sauvegarde ──
   const handleSave = async () => {
     if (isMultiProduct) {
       if (products.length === 0) {
@@ -426,13 +413,9 @@ export function useCalculator(
 
       await createQuote({
         studyNumber,
-        productTypeId: isMultiProduct
-          ? parseInt(products[0].productTypeId) // produit principal = premier produit
-          : parsedProductId,
+        productTypeId: isMultiProduct ? parseInt(products[0].productTypeId) : parsedProductId,
         quantity: isMultiProduct ? totalQuantityMulti : quantity,
-        plateId: isMultiProduct
-          ? parseInt(products[0].selectedPlateId)
-          : parseInt(selectedPlateId),
+        plateId: isMultiProduct ? parseInt(products[0].selectedPlateId) : parseInt(selectedPlateId),
         itemsPerPlate: isMultiProduct
           ? (productSlotResults[0]?.impositionResult?.itemsPerPlate || 0)
           : (impositionResult?.itemsPerPlate || 0),
@@ -460,8 +443,8 @@ export function useCalculator(
         packagingCuttingTimePerPoseSeconds,
         packagingWidth: packagingWidth || null,
         packagingHeight: packagingHeight || null,
-        hasPrintSetup: isMultiProduct ? false : hasPrintSetup,
-        hasCuttingSetup: isMultiProduct ? false : hasCuttingSetup,
+        printSetupType: isMultiProduct ? 'none' : printSetupType,
+        cuttingSetupType: isMultiProduct ? 'none' : cuttingSetupType,
         hasImpression: isMultiProduct ? false : hasImpression,
         hasFaconnage,
         hasConditionnement,
@@ -502,9 +485,9 @@ export function useCalculator(
           hasVarnish: p.hasVarnish,
           hasFlatColor: p.hasFlatColor,
           hasImpression: p.hasImpression,
-          hasPrintSetup: p.hasPrintSetup,
+          printSetupType: p.printSetupType,
+          cuttingSetupType: p.cuttingSetupType,
           cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds,
-          hasCuttingSetup: p.hasCuttingSetup,
           totalCost: productSlotResults[i]?.costResult.subtotal || null,
         })) : [],
       })
@@ -523,7 +506,6 @@ export function useCalculator(
     }
   }
 
-  // ── Reset ──
   const handleReset = () => {
     setScreenState('form')
     resetForm()
@@ -553,10 +535,10 @@ export function useCalculator(
     hasVarnish, setHasVarnish: (v: boolean) => setField('hasVarnish', v),
     hasFlatColor, setHasFlatColor: (v: boolean) => setField('hasFlatColor', v),
     rectoVersoType, setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
-    hasPrintSetup, setHasPrintSetup: (v: boolean) => setField('hasPrintSetup', v),
     hasImpression, setHasImpression: (v: boolean) => setField('hasImpression', v),
+    printSetupType, setPrintSetupType: (v: 'none' | 'standard' | 'complexe') => setField('printSetupType', v),
+    cuttingSetupType, setCuttingSetupType: (v: 'none' | 'standard' | 'complexe') => setField('cuttingSetupType', v),
     cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
-    hasCuttingSetup, setHasCuttingSetup: (v: boolean) => setField('hasCuttingSetup', v),
     assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds: (v: number) => setField('assemblyTimePerPieceSeconds', v),
     hasFaconnage, setHasFaconnage: (v: boolean) => setField('hasFaconnage', v),
     packTimePerPieceSeconds, setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
@@ -584,7 +566,6 @@ export function useCalculator(
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState,
     costResult,
-    // ── Multi-produits ──
     isMultiProduct, setIsMultiProduct: (v: boolean) => setField('isMultiProduct', v),
     products,
     activeProductIndex,

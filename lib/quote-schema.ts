@@ -19,10 +19,10 @@ export const quoteFieldsSchema = z.object({
   hasVarnish: z.boolean().optional(),
   hasFlatColor: z.boolean().optional(),
   hasImpression: z.boolean().optional(),
-  hasPrintSetup: z.boolean().optional(),
-
+  printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  
+  cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
-  hasCuttingSetup: z.boolean().optional(),
 
   assemblyTimePerPieceSeconds: z.number().int().optional(),
   hasFaconnage: z.boolean().optional(),

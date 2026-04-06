@@ -107,9 +107,10 @@ export interface ProductSlot {
   hasVarnish: boolean
   hasFlatColor: boolean
   hasImpression: boolean
-  hasPrintSetup: boolean
+  printSetupType: 'none' | 'standard' | 'complexe'
+  cuttingSetupType: 'none' | 'standard' | 'complexe'
   cuttingTimePerPoseSeconds: number
-  hasCuttingSetup: boolean
+
 }
 
 export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
@@ -129,9 +130,9 @@ export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
   hasVarnish: false,
   hasFlatColor: false,
   hasImpression: true,
-  hasPrintSetup: true,
+  printSetupType: 'none',
+  cuttingSetupType: 'none',
   cuttingTimePerPoseSeconds: 0,
-  hasCuttingSetup: true,
 }
 
 export interface ProductSlotResult {

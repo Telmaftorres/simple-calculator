@@ -8,8 +8,9 @@ import { useCalculatorContext } from '../context/CalculatorContext'
 export function RecapSidebar() {
   const {
     impositionResult, selectedPlate,
-    hasPrintSetup, hasImpression,
-    hasCuttingSetup,
+    hasImpression,
+    printSetupType,
+    cuttingSetupType,
     hasFaconnage, getAssemblyDetails,
     hasConditionnement, getPackDetails,
     hasAccessoires, selectedAccessories,
@@ -126,7 +127,7 @@ export function RecapSidebar() {
                     value={printingCostData.machineCost}
                     details={printingCostData.machineTimeMin > 0 ? formatMinutes(printingCostData.machineTimeMin) : undefined}
                   />
-                  {hasPrintSetup && printingCostData.setupCost > 0 && (
+                  {printSetupType !== 'none' && printingCostData.setupCost > 0 && (
                     <CostRow label="Calage impression" value={printingCostData.setupCost} details={`${printingCostData.setupTimeMin} min`} />
                   )}
                 </>
@@ -137,7 +138,7 @@ export function RecapSidebar() {
                 value={cuttingMachineCost}
                 details={cuttingMachineTimeMin > 0 ? formatMinutes(cuttingMachineTimeMin) : undefined}
               />
-              {hasCuttingSetup && cuttingSetupCost > 0 && (
+              {cuttingSetupType !== 'none' && cuttingSetupCost > 0 && (
                 <CostRow label="Calage découpe" value={cuttingSetupCost} details={`${cuttingSetupTimeMin} min`} />
               )}
             </>

@@ -7,69 +7,109 @@ import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
 const CUTTING_SHORTCUTS = [30, 45, 60, 90, 120]
+
 export function SectionDecoupe() {
   const {
     cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds,
-    hasCuttingSetup, setHasCuttingSetup,
+    cuttingSetupType, setCuttingSetupType,
     costResult,
   } = useCalculatorContext()
 
-  const { cuttingSetupTimeMin, cuttingMachineTimeMin, cuttingMachineCost, cuttingSetupCost } = costResult
+  const { cuttingMachineTimeMin, cuttingSetupCost } = costResult
 
   return (
     <SectionDisplay number="4" title="Découpe" color="orange">
-      <div className="space-y-2">
-        <GaugeSlider
-          label="Temps par Pose"
-          value={cuttingTimePerPoseSeconds}
-          min={0}
-          max={300}
-          unit="sec"
-          onChange={setCuttingTimePerPoseSeconds}
-          formatValue={formatTimeSeconds}
-          gradientColors="from-yellow-300 to-orange-600"
-        />
-        <div className="flex gap-2">
-          {CUTTING_SHORTCUTS.map((val) => (
+      <div className="space-y-4">
+
+        {/* ── Calage découpe ── */}
+        <div className="space-y-2">
+          <Label className="text-orange-900 font-medium">Calage découpe</Label>
+          <div className="flex gap-2 bg-slate-100 p-1.5 rounded-xl">
             <button
-              key={val}
-              onClick={() => setCuttingTimePerPoseSeconds(val)}
-              className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                cuttingTimePerPoseSeconds === val
-                  ? 'bg-orange-500 text-white border-orange-500'
-                  : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+              onClick={() => setCuttingSetupType('none')}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                cuttingSetupType === 'none'
+                  ? 'bg-white shadow-sm text-slate-700 ring-1 ring-slate-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
               }`}
             >
-              {val === 0 ? '0s' : formatTimeSeconds(val)}
+              Aucun
             </button>
-          ))}
-        </div>
-      </div>
-
-      <div className="mt-4 flex items-center space-x-2 bg-orange-50 p-3 rounded-lg border border-orange-100">
-        <input
-          type="checkbox"
-          id="hasCuttingSetup"
-          checked={hasCuttingSetup}
-          onChange={(e) => setHasCuttingSetup(e.target.checked)}
-          className="h-5 w-5 text-orange-600 rounded border-slate-300 focus:ring-orange-500"
-        />
-        <Label htmlFor="hasCuttingSetup" className="text-orange-900 cursor-pointer font-medium">
-          Inclure calage découpe (15 min)
-        </Label>
-      </div>
-
-      <div className="mt-3 bg-orange-50 p-3 rounded-lg border border-orange-100 text-xs text-orange-800 space-y-1">
-        <div className="flex justify-between">
-          <span>Temps machine</span>
-          <span className="font-medium">{formatMinutes(cuttingMachineTimeMin)}</span>
-        </div>
-        {hasCuttingSetup && (
-          <div className="flex justify-between">
-            <span>Calage</span>
-            <span className="font-medium">{cuttingSetupTimeMin} min</span>
+            <button
+              onClick={() => setCuttingSetupType('standard')}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                cuttingSetupType === 'standard'
+                  ? 'bg-white shadow-sm text-amber-700 ring-1 ring-amber-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Standard
+            </button>
+            <button
+              onClick={() => setCuttingSetupType('complexe')}
+              className={`flex-1 px-4 py-2.5 text-sm font-semibold rounded-lg transition-all duration-200 ${
+                cuttingSetupType === 'complexe'
+                  ? 'bg-white shadow-sm text-red-700 ring-1 ring-red-200'
+                  : 'text-slate-400 hover:text-slate-600 hover:bg-slate-50'
+              }`}
+            >
+              Complexe
+            </button>
           </div>
-        )}
+          {cuttingSetupType !== 'none' && (
+            <div className={`text-xs px-3 py-1.5 rounded-lg font-medium ${
+              cuttingSetupType === 'standard'
+                ? 'bg-amber-50 text-amber-700'
+                : 'bg-red-50 text-red-700'
+            }`}>
+              + {cuttingSetupType === 'standard' ? '15' : '25'} € forfait {cuttingSetupType}
+            </div>
+          )}
+        </div>
+
+        {/* ── Temps par pose ── */}
+        <div className="space-y-2">
+          <GaugeSlider
+            label="Temps par Pose"
+            value={cuttingTimePerPoseSeconds}
+            min={0}
+            max={300}
+            unit="sec"
+            onChange={setCuttingTimePerPoseSeconds}
+            formatValue={formatTimeSeconds}
+            gradientColors="from-yellow-300 to-orange-600"
+          />
+          <div className="flex gap-2">
+            {CUTTING_SHORTCUTS.map((val) => (
+              <button
+                key={val}
+                onClick={() => setCuttingTimePerPoseSeconds(val)}
+                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                  cuttingTimePerPoseSeconds === val
+                    ? 'bg-orange-500 text-white border-orange-500'
+                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                }`}
+              >
+                {formatTimeSeconds(val)}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* ── Résumé temps ── */}
+        <div className="bg-orange-50 p-3 rounded-lg border border-orange-100 text-xs text-orange-800 space-y-1">
+          <div className="flex justify-between">
+            <span>Temps machine</span>
+            <span className="font-medium">{formatMinutes(cuttingMachineTimeMin)}</span>
+          </div>
+          {cuttingSetupType !== 'none' && (
+            <div className="flex justify-between">
+              <span>Forfait calage {cuttingSetupType}</span>
+              <span className="font-medium">{cuttingSetupCost.toFixed(2)} €</span>
+            </div>
+          )}
+        </div>
+
       </div>
     </SectionDisplay>
   )

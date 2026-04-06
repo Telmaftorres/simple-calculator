@@ -19,12 +19,13 @@ export function formatMinutes(mins: number): string {
 export function formatCuttingDetails(params: {
   cuttingMachineTimeMin: number
   cuttingSetupTimeMin: number
-  hasCuttingSetup: boolean
+  cuttingSetupType: 'none' | 'standard' | 'complexe'
   cuttingTimePerPoseSeconds: number
 }): string {
-  const totalMin = params.cuttingMachineTimeMin + (params.hasCuttingSetup ? params.cuttingSetupTimeMin : 0)
+  const hasSetup = params.cuttingSetupType !== 'none'
+  const totalMin = params.cuttingMachineTimeMin + (hasSetup ? params.cuttingSetupTimeMin : 0)
   return `${formatMinutes(totalMin)} (${formatTimeSeconds(params.cuttingTimePerPoseSeconds)}/pose${
-    params.hasCuttingSetup ? ` + ${params.cuttingSetupTimeMin} min calage` : ''
+    hasSetup ? ` + calage ${params.cuttingSetupType}` : ''
   })`
 }
 
