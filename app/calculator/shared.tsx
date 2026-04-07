@@ -74,6 +74,8 @@ interface SectionDisplayProps {
   // ✅ Props optionnelles pour le toggle ON/OFF
   enabled?: boolean
   onToggle?: (v: boolean) => void
+  // ✅ Boutons sous le header
+  headerButtons?: React.ReactNode
 }
 
 export function SectionDisplay({
@@ -83,6 +85,7 @@ export function SectionDisplay({
   children,
   enabled,
   onToggle,
+  headerButtons,
 }: SectionDisplayProps) {
   const colors = colorMap[color] || colorMap.blue
   const hasToggle = enabled !== undefined && onToggle !== undefined
@@ -117,6 +120,13 @@ export function SectionDisplay({
           </button>
         )}
       </div>
+
+      {/* ✅ Boutons sous le header */}
+      {headerButtons && (
+        <div className="px-5 pt-3 flex items-center gap-2 flex-wrap">
+          {headerButtons}
+        </div>
+      )}
 
       {/* Contenu — masqué si toggle OFF */}
       {(!hasToggle || enabled) && (

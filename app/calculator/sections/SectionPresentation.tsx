@@ -32,7 +32,35 @@ export function SectionPresentation() {
   }
 
   return (
-    <SectionDisplay number="1" title="Présentation & Matière" color="emerald">
+    <SectionDisplay
+      number="1"
+      title="Présentation & Matière"
+      color="emerald"
+      headerButtons={
+        <>
+          <button
+            onClick={() => handleToggleMultiProduct(!isMultiProduct)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+              isMultiProduct
+                ? 'bg-emerald-500 text-white border-emerald-500'
+                : 'border-slate-300 text-slate-500 hover:border-slate-400'
+            }`}
+          >
+            Multi-produits{isMultiProduct ? ` (${products.length})` : ''}
+          </button>
+          <button
+            onClick={() => setHasDossierFee(!hasDossierFee)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+              hasDossierFee
+                ? 'bg-slate-700 text-white border-slate-700'
+                : 'border-slate-300 text-slate-500 hover:border-slate-400'
+            }`}
+          >
+            Frais de dossier 8 €
+          </button>
+        </>
+      }
+    >
 
       {/* ── Numéro de dossier ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -139,68 +167,6 @@ export function SectionPresentation() {
           </div>
         </div>
       )}
-
-      {/* ── Toggle multi-produits ── */}
-      <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-        isMultiProduct
-          ? 'bg-emerald-50 border-emerald-200 mt-4'
-          : 'bg-slate-50 border-slate-200 mt-4'
-      }`}>
-        <button
-          onClick={() => handleToggleMultiProduct(!isMultiProduct)}
-          className={`relative w-10 h-5 rounded-full transition-colors ${
-            isMultiProduct ? 'bg-emerald-500' : 'bg-slate-300'
-          }`}
-        >
-          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-            isMultiProduct ? 'left-5' : 'left-0.5'
-          }`} />
-        </button>
-        <div>
-          <span className={`text-sm font-semibold ${isMultiProduct ? 'text-emerald-800' : 'text-slate-600'}`}>
-            Devis multi-produits
-          </span>
-          <p className="text-xs text-slate-400">
-            {isMultiProduct
-              ? 'Chaque produit a sa propre impression et découpe'
-              : 'Activer pour ajouter plusieurs types de PLV'}
-          </p>
-        </div>
-        {isMultiProduct && (
-          <span className="ml-auto text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
-            {products.length} produit{products.length > 1 ? 's' : ''}
-          </span>
-        )}
-      </div>
-
-      {/* ── Frais de dossier ── */}
-      <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
-        hasDossierFee
-          ? 'bg-slate-100 border-slate-300'
-          : 'bg-slate-50 border-slate-200'
-      }`}>
-        <button
-          onClick={() => setHasDossierFee(!hasDossierFee)}
-          className={`relative w-10 h-5 rounded-full transition-colors ${
-            hasDossierFee ? 'bg-slate-700' : 'bg-slate-300'
-          }`}
-        >
-          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
-            hasDossierFee ? 'left-5' : 'left-0.5'
-          }`} />
-        </button>
-        <div>
-          <span className={`text-sm font-semibold ${hasDossierFee ? 'text-slate-800' : 'text-slate-600'}`}>
-            Frais de dossier
-          </span>
-          <p className="text-xs text-slate-400">8 € forfait administratif</p>
-        </div>
-        {hasDossierFee && (
-          <span className="ml-auto text-xs font-semibold bg-slate-200 text-slate-700 px-2 py-1 rounded-full">
-            + 8 €
-          </span>
-        )}
-      </div>
 
     </SectionDisplay>
   )
