@@ -187,13 +187,19 @@ const FORMULAS: Record<string, {
     },
   },
   ASSEMBLY_NOTICE_COST_PER_PIECE: {
-    usedIn: ['Conditionnement — notice de montage'],
-    formula: 'coût_notices = coût_par_pce × quantité',
+    usedIn: ['Conditionnement'],
+    formula: 'coût_notice = quantité_produite × coût_unitaire_notice',
     getExample: (v) => {
-      const cost = parseFloat(v.ASSEMBLY_NOTICE_COST_PER_PIECE) || 0
-      const qty = 500
-      const result = cost * qty
-      return `${cost} € × ${qty} pces = ${result.toFixed(2)} €`
+      const p = parseFloat(v.ASSEMBLY_NOTICE_COST_PER_PIECE) || 0
+      return `Pour 50 présentoirs : 50 × ${p} = ${(50 * p).toFixed(2)} € (ajouté au coût final du conditionnement)`
+    },
+  },
+  HOURLY_RATE_CONDITIONING: {
+    usedIn: ['Conditionnement'],
+    formula: 'coût = (temps_unitaire_sec × quantité / 3600) × taux_horaire',
+    getExample: (v) => {
+      const rate = parseFloat(v.HOURLY_RATE_CONDITIONING) || 0
+      return `Ex: 2 min/pièce × 30 pièces = 1h. Total = ${rate.toFixed(2)} €`
     },
   },
   POSE_SPACING_MM: {
@@ -362,10 +368,10 @@ const CATEGORIES: {
   },
   {
     label: 'Conditionnement',
-    description: 'Coût de la notice de montage',
+    description: 'Coûts de la mise en carton et notices',
     color: 'teal',
     emoji: '📦',
-    keys: ['ASSEMBLY_NOTICE_COST_PER_PIECE'],
+    keys: ['HOURLY_RATE_CONDITIONING', 'ASSEMBLY_NOTICE_COST_PER_PIECE'],
   },
   {
     label: 'Imposition',

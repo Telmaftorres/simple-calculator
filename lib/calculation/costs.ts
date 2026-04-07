@@ -22,6 +22,7 @@ import {
   MATERIAL_MARGIN_TIER3,
   MATERIAL_MARGIN_TIER4,
   DOSSIER_FEE,
+  HOURLY_RATE_CONDITIONING,
 } from '@/lib/constants'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
@@ -109,6 +110,7 @@ export function calculateCosts(params: {
   const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
   const hourlyRateBE = settings?.HOURLY_RATE_BE ?? HOURLY_RATE_BE
   const hourlyRateBAT = settings?.HOURLY_RATE_BAT ?? HOURLY_RATE_BAT
+  const hourlyRateConditioning = settings?.HOURLY_RATE_CONDITIONING ?? HOURLY_RATE_CONDITIONING
   const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
@@ -225,7 +227,7 @@ export function calculateCosts(params: {
   const packagingCost = (() => {
     if (!hasConditionnement) return 0
     const totalHours = (packTimePerPieceSeconds * quantity) / 3600
-    const timeCost = totalHours * hourlyRateAssembly
+    const timeCost = totalHours * hourlyRateConditioning
     const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
     return timeCost + noticeCost
   })()
