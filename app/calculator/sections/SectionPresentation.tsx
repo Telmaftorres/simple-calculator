@@ -21,6 +21,7 @@ export function SectionPresentation() {
     isMultiProduct, setIsMultiProduct,
     addProduct,
     products,
+    hasDossierFee, setHasDossierFee,
   } = useCalculatorContext()
 
   const handleToggleMultiProduct = (enabled: boolean) => {
@@ -168,6 +169,35 @@ export function SectionPresentation() {
         {isMultiProduct && (
           <span className="ml-auto text-xs font-semibold bg-emerald-100 text-emerald-700 px-2 py-1 rounded-full">
             {products.length} produit{products.length > 1 ? 's' : ''}
+          </span>
+        )}
+      </div>
+
+      {/* ── Frais de dossier ── */}
+      <div className={`flex items-center gap-3 p-3 rounded-lg border transition-all ${
+        hasDossierFee
+          ? 'bg-slate-100 border-slate-300'
+          : 'bg-slate-50 border-slate-200'
+      }`}>
+        <button
+          onClick={() => setHasDossierFee(!hasDossierFee)}
+          className={`relative w-10 h-5 rounded-full transition-colors ${
+            hasDossierFee ? 'bg-slate-700' : 'bg-slate-300'
+          }`}
+        >
+          <span className={`absolute top-0.5 w-4 h-4 bg-white rounded-full transition-all ${
+            hasDossierFee ? 'left-5' : 'left-0.5'
+          }`} />
+        </button>
+        <div>
+          <span className={`text-sm font-semibold ${hasDossierFee ? 'text-slate-800' : 'text-slate-600'}`}>
+            Frais de dossier
+          </span>
+          <p className="text-xs text-slate-400">8 € forfait administratif</p>
+        </div>
+        {hasDossierFee && (
+          <span className="ml-auto text-xs font-semibold bg-slate-200 text-slate-700 px-2 py-1 rounded-full">
+            + 8 €
           </span>
         )}
       </div>

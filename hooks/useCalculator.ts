@@ -84,6 +84,7 @@ export function useCalculator(
     isMultiProduct,
     products,
     activeProductIndex,
+    hasDossierFee,
   } = formState
 
   const {
@@ -271,6 +272,7 @@ export function useCalculator(
           packagingCuttingTimePerPoseSeconds: 20,
           packagingWidth: 0,
           packagingHeight: 0,
+          hasDossierFee,
         })
 
         return {
@@ -324,6 +326,7 @@ export function useCalculator(
     hasBE,
     beTimeMinutes,
     batTimeMinutes,
+    hasDossierFee,
     packagingPlate,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
@@ -560,6 +563,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
     packagingWidth, setPackagingWidth: (v: number) => setField('packagingWidth', v),
     packagingHeight, setPackagingHeight: (v: number) => setField('packagingHeight', v),
+    hasDossierFee, setHasDossierFee: (v: boolean) => setField('hasDossierFee', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
     handleCreateProductType, handleCreateAccessory, handleSave, handleReset,

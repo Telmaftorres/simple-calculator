@@ -28,6 +28,7 @@ export function RecapSidebar() {
 
   const {
     printingCostData,
+    dossierFeeCost,
     inkVolumeL,
     cuttingMachineCost,
     cuttingSetupCost,
@@ -186,6 +187,9 @@ export function RecapSidebar() {
 
           {hasPackaging && (
             <CostRow label="Emballage" value={packagingTotalCost} details={packagingTotalCost > 0 ? 'Matière + découpe' : undefined} />
+          )}
+          {formState.hasDossierFee && dossierFeeCost > 0 && (
+            <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />
           )}
 
           {/* ── Total ── */}

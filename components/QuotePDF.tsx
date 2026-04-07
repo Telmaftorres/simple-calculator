@@ -224,6 +224,8 @@ export function QuotePDF({
     packagingTotalCost,
     packagingMaterialCost,
     packagingCuttingCost,
+    hasDossierFee: formValues.hasDossierFee,
+    dossierFeeCost: costResult.dossierFeeCost,
   })
 
   return (

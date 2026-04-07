@@ -40,4 +40,6 @@ export const HOURLY_RATE_BAT = 70
 export const MATERIAL_MARGIN_TIER1 = 3.5  // < 5 €/m²
 export const MATERIAL_MARGIN_TIER2 = 3    // 5-10 €/m²
 export const MATERIAL_MARGIN_TIER3 = 2.5  // 10-20 €/m²
-export const MATERIAL_MARGIN_TIER4 = 2    // > 20 €/m²
+export const MATERIAL_MARGIN_TIER4 = 2    // > 20 €/m²``
+
+export const DOSSIER_FEE = 8

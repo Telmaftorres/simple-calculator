@@ -37,6 +37,8 @@ export type QuoteCostRowsParams = {
   hasBE?: boolean
   beTimeMinutes?: number
   batTimeMinutes?: number
+  hasDossierFee?: boolean
+  dossierFeeCost?: number
   beCost?: number
   batCost?: number
   beTotalCost?: number
@@ -44,6 +46,9 @@ export type QuoteCostRowsParams = {
 
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
   return [
+    ...(p.hasDossierFee && p.dossierFeeCost && p.dossierFeeCost > 0 ? [
+      { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
+    ] : []),
     {
       label: 'Matière',
       detail: `${p.impositionResult?.platesNeeded} plaque(s) × ${p.selectedPlate?.cost}€`,

@@ -81,6 +81,8 @@ export function ScreenRecap() {
     packagingTotalCost: costResult.packagingTotalCost,
     packagingMaterialCost: costResult.packagingMaterialCost,
     packagingCuttingCost: costResult.packagingCuttingCost,
+    hasDossierFee: formState.hasDossierFee,
+    dossierFeeCost: costResult.dossierFeeCost,
   })
 
   console.log('assemblyCost:', costResult.assemblyCost)
