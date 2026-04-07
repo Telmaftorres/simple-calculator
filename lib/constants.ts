@@ -23,6 +23,7 @@ export const CUTTING_SETUP_MINUTES = 15
 export const HOURLY_RATE_ASSEMBLY = 45
 
 // ── Conditionnement ──
+export const HOURLY_RATE_CONDITIONING = 40
 export const ASSEMBLY_NOTICE_COST_PER_PIECE = 0.10
 
 // ── Imposition ──
