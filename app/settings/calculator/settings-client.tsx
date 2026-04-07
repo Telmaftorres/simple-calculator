@@ -285,6 +285,15 @@ const FORMULAS: Record<string, {
       return `Matière 100 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
     },
   },
+
+  DOSSIER_FEE: {
+    usedIn: ['Frais de dossier'],
+    formula: 'si activé → frais_dossier = DOSSIER_FEE',
+    getExample: (v) => {
+      const fee = parseFloat(v.DOSSIER_FEE) || 0
+      return `Frais de dossier activé = ${fee} € forfait fixe`
+    },
+  },
 }
 
 const CATEGORIES: {
@@ -370,6 +379,13 @@ const CATEGORIES: {
       'MATERIAL_MARGIN_TIER3',
       'MATERIAL_MARGIN_TIER4',
     ],
+  },
+  {
+    label: 'Administratif',
+    description: 'Frais administratifs et de gestion',
+    color: 'gray',
+    emoji: '📁',
+    keys: ['DOSSIER_FEE'],
   },
 ]
 

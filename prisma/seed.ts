@@ -27,6 +27,7 @@ import {
   MATERIAL_MARGIN_TIER2,
   MATERIAL_MARGIN_TIER3,
   MATERIAL_MARGIN_TIER4,
+  DOSSIER_FEE,
 } from '../lib/constants'
 
 const prisma = new PrismaClient({
@@ -61,6 +62,7 @@ async function seedSettings() {
     { key: 'MATERIAL_MARGIN_TIER2', value: String(MATERIAL_MARGIN_TIER2), label: 'Coefficient matière 5-10 €/m²', unit: 'x' },
     { key: 'MATERIAL_MARGIN_TIER3', value: String(MATERIAL_MARGIN_TIER3), label: 'Coefficient matière 10-20 €/m²', unit: 'x' },
     { key: 'MATERIAL_MARGIN_TIER4', value: String(MATERIAL_MARGIN_TIER4), label: 'Coefficient matière > 20 €/m²', unit: 'x' },
+    { key: 'DOSSIER_FEE', value: String(DOSSIER_FEE), label: 'Frais de dossier', unit: '€' },
   ]
 
   // ✅ Supprimer les anciennes clés obsolètes

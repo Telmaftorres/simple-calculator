@@ -21,6 +21,7 @@ import {
   MATERIAL_MARGIN_TIER2,
   MATERIAL_MARGIN_TIER3,
   MATERIAL_MARGIN_TIER4,
+  DOSSIER_FEE,
 } from '@/lib/constants'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
@@ -43,6 +44,7 @@ export function calculateCosts(params: {
   isRectoVerso: boolean
   hasVarnish: boolean
   hasFlatColor: boolean
+  hasDossierFee?: boolean
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   hasImpression: boolean
@@ -94,6 +96,7 @@ export function calculateCosts(params: {
     hasBE = false,
     beTimeMinutes = 0,
     batTimeMinutes = 0,
+    hasDossierFee = false,
     packagingPlate,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
@@ -123,6 +126,8 @@ export function calculateCosts(params: {
   const materialMarginTier2 = settings?.MATERIAL_MARGIN_TIER2 ?? MATERIAL_MARGIN_TIER2
   const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
   const materialMarginTier4 = settings?.MATERIAL_MARGIN_TIER4 ?? MATERIAL_MARGIN_TIER4
+  const dossierFee = settings?.DOSSIER_FEE ?? DOSSIER_FEE
+
 
   // ── Impression ──
   const printingCostData: PrintingCostData = (() => {
@@ -170,6 +175,7 @@ export function calculateCosts(params: {
 
     const machineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
+
 
     const setupCost = (() => {
       if (printSetupType === 'standard') return printSetupStandardCost
@@ -291,8 +297,12 @@ const materialMarginCoeff = (() => {
 const materialCostRaw = impositionResult?.materialCost || 0
 const materialCostMarged = materialCostRaw * materialMarginCoeff
 
+// ── Frais de dossier ──
+const dossierFeeCost = hasDossierFee ? dossierFee : 0
+
   // ── Total ──
   const totalCost =
+    dossierFeeCost +  
     materialCostMarged +
     printingCost +
     cuttingCost +
@@ -327,6 +337,7 @@ const materialCostMarged = materialCostRaw * materialMarginCoeff
     materialCostRaw,
     materialCostMarged,
     materialMarginCoeff,
+    dossierFeeCost,
     beCost,
     batCost,
     beTotalCost,
