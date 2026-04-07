@@ -5,7 +5,7 @@ import { SectionDisplay } from '../shared'
 export function SectionTransport() {
   return (
     <SectionDisplay
-      number="9"
+      number="10"
       title="Transport"
       color="gray"
       enabled={false}

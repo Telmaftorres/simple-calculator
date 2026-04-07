@@ -35,7 +35,7 @@ export function SectionEmballage() {
 
   return (
     <SectionDisplay
-      number="8"
+      number="9"
       title="Emballage"
       color="amber"
       enabled={hasPackaging}

@@ -17,7 +17,7 @@ export function SectionConditionnement() {
 
   return (
     <SectionDisplay
-      number="6"
+      number="7"
       title="Conditionnement"
       color="teal"
       enabled={hasConditionnement}
