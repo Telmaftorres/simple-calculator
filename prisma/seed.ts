@@ -23,6 +23,10 @@ import {
   HOURLY_RATE_BAT,
   HOURLY_RATE_BE,
   HOURLY_RATE_CUTTING,
+  MATERIAL_MARGIN_TIER1,
+  MATERIAL_MARGIN_TIER2,
+  MATERIAL_MARGIN_TIER3,
+  MATERIAL_MARGIN_TIER4,
 } from '../lib/constants'
 
 const prisma = new PrismaClient({
@@ -53,16 +57,24 @@ async function seedSettings() {
     { key: 'PACKAGING_SETUP_MINUTES', value: String(PACKAGING_SETUP_MINUTES), label: 'Calage emballage', unit: 'min' },
     { key: 'HOURLY_RATE_BE', value: String(HOURLY_RATE_BE), label: 'Taux horaire Bureau d\'études', unit: '€/h' },
     { key: 'HOURLY_RATE_BAT', value: String(HOURLY_RATE_BAT), label: 'Taux horaire BAT', unit: '€/h' },
-    { key: 'MARGIN_IMPRESSION', value: '0', label: 'Marge impression', unit: '%' },
-    { key: 'MARGIN_DECOUPE', value: '0', label: 'Marge découpe', unit: '%' },
-    { key: 'MARGIN_FACONNAGE', value: '0', label: 'Marge façonnage', unit: '%' },
-    { key: 'MARGIN_CONDITIONNEMENT', value: '0', label: 'Marge conditionnement', unit: '%' },
-    { key: 'MARGIN_MATERIAUX', value: '0', label: 'Marge matériaux', unit: '%' },
-    { key: 'MARGIN_EMBALLAGE', value: '0', label: 'Marge emballage', unit: '%' },
+    { key: 'MATERIAL_MARGIN_TIER1', value: String(MATERIAL_MARGIN_TIER1), label: 'Coefficient matière < 5 €/m²', unit: 'x' },
+    { key: 'MATERIAL_MARGIN_TIER2', value: String(MATERIAL_MARGIN_TIER2), label: 'Coefficient matière 5-10 €/m²', unit: 'x' },
+    { key: 'MATERIAL_MARGIN_TIER3', value: String(MATERIAL_MARGIN_TIER3), label: 'Coefficient matière 10-20 €/m²', unit: 'x' },
+    { key: 'MATERIAL_MARGIN_TIER4', value: String(MATERIAL_MARGIN_TIER4), label: 'Coefficient matière > 20 €/m²', unit: 'x' },
   ]
 
   // ✅ Supprimer les anciennes clés obsolètes
-  const obsoleteKeys = ['INK_BASE_ML_PER_PLATE', 'INK_COST_FINISHING_PER_LITER', 'FINISHING_SURCHARGE_PERCENT']
+  const obsoleteKeys = [
+    'INK_BASE_ML_PER_PLATE',
+    'INK_COST_FINISHING_PER_LITER',
+    'FINISHING_SURCHARGE_PERCENT',
+    'MARGIN_IMPRESSION',
+    'MARGIN_DECOUPE',
+    'MARGIN_FACONNAGE',
+    'MARGIN_CONDITIONNEMENT',
+    'MARGIN_MATERIAUX',
+    'MARGIN_EMBALLAGE',
+  ]
   await prisma.setting.deleteMany({ where: { key: { in: obsoleteKeys } } })
   console.log('Anciennes constantes supprimées :', obsoleteKeys)
 

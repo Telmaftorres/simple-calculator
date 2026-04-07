@@ -36,10 +36,8 @@ export const PACKAGING_SETUP_MINUTES = 15
 export const HOURLY_RATE_BE = 90
 export const HOURLY_RATE_BAT = 70
 
-// ── Marges (réservé — non fonctionnel) ──
-export const MARGIN_IMPRESSION = 0
-export const MARGIN_DECOUPE = 0
-export const MARGIN_FACONNAGE = 0
-export const MARGIN_CONDITIONNEMENT = 0
-export const MARGIN_MATERIAUX = 0
-export const MARGIN_EMBALLAGE = 0
+// ── Marges Matériel ──
+export const MATERIAL_MARGIN_TIER1 = 3.5  // < 5 €/m²
+export const MATERIAL_MARGIN_TIER2 = 3    // 5-10 €/m²
+export const MATERIAL_MARGIN_TIER3 = 2.5  // 10-20 €/m²
+export const MATERIAL_MARGIN_TIER4 = 2    // > 20 €/m²

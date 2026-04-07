@@ -17,6 +17,10 @@ import {
   PRINT_SETUP_COMPLEX_COST,
   CUTTING_SETUP_STANDARD_COST,
   CUTTING_SETUP_COMPLEX_COST,
+  MATERIAL_MARGIN_TIER1,
+  MATERIAL_MARGIN_TIER2,
+  MATERIAL_MARGIN_TIER3,
+  MATERIAL_MARGIN_TIER4,
 } from '@/lib/constants'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
@@ -115,6 +119,10 @@ export function calculateCosts(params: {
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const packagingSetupMinutes = settings?.PACKAGING_SETUP_MINUTES ?? PACKAGING_SETUP_MINUTES
+  const materialMarginTier1 = settings?.MATERIAL_MARGIN_TIER1 ?? MATERIAL_MARGIN_TIER1
+  const materialMarginTier2 = settings?.MATERIAL_MARGIN_TIER2 ?? MATERIAL_MARGIN_TIER2
+  const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
+  const materialMarginTier4 = settings?.MATERIAL_MARGIN_TIER4 ?? MATERIAL_MARGIN_TIER4
 
   // ── Impression ──
   const printingCostData: PrintingCostData = (() => {
@@ -267,9 +275,25 @@ export function calculateCosts(params: {
   const batCost = hasBE ? (batTimeMinutes / 60) * hourlyRateBAT : 0
   const beTotalCost = beCost + batCost
 
+// ── Coefficient matière ──
+const materialCostPerM2 = selectedPlate
+  ? selectedPlate.cost / ((selectedPlate.width * selectedPlate.height) / 1000000)
+  : 0
+
+const materialMarginCoeff = (() => {
+  if (!selectedPlate) return 1
+  if (materialCostPerM2 < 5) return materialMarginTier1
+  if (materialCostPerM2 < 10) return materialMarginTier2
+  if (materialCostPerM2 < 20) return materialMarginTier3
+  return materialMarginTier4
+})()
+
+const materialCostRaw = impositionResult?.materialCost || 0
+const materialCostMarged = materialCostRaw * materialMarginCoeff
+
   // ── Total ──
   const totalCost =
-    (impositionResult?.materialCost || 0) +
+    materialCostMarged +
     printingCost +
     cuttingCost +
     assemblyCost +
@@ -300,6 +324,9 @@ export function calculateCosts(params: {
     packagingPlatesNeeded,
     poseSpacingMm,
     assemblyNoticeCostPerPiece,
+    materialCostRaw,
+    materialCostMarged,
+    materialMarginCoeff,
     beCost,
     batCost,
     beTotalCost,
