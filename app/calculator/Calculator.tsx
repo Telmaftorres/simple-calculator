@@ -106,11 +106,13 @@ export default function Calculator({
               </div>
 
               <SectionPresentation />
-              <SectionBureauEtudes />
 
               {/* ── Mode multi-produits ── */}
               {calc.isMultiProduct ? (
-                <SectionMultiProduct />
+                <>
+                  <SectionBureauEtudes />
+                  <SectionMultiProduct />
+                </>
               ) : (
                 <>
                   {calc.impositionResult && (
@@ -131,6 +133,7 @@ export default function Calculator({
                       </div>
                     </SectionDisplay>
                   )}
+                  <SectionBureauEtudes />
                   <SectionImpression />
                   <SectionDecoupe />
                 </>
