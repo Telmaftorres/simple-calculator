@@ -47,6 +47,9 @@ export const quoteFieldsSchema = z.object({
   batTimeMinutes: z.number().int().min(0).optional(),
 
   hasDossierFee: z.boolean().optional(),
+
+  showMargeCommerciale: z.boolean().optional(),
+  showMargeSopano: z.boolean().optional(),
 })
 
 const quoteProductSchema = z.object({

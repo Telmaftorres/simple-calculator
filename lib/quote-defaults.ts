@@ -23,5 +23,8 @@ export const QUOTE_DEFAULTS = {
   hasBE: false as boolean,
   beTimeMinutes: 0 as number,
   batTimeMinutes: 0 as number,
+  // ── Marges internes ──
+  showMargeCommerciale: false as boolean,
+  showMargeSopano: false as boolean,
 
 }

@@ -108,6 +108,8 @@ model Quote {
   beTimeMinutes                      Int               @default(0)
   batTimeMinutes                     Int               @default(0)
   hasDossierFee                      Boolean           @default(false)
+  showMargeCommerciale               Boolean           @default(false)
+  showMargeSopano                    Boolean           @default(false)
 }
 
 
