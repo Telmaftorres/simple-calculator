@@ -354,7 +354,10 @@ Modifiables depuis `/settings/calculator` sans redéploiement.
 | `PACKAGING_SETUP_MINUTES` | 15 min | Calage emballage |
 | `HOURLY_RATE_BE` | 90 €/h | Taux horaire Bureau d'études / Création |
 | `HOURLY_RATE_BAT` | 70 €/h | Taux horaire BAT |
-| `MARGIN_*` | 0 % | Marges commerciales par poste (non fonctionnelles — à venir) |
+| `MATERIAL_MARGIN_TIER*` | — | Coefficients de marge selon le coût de la matière |
+| `DOSSIER_FEE` | 8 € | Frais de dossier forfaitaires administratifs |
+| `MARGE_COMMERCIALE_PERCENT` | 2.5 % | Marge interne commerciale (affichage indicatif) |
+| `MARGE_SOPANO_PERCENT` | 5 % | Marge interne Sopano (affichage indicatif) |
 
 > ⚠️ Après l'ajout de nouvelles clés en DB via seed, relancer le serveur. `getSettings` n'utilise pas `unstable_cache` donc les nouvelles clés apparaissent immédiatement.
 
