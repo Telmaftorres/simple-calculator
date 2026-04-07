@@ -249,64 +249,40 @@ const FORMULAS: Record<string, {
       return `(${timeMin} min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
     },
   },
-  MARGIN_IMPRESSION: {
-    usedIn: ['Impression — à venir'],
-    formula: 'prix_vente = coût_impression × (1 + marge / 100)',
+  MATERIAL_MARGIN_TIER1: {
+    usedIn: ['Matière — coefficient < 5 €/m²'],
+    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
-      const margin = parseFloat(v.MARGIN_IMPRESSION) || 0
-      const cost = 150
-      const result = cost * (1 + margin / 100)
-      return `${cost} € × (1 + ${margin} / 100) = ${result.toFixed(2)} € — non appliqué actuellement`
+      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER1) || 0
+      const cost = 10
+      return `Matière 10 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
     },
   },
-  MARGIN_DECOUPE: {
-    usedIn: ['Découpe — à venir'],
-    formula: 'prix_vente = coût_découpe × (1 + marge / 100)',
+  MATERIAL_MARGIN_TIER2: {
+    usedIn: ['Matière — coefficient 5 à 10 €/m²'],
+    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
-      const margin = parseFloat(v.MARGIN_DECOUPE) || 0
-      const cost = 50
-      const result = cost * (1 + margin / 100)
-      return `${cost} € × (1 + ${margin} / 100) = ${result.toFixed(2)} € — non appliqué actuellement`
-    },
-  },
-  MARGIN_FACONNAGE: {
-    usedIn: ['Façonnage — à venir'],
-    formula: 'prix_vente = coût_façonnage × (1 + marge / 100)',
-    getExample: (v) => {
-      const margin = parseFloat(v.MARGIN_FACONNAGE) || 0
-      const cost = 30
-      const result = cost * (1 + margin / 100)
-      return `${cost} € × (1 + ${margin} / 100) = ${result.toFixed(2)} € — non appliqué actuellement`
-    },
-  },
-  MARGIN_CONDITIONNEMENT: {
-    usedIn: ['Conditionnement — à venir'],
-    formula: 'prix_vente = coût_conditionnement × (1 + marge / 100)',
-    getExample: (v) => {
-      const margin = parseFloat(v.MARGIN_CONDITIONNEMENT) || 0
+      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER2) || 0
       const cost = 20
-      const result = cost * (1 + margin / 100)
-      return `${cost} € × (1 + ${margin} / 100) = ${result.toFixed(2)} € — non appliqué actuellement`
+      return `Matière 20 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
     },
   },
-  MARGIN_MATERIAUX: {
-    usedIn: ['Matériaux — à venir'],
-    formula: 'prix_vente = coût_matériaux × (1 + marge / 100)',
+  MATERIAL_MARGIN_TIER3: {
+    usedIn: ['Matière — coefficient 10 à 20 €/m²'],
+    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
-      const margin = parseFloat(v.MARGIN_MATERIAUX) || 0
+      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER3) || 0
+      const cost = 50
+      return `Matière 50 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
+    },
+  },
+  MATERIAL_MARGIN_TIER4: {
+    usedIn: ['Matière — coefficient > 20 €/m²'],
+    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
+    getExample: (v) => {
+      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER4) || 0
       const cost = 100
-      const result = cost * (1 + margin / 100)
-      return `${cost} € × (1 + ${margin} / 100) = ${result.toFixed(2)} € — non appliqué actuellement`
-    },
-  },
-  MARGIN_EMBALLAGE: {
-    usedIn: ['Emballage — à venir'],
-    formula: 'prix_vente = coût_emballage × (1 + marge / 100)',
-    getExample: (v) => {
-      const margin = parseFloat(v.MARGIN_EMBALLAGE) || 0
-      const cost = 40
-      const result = cost * (1 + margin / 100)
-      return `${cost} € × (1 + ${margin} / 100) = ${result.toFixed(2)} € — non appliqué actuellement`
+      return `Matière 100 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
     },
   },
 }
@@ -384,17 +360,15 @@ const CATEGORIES: {
     keys: ['HOURLY_RATE_BE', 'HOURLY_RATE_BAT'],
   },
   {
-    label: 'Marges',
-    description: 'Marges commerciales — à venir',
-    color: 'gray',
-    emoji: '🔒',
+  label: 'Matière',
+    description: 'Coefficients de marge selon le prix de la matière',
+    color: 'teal',
+    emoji: '🧱',
     keys: [
-      'MARGIN_IMPRESSION',
-      'MARGIN_DECOUPE',
-      'MARGIN_FACONNAGE',
-      'MARGIN_CONDITIONNEMENT',
-      'MARGIN_MATERIAUX',
-      'MARGIN_EMBALLAGE',
+      'MATERIAL_MARGIN_TIER1',
+      'MATERIAL_MARGIN_TIER2',
+      'MATERIAL_MARGIN_TIER3',
+      'MATERIAL_MARGIN_TIER4',
     ],
   },
 ]
@@ -497,14 +471,8 @@ const COLOR_MAP: Record<string, {
   },
 }
 
-const MARGIN_KEYS = [
-  'MARGIN_IMPRESSION',
-  'MARGIN_DECOUPE',
-  'MARGIN_FACONNAGE',
-  'MARGIN_CONDITIONNEMENT',
-  'MARGIN_MATERIAUX',
-  'MARGIN_EMBALLAGE',
-]
+const MARGIN_KEYS: string[] = []
+
 
 export function SettingsClient({ settings }: { settings: Setting[] }) {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label)
