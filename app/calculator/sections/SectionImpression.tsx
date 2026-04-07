@@ -31,7 +31,7 @@ export function SectionImpression() {
 
   return (
     <SectionDisplay
-      number="3"
+      number="4"
       title="Impression"
       color="purple"
       enabled={hasImpression}

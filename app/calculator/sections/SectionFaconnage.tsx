@@ -25,7 +25,7 @@ export function SectionFaconnage() {
 
   return (
     <SectionDisplay
-      number="5"
+      number="6"
       title="Façonnage"
       color="pink"
       enabled={hasFaconnage}

@@ -41,7 +41,7 @@ export function SectionAccessoires() {
 
   return (
     <SectionDisplay
-      number="7"
+      number="8"
       title="Accessoires"
       color="teal"
       enabled={hasAccessoires}

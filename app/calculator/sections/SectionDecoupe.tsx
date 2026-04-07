@@ -18,7 +18,7 @@ export function SectionDecoupe() {
   const { cuttingMachineTimeMin, cuttingSetupCost } = costResult
 
   return (
-    <SectionDisplay number="4" title="Découpe" color="orange">
+    <SectionDisplay number="5" title="Découpe" color="orange">
       <div className="space-y-4">
 
         {/* ── Calage découpe ── */}
