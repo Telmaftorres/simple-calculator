@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Users, Shield } from 'lucide-react'
+import { ArrowLeft, Users, Calculator } from 'lucide-react'
 import Link from 'next/link'
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -33,17 +33,18 @@ export default function SettingsPage() {
           </Card>
         </Link>
 
-        {/* Future settings can go here */}
-        <div className="block opacity-50 cursor-not-allowed">
-          <Card className="h-full">
+        <Link href="/settings/calculator" className="block group">
+          <Card className="h-full transition-all duration-200 group-hover:shadow-lg group-hover:border-emerald-200">
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Shield className="h-5 w-5" /> Sécurité Avancée
+              <CardTitle className="flex items-center gap-2 group-hover:text-emerald-700">
+                <Calculator className="h-5 w-5" /> Paramètres du Calculateur
               </CardTitle>
-              <CardDescription>Configuration 2FA et logs (Bientôt disponible).</CardDescription>
+              <CardDescription>
+                Modifier les taux horaires, marges, frais et constantes de calcul.
+              </CardDescription>
             </CardHeader>
           </Card>
-        </div>
+        </Link>
       </div>
     </div>
   )

@@ -84,15 +84,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
           </Link>
         </nav>
 
-        {isAdmin && (
-          <Link
-            href="/settings/calculator"
-            className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
-          >
-            <Settings className="h-5 w-5" />
-            Paramètres Calcul
-          </Link>
-        )}
+
 
         <div className="p-4 border-t border-slate-800 space-y-2">
           {isAdmin && (
