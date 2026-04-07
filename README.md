@@ -354,7 +354,10 @@ Modifiables depuis `/settings/calculator` sans redéploiement.
 | `PACKAGING_SETUP_MINUTES` | 15 min | Calage emballage |
 | `HOURLY_RATE_BE` | 90 €/h | Taux horaire Bureau d'études / Création |
 | `HOURLY_RATE_BAT` | 70 €/h | Taux horaire BAT |
-| `MARGIN_*` | 0 % | Marges commerciales par poste (non fonctionnelles — à venir) |
+| `MATERIAL_MARGIN_TIER*` | — | Coefficients de marge selon le coût de la matière |
+| `DOSSIER_FEE` | 8 € | Frais de dossier forfaitaires administratifs |
+| `MARGE_COMMERCIALE_PERCENT` | 2.5 % | Marge interne commerciale (affichage indicatif) |
+| `MARGE_SOPANO_PERCENT` | 5 % | Marge interne Sopano (affichage indicatif) |
 
 > ⚠️ Après l'ajout de nouvelles clés en DB via seed, relancer le serveur. `getSettings` n'utilise pas `unstable_cache` donc les nouvelles clés apparaissent immédiatement.
 
@@ -450,7 +453,12 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Coefficients matière** par tranche de prix/m² (×3.5, ×3, ×2.5, ×2) appliqués au coût matière
 - ✅ **Frais de dossier** toggle ON/OFF (8€ forfait fixe configurable)
 - ✅ **Suppression catégorie Marges** — remplacée par catégorie Matière
-- ✅ **Marges internes** : indicateurs lecture seule (Com. commerciale 2.5%, Com. Sopano 5%), toggle ON/OFF, affichage du Net interne — jamais sauvegardées en DB
+- ✅ **Marges internes** : indicateurs (Com. commerciale 2.5%, Com. Sopano 5%), toggles ON/OFF sauvegardés en DB, affichage du Net interne calculé à la volée. Ajoutées aux constantes de calcul (Administratif).
+- ✅ **UX / UI** : 
+  - Remplacement des toggles par des "pill buttons" pour Multi-produits et Frais de dossier dans Présentation.
+  - Correction de l'ordre des sections (Imposition s'affiche avant Bureau d'études en mode mono).
+  - Centralisation de l'accès "Paramètres Calcul" dans la page principale "Paramètres".
+  - Nettoyage : suppression du bouton mode sombre redondant dans la barre latérale.
 
 ---
 
