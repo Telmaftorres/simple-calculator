@@ -6,7 +6,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from 'sonner'
-import { Save, Lock, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
+import { Save, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
 
 interface Setting {
   id: number
@@ -294,6 +294,26 @@ const FORMULAS: Record<string, {
       return `Frais de dossier activé = ${fee} € forfait fixe`
     },
   },
+  MARGE_COMMERCIALE_PERCENT: {
+    usedIn: ['Marges internes — Com. commerciale'],
+    formula: 'marge_commerciale = total_HT × (pourcentage / 100)',
+    getExample: (v) => {
+      const pct = parseFloat(v.MARGE_COMMERCIALE_PERCENT) || 0
+      const total = 500
+      const result = total * (pct / 100)
+      return `${total} € × (${pct}% / 100) = ${result.toFixed(2)} € déduit du total`
+    },
+  },
+  MARGE_SOPANO_PERCENT: {
+    usedIn: ['Marges internes — Com. Sopano'],
+    formula: 'marge_sopano = total_HT × (pourcentage / 100)',
+    getExample: (v) => {
+      const pct = parseFloat(v.MARGE_SOPANO_PERCENT) || 0
+      const total = 500
+      const result = total * (pct / 100)
+      return `${total} € × (${pct}% / 100) = ${result.toFixed(2)} € déduit du total`
+    },
+  },
 }
 
 const CATEGORIES: {
@@ -382,10 +402,10 @@ const CATEGORIES: {
   },
   {
     label: 'Administratif',
-    description: 'Frais administratifs et de gestion',
+    description: 'Frais administratifs et marges internes',
     color: 'gray',
     emoji: '📁',
-    keys: ['DOSSIER_FEE'],
+    keys: ['DOSSIER_FEE', 'MARGE_COMMERCIALE_PERCENT', 'MARGE_SOPANO_PERCENT'],
   },
 ]
 
@@ -487,7 +507,6 @@ const COLOR_MAP: Record<string, {
   },
 }
 
-const MARGIN_KEYS: string[] = []
 
 
 export function SettingsClient({ settings }: { settings: Setting[] }) {
@@ -501,7 +520,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s]))
 
   const handleSave = async (key: string) => {
-    if (MARGIN_KEYS.includes(key)) return
+
     setSaving(key)
     try {
       await updateSetting(key, values[key])
@@ -520,7 +539,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
 
   const activeConfig = CATEGORIES.find((c) => c.label === activeCategory)!
   const activeColors = COLOR_MAP[activeConfig.color]
-  const isMargin = activeConfig.color === 'gray'
+
   const categorySettings = activeConfig.keys
     .map((key) => settingsMap[key])
     .filter(Boolean)
@@ -580,7 +599,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
               <div>
                 <CardTitle className="text-base flex items-center gap-2">
                   <span>{activeConfig.emoji}</span>
-                  {isMargin && <Lock className="h-4 w-4 text-slate-400" />}
+
                   {activeConfig.label}
                 </CardTitle>
                 <CardDescription className="mt-0.5 text-xs">
@@ -594,15 +613,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
           </CardHeader>
 
           <CardContent className="px-6 py-4 space-y-4">
-            {isMargin && (
-              <div className="flex items-center gap-2 bg-slate-50 border border-slate-200 rounded-lg px-4 py-3">
-                <Lock className="h-4 w-4 text-slate-400 shrink-0" />
-                <p className="text-xs text-slate-500">
-                  Les marges commerciales seront intégrées dans une prochaine version.
-                  Les valeurs ci-dessous ne sont pas encore appliquées aux calculs.
-                </p>
-              </div>
-            )}
+
 
             {categorySettings.map((setting, index) => {
               const formula = FORMULAS[setting.key]
@@ -613,7 +624,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
                   key={setting.key}
                   className={`
                     ${index < categorySettings.length - 1 ? 'pb-4 border-b border-slate-100' : ''}
-                    ${isMargin ? 'opacity-50' : ''}
+
                   `}
                 >
                   {/* Ligne principale */}
@@ -648,7 +659,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
                           setValues((prev) => ({ ...prev, [setting.key]: e.target.value }))
                         }
                         className="w-28 text-right"
-                        disabled={isMargin}
+
                       />
                       {setting.unit && (
                         <span className="text-sm text-slate-500 w-14 shrink-0">{setting.unit}</span>
@@ -656,19 +667,11 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
                       <Button
                         size="icon"
                         variant="ghost"
-                        className={
-                          isMargin
-                            ? 'text-slate-300 cursor-not-allowed'
-                            : 'text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50'
-                        }
+                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
                         onClick={() => handleSave(setting.key)}
-                        disabled={saving === setting.key || isMargin}
+                        disabled={saving === setting.key}
                       >
-                        {isMargin ? (
-                          <Lock className="h-4 w-4" />
-                        ) : (
-                          <Save className="h-4 w-4" />
-                        )}
+                        <Save className="h-4 w-4" />
                       </Button>
                     </div>
                   </div>
