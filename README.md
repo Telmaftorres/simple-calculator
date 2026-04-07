@@ -347,7 +347,8 @@ Modifiables depuis `/settings/calculator` sans redéploiement.
 | `INK_COST_VARNISH_PER_LITER` | 120 €/L | Coût encre vernis |
 | `INK_COST_FLAT_COLOR_PER_LITER` | 120 €/L | Coût encre aplat |
 | `CUTTING_SETUP_MINUTES` | 15 min | Calage découpe |
-| `HOURLY_RATE_ASSEMBLY` | 45 €/h | Taux horaire façonnage et conditionnement |
+| `HOURLY_RATE_ASSEMBLY` | 45 €/h | Taux horaire façonnage |
+| `HOURLY_RATE_CONDITIONING` | 40 €/h | Taux horaire conditionnement (mise en boîte) |
 | `ASSEMBLY_NOTICE_COST_PER_PIECE` | 0.10 €/pce | Coût notice de montage par pièce |
 | `POSE_SPACING_MM` | 10 mm | Espacement entre poses (imposition) |
 | `HOURLY_RATE_PACKAGING` | 45 €/h | Taux horaire emballage |
@@ -454,9 +455,11 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Frais de dossier** toggle ON/OFF (8€ forfait fixe configurable)
 - ✅ **Suppression catégorie Marges** — remplacée par catégorie Matière
 - ✅ **Marges internes** : indicateurs (Com. commerciale 2.5%, Com. Sopano 5%), toggles ON/OFF sauvegardés en DB, affichage du Net interne calculé à la volée. Ajoutées aux constantes de calcul (Administratif).
+- ✅ **Séparation taux horaires** : le taux horaire du conditionnement (40 €/h) est désormais indépendant du façonnage (45 €/h) et modifiable depuis les paramètres.
 - ✅ **UX / UI** : 
   - Remplacement des toggles par des "pill buttons" pour Multi-produits et Frais de dossier dans Présentation.
   - Correction de l'ordre des sections (Imposition s'affiche avant Bureau d'études en mode mono).
+  - Décalage et correction des numéros d'étapes (1 à 10 pour que Impression soit bien l'étape 4).
   - Centralisation de l'accès "Paramètres Calcul" dans la page principale "Paramètres".
   - Nettoyage : suppression du bouton mode sombre redondant dans la barre latérale.
 
