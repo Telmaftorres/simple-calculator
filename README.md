@@ -446,15 +446,16 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Paramètres de calcul** : catégorie "Bureau d'études" avec `HOURLY_RATE_BE` et `HOURLY_RATE_BAT`
 - ✅ **Fix cache settings** : suppression de `unstable_cache` sur `getSettings` — les nouveaux settings apparaissent sans vider le cache manuellement
 - ✅ **Clés techniques masquées** dans la page paramètres (meilleure lisibilité)
+- ✅ **Calage impression/découpe** : sélecteur 3 états (Aucun/Standard/Complexe), forfaits fixes configurables en DB
+- ✅ **Coefficients matière** par tranche de prix/m² (×3.5, ×3, ×2.5, ×2) appliqués au coût matière
+- ✅ **Frais de dossier** toggle ON/OFF (8€ forfait fixe configurable)
+- ✅ **Suppression catégorie Marges** — remplacée par catégorie Matière
+- ✅ **Marges internes** : indicateurs lecture seule (Com. commerciale 2.5%, Com. Sopano 5%), toggle ON/OFF, affichage du Net interne — jamais sauvegardées en DB
 
 ---
 
 ## 🗺 Roadmap (à venir)
 
-- [ ] Forfaits machine (calage standard 15 €, calage complexe 25 €)
-- [ ] Coefficients matières (×3.5, ×3, ×2.5, ×2 selon prix/m²)
-- [ ] Logistique & administratif (frais dossier 8 €, fournitures emballage 15 €, palette +5 €)
-- [ ] Indicateurs de marge (2.5 % com commerciale, 5 % com Sopano)
 - [ ] Historique & comparaison de devis
 - [ ] Module Transport complet
 ---

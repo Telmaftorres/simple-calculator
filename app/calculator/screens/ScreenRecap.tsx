@@ -38,6 +38,11 @@ export function ScreenRecap() {
     productSlotResults,
     totalCostMulti,
     totalQuantityMulti,
+    showMargeCommerciale,
+    showMargeSopano,
+    margeCommercialeMontant,
+    margeSopanoMontant,
+    totalNet,
   } = useCalculatorContext()
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -370,6 +375,39 @@ export function ScreenRecap() {
                 </tfoot>
               </table>
             </div>
+
+            {/* ── Marges internes ── */}
+            {(showMargeCommerciale || showMargeSopano) && (
+              <div className="mt-4 border rounded-lg overflow-hidden bg-amber-50 border-amber-200">
+                <table className="w-full text-sm">
+                  <tbody className="divide-y divide-amber-100">
+                    {showMargeCommerciale && (
+                      <tr>
+                        <td className="p-3 text-amber-800">- Com. commerciale (2.5%)</td>
+                        <td className="p-3 text-right text-amber-600 italic text-xs">sur total HT</td>
+                        <td className="p-3 text-right font-medium text-amber-800">-{margeCommercialeMontant.toFixed(2)} €</td>
+                      </tr>
+                    )}
+                    {showMargeSopano && (
+                      <tr>
+                        <td className="p-3 text-amber-800">- Com. Sopano (5%)</td>
+                        <td className="p-3 text-right text-amber-600 italic text-xs">sur total HT</td>
+                        <td className="p-3 text-right font-medium text-amber-800">-{margeSopanoMontant.toFixed(2)} €</td>
+                      </tr>
+                    )}
+                  </tbody>
+                  <tfoot className="bg-amber-100">
+                    <tr>
+                      <td className="p-4 font-bold text-slate-900">Net interne</td>
+                      <td className="p-4 text-right opacity-80 text-slate-700">
+                        {(totalNet / (displayQuantity || 1)).toFixed(2)} € / pce
+                      </td>
+                      <td className="p-4 text-right font-bold text-lg text-slate-900">{totalNet.toFixed(2)} €</td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            )}
           </div>
 
           {/* ── Actions ── */}

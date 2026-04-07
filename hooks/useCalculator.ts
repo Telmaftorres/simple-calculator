@@ -5,7 +5,7 @@ import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
-import { POSE_SPACING_MM } from '@/lib/constants'
+import { POSE_SPACING_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/constants'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { useCalculatorForm } from './useCalculatorForm'
 import { useAccessories } from './useAccessories'
@@ -29,6 +29,8 @@ export function useCalculator(
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
+
+
 
   const {
     formState,
@@ -85,6 +87,8 @@ export function useCalculator(
     products,
     activeProductIndex,
     hasDossierFee,
+    showMargeCommerciale,
+    showMargeSopano,
   } = formState
 
   const {
@@ -150,6 +154,8 @@ export function useCalculator(
       hasConditionnement: initialQuote.hasConditionnement ?? true,
       hasAccessoires: initialQuote.hasAccessoires ?? false,
       isMultiProduct: initialQuote.isMultiProduct ?? false,
+      showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
+      showMargeSopano: initialQuote.showMargeSopano ?? false,
       products: initialQuote.products?.map((p) => ({
         id: uuidv4(),
         productTypeId: p.productTypeId?.toString() || '',
@@ -339,6 +345,12 @@ export function useCalculator(
   )
   const totalCostMulti = multiProductsSubtotal + costResult.totalCost
 
+  // ── Calcul des marges internes ──
+  const displayTotalForMarges = isMultiProduct ? totalCostMulti : costResult.totalCost
+  const margeCommercialeMontant = showMargeCommerciale ? displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100) : 0
+  const margeSopanoMontant = showMargeSopano ? displayTotalForMarges * (MARGE_SOPANO_PERCENT / 100) : 0
+  const totalNet = displayTotalForMarges - margeCommercialeMontant - margeSopanoMontant
+
   const getCuttingDetails = useCallback(() => formatCuttingDetails({
     cuttingMachineTimeMin: costResult.cuttingMachineTimeMin,
     cuttingSetupTimeMin: costResult.cuttingSetupTimeMin,
@@ -456,6 +468,8 @@ export function useCalculator(
         beTimeMinutes,
         batTimeMinutes,
         isMultiProduct,
+        showMargeCommerciale,
+        showMargeSopano,
         elements: isMultiProduct ? [] : (selectedProductType?.elements.map((el) => ({
           name: el.name,
           quantity: el.quantity,
@@ -580,5 +594,10 @@ export function useCalculator(
     removeProduct,
     setActiveProduct,
     updateProduct,
+    showMargeCommerciale, setShowMargeCommerciale: (v: boolean) => setField('showMargeCommerciale', v),
+    showMargeSopano, setShowMargeSopano: (v: boolean) => setField('showMargeSopano', v),
+    margeCommercialeMontant,
+    margeSopanoMontant,
+    totalNet,
   }
 }

@@ -24,6 +24,11 @@ export function RecapSidebar() {
     totalCostMulti,
     totalQuantityMulti,
     formState,
+    showMargeCommerciale,
+    showMargeSopano,
+    margeCommercialeMontant,
+    margeSopanoMontant,
+    totalNet,
   } = useCalculatorContext()
 
   const {
@@ -203,6 +208,28 @@ export function RecapSidebar() {
               {isMultiProduct && ` (${displayQuantity} pcs total)`}
             </div>
           </div>
+
+          {/* ── Marges internes ── */}
+          {(showMargeCommerciale || showMargeSopano) && (
+            <div className="pt-3 border-t border-dashed border-slate-200 space-y-2">
+              {showMargeCommerciale && (
+                <div className="flex justify-between text-sm text-amber-700">
+                  <span>- Com. commerciale (2.5%)</span>
+                  <span>-{margeCommercialeMontant.toFixed(2)} €</span>
+                </div>
+              )}
+              {showMargeSopano && (
+                <div className="flex justify-between text-sm text-amber-700">
+                  <span>- Com. Sopano (5%)</span>
+                  <span>-{margeSopanoMontant.toFixed(2)} €</span>
+                </div>
+              )}
+              <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-200">
+                <span>Net interne</span>
+                <span>{totalNet.toFixed(2)} €</span>
+              </div>
+            </div>
+          )}
 
           <Button className="w-full mt-6 bg-slate-900 hover:bg-slate-800" onClick={handleSave} disabled={isServing}>
             {isServing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}

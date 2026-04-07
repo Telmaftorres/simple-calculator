@@ -43,3 +43,7 @@ export const MATERIAL_MARGIN_TIER3 = 2.5  // 10-20 €/m²
 export const MATERIAL_MARGIN_TIER4 = 2    // > 20 €/m²``
 
 export const DOSSIER_FEE = 8
+
+// ── Marges internes (lecture seule, jamais sauvegardées en DB) ──
+export const MARGE_COMMERCIALE_PERCENT = 2.5
+export const MARGE_SOPANO_PERCENT = 5
