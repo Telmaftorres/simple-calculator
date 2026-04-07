@@ -127,8 +127,7 @@ export function MobileSidebar({ isAdmin }: { isAdmin: boolean }) {
               Paramètres
             </Link>
           )}
-          <div className="flex items-center justify-between px-2">
-            <ModeToggle />
+          <div className="flex justify-center px-2">
             <LogoutButton />
           </div>
         </div>

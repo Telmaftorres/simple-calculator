@@ -96,8 +96,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
               Paramètres
             </Link>
           )}
-          <div className="flex items-center justify-between px-2">
-            <ModeToggle />
+          <div className="flex justify-center px-2">
             <LogoutButton />
           </div>
         </div>
