@@ -320,6 +320,16 @@ const FORMULAS: Record<string, {
       return `${total} € × (${pct}% / 100) = ${result.toFixed(2)} € déduit du total`
     },
   },
+  GEODIS_FUEL_SURCHARGE_PERCENT: {
+    usedIn: ['Transport — Surcharge carburant'],
+    formula: 'transport_total = (base_HT + options_HT) × (1 + surcharge_% / 100)',
+    getExample: (v) => {
+      const pct = parseFloat(v.GEODIS_FUEL_SURCHARGE_PERCENT) || 0
+      const base = 120
+      const result = base * (1 + pct / 100)
+      return `Base ${base} € × (1 + ${pct}% / 100) = ${result.toFixed(2)} € TTC surcharge`
+    },
+  },
 }
 
 const CATEGORIES: {
@@ -412,6 +422,13 @@ const CATEGORIES: {
     color: 'gray',
     emoji: '📁',
     keys: ['DOSSIER_FEE', 'MARGE_COMMERCIALE_PERCENT', 'MARGE_SOPANO_PERCENT'],
+  },
+  {
+    label: 'Transport',
+    description: 'Paramètres de calcul du transport GEODIS',
+    color: 'sky',
+    emoji: '🚚',
+    keys: ['GEODIS_FUEL_SURCHARGE_PERCENT'],
   },
 ]
 
@@ -510,6 +527,18 @@ const COLOR_MAP: Record<string, {
     formulaBg: 'bg-slate-50',
     formulaBorder: 'border-slate-200',
     formulaText: 'text-slate-600',
+  },
+  sky: {
+    sidebar: 'hover:bg-sky-50 hover:text-sky-700',
+    sidebarActive: 'bg-sky-50 text-sky-700',
+    header: 'bg-sky-50 border-b border-sky-100',
+    border: 'border-sky-200',
+    badge: 'bg-sky-100',
+    badgeText: 'text-sky-700',
+    dot: 'bg-sky-500',
+    formulaBg: 'bg-sky-50',
+    formulaBorder: 'border-sky-100',
+    formulaText: 'text-sky-800',
   },
 }
 

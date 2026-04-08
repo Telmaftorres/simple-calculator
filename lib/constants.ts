@@ -48,3 +48,6 @@ export const DOSSIER_FEE = 8
 // ── Marges internes (lecture seule, jamais sauvegardées en DB) ──
 export const MARGE_COMMERCIALE_PERCENT = 2.5
 export const MARGE_SOPANO_PERCENT = 5
+
+// ── Transport GEODIS ──
+export const GEODIS_FUEL_SURCHARGE_PERCENT = 2.9

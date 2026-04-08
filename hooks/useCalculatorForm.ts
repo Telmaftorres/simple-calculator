@@ -1,7 +1,7 @@
 import { useReducer } from 'react'
 import { QUOTE_DEFAULTS } from '@/lib/quote-defaults'
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
-import type { ProductSlot } from '@/types/calculator'
+import type { ProductSlot, TransportDeliveryForm } from '@/types/calculator'
 import { v4 as uuidv4 } from 'uuid'
 
 export const initialFormState = {
@@ -38,6 +38,9 @@ export type CalculatorFormAction =
   | { type: 'REMOVE_PRODUCT'; index: number }
   | { type: 'SET_ACTIVE_PRODUCT'; index: number }
   | { type: 'UPDATE_PRODUCT'; index: number; field: keyof ProductSlot; value: ProductSlot[keyof ProductSlot] }
+  | { type: 'ADD_TRANSPORT_DELIVERY' }
+  | { type: 'REMOVE_TRANSPORT_DELIVERY'; id: string }
+  | { type: 'UPDATE_TRANSPORT_DELIVERY'; id: string; field: keyof Omit<TransportDeliveryForm, 'id'>; value: TransportDeliveryForm[keyof TransportDeliveryForm] }
 
 export function calculatorFormReducer(
   state: CalculatorFormState,
@@ -87,6 +90,30 @@ export function calculatorFormReducer(
       return { ...state, products: newProducts }
     }
 
+    case 'ADD_TRANSPORT_DELIVERY': {
+      const newDelivery: TransportDeliveryForm = {
+        id: uuidv4(),
+        mode: undefined,
+        department: undefined,
+        weightKg: undefined,
+        units: 1,
+        optionsHT: 0,
+      }
+      return { ...state, transportDeliveries: [...state.transportDeliveries, newDelivery] }
+    }
+
+    case 'REMOVE_TRANSPORT_DELIVERY': {
+      if (state.transportDeliveries.length <= 1) return state
+      return { ...state, transportDeliveries: state.transportDeliveries.filter(d => d.id !== action.id) }
+    }
+
+    case 'UPDATE_TRANSPORT_DELIVERY': {
+      const updated = state.transportDeliveries.map(d =>
+        d.id === action.id ? { ...d, [action.field]: action.value } : d
+      )
+      return { ...state, transportDeliveries: updated }
+    }
+
     default:
       return state
   }
@@ -122,6 +149,18 @@ export function useCalculatorForm() {
     dispatch({ type: 'UPDATE_PRODUCT', index, field, value })
   }
 
+  const addTransportDelivery = () => dispatch({ type: 'ADD_TRANSPORT_DELIVERY' })
+
+  const removeTransportDelivery = (id: string) => dispatch({ type: 'REMOVE_TRANSPORT_DELIVERY', id })
+
+  const updateTransportDelivery = <K extends keyof Omit<TransportDeliveryForm, 'id'>>(
+    id: string,
+    field: K,
+    value: TransportDeliveryForm[K]
+  ) => {
+    dispatch({ type: 'UPDATE_TRANSPORT_DELIVERY', id, field, value })
+  }
+
   return {
     formState,
     setField,
@@ -131,5 +170,8 @@ export function useCalculatorForm() {
     removeProduct,
     setActiveProduct,
     updateProduct,
+    addTransportDelivery,
+    removeTransportDelivery,
+    updateTransportDelivery,
   }
 }

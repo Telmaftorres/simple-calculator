@@ -7,11 +7,13 @@ import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
 import { POSE_SPACING_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/constants'
 import { calculateCosts } from '@/lib/calculation/costs'
+import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
+import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/constants'
 import { useCalculatorForm } from './useCalculatorForm'
 import { useAccessories } from './useAccessories'
 import { useConsumables } from './useConsumables'
 import { formatCuttingDetails, formatAssemblyDetails, formatPackDetails } from '@/lib/format'
-import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlot, ProductSlotResult } from '@/types/calculator'
+import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlot, ProductSlotResult, TransportDeliveryForm } from '@/types/calculator'
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import { createAccessory } from '@/app/actions/accessories'
 import { v4 as uuidv4 } from 'uuid'
@@ -41,6 +43,9 @@ export function useCalculator(
     removeProduct,
     setActiveProduct,
     updateProduct,
+    addTransportDelivery,
+    removeTransportDelivery,
+    updateTransportDelivery,
   } = useCalculatorForm()
 
   const {
@@ -156,6 +161,14 @@ export function useCalculator(
       isMultiProduct: initialQuote.isMultiProduct ?? false,
       showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
       showMargeSopano: initialQuote.showMargeSopano ?? false,
+      transportDeliveries: initialQuote.transportDeliveries?.map((d): TransportDeliveryForm => ({
+        id: uuidv4(),
+        mode: d.transportMode,
+        department: d.department,
+        weightKg: d.weightKg ?? undefined,
+        units: d.units,
+        optionsHT: d.optionsHT,
+      })) || [],
       products: initialQuote.products?.map((p) => ({
         id: uuidv4(),
         productTypeId: p.productTypeId?.toString() || '',
@@ -304,6 +317,21 @@ export function useCalculator(
     ? products.reduce((sum, p) => sum + p.quantity, 0)
     : 0
 
+  const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
+  const transportTotal = formState.transportDeliveries.reduce((sum, d) => {
+    if (!d.mode || !d.department || d.units === undefined) return sum
+    if (d.mode !== 'AFFRETEMENT' && d.weightKg === undefined) return sum
+    const calc = calculateTransport(
+      d.mode as TransportMode,
+      d.department,
+      d.weightKg || 0,
+      d.units,
+      fuelSurchargePct,
+      d.optionsHT || 0
+    )
+    return sum + (calc?.total ?? 0)
+  }, 0)
+
   const costResult = calculateCosts({
     quantity: isMultiProduct ? totalQuantityMulti : quantity,
     impositionResult: isMultiProduct ? null : impositionResult,
@@ -338,6 +366,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds,
     packagingWidth,
     packagingHeight,
+    transportTotal: transportTotal > 0 ? transportTotal : undefined,
   })
 
   const multiProductsSubtotal = productSlotResults.reduce(
@@ -482,6 +511,28 @@ export function useCalculator(
           id: sc.id,
           sizePerItem: sc.sizePerItem,
         })),
+        transportTotal: transportTotal > 0 ? transportTotal : undefined,
+        transportDeliveries: formState.transportDeliveries
+          .filter(d => d.mode && d.department && d.units)
+          .map(d => {
+            const c = calculateTransport(
+              d.mode as TransportMode,
+              d.department!,
+              d.weightKg || 0,
+              d.units,
+              fuelSurchargePct,
+              d.optionsHT || 0
+            )
+            return {
+              transportMode: d.mode!,
+              department: d.department!,
+              weightKg: d.weightKg ?? null,
+              units: d.units,
+              optionsHT: d.optionsHT,
+              basePriceHT: c?.basePrice ?? 0,
+              totalHT: c?.total ?? 0,
+            }
+          }),
         parentReference: initialQuote?.reference || undefined,
         products: isMultiProduct ? products.map((p, i) => ({
           position: i,
@@ -594,10 +645,15 @@ export function useCalculator(
     removeProduct,
     setActiveProduct,
     updateProduct,
+    addTransportDelivery,
+    removeTransportDelivery,
+    updateTransportDelivery,
     showMargeCommerciale, setShowMargeCommerciale: (v: boolean) => setField('showMargeCommerciale', v),
     showMargeSopano, setShowMargeSopano: (v: boolean) => setField('showMargeSopano', v),
     margeCommercialeMontant,
     margeSopanoMontant,
     totalNet,
+    settings,
+    setField,
   }
 }

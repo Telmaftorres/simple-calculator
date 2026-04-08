@@ -48,6 +48,9 @@ export function RecapSidebar() {
     beCost,
     batCost,
     beTotalCost,
+    materialCostMarged,
+    materialMarginCoeff,
+    transportTotal: transportCost,
   } = costResult
 
   const displayTotal = isMultiProduct ? totalCostMulti : totalCost
@@ -117,8 +120,10 @@ export function RecapSidebar() {
             <>
               <CostRow
                 label="Matière"
-                value={impositionResult?.materialCost || 0}
-                details={impositionResult ? `${impositionResult.platesNeeded} plaque(s) × ${selectedPlate?.cost}€` : undefined}
+                value={materialCostMarged}
+                details={impositionResult
+                  ? `${impositionResult.platesNeeded} plaque(s) × coeff. ×${materialMarginCoeff.toFixed(1)}`
+                  : undefined}
               />
 
               {hasImpression && (
@@ -195,6 +200,16 @@ export function RecapSidebar() {
           )}
           {formState.hasDossierFee && dossierFeeCost > 0 && (
             <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />
+          )}
+
+          {transportCost > 0 && (
+            <CostRow
+              label="Transport"
+              value={transportCost}
+              details={formState.transportDeliveries.length > 1
+                ? `${formState.transportDeliveries.length} livraisons`
+                : undefined}
+            />
           )}
 
           {/* ── Total ── */}

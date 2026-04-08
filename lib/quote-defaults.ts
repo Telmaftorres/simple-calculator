@@ -26,5 +26,6 @@ export const QUOTE_DEFAULTS = {
   // ── Marges internes ──
   showMargeCommerciale: false as boolean,
   showMargeSopano: false as boolean,
-
+  // ── Transport ──
+  transportDeliveries: [] as import('@/types/calculator').TransportDeliveryForm[],
 }
