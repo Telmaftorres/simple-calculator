@@ -223,16 +223,17 @@ const FORMULAS: Record<string, {
       return `(${totalMin} min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
     },
   },
-  PACKAGING_SETUP_MINUTES: {
+  PACKAGING_SETUP_COST: {
     usedIn: ['Emballage (calage découpe)'],
-    formula: 'temps_total_min = (temps_par_pose_sec × quantité / 60) + calage_emballage_min',
+    formula: 'coût_emballage = (temps_machine_min / 60) × taux_horaire + forfait_calage',
     getExample: (v) => {
-      const setup = parseFloat(v.PACKAGING_SETUP_MINUTES) || 0
+      const setup = parseFloat(v.PACKAGING_SETUP_COST) || 0
       const secPerPose = 20
       const qty = 500
       const machineMin = (secPerPose * qty) / 60
-      const total = machineMin + setup
-      return `(${secPerPose} sec × ${qty} / 60) + ${setup} min = ${machineMin.toFixed(2)} + ${setup} = ${total.toFixed(2)} min`
+      const rate = parseFloat(v.HOURLY_RATE_PACKAGING) || 45
+      const machineCost = (machineMin / 60) * rate
+      return `(${machineMin.toFixed(2)} min / 60) × ${rate} €/h + ${setup} € = ${machineCost.toFixed(2)} + ${setup} = ${(machineCost + setup).toFixed(2)} €`
     },
   },
   HOURLY_RATE_BE: {
@@ -395,7 +396,7 @@ const CATEGORIES: {
     description: 'Taux horaire et calage emballage',
     color: 'amber',
     emoji: '🗂️',
-    keys: ['HOURLY_RATE_PACKAGING', 'PACKAGING_SETUP_MINUTES'],
+    keys: ['HOURLY_RATE_PACKAGING', 'PACKAGING_SETUP_COST'],
   },
   {
     label: 'Bureau d\'études',

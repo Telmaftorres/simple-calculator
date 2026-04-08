@@ -31,7 +31,7 @@ export const POSE_SPACING_MM = 10
 
 // ── Emballage ──
 export const HOURLY_RATE_PACKAGING = 45
-export const PACKAGING_SETUP_MINUTES = 15
+export const PACKAGING_SETUP_COST = 10
 
 // ── Bureau d'études ──
 export const HOURLY_RATE_BE = 90
