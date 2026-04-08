@@ -42,8 +42,10 @@ export type QuoteCostRowsParams = {
   beCost?: number
   batCost?: number
   beTotalCost?: number
-  transportMode?: string
   transportTotal?: number
+  transportDeliveriesCount?: number
+  materialCostMarged?: number
+  materialMarginCoeff?: number
 }
 
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
@@ -53,8 +55,10 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ] : []),
     {
       label: 'Matière',
-      detail: `${p.impositionResult?.platesNeeded} plaque(s) × ${p.selectedPlate?.cost}€`,
-      value: p.impositionResult?.materialCost || 0,
+      detail: p.materialMarginCoeff && p.materialMarginCoeff !== 1
+        ? `${p.impositionResult?.platesNeeded} plaque(s) × coeff. ×${p.materialMarginCoeff.toFixed(1)}`
+        : `${p.impositionResult?.platesNeeded} plaque(s) × ${p.selectedPlate?.cost}€`,
+      value: p.materialCostMarged ?? p.impositionResult?.materialCost ?? 0,
     },
     ...(p.hasImpression ? [
       { label: 'Impression (Encre)', detail: `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
@@ -92,8 +96,14 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasPackaging && p.packagingTotalCost > 0 ? [
       { label: 'Emballage', detail: `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`, value: p.packagingTotalCost },
     ] : []),
-    ...(p.transportMode !== undefined && p.transportTotal !== undefined && p.transportTotal > 0 ? [
-      { label: 'Transport', detail: p.transportMode, value: p.transportTotal },
+    ...(p.transportTotal !== undefined && p.transportTotal > 0 ? [
+      {
+        label: 'Transport',
+        detail: p.transportDeliveriesCount && p.transportDeliveriesCount > 1
+          ? `${p.transportDeliveriesCount} livraisons`
+          : 'GEODIS',
+        value: p.transportTotal,
+      },
     ] : []),
   ]
 }

@@ -226,6 +226,10 @@ export function QuotePDF({
     packagingCuttingCost,
     hasDossierFee: formValues.hasDossierFee,
     dossierFeeCost: costResult.dossierFeeCost,
+    materialCostMarged: costResult.materialCostMarged,
+    materialMarginCoeff: costResult.materialMarginCoeff,
+    transportTotal: costResult.transportTotal,
+    transportDeliveriesCount: formValues.transportDeliveries?.length,
   })
 
   return (

@@ -125,7 +125,7 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │   │   │   ├── SectionConditionnement.tsx
 │   │   │   ├── SectionAccessoires.tsx    # Création inline d'accessoires
 │   │   │   ├── SectionEmballage.tsx
-│   │   │   ├── SectionTransport.tsx      # Placeholder désactivé
+│   │   │   ├── SectionTransport.tsx      # Multi-livraisons GEODIS
 │   │   │   └── RecapSidebar.tsx
 │   │   └── screens/
 │   │       ├── ScreenSuccess.tsx
@@ -154,7 +154,7 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │   └── MobileSidebar.tsx
 ├── hooks/
 │   ├── useCalculator.ts          # Gère mono et multi-produits, expose productSlotResults
-│   ├── useCalculatorForm.ts      # Reducer avec actions ADD/REMOVE/UPDATE_PRODUCT
+│   ├── useCalculatorForm.ts      # Reducer avec actions ADD/REMOVE/UPDATE_PRODUCT + TRANSPORT_DELIVERY
 │   ├── useAccessories.ts
 │   └── useConsumables.ts
 ├── lib/
@@ -194,7 +194,8 @@ Study (dossier client)
   └── Quote[] (devis)
         ├── ProductType (type PLV) → Element[]
         ├── Plate (matière/plaque)
-        ├── QuoteProduct[]        (mode multi-produits, onDelete: Cascade)
+        ├── QuoteProduct[]              (mode multi-produits, onDelete: Cascade)
+        ├── QuoteTransportDelivery[]    (points de livraison transport, onDelete: Cascade)
         ├── QuoteAccessory[] → Accessory   (onDelete: Cascade)
         ├── QuoteConsumable[] → Consumable (onDelete: Cascade)
         └── QuoteElement[]                 (onDelete: Cascade)
@@ -286,7 +287,7 @@ Le moteur `lib/calculation/imposition.ts` calcule automatiquement le meilleur pl
 
 | Poste | Formule |
 |---|---|
-| **Matière** | `plaquesNécessaires × coût/plaque` |
+| **Matière** | `plaquesNécessaires × coût/plaque × coefficientMatière` (tiered ×3.5/×3/×2.5/×2 selon €/m²) |
 | **Impression (encre standard)** | `(inkMlPerPlate × 100% × nb_plaques × multiplicateur_rv / 1000) × INK_COST_PER_LITER` |
 | **Impression (vernis)** | `(inkMlPerPlate × varnishRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_VARNISH_PER_LITER` |
 | **Impression (blanc)** | `(inkMlPerPlate × flatColorRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_FLAT_COLOR_PER_LITER` |
@@ -300,7 +301,8 @@ Le moteur `lib/calculation/imposition.ts` calcule automatiquement le meilleur pl
 | **Conditionnement** | `temps_par_pce_sec × quantité / 3600 × taux_horaire_façonnage + notices` |
 | **Accessoires** | `Σ (prix × quantité)` |
 | **Consommables** | `Σ (sizePerItem × quantité / size_rouleau × prix_rouleau)` |
-| **Emballage** | `plaques_carton × coût_plaque + (temps_découpe_sec × quantité / 60 + calage_min) / 60 × taux_horaire_emballage` |
+| **Emballage** | `plaques_carton × coût_plaque + (temps_découpe_sec × quantité / 60) / 60 × taux_horaire_emballage + forfait_calage` |
+| **Transport** | `Σ livraisons (prix_base_GEODIS × surcharge_carburant + options)` |
 
 ### Mode multi-produits
 
@@ -327,7 +329,7 @@ productSlotResults[1].costResult.subtotal  (matière + impression + découpe pro
 | Conditionnement | ✓ | ✓ | commun |
 | Accessoires | ✓ | ✓ | commun |
 | Emballage | ✓ | ✓ | commun |
-| Transport | — | placeholder | placeholder |
+| Transport | — | multi-livraisons GEODIS | commun |
 
 ---
 
@@ -352,13 +354,14 @@ Modifiables depuis `/settings/calculator` sans redéploiement.
 | `ASSEMBLY_NOTICE_COST_PER_PIECE` | 0.10 €/pce | Coût notice de montage par pièce |
 | `POSE_SPACING_MM` | 10 mm | Espacement entre poses (imposition) |
 | `HOURLY_RATE_PACKAGING` | 45 €/h | Taux horaire emballage |
-| `PACKAGING_SETUP_MINUTES` | 15 min | Calage emballage |
+| `PACKAGING_SETUP_COST` | 10 € | Forfait calage emballage (fixe, hors taux horaire) |
 | `HOURLY_RATE_BE` | 90 €/h | Taux horaire Bureau d'études / Création |
 | `HOURLY_RATE_BAT` | 70 €/h | Taux horaire BAT |
 | `MATERIAL_MARGIN_TIER*` | — | Coefficients de marge selon le coût de la matière |
 | `DOSSIER_FEE` | 8 € | Frais de dossier forfaitaires administratifs |
 | `MARGE_COMMERCIALE_PERCENT` | 2.5 % | Marge interne commerciale (affichage indicatif) |
 | `MARGE_SOPANO_PERCENT` | 5 % | Marge interne Sopano (affichage indicatif) |
+| `GEODIS_FUEL_SURCHARGE_PERCENT` | 2.9 % | Surcharge carburant GEODIS (mensuel) |
 
 > ⚠️ Après l'ajout de nouvelles clés en DB via seed, relancer le serveur. `getSettings` n'utilise pas `unstable_cache` donc les nouvelles clés apparaissent immédiatement.
 
@@ -463,22 +466,22 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
   - Centralisation de l'accès "Paramètres Calcul" dans la page principale "Paramètres".
   - Nettoyage : suppression du bouton mode sombre redondant dans la barre latérale.
 
-  ### Sprint 8 — Module Transport & Base de données historique (à venir)
-- [ ] **Grilles tarifaires GEODIS** encodées en base : Pack 30 (3 zones, 5 tranches), Messagerie Plus (11 zones, 16 tranches), Affrètement (95 départements, 28 colonnes palettes)
-- [ ] **Calcul automatique** du prix transport depuis département + poids + nombre colis/palettes
-- [ ] **Suggestion de mode** : Pack 30 si ≤ 30kg, Messagerie Plus sinon, Affrètement si multi-palettes > 500kg
-- [ ] **Surcharge carburant** configurable en Settings (taux mensuel variable GEODIS)
-- [ ] **Options transport** saisissables manuellement (champ libre €)
-- [ ] **Table `TransportShipment`** : données transport réelles par dossier clôturé (mode, poids réel, département, coût réel, options)
-- [ ] **Table `HistoricalDossier`** : profils type enrichis dossier par dossier (type PLV, format, quantité, poids total envoi, temps réels)
-- [ ] **10 dossiers initiaux** intégrés en seed comme données de référence de départ
+### Sprint 8 — Module Transport & améliorations calcul (avril 2026)
+- ✅ **Section Transport multi-livraisons** : ajout/suppression de points de livraison indépendants, chacun avec son mode, département, poids, colis et options
+- ✅ **Grilles tarifaires GEODIS** : Pack 30 (3 zones, 5 tranches), Messagerie Plus (11 zones, 16 tranches), Affrètement (95 départements, 28 colonnes palettes) — hardcodées en `lib/transport/geodis-rates.ts`
+- ✅ **Calcul automatique** du prix transport : prix de base + surcharge carburant + options
+- ✅ **Suggestion de mode** : Pack 30 si ≤ 30 kg, Messagerie Plus sinon, Affrètement si multi-palettes > 500 kg
+- ✅ **Surcharge carburant** `GEODIS_FUEL_SURCHARGE_PERCENT` configurable en Settings (2.9% par défaut)
+- ✅ **Table `QuoteTransportDelivery`** : persistance des points de livraison par devis (rechargement en édition), onDelete Cascade
+- ✅ **Transport intégré au total** : `transportTotal` passé à `calculateCosts()` et affiché dans le RecapSidebar
+- ✅ **RecapSidebar matière corrigé** : la ligne Matière affiche désormais `materialCostMarged` (coût × coefficient) au lieu du coût brut, avec le coefficient appliqué visible en détail
+- ✅ **Calage emballage** : passage d'un temps (minutes × taux horaire) à un **forfait fixe 10 € `PACKAGING_SETUP_COST`** indépendant du taux horaire
+- ✅ **Paramètres Impression** : sous-catégories en onglets (**Impression** / **Calage** / **Encre**) pour une meilleure lisibilité
 
 ---
 
 ## 🗺 Roadmap (à venir)
 
-### Court terme
-- [ ] Module Transport complet (GEODIS — Pack 30, Messagerie Plus, Affrètement)
 - [ ] Historique & comparaison devis vs réel (données de production saisies en post-dossier)
 
 ### Vision long terme — Système d'apprentissage par l'historique
@@ -490,6 +493,7 @@ L'objectif est de construire une base de données intelligente qui s'enrichit à
 **Phase 2 — Base de référence** : les dossiers clôturés alimentent des profils type par famille de PLV (présentoir comptoir, totem grand format, cube, etc.) avec leurs valeurs réelles moyennes.
 
 **Phase 3 — Suggestions intelligentes** : lors d'un nouveau devis similaire, le logiciel propose des valeurs pré-remplies (poids estimé, mode transport suggéré, temps façonnage estimé) basées sur l'historique. Plus la base grossit, plus les estimations sont précises — jusqu'à une quasi-automatisation des devis courants.
+
 ---
 
 © 2024-2026 Kontfeel — Tous droits réservés
