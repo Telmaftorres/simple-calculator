@@ -599,5 +599,7 @@ export function useCalculator(
     margeCommercialeMontant,
     margeSopanoMontant,
     totalNet,
+    settings,
+    setField,
   }
 }

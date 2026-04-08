@@ -68,6 +68,7 @@ export function calculateCosts(params: {
   packagingCuttingTimePerPoseSeconds: number
   packagingWidth: number
   packagingHeight: number
+  transportTotal?: number
 }) {
   const {
     quantity,
@@ -103,6 +104,7 @@ export function calculateCosts(params: {
     packagingCuttingTimePerPoseSeconds,
     packagingWidth,
     packagingHeight,
+    transportTotal,
   } = params
 
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
@@ -313,7 +315,8 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     accessoriesCost +
     consumablesCost +
     packagingTotalCost +
-    beTotalCost
+    beTotalCost +
+    (transportTotal ?? 0)
 
   return {
     printingCostData,
@@ -343,7 +346,7 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     beCost,
     batCost,
     beTotalCost,
-    transportTotal: 0,
+    transportTotal: transportTotal ?? 0,
   }
 }
 
