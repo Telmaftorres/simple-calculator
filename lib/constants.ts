@@ -37,6 +37,11 @@ export const PACKAGING_SETUP_COST = 10
 export const HOURLY_RATE_BE = 90
 export const HOURLY_RATE_BAT = 70
 
+// ── Marges Encre ──
+export const INK_MARGIN_STANDARD = 4.5
+export const INK_MARGIN_VARNISH = 7
+export const INK_MARGIN_FLAT_COLOR = 7
+
 // ── Marges Matériel ──
 export const MATERIAL_MARGIN_TIER1 = 3.5  // < 5 €/m²
 export const MATERIAL_MARGIN_TIER2 = 3    // 5-10 €/m²

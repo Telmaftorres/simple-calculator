@@ -1,6 +1,7 @@
 export const QUOTE_DEFAULTS = {
   printMode: 'production' as 'production' | 'quality',
   isRectoVerso: false as boolean,
+  inkMlVerso: 0 as number,
   hasVarnish: false as boolean,
   hasFlatColor: false as boolean,
   varnishSurfacePercent: 0 as number,

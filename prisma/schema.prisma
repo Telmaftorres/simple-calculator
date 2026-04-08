@@ -67,6 +67,7 @@ model Quote {
   isRectoVerso                       Boolean           @default(false)
   rectoVersoType                     String?
   inkMlPerPlate                      Int?              @default(0)
+  inkMlVerso                         Int?              @default(0)
   varnishSurfacePercent              Int               @default(0)
   flatColorSurfacePercent            Int               @default(0)
   hasVarnish                         Boolean           @default(false)
@@ -236,6 +237,7 @@ model QuoteProduct {
   isRectoVerso              Boolean @default(false)
   rectoVersoType            String?
   inkMlPerPlate             Int     @default(0)
+  inkMlVerso                Int     @default(0)
   varnishSurfacePercent     Int     @default(0)
   flatColorSurfacePercent   Int     @default(0)
   hasVarnish                Boolean @default(false)

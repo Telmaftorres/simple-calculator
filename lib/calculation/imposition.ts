@@ -34,7 +34,8 @@ export interface ImpositionResult {
 export function calculateImposition(
   item: Dimensions,
   plate: Plate,
-  spacing: number = 0
+  spacing: number = 0,
+  forceOrientation?: 'normal' | 'rotated'
 ): ImpositionResult {
   const { width: iW, height: iH } = item
   const { width: pW, height: pH } = plate
@@ -139,6 +140,14 @@ export function calculateImposition(
     }
 
     return bestMixed
+  }
+
+  // ── Orientation forcée ──
+  if (forceOrientation === 'normal') {
+    return { itemsPerPlate: totalNormal, orientation: 'normal', layout: generateLayout(rowsNormal, colsNormal, iW, iH) }
+  }
+  if (forceOrientation === 'rotated') {
+    return { itemsPerPlate: totalRotated, orientation: 'rotated', layout: generateLayout(rowsRotated, colsRotated, iH, iW) }
   }
 
   const mixedResult = tryMixed()

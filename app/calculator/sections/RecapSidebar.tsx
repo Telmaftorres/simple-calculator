@@ -75,9 +75,9 @@ export function RecapSidebar() {
                   </div>
                   <CostRow
                     label="Matière"
-                    value={result.costResult.materialCost}
+                    value={result.costResult.materialCostMarged}
                     details={result.impositionResult
-                      ? `${result.impositionResult.platesNeeded} plaque(s)`
+                      ? `${result.impositionResult.platesNeeded} plaque(s) × coeff. ×${result.costResult.materialMarginCoeff.toFixed(1)}`
                       : undefined}
                   />
                   {result.slot.hasImpression && (

@@ -96,6 +96,17 @@ const FORMULAS: Record<string, {
       return `${volumeL} L × ${cost} €/L × ${surcharge} (vernis) = ${result.toFixed(2)} €`
     },
   },
+  INK_MARGIN_STANDARD: {
+    usedIn: ['Impression (encre standard)'],
+    formula: 'coût_encre_margé = volume_L × coût_par_litre × marge',
+    getExample: (v) => {
+      const margin = parseFloat(v.INK_MARGIN_STANDARD) || 0
+      const cost = parseFloat(v.INK_COST_PER_LITER) || 0
+      const volumeL = 0.2
+      const result = volumeL * cost * margin
+      return `${volumeL} L × ${cost} €/L × ${margin} = ${result.toFixed(2)} € facturé`
+    },
+  },
   INK_COST_VARNISH_PER_LITER: {
     usedIn: ['Impression (encre) — vernis'],
     formula: 'coût_vernis = volume_vernis_L × coût_vernis_par_litre',
@@ -110,6 +121,17 @@ const FORMULAS: Record<string, {
       return `vernis 30% → 20 ml × 30% × ${nbPlates} plaques / 1000 = ${varnishVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(varnishVolumeL * stdCost).toFixed(2)} € en encre standard)`
     },
   },
+  INK_MARGIN_VARNISH: {
+    usedIn: ['Impression (encre vernis)'],
+    formula: 'coût_vernis_margé = volume_L × coût_par_litre × marge',
+    getExample: (v) => {
+      const margin = parseFloat(v.INK_MARGIN_VARNISH) || 0
+      const cost = parseFloat(v.INK_COST_VARNISH_PER_LITER) || 0
+      const volumeL = 0.06
+      const result = volumeL * cost * margin
+      return `${volumeL} L × ${cost} €/L × ${margin} = ${result.toFixed(2)} € facturé`
+    },
+  },
   INK_COST_FLAT_COLOR_PER_LITER: {
     usedIn: ['Impression (encre) — blanc'],
     formula: 'coût_blanc = volume_blanc_L × coût_blanc_par_litre',
@@ -122,6 +144,17 @@ const FORMULAS: Record<string, {
       const flatVolumeL = (inkMl * flatPct * nbPlates) / 1000
       const result = flatVolumeL * cost
       return `blanc 20% → 20 ml × 20% × ${nbPlates} plaques / 1000 = ${flatVolumeL.toFixed(3)} L × ${cost} €/L = ${result.toFixed(2)} € (vs ${(flatVolumeL * stdCost).toFixed(2)} € en encre standard)`
+    },
+  },
+  INK_MARGIN_FLAT_COLOR: {
+    usedIn: ['Impression (encre blanc)'],
+    formula: 'coût_blanc_margé = volume_L × coût_par_litre × marge',
+    getExample: (v) => {
+      const margin = parseFloat(v.INK_MARGIN_FLAT_COLOR) || 0
+      const cost = parseFloat(v.INK_COST_FLAT_COLOR_PER_LITER) || 0
+      const volumeL = 0.04
+      const result = volumeL * cost * margin
+      return `${volumeL} L × ${cost} €/L × ${margin} = ${result.toFixed(2)} € facturé`
     },
   },
   HOURLY_RATE_CUTTING: {
@@ -257,7 +290,7 @@ const FORMULAS: Record<string, {
     },
   },
   MATERIAL_MARGIN_TIER1: {
-    usedIn: ['Matière — coefficient < 5 €/m²'],
+    usedIn: ['Matière — plaque < 5 €'],
     formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
       const coeff = parseFloat(v.MATERIAL_MARGIN_TIER1) || 0
@@ -266,7 +299,7 @@ const FORMULAS: Record<string, {
     },
   },
   MATERIAL_MARGIN_TIER2: {
-    usedIn: ['Matière — coefficient 5 à 10 €/m²'],
+    usedIn: ['Matière — plaque 5 à 10 €'],
     formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
       const coeff = parseFloat(v.MATERIAL_MARGIN_TIER2) || 0
@@ -275,7 +308,7 @@ const FORMULAS: Record<string, {
     },
   },
   MATERIAL_MARGIN_TIER3: {
-    usedIn: ['Matière — coefficient 10 à 20 €/m²'],
+    usedIn: ['Matière — plaque 10 à 20 €'],
     formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
       const coeff = parseFloat(v.MATERIAL_MARGIN_TIER3) || 0
@@ -284,7 +317,7 @@ const FORMULAS: Record<string, {
     },
   },
   MATERIAL_MARGIN_TIER4: {
-    usedIn: ['Matière — coefficient > 20 €/m²'],
+    usedIn: ['Matière — plaque > 20 €'],
     formula: 'coût_matière_margé = coût_matière_brut × coefficient',
     getExample: (v) => {
       const coeff = parseFloat(v.MATERIAL_MARGIN_TIER4) || 0
@@ -368,8 +401,11 @@ const CATEGORIES: {
         label: 'Encre',
         keys: [
           'INK_COST_PER_LITER',
+          'INK_MARGIN_STANDARD',
           'INK_COST_VARNISH_PER_LITER',
+          'INK_MARGIN_VARNISH',
           'INK_COST_FLAT_COLOR_PER_LITER',
+          'INK_MARGIN_FLAT_COLOR',
         ],
       },
     ],
