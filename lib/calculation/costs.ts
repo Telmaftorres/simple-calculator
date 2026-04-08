@@ -12,7 +12,7 @@ import {
   PRINT_SPEED_QUALITY,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   POSE_SPACING_MM,
-  PACKAGING_SETUP_MINUTES,
+  PACKAGING_SETUP_COST,
   PRINT_SETUP_STANDARD_COST,
   PRINT_SETUP_COMPLEX_COST,
   CUTTING_SETUP_STANDARD_COST,
@@ -125,7 +125,7 @@ export function calculateCosts(params: {
   const cuttingSetupComplexCost = settings?.CUTTING_SETUP_COMPLEX_COST ?? CUTTING_SETUP_COMPLEX_COST
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
-  const packagingSetupMinutes = settings?.PACKAGING_SETUP_MINUTES ?? PACKAGING_SETUP_MINUTES
+  const packagingSetupCost = settings?.PACKAGING_SETUP_COST ?? PACKAGING_SETUP_COST
   const materialMarginTier1 = settings?.MATERIAL_MARGIN_TIER1 ?? MATERIAL_MARGIN_TIER1
   const materialMarginTier2 = settings?.MATERIAL_MARGIN_TIER2 ?? MATERIAL_MARGIN_TIER2
   const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
@@ -273,9 +273,8 @@ export function calculateCosts(params: {
 
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
-    const totalMinutes =
-      (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60 + packagingSetupMinutes
-    return (totalMinutes / 60) * hourlyRatePackaging
+    const machineMinutes = (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
+    return (machineMinutes / 60) * hourlyRatePackaging + packagingSetupCost
   })()
 
   const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
