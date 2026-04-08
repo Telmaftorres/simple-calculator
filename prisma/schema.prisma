@@ -110,6 +110,15 @@ model Quote {
   hasDossierFee                      Boolean           @default(false)
   showMargeCommerciale               Boolean           @default(false)
   showMargeSopano                    Boolean           @default(false)
+  // ── Transport ──
+  transportMode                      String?           // "PACK30" | "MESSAGERIE_PLUS" | "AFFRETEMENT"
+  transportDepartment                String?           // ex: "76", "75", "13"
+  transportWeight                    Float?            // poids total en kg
+  transportUnits                     Int?              // nombre de colis ou palettes
+  transportBasePrice                 Float?            // prix base HT calculé
+  transportOptions                   Float?            // options manuelles HT
+  transportTotal                     Float?            // total transport HT
+  transportShipments                 TransportShipment[]
 }
 
 
@@ -204,4 +213,23 @@ model QuoteProduct {
   totalCost                 Float?
   quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   plate                     Plate?  @relation(fields: [plateId], references: [id])
+}
+
+model TransportShipment {
+  id            String   @id @default(cuid())
+  createdAt     DateTime @default(now())
+  clientName    String
+  plvType       String   // ex: "Présentoir comptoir", "Totem", "Cube"
+  plvFormat     String   // ex: "350x276x275mm"
+  quantity      Int
+  transportMode String   // "PACK30" | "MESSAGERIE_PLUS" | "AFFRETEMENT"
+  department    String
+  weightKg      Float
+  units         Int      // colis ou palettes
+  basePriceHT   Float
+  optionsHT     Float    @default(0)
+  totalHT       Float
+  notes         String?
+  quoteId       Int?
+  quote         Quote?   @relation(fields: [quoteId], references: [id], onDelete: SetNull)
 }
