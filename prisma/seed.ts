@@ -69,6 +69,7 @@ async function seedSettings() {
     { key: 'DOSSIER_FEE', value: String(DOSSIER_FEE), label: 'Frais de dossier', unit: '€' },
     { key: 'MARGE_COMMERCIALE_PERCENT', value: String(MARGE_COMMERCIALE_PERCENT), label: 'Com. commerciale', unit: '%' },
     { key: 'MARGE_SOPANO_PERCENT', value: String(MARGE_SOPANO_PERCENT), label: 'Com. Sopano', unit: '%' },
+    { key: 'GEODIS_FUEL_SURCHARGE_PERCENT', value: '2.9', label: 'Surcharge carburant GEODIS', unit: '%' },
   ]
 
   // ✅ Supprimer les anciennes clés obsolètes
