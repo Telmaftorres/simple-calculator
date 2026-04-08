@@ -130,6 +130,7 @@ export function useCalculator(
 
     loadQuote({
       studyNumber: initialQuote.study?.number || 'ET',
+      selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
       quantity: initialQuote.quantity,
       selectedPlateId: initialQuote.plateId?.toString() || '',
       flatWidth: initialQuote.flatWidth || 0,
@@ -159,6 +160,10 @@ export function useCalculator(
       hasConditionnement: initialQuote.hasConditionnement ?? true,
       hasAccessoires: initialQuote.hasAccessoires ?? false,
       isMultiProduct: initialQuote.isMultiProduct ?? false,
+      hasBE: initialQuote.hasBE ?? false,
+      beTimeMinutes: initialQuote.beTimeMinutes ?? 0,
+      batTimeMinutes: initialQuote.batTimeMinutes ?? 0,
+      hasDossierFee: initialQuote.hasDossierFee ?? false,
       showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
       showMargeSopano: initialQuote.showMargeSopano ?? false,
       transportDeliveries: initialQuote.transportDeliveries?.map((d): TransportDeliveryForm => ({
