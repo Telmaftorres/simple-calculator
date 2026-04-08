@@ -5,9 +5,9 @@ export const quoteFieldsSchema = z.object({
   quantity: z.number().int().positive(),
   flatWidth: z.number().int().positive(),
   flatHeight: z.number().int().positive(),
-  plateId: z.number().int().positive(),
-  itemsPerPlate: z.number().int().positive(),
-  platesCount: z.number().int().positive(),
+  plateId: z.number().int().positive().nullable().optional(),
+  itemsPerPlate: z.number().int().min(0).nullable().optional(),
+  platesCount: z.number().int().min(0).nullable().optional(),
   totalCost: z.number().min(0),
 
   inkMlPerPlate: z.number().min(0).max(100).optional(),
@@ -74,9 +74,9 @@ const quoteProductSchema = z.object({
   hasVarnish: z.boolean().optional(),
   hasFlatColor: z.boolean().optional(),
   hasImpression: z.boolean().optional(),
-  hasPrintSetup: z.boolean().optional(),
+  printSetupType: z.string().optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
-  hasCuttingSetup: z.boolean().optional(),
+  cuttingSetupType: z.string().optional(),
   totalCost: z.number().nullable().optional(),
 })
 
