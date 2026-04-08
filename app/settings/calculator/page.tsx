@@ -3,7 +3,7 @@ import { redirect } from 'next/navigation'
 import { getSettings } from '@/app/actions/settings'
 import { SettingsClient } from './settings-client'
 import Link from 'next/link'
-import { ArrowLeft } from 'lucide-react'
+import { ArrowLeft, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { ModeToggle } from '@/components/mode-toggle'
 
@@ -27,6 +27,11 @@ export default async function CalculatorSettingsPage() {
         </div>
         <div className="flex items-center gap-4">
           <ModeToggle />
+          <Link href="/dashboard">
+            <Button variant="outline" className="gap-2">
+              <LayoutDashboard className="h-4 w-4" /> Dashboard
+            </Button>
+          </Link>
           <Link href="/settings">
             <Button variant="outline" className="gap-2">
               <ArrowLeft className="h-4 w-4" /> Retour
