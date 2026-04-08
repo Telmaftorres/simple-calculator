@@ -343,6 +343,7 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     beCost,
     batCost,
     beTotalCost,
+    transportTotal: 0,
   }
 }
 

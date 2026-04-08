@@ -42,6 +42,8 @@ export type QuoteCostRowsParams = {
   beCost?: number
   batCost?: number
   beTotalCost?: number
+  transportMode?: string
+  transportTotal?: number
 }
 
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
@@ -89,6 +91,9 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ] : []),
     ...(p.hasPackaging && p.packagingTotalCost > 0 ? [
       { label: 'Emballage', detail: `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`, value: p.packagingTotalCost },
+    ] : []),
+    ...(p.transportMode !== undefined && p.transportTotal !== undefined && p.transportTotal > 0 ? [
+      { label: 'Transport', detail: p.transportMode, value: p.transportTotal },
     ] : []),
   ]
 }
