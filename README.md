@@ -463,12 +463,33 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
   - Centralisation de l'accès "Paramètres Calcul" dans la page principale "Paramètres".
   - Nettoyage : suppression du bouton mode sombre redondant dans la barre latérale.
 
+  ### Sprint 8 — Module Transport & Base de données historique (à venir)
+- [ ] **Grilles tarifaires GEODIS** encodées en base : Pack 30 (3 zones, 5 tranches), Messagerie Plus (11 zones, 16 tranches), Affrètement (95 départements, 28 colonnes palettes)
+- [ ] **Calcul automatique** du prix transport depuis département + poids + nombre colis/palettes
+- [ ] **Suggestion de mode** : Pack 30 si ≤ 30kg, Messagerie Plus sinon, Affrètement si multi-palettes > 500kg
+- [ ] **Surcharge carburant** configurable en Settings (taux mensuel variable GEODIS)
+- [ ] **Options transport** saisissables manuellement (champ libre €)
+- [ ] **Table `TransportShipment`** : données transport réelles par dossier clôturé (mode, poids réel, département, coût réel, options)
+- [ ] **Table `HistoricalDossier`** : profils type enrichis dossier par dossier (type PLV, format, quantité, poids total envoi, temps réels)
+- [ ] **10 dossiers initiaux** intégrés en seed comme données de référence de départ
+
 ---
 
 ## 🗺 Roadmap (à venir)
 
-- [ ] Historique & comparaison de devis
-- [ ] Module Transport complet
+### Court terme
+- [ ] Module Transport complet (GEODIS — Pack 30, Messagerie Plus, Affrètement)
+- [ ] Historique & comparaison devis vs réel (données de production saisies en post-dossier)
+
+### Vision long terme — Système d'apprentissage par l'historique
+
+L'objectif est de construire une base de données intelligente qui s'enrichit à chaque dossier clôturé :
+
+**Phase 1 — Collecte** : à la clôture d'un dossier, saisie des données réelles (poids, temps, coûts, mode transport choisi) vs devis initial.
+
+**Phase 2 — Base de référence** : les dossiers clôturés alimentent des profils type par famille de PLV (présentoir comptoir, totem grand format, cube, etc.) avec leurs valeurs réelles moyennes.
+
+**Phase 3 — Suggestions intelligentes** : lors d'un nouveau devis similaire, le logiciel propose des valeurs pré-remplies (poids estimé, mode transport suggéré, temps façonnage estimé) basées sur l'historique. Plus la base grossit, plus les estimations sont précises — jusqu'à une quasi-automatisation des devis courants.
 ---
 
 © 2024-2026 Kontfeel — Tous droits réservés
