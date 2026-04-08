@@ -338,25 +338,40 @@ const CATEGORIES: {
   description: string
   color: string
   emoji: string
-  keys: string[]
+  keys?: string[]
+  subcategories?: { label: string; keys: string[] }[]
 }[] = [
   {
     label: 'Impression',
     description: 'Taux horaires, vitesses, encre et calages impression',
     color: 'purple',
     emoji: '🖨️',
-    keys: [
-      'HOURLY_RATE_PRINT',
-      'PRINT_SETUP_TIME_MIN',
-      'PRINT_SETUP_STANDARD_COST',
-      'PRINT_SETUP_COMPLEX_COST',
-      'PRINT_SPEED_PRODUCTION',
-      'PRINT_SPEED_QUALITY',
-      'PRINT_SPEED_VARNISH',
-      'PRINT_SPEED_FLAT_COLOR',
-      'INK_COST_PER_LITER',
-      'INK_COST_VARNISH_PER_LITER',
-      'INK_COST_FLAT_COLOR_PER_LITER',
+    subcategories: [
+      {
+        label: 'Impression',
+        keys: [
+          'HOURLY_RATE_PRINT',
+          'PRINT_SPEED_PRODUCTION',
+          'PRINT_SPEED_QUALITY',
+          'PRINT_SPEED_VARNISH',
+          'PRINT_SPEED_FLAT_COLOR',
+        ],
+      },
+      {
+        label: 'Calage',
+        keys: [
+          'PRINT_SETUP_STANDARD_COST',
+          'PRINT_SETUP_COMPLEX_COST',
+        ],
+      },
+      {
+        label: 'Encre',
+        keys: [
+          'INK_COST_PER_LITER',
+          'INK_COST_VARNISH_PER_LITER',
+          'INK_COST_FLAT_COLOR_PER_LITER',
+        ],
+      },
     ],
   },
   {
@@ -543,7 +558,99 @@ const COLOR_MAP: Record<string, {
   },
 }
 
+type Colors = typeof COLOR_MAP[string]
 
+function SettingRowContent({
+  setting,
+  formula,
+  isExpanded,
+  values,
+  saving,
+  activeColors,
+  onToggleFormula,
+  onValueChange,
+  onSave,
+}: {
+  setting: { key: string; label: string; unit?: string | null }
+  formula: { usedIn: string[]; formula: string; getExample: (v: Record<string, string>) => string } | undefined
+  isExpanded: boolean
+  values: Record<string, string>
+  saving: string | null
+  activeColors: Colors
+  onToggleFormula: () => void
+  onValueChange: (val: string) => void
+  onSave: () => void
+}) {
+  return (
+    <>
+      <div className="flex items-center gap-4">
+        <div className="flex-1 min-w-0">
+          <label className="text-sm font-medium text-slate-700 block">{setting.label}</label>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          {formula && (
+            <Button
+              size="sm"
+              variant="ghost"
+              className={`text-xs gap-1 h-8 px-2 ${activeColors.formulaText} hover:${activeColors.formulaBg}`}
+              onClick={onToggleFormula}
+            >
+              <FlaskConical className="h-3 w-3" />
+              {isExpanded ? 'Masquer' : 'Voir le calcul'}
+              {isExpanded ? <ChevronUp className="h-3 w-3" /> : <ChevronDown className="h-3 w-3" />}
+            </Button>
+          )}
+          <Input
+            type="number"
+            step="any"
+            value={values[setting.key] ?? ''}
+            onChange={(e) => onValueChange(e.target.value)}
+            className="w-28 text-right"
+          />
+          {setting.unit && (
+            <span className="text-sm text-slate-500 w-14 shrink-0">{setting.unit}</span>
+          )}
+          <Button
+            size="icon"
+            variant="ghost"
+            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+            onClick={onSave}
+            disabled={saving === setting.key}
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+
+      {formula && isExpanded && (
+        <div className={`mt-3 rounded-lg border ${activeColors.formulaBorder} ${activeColors.formulaBg} p-4 space-y-3`}>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Utilisé dans</p>
+            <div className="flex flex-wrap gap-1.5">
+              {formula.usedIn.map((usage) => (
+                <span key={usage} className={`text-xs px-2 py-0.5 rounded-full font-medium ${activeColors.badge} ${activeColors.badgeText}`}>
+                  {usage}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Formule</p>
+            <code className={`text-xs font-mono block bg-white/70 rounded px-3 py-2 border ${activeColors.formulaBorder} ${activeColors.formulaText}`}>
+              {formula.formula}
+            </code>
+          </div>
+          <div>
+            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">Exemple chiffré</p>
+            <code className={`text-xs font-mono block bg-white/70 rounded px-3 py-2 border ${activeColors.formulaBorder} ${activeColors.formulaText}`}>
+              {formula.getExample(values)}
+            </code>
+          </div>
+        </div>
+      )}
+    </>
+  )
+}
 
 export function SettingsClient({ settings }: { settings: Setting[] }) {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label)
@@ -576,9 +683,11 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
   const activeConfig = CATEGORIES.find((c) => c.label === activeCategory)!
   const activeColors = COLOR_MAP[activeConfig.color]
 
-  const categorySettings = activeConfig.keys
-    .map((key) => settingsMap[key])
-    .filter(Boolean)
+  const allKeys = activeConfig.subcategories
+    ? activeConfig.subcategories.flatMap((s) => s.keys)
+    : (activeConfig.keys ?? [])
+
+  const categorySettings = allKeys.map((key) => settingsMap[key]).filter(Boolean)
 
   return (
     <div className="flex gap-6 pb-8">
@@ -594,7 +703,8 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
               {CATEGORIES.map((cat) => {
                 const colors = COLOR_MAP[cat.color]
                 const isActive = activeCategory === cat.label
-                const catSettings = cat.keys.map((k) => settingsMap[k]).filter(Boolean)
+                const catKeys = cat.subcategories ? cat.subcategories.flatMap((s) => s.keys) : (cat.keys ?? [])
+                const catSettings = catKeys.map((k) => settingsMap[k]).filter(Boolean)
 
                 return (
                   <button
@@ -650,112 +760,61 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
 
           <CardContent className="px-6 py-4 space-y-4">
 
-
-            {categorySettings.map((setting, index) => {
-              const formula = FORMULAS[setting.key]
-              const isExpanded = expandedFormulas[setting.key]
-
-              return (
-                <div
-                  key={setting.key}
-                  className={`
-                    ${index < categorySettings.length - 1 ? 'pb-4 border-b border-slate-100' : ''}
-
-                  `}
-                >
-                  {/* Ligne principale */}
-                  <div className="flex items-center gap-4">
-                    <div className="flex-1 min-w-0">
-                      <label className="text-sm font-medium text-slate-700 block">
-                        {setting.label}
-                      </label>
+            {activeConfig.subcategories ? (
+              activeConfig.subcategories.map((sub, subIndex) => {
+                const subSettings = sub.keys.map((k) => settingsMap[k]).filter(Boolean)
+                if (subSettings.length === 0) return null
+                return (
+                  <div key={sub.label}>
+                    {subIndex > 0 && <div className="border-t border-slate-100 mt-2 mb-4" />}
+                    <div className={`text-xs font-semibold uppercase tracking-wide mb-3 ${activeColors.badgeText}`}>
+                      {sub.label}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0">
-                      {/* Bouton voir le calcul */}
-                      {formula && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className={`text-xs gap-1 h-8 px-2 ${activeColors.formulaText} hover:${activeColors.formulaBg}`}
-                          onClick={() => toggleFormula(setting.key)}
-                        >
-                          <FlaskConical className="h-3 w-3" />
-                          {isExpanded ? 'Masquer' : 'Voir le calcul'}
-                          {isExpanded
-                            ? <ChevronUp className="h-3 w-3" />
-                            : <ChevronDown className="h-3 w-3" />
-                          }
-                        </Button>
-                      )}
-                      <Input
-                        type="number"
-                        step="any"
-                        value={values[setting.key]}
-                        onChange={(e) =>
-                          setValues((prev) => ({ ...prev, [setting.key]: e.target.value }))
-                        }
-                        className="w-28 text-right"
-
-                      />
-                      {setting.unit && (
-                        <span className="text-sm text-slate-500 w-14 shrink-0">{setting.unit}</span>
-                      )}
-                      <Button
-                        size="icon"
-                        variant="ghost"
-                        className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
-                        onClick={() => handleSave(setting.key)}
-                        disabled={saving === setting.key}
-                      >
-                        <Save className="h-4 w-4" />
-                      </Button>
+                    <div className="space-y-4">
+                      {subSettings.map((setting, index) => {
+                        const formula = FORMULAS[setting.key]
+                        const isExpanded = expandedFormulas[setting.key]
+                        return (
+                          <div key={setting.key} className={index < subSettings.length - 1 ? 'pb-4 border-b border-slate-100' : ''}>
+                            <SettingRowContent
+                              setting={setting}
+                              formula={formula}
+                              isExpanded={!!isExpanded}
+                              values={values}
+                              saving={saving}
+                              activeColors={activeColors}
+                              onToggleFormula={() => toggleFormula(setting.key)}
+                              onValueChange={(val) => setValues((prev) => ({ ...prev, [setting.key]: val }))}
+                              onSave={() => handleSave(setting.key)}
+                            />
+                          </div>
+                        )
+                      })}
                     </div>
                   </div>
-
-                  {/* ✅ Panneau dépliable formule */}
-                  {formula && isExpanded && (
-                    <div className={`mt-3 rounded-lg border ${activeColors.formulaBorder} ${activeColors.formulaBg} p-4 space-y-3`}>
-                      {/* Utilisé dans */}
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Utilisé dans
-                        </p>
-                        <div className="flex flex-wrap gap-1.5">
-                          {formula.usedIn.map((usage) => (
-                            <span
-                              key={usage}
-                              className={`text-xs px-2 py-0.5 rounded-full font-medium ${activeColors.badge} ${activeColors.badgeText}`}
-                            >
-                              {usage}
-                            </span>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* Formule */}
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Formule
-                        </p>
-                        <code className={`text-xs font-mono block bg-white/70 rounded px-3 py-2 border ${activeColors.formulaBorder} ${activeColors.formulaText}`}>
-                          {formula.formula}
-                        </code>
-                      </div>
-
-                      {/* Exemple */}
-                      <div>
-                        <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-1">
-                          Exemple chiffré
-                        </p>
-                        <code className={`text-xs font-mono block bg-white/70 rounded px-3 py-2 border ${activeColors.formulaBorder} ${activeColors.formulaText}`}>
-                          {formula.getExample(values)}
-                        </code>
-                      </div>
-                    </div>
-                  )}
-                </div>
-              )
-            })}
+                )
+              })
+            ) : (
+              categorySettings.map((setting, index) => {
+                const formula = FORMULAS[setting.key]
+                const isExpanded = expandedFormulas[setting.key]
+                return (
+                  <div key={setting.key} className={index < categorySettings.length - 1 ? 'pb-4 border-b border-slate-100' : ''}>
+                    <SettingRowContent
+                      setting={setting}
+                      formula={formula}
+                      isExpanded={!!isExpanded}
+                      values={values}
+                      saving={saving}
+                      activeColors={activeColors}
+                      onToggleFormula={() => toggleFormula(setting.key)}
+                      onValueChange={(val) => setValues((prev) => ({ ...prev, [setting.key]: val }))}
+                      onSave={() => handleSave(setting.key)}
+                    />
+                  </div>
+                )
+              })
+            )}
           </CardContent>
         </Card>
       </div>
