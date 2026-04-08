@@ -31,6 +31,7 @@ export function useCalculator(
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
+  const [orientationOverride, setOrientationOverride] = useState<'normal' | 'rotated' | null>(null)
   const quoteLoaded = useRef(false)
 
 
@@ -59,6 +60,7 @@ export function useCalculator(
     flatWidth,
     flatHeight,
     inkMlPerPlate,
+    inkMlVerso,
     varnishSurfacePercent,
     flatColorSurfacePercent,
     printMode,
@@ -138,6 +140,7 @@ export function useCalculator(
       flatWidth: initialQuote.flatWidth || 0,
       flatHeight: initialQuote.flatHeight || 0,
       inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
+      inkMlVerso: initialQuote.inkMlVerso ?? 0,
       varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
       flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
       printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
@@ -196,6 +199,7 @@ export function useCalculator(
         printSetupType: (p.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
         cuttingSetupType: (p.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
         cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds || 0,
+        orientationOverride: null,
       })) || [],
     })
 
@@ -232,7 +236,8 @@ export function useCalculator(
       const imp = calculateImposition(
         { width: flatWidth, height: flatHeight },
         { width: selectedPlate.width, height: selectedPlate.height },
-        poseSpacingMm
+        poseSpacingMm,
+        orientationOverride ?? undefined
       )
       const platesNeeded = Math.ceil(quantity / imp.itemsPerPlate) || 0
       setImpositionResult({
@@ -245,7 +250,7 @@ export function useCalculator(
     } else {
       setImpositionResult(null)
     }
-  }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm, isMultiProduct])
+  }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm, isMultiProduct, orientationOverride])
 
   const productSlotResults: ProductSlotResult[] = isMultiProduct
     ? products.map((slot) => {
@@ -256,7 +261,8 @@ export function useCalculator(
           const imp = calculateImposition(
             { width: slot.flatWidth, height: slot.flatHeight },
             { width: plate.width, height: plate.height },
-            poseSpacingMm
+            poseSpacingMm,
+            slot.orientationOverride ?? undefined
           )
           const platesNeeded = Math.ceil(slot.quantity / imp.itemsPerPlate) || 0
           slotImposition = {
@@ -305,7 +311,9 @@ export function useCalculator(
           slot,
           impositionResult: slotImposition,
           costResult: {
-            materialCost: slotImposition?.materialCost || 0,
+            materialCost: slotCosts.materialCostRaw,
+            materialCostMarged: slotCosts.materialCostMarged,
+            materialMarginCoeff: slotCosts.materialMarginCoeff,
             printingCost: slotCosts.printingCost,
             printingCostData: slotCosts.printingCostData,
             cuttingCost: slotCosts.cuttingCost,
@@ -339,15 +347,21 @@ export function useCalculator(
     return sum + (calc?.total ?? 0)
   }, 0)
 
+  // Pour recto-verso "différent", l'encre totale = recto + verso (multiplier=1)
+  const effectiveInkMlPerPlate = isRectoVerso && rectoVersoType === 'different'
+    ? inkMlPerPlate + inkMlVerso
+    : inkMlPerPlate
+  const effectiveIsRectoVerso = isRectoVerso && rectoVersoType !== 'different'
+
   const costResult = calculateCosts({
     quantity: isMultiProduct ? totalQuantityMulti : quantity,
     impositionResult: isMultiProduct ? null : impositionResult,
     selectedPlate: isMultiProduct ? undefined : selectedPlate,
-    inkMlPerPlate: isMultiProduct ? 0 : inkMlPerPlate,
+    inkMlPerPlate: isMultiProduct ? 0 : effectiveInkMlPerPlate,
     varnishSurfacePercent: isMultiProduct ? 0 : varnishSurfacePercent,
     flatColorSurfacePercent: isMultiProduct ? 0 : flatColorSurfacePercent,
     printMode: isMultiProduct ? 'production' : printMode,
-    isRectoVerso: isMultiProduct ? false : isRectoVerso,
+    isRectoVerso: isMultiProduct ? false : effectiveIsRectoVerso,
     hasVarnish: isMultiProduct ? false : hasVarnish,
     hasFlatColor: isMultiProduct ? false : hasFlatColor,
     printSetupType: isMultiProduct ? 'none' : printSetupType,
@@ -425,6 +439,24 @@ export function useCalculator(
     }
   }
 
+  const handleCreateProductTypeForSlot = async (slotIndex: number, name: string) => {
+    if (!name.trim()) return
+    try {
+      const newType = await createProductType(name.trim())
+      if (!productTypes.find((pt) => pt.id === newType.id)) {
+        setProductTypes([
+          ...productTypes,
+          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [] },
+        ])
+      }
+      updateProduct(slotIndex, 'productTypeId', newType.id.toString())
+      updateProduct(slotIndex, 'productSearch', newType.name)
+    } catch (e) {
+      console.error(e)
+      toast.error('Erreur lors de la création du type de PLV')
+    }
+  }
+
   const handleCreateAccessory = async (name: string, price: number) => {
     try {
       const newAccessory = await createAccessory({ name, price })
@@ -477,6 +509,7 @@ export function useCalculator(
         flatWidth: isMultiProduct ? products[0].flatWidth : flatWidth,
         flatHeight: isMultiProduct ? products[0].flatHeight : flatHeight,
         inkMlPerPlate: isMultiProduct ? 0 : inkMlPerPlate,
+        inkMlVerso: isMultiProduct ? 0 : inkMlVerso,
         varnishSurfacePercent: isMultiProduct ? 0 : varnishSurfacePercent,
         flatColorSurfacePercent: isMultiProduct ? 0 : flatColorSurfacePercent,
         printMode: isMultiProduct ? 'production' : printMode,
@@ -603,7 +636,9 @@ export function useCalculator(
     flatHeight, setFlatHeight: (v: number) => setField('flatHeight', v),
     selectedPlate, selectedProductType,
     impositionResult,
+    orientationOverride, setOrientationOverride,
     inkMlPerPlate, setInkMlPerPlate: (v: number) => setField('inkMlPerPlate', v),
+    inkMlVerso, setInkMlVerso: (v: number) => setField('inkMlVerso', v),
     varnishSurfacePercent, setVarnishSurfacePercent: (v: number) => setField('varnishSurfacePercent', v),
     flatColorSurfacePercent, setFlatColorSurfacePercent: (v: number) => setField('flatColorSurfacePercent', v),
     printMode, setPrintMode: (v: 'production' | 'quality') => setField('printMode', v),
@@ -639,7 +674,7 @@ export function useCalculator(
     hasDossierFee, setHasDossierFee: (v: boolean) => setField('hasDossierFee', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
-    handleCreateProductType, handleCreateAccessory, handleSave, handleReset,
+    handleCreateProductType, handleCreateProductTypeForSlot, handleCreateAccessory, handleSave, handleReset,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState,
     costResult,

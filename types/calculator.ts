@@ -121,7 +121,7 @@ export interface ProductSlot {
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   cuttingTimePerPoseSeconds: number
-
+  orientationOverride: 'normal' | 'rotated' | null
 }
 
 export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
@@ -144,6 +144,7 @@ export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
   printSetupType: 'none',
   cuttingSetupType: 'none',
   cuttingTimePerPoseSeconds: 0,
+  orientationOverride: null,
 }
 
 export interface ProductSlotResult {
@@ -151,6 +152,8 @@ export interface ProductSlotResult {
   impositionResult: ImpositionResult | null
   costResult: {
     materialCost: number
+    materialCostMarged: number
+    materialMarginCoeff: number
     printingCost: number
     printingCostData: PrintingCostData
     cuttingCost: number

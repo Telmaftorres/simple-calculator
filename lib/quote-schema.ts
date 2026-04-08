@@ -11,6 +11,7 @@ export const quoteFieldsSchema = z.object({
   totalCost: z.number().min(0),
 
   inkMlPerPlate: z.number().min(0).max(100).optional(),
+  inkMlVerso: z.number().min(0).max(100).optional(),
   varnishSurfacePercent: z.number().min(0).max(100).optional(),
   flatColorSurfacePercent: z.number().min(0).max(100).optional(),
   printMode: z.string().optional(),
@@ -69,6 +70,7 @@ const quoteProductSchema = z.object({
   isRectoVerso: z.boolean().optional(),
   rectoVersoType: z.string().nullable().optional(),
   inkMlPerPlate: z.number().min(0).max(100).optional(),
+  inkMlVerso: z.number().min(0).max(100).optional(),
   varnishSurfacePercent: z.number().min(0).max(100).optional(),
   flatColorSurfacePercent: z.number().min(0).max(100).optional(),
   hasVarnish: z.boolean().optional(),

@@ -21,6 +21,9 @@ import {
   MATERIAL_MARGIN_TIER2,
   MATERIAL_MARGIN_TIER3,
   MATERIAL_MARGIN_TIER4,
+  INK_MARGIN_STANDARD,
+  INK_MARGIN_VARNISH,
+  INK_MARGIN_FLAT_COLOR,
   DOSSIER_FEE,
   HOURLY_RATE_CONDITIONING,
 } from '@/lib/constants'
@@ -126,6 +129,9 @@ export function calculateCosts(params: {
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const packagingSetupCost = settings?.PACKAGING_SETUP_COST ?? PACKAGING_SETUP_COST
+  const inkMarginStandard = settings?.INK_MARGIN_STANDARD ?? INK_MARGIN_STANDARD
+  const inkMarginVarnish = settings?.INK_MARGIN_VARNISH ?? INK_MARGIN_VARNISH
+  const inkMarginFlatColor = settings?.INK_MARGIN_FLAT_COLOR ?? INK_MARGIN_FLAT_COLOR
   const materialMarginTier1 = settings?.MATERIAL_MARGIN_TIER1 ?? MATERIAL_MARGIN_TIER1
   const materialMarginTier2 = settings?.MATERIAL_MARGIN_TIER2 ?? MATERIAL_MARGIN_TIER2
   const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
@@ -163,9 +169,9 @@ export function calculateCosts(params: {
     const flatColorVolumeL = (flatColorMlPerPlate * platesNeeded * multiplier) / 1000
     const totalInkVolumeL = standardVolumeL + varnishVolumeL + flatColorVolumeL
 
-    const standardInkCost = standardVolumeL * inkCostPerLiter
-    const varnishInkCost = varnishVolumeL * inkCostVarnishPerLiter
-    const flatColorInkCost = flatColorVolumeL * inkCostFlatColorPerLiter
+    const standardInkCost = standardVolumeL * inkCostPerLiter * inkMarginStandard
+    const varnishInkCost = varnishVolumeL * inkCostVarnishPerLiter * inkMarginVarnish
+    const flatColorInkCost = flatColorVolumeL * inkCostFlatColorPerLiter * inkMarginFlatColor
     const inkCost = standardInkCost + varnishInkCost + flatColorInkCost
 
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
@@ -265,10 +271,18 @@ export function calculateCosts(params: {
     return Math.ceil(packagingQuantity / packagingItemsPerPlate)
   })()
 
+  const packagingMaterialMarginCoeff = (() => {
+    if (!packagingPlate) return 1
+    if (packagingPlate.cost < 5) return materialMarginTier1
+    if (packagingPlate.cost < 10) return materialMarginTier2
+    if (packagingPlate.cost < 20) return materialMarginTier3
+    return materialMarginTier4
+  })()
+
   const packagingMaterialCost = (() => {
     if (!hasPackaging || !packagingPlate || packagingQuantity <= 0) return 0
     if (packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
-    return packagingPlatesNeeded * packagingPlate.cost
+    return packagingPlatesNeeded * packagingPlate.cost * packagingMaterialMarginCoeff
   })()
 
   const packagingCuttingCost = (() => {
@@ -285,15 +299,11 @@ export function calculateCosts(params: {
   const beTotalCost = beCost + batCost
 
 // ── Coefficient matière ──
-const materialCostPerM2 = selectedPlate
-  ? selectedPlate.cost / ((selectedPlate.width * selectedPlate.height) / 1000000)
-  : 0
-
 const materialMarginCoeff = (() => {
   if (!selectedPlate) return 1
-  if (materialCostPerM2 < 5) return materialMarginTier1
-  if (materialCostPerM2 < 10) return materialMarginTier2
-  if (materialCostPerM2 < 20) return materialMarginTier3
+  if (selectedPlate.cost < 5) return materialMarginTier1
+  if (selectedPlate.cost < 10) return materialMarginTier2
+  if (selectedPlate.cost < 20) return materialMarginTier3
   return materialMarginTier4
 })()
 

@@ -18,6 +18,7 @@ export function SectionImpression() {
     hasVarnish, setHasVarnish,
     hasFlatColor, setHasFlatColor,
     inkMlPerPlate, setInkMlPerPlate,
+    inkMlVerso, setInkMlVerso,
     varnishSurfacePercent, setVarnishSurfacePercent,
     flatColorSurfacePercent, setFlatColorSurfacePercent,
     printSetupType, setPrintSetupType,
@@ -144,32 +145,89 @@ export function SectionImpression() {
         )}
 
         {/* ── Encre ── */}
-        <div className="space-y-2">
-          <GaugeSlider
-            label="Encre (ml / plaque)"
-            value={inkMlPerPlate}
-            max={100}
-            min={0}
-            unit="ml"
-            onChange={setInkMlPerPlate}
-            gradientColors="from-indigo-300 to-purple-600"
-          />
-          <div className="flex gap-2">
-            {INK_SHORTCUTS.map((val) => (
-              <button
-                key={val}
-                onClick={() => setInkMlPerPlate(val)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  inkMlPerPlate === val
-                    ? 'bg-purple-600 text-white border-purple-600'
-                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {val} ml
-              </button>
-            ))}
+        {rectoVersoType === 'different' ? (
+          <div className="space-y-4">
+            <div className="space-y-2">
+              <GaugeSlider
+                label="Encre Recto (ml / plaque)"
+                value={inkMlPerPlate}
+                max={100}
+                min={0}
+                unit="ml"
+                onChange={setInkMlPerPlate}
+                gradientColors="from-indigo-300 to-purple-600"
+              />
+              <div className="flex gap-2">
+                {INK_SHORTCUTS.map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setInkMlPerPlate(val)}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                      inkMlPerPlate === val
+                        ? 'bg-purple-600 text-white border-purple-600'
+                        : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {val} ml
+                  </button>
+                ))}
+              </div>
+            </div>
+            <div className="space-y-2">
+              <GaugeSlider
+                label="Encre Verso (ml / plaque)"
+                value={inkMlVerso}
+                max={100}
+                min={0}
+                unit="ml"
+                onChange={setInkMlVerso}
+                gradientColors="from-violet-300 to-fuchsia-600"
+              />
+              <div className="flex gap-2">
+                {INK_SHORTCUTS.map((val) => (
+                  <button
+                    key={val}
+                    onClick={() => setInkMlVerso(val)}
+                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                      inkMlVerso === val
+                        ? 'bg-fuchsia-600 text-white border-fuchsia-600'
+                        : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                    }`}
+                  >
+                    {val} ml
+                  </button>
+                ))}
+              </div>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="space-y-2">
+            <GaugeSlider
+              label="Encre (ml / plaque)"
+              value={inkMlPerPlate}
+              max={100}
+              min={0}
+              unit="ml"
+              onChange={setInkMlPerPlate}
+              gradientColors="from-indigo-300 to-purple-600"
+            />
+            <div className="flex gap-2">
+              {INK_SHORTCUTS.map((val) => (
+                <button
+                  key={val}
+                  onClick={() => setInkMlPerPlate(val)}
+                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                    inkMlPerPlate === val
+                      ? 'bg-purple-600 text-white border-purple-600'
+                      : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                  }`}
+                >
+                  {val} ml
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* ── Finitions ── */}
         <div>

@@ -287,7 +287,7 @@ Le moteur `lib/calculation/imposition.ts` calcule automatiquement le meilleur pl
 
 | Poste | Formule |
 |---|---|
-| **Matière** | `plaquesNécessaires × coût/plaque × coefficientMatière` (tiered ×3.5/×3/×2.5/×2 selon €/m²) |
+| **Matière** | `plaquesNécessaires × coût/plaque × coefficientMatière` (tiered ×3.5/×3/×2.5/×2 selon €/plaque) |
 | **Impression (encre standard)** | `(inkMlPerPlate × 100% × nb_plaques × multiplicateur_rv / 1000) × INK_COST_PER_LITER` |
 | **Impression (vernis)** | `(inkMlPerPlate × varnishRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_VARNISH_PER_LITER` |
 | **Impression (blanc)** | `(inkMlPerPlate × flatColorRatio × nb_plaques × multiplicateur_rv / 1000) × INK_COST_FLAT_COLOR_PER_LITER` |
@@ -454,7 +454,7 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Fix cache settings** : suppression de `unstable_cache` sur `getSettings` — les nouveaux settings apparaissent sans vider le cache manuellement
 - ✅ **Clés techniques masquées** dans la page paramètres (meilleure lisibilité)
 - ✅ **Calage impression/découpe** : sélecteur 3 états (Aucun/Standard/Complexe), forfaits fixes configurables en DB
-- ✅ **Coefficients matière** par tranche de prix/m² (×3.5, ×3, ×2.5, ×2) appliqués au coût matière
+- ✅ **Coefficients matière** par tranche de prix/plaque (×3.5, ×3, ×2.5, ×2) appliqués au coût matière
 - ✅ **Frais de dossier** toggle ON/OFF (8€ forfait fixe configurable)
 - ✅ **Suppression catégorie Marges** — remplacée par catégorie Matière
 - ✅ **Marges internes** : indicateurs (Com. commerciale 2.5%, Com. Sopano 5%), toggles ON/OFF sauvegardés en DB, affichage du Net interne calculé à la volée. Ajoutées aux constantes de calcul (Administratif).
@@ -478,11 +478,21 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Calage emballage** : passage d'un temps (minutes × taux horaire) à un **forfait fixe 10 € `PACKAGING_SETUP_COST`** indépendant du taux horaire
 - ✅ **Paramètres Impression** : sous-catégories en onglets (**Impression** / **Calage** / **Encre**) pour une meilleure lisibilité
 
+### Sprint 9 — Données réelles, corrections & UX imposition (avril 2026)
+- ✅ **Module "Données réelles"** : page de détail par devis (`/dashboard/my-quotes/[id]`) permettant de saisir les temps, coûts et notes réels après production. Comparatif estimé vs réel avec badges % d'écart (vert/rouge). Table `QuoteActuals` (Prisma, onDelete Cascade)
+- ✅ **Fix multi-produits — sauvegarde** : correction de l'erreur 500 lors de l'enregistrement (`hasPrintSetup`/`hasCuttingSetup` → `printSetupType`/`cuttingSetupType`, champs `plateId`/`itemsPerPlate`/`platesCount` rendus optionnels pour le devis parent)
+- ✅ **Fix chargement devis** : restauration complète de tous les champs au rechargement (`hasBE`, `beTimeMinutes`, `batTimeMinutes`, `hasDossierFee`, `selectedProductTypeId`) — le prix en "Voir/Modifier" correspondait désormais au prix sauvegardé
+- ✅ **Fix frais de dossier** : champ non sauvegardé en base → corrigé dans le payload `handleSave`. Suppression du double-comptage en mode multi-produits (`hasDossierFee: false` sur les slots individuels)
+- ✅ **Fix reset formulaire après save** : le soft-refresh Next.js (déclenché par `revalidateTag`) recréait un nouvel objet `initialQuote` → le `useEffect` réinitialisait le formulaire. Correction via `useRef` : le devis ne se charge qu'une seule fois au montage
+- ✅ **Création PLV inline en multi-produits** : le `<select>` du type de PLV remplacé par un champ de recherche avec dropdown + option `+ Créer "..."`, identique au mode simple produit
+- ✅ **Encre recto/verso différenciée** : en mode Recto/Verso "Différent", deux jauges indépendantes (Recto + Verso) remplacent la jauge unique. Encre effective = `inkMlRecto + inkMlVerso` (multiplier ×1 au lieu de ×2). Champ `inkMlVerso` ajouté en DB (`migration add_ink_ml_verso`)
+- ✅ **Override orientation imposition** : clic sur le badge Horizontal/Vertical/Mix → menu contextuel pour forcer l'orientation ("Forcer Horizontal" / "Forcer Vertical" / "↩ Remettre en auto"). Fonctionne en mono et multi-produits (par slot)
+
 ---
 
 ## 🗺 Roadmap (à venir)
 
-- [ ] Historique & comparaison devis vs réel (données de production saisies en post-dossier)
+- [ ] Historique & comparaison devis vs réel — affinements (filtres, export, statistiques par famille PLV)
 
 ### Vision long terme — Système d'apprentissage par l'historique
 

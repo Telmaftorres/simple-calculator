@@ -1,12 +1,70 @@
 'use client'
 
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { GaugeSlider } from '@/components/GaugeSlider'
 import { Trash2, Plus } from 'lucide-react'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { formatTimeSeconds } from '@/lib/format'
 import type { ProductSlot } from '@/types/calculator'
+
+import type { ImpositionResult } from '@/types/calculator'
+
+function SlotImpositionDisplay({
+  impositionResult,
+  orientationOverride,
+  onOrientationChange,
+}: {
+  impositionResult: ImpositionResult
+  orientationOverride: 'normal' | 'rotated' | null
+  onOrientationChange: (v: 'normal' | 'rotated' | null) => void
+}) {
+  const [open, setOpen] = useState(false)
+  const ORIENTATION_LABELS = { normal: 'Horizontal', rotated: 'Vertical', mixed: 'Mix' }
+  const isOverridden = orientationOverride !== null
+  const displayLabel = isOverridden
+    ? (orientationOverride === 'normal' ? 'Horizontal ✎' : 'Vertical ✎')
+    : ORIENTATION_LABELS[impositionResult.orientation]
+  return (
+    <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
+      <div className="text-center">
+        <div className="text-xl font-bold text-blue-600">{impositionResult.itemsPerPlate}</div>
+        <div className="text-xs text-blue-400 uppercase">Poses / Plaque</div>
+      </div>
+      <div className="text-center relative">
+        <button
+          onClick={() => setOpen(!open)}
+          className={`text-sm font-medium px-2 py-1 rounded-md transition-colors ${isOverridden ? 'bg-blue-200 text-blue-800 hover:bg-blue-300' : 'hover:bg-blue-100 text-slate-600'}`}
+        >
+          {displayLabel}
+        </button>
+        <div className="text-xs text-slate-400">Orientation</div>
+        {open && (
+          <div className="absolute z-20 top-full mt-1 left-1/2 -translate-x-1/2 bg-white border border-slate-200 rounded-lg shadow-lg overflow-hidden text-sm min-w-[140px]">
+            {isOverridden && (
+              <button className="w-full text-left px-3 py-2 hover:bg-slate-50 text-slate-500 italic border-b border-slate-100"
+                onClick={() => { onOrientationChange(null); setOpen(false) }}>↩ Remettre en auto</button>
+            )}
+            {orientationOverride !== 'normal' && (
+              <button className="w-full text-left px-3 py-2 hover:bg-blue-50 text-blue-700 font-medium"
+                onClick={() => { onOrientationChange('normal'); setOpen(false) }}>Forcer Horizontal</button>
+            )}
+            {orientationOverride !== 'rotated' && (
+              <button className="w-full text-left px-3 py-2 hover:bg-blue-50 text-blue-700 font-medium"
+                onClick={() => { onOrientationChange('rotated'); setOpen(false) }}>Forcer Vertical</button>
+            )}
+          </div>
+        )}
+      </div>
+      <div className="text-center">
+        <div className="text-xl font-bold text-slate-700">{impositionResult.platesNeeded}</div>
+        <div className="text-xs text-slate-400 uppercase">Plaques nécessaires</div>
+      </div>
+    </div>
+  )
+}
 
 const INK_SHORTCUTS = [10, 25, 50, 75]
 const FINISHING_SHORTCUTS = [10, 25, 50, 75]
@@ -23,7 +81,10 @@ export function SectionMultiProduct() {
     removeProduct,
     setActiveProduct,
     updateProduct,
+    handleCreateProductTypeForSlot,
   } = useCalculatorContext()
+
+  const [plvDropdownOpen, setPlvDropdownOpen] = useState(false)
 
   const activeSlot: ProductSlot | undefined = products[activeProductIndex]
   const activeResult = productSlotResults[activeProductIndex]
@@ -80,22 +141,49 @@ export function SectionMultiProduct() {
 
           {/* Infos de base */}
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
+            <div className="space-y-2 relative">
               <Label>Type de PLV</Label>
-              <select
-                value={activeSlot.productTypeId}
+              <Input
+                value={activeSlot.productSearch}
                 onChange={(e) => {
-                  const pt = productTypes.find((p) => p.id.toString() === e.target.value)
-                  updateProduct(activeProductIndex, 'productTypeId', e.target.value)
-                  updateProduct(activeProductIndex, 'productSearch', pt?.name || '')
+                  updateProduct(activeProductIndex, 'productSearch', e.target.value)
+                  updateProduct(activeProductIndex, 'productTypeId', '')
+                  setPlvDropdownOpen(true)
                 }}
-                className="w-full flex h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
-              >
-                <option value="">Choisir un type de PLV...</option>
-                {productTypes.map((pt) => (
-                  <option key={pt.id} value={pt.id.toString()}>{pt.name}</option>
-                ))}
-              </select>
+                onFocus={() => setPlvDropdownOpen(true)}
+                onBlur={() => setTimeout(() => setPlvDropdownOpen(false), 150)}
+                placeholder="Rechercher..."
+              />
+              {plvDropdownOpen && (
+                <div className="absolute z-10 w-full bg-white border shadow-lg mt-1 rounded max-h-40 overflow-auto">
+                  {productTypes
+                    .filter((pt) => pt.name.toLowerCase().includes(activeSlot.productSearch.toLowerCase()))
+                    .map((pt) => (
+                      <div
+                        key={pt.id}
+                        className="p-2 hover:bg-slate-100 cursor-pointer text-sm"
+                        onMouseDown={() => {
+                          updateProduct(activeProductIndex, 'productTypeId', pt.id.toString())
+                          updateProduct(activeProductIndex, 'productSearch', pt.name)
+                          setPlvDropdownOpen(false)
+                        }}
+                      >
+                        {pt.name}
+                      </div>
+                    ))}
+                  {activeSlot.productSearch.trim() && !productTypes.some((pt) => pt.name.toLowerCase() === activeSlot.productSearch.toLowerCase()) && (
+                    <div
+                      className="p-2 text-emerald-600 font-medium cursor-pointer border-t hover:bg-emerald-50 text-sm"
+                      onMouseDown={() => {
+                        handleCreateProductTypeForSlot(activeProductIndex, activeSlot.productSearch)
+                        setPlvDropdownOpen(false)
+                      }}
+                    >
+                      + Créer &quot;{activeSlot.productSearch}&quot;
+                    </div>
+                  )}
+                </div>
+              )}
             </div>
 
             <div className="space-y-2">
@@ -151,20 +239,11 @@ export function SectionMultiProduct() {
 
           {/* Résultat imposition */}
           {activeResult?.impositionResult && (
-            <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
-              <div className="text-center">
-                <div className="text-xl font-bold text-blue-600">{activeResult.impositionResult.itemsPerPlate}</div>
-                <div className="text-xs text-blue-400 uppercase">Poses / Plaque</div>
-              </div>
-              <div className="text-center">
-                <div className="text-sm font-medium text-slate-600">{activeResult.impositionResult.orientation}</div>
-                <div className="text-xs text-slate-400">Orientation</div>
-              </div>
-              <div className="text-center">
-                <div className="text-xl font-bold text-slate-700">{activeResult.impositionResult.platesNeeded}</div>
-                <div className="text-xs text-slate-400 uppercase">Plaques nécessaires</div>
-              </div>
-            </div>
+            <SlotImpositionDisplay
+              impositionResult={activeResult.impositionResult}
+              orientationOverride={activeSlot.orientationOverride}
+              onOrientationChange={(v) => updateProduct(activeProductIndex, 'orientationOverride', v)}
+            />
           )}
 
           {/* ── Impression ── */}
