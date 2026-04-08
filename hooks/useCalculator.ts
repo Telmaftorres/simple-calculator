@@ -296,7 +296,7 @@ export function useCalculator(
           packagingCuttingTimePerPoseSeconds: 20,
           packagingWidth: 0,
           packagingHeight: 0,
-          hasDossierFee,
+          hasDossierFee: false,
         })
 
         return {
