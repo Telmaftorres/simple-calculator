@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
-import { createQuote } from '@/app/actions/get-data'
+import { createQuote, updateQuote } from '@/app/actions/get-data'
 import { createProductType } from '@/app/actions/admin'
 import { toast } from 'sonner'
 import { POSE_SPACING_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/constants'
@@ -31,6 +31,7 @@ export function useCalculator(
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
+  const quoteLoaded = useRef(false)
 
 
 
@@ -126,7 +127,8 @@ export function useCalculator(
   )
 
   useEffect(() => {
-    if (!initialQuote) return
+    if (!initialQuote || quoteLoaded.current) return
+    quoteLoaded.current = true
 
     loadQuote({
       studyNumber: initialQuote.study?.number || 'ET',
@@ -501,6 +503,7 @@ export function useCalculator(
         hasBE,
         beTimeMinutes,
         batTimeMinutes,
+        hasDossierFee,
         isMultiProduct,
         showMargeCommerciale,
         showMargeSopano,
