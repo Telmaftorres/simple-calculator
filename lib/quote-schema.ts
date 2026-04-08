@@ -50,6 +50,15 @@ export const quoteFieldsSchema = z.object({
 
   showMargeCommerciale: z.boolean().optional(),
   showMargeSopano: z.boolean().optional(),
+
+  // ── Transport ──
+  transportMode:       z.string().optional(),
+  transportDepartment: z.string().optional(),
+  transportWeight:     z.number().optional(),
+  transportUnits:      z.number().int().optional(),
+  transportBasePrice:  z.number().optional(),
+  transportOptions:    z.number().optional(),
+  transportTotal:      z.number().optional(),
 })
 
 const quoteProductSchema = z.object({
