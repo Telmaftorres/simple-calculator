@@ -27,11 +27,5 @@ export const QUOTE_DEFAULTS = {
   showMargeCommerciale: false as boolean,
   showMargeSopano: false as boolean,
   // ── Transport ──
-  transportMode:       undefined as string | undefined,
-  transportDepartment: undefined as string | undefined,
-  transportWeight:     undefined as number | undefined,
-  transportUnits:      1 as number,
-  transportBasePrice:  undefined as number | undefined,
-  transportOptions:    0 as number,
-  transportTotal:      undefined as number | undefined,
+  transportDeliveries: [] as import('@/types/calculator').TransportDeliveryForm[],
 }

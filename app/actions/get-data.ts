@@ -19,6 +19,7 @@ function buildQuoteData(
     accessories,
     consumables,
     products,
+    transportDeliveries,
     parentReference,
     ...quoteFields
   } = validated
@@ -98,6 +99,7 @@ export async function createQuote(data: CreateQuoteInput) {
   }
 
   const reference = await generateReference(validated.parentReference)
+  const { transportDeliveries } = validated
 
   const quote = await prisma.quote.create({
     data: {
@@ -124,6 +126,17 @@ export async function createQuote(data: CreateQuoteInput) {
           quantity: el.quantity,
         })),
       },
+      transportDeliveries: transportDeliveries && transportDeliveries.length > 0 ? {
+        create: transportDeliveries.map((d) => ({
+          transportMode: d.transportMode,
+          department:    d.department,
+          weightKg:      d.weightKg ?? null,
+          units:         d.units,
+          optionsHT:     d.optionsHT,
+          basePriceHT:   d.basePriceHT,
+          totalHT:       d.totalHT,
+        })),
+      } : undefined,
       products: validated.products && validated.products.length > 0 ? {
         create: validated.products.map((p) => ({
           position: p.position,
@@ -192,6 +205,7 @@ export async function getQuoteById(id: number) {
         include: { plate: true },
         orderBy: { position: 'asc' },
       },
+      transportDeliveries: true,
     },
   })
   if (!quote) return null

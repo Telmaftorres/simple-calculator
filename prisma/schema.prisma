@@ -119,6 +119,7 @@ model Quote {
   transportOptions                   Float?            // options manuelles HT
   transportTotal                     Float?            // total transport HT
   transportShipments                 TransportShipment[]
+  transportDeliveries                QuoteTransportDelivery[]
 }
 
 
@@ -213,6 +214,19 @@ model QuoteProduct {
   totalCost                 Float?
   quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   plate                     Plate?  @relation(fields: [plateId], references: [id])
+}
+
+model QuoteTransportDelivery {
+  id            Int     @id @default(autoincrement())
+  quoteId       Int
+  transportMode String
+  department    String
+  weightKg      Float?
+  units         Int     @default(1)
+  optionsHT     Float   @default(0)
+  basePriceHT   Float   @default(0)
+  totalHT       Float   @default(0)
+  quote         Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model TransportShipment {

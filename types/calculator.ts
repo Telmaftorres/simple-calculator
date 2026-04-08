@@ -52,6 +52,16 @@ export interface PrintingCostData {
   machineTimeMin: number
 }
 
+// ── Transport multi-livraisons ──
+export interface TransportDeliveryForm {
+  id: string               // UUID local (clé React)
+  mode: string | undefined
+  department: string | undefined
+  weightKg: number | undefined
+  units: number
+  optionsHT: number
+}
+
 export type Quote = Prisma.QuoteGetPayload<{
   include: {
     study: true
@@ -66,11 +76,12 @@ export type Quote = Prisma.QuoteGetPayload<{
       include: { consumable: true }
     }
     elements: true
-    products: {          // ← ajouter
+    products: {
       include: {
         plate: true
       }
     }
+    transportDeliveries: true
   }
 }>
 

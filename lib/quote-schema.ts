@@ -52,13 +52,7 @@ export const quoteFieldsSchema = z.object({
   showMargeSopano: z.boolean().optional(),
 
   // ── Transport ──
-  transportMode:       z.string().optional(),
-  transportDepartment: z.string().optional(),
-  transportWeight:     z.number().optional(),
-  transportUnits:      z.number().int().optional(),
-  transportBasePrice:  z.number().optional(),
-  transportOptions:    z.number().optional(),
-  transportTotal:      z.number().optional(),
+  transportTotal: z.number().optional(),
 })
 
 const quoteProductSchema = z.object({
@@ -86,6 +80,16 @@ const quoteProductSchema = z.object({
   totalCost: z.number().nullable().optional(),
 })
 
+const transportDeliverySchema = z.object({
+  transportMode: z.string(),
+  department:    z.string(),
+  weightKg:      z.number().nullable().optional(),
+  units:         z.number().int().min(1),
+  optionsHT:     z.number().min(0),
+  basePriceHT:   z.number().min(0),
+  totalHT:       z.number().min(0),
+})
+
 export const createQuoteSchema = quoteFieldsSchema.extend({
   studyNumber: z.string().min(1, 'Le numéro de dossier est requis'),
   parentReference: z.string().optional(),
@@ -102,6 +106,7 @@ export const createQuoteSchema = quoteFieldsSchema.extend({
     sizePerItem: z.number().positive(),
   })).optional(),
   products: z.array(quoteProductSchema).optional(),
+  transportDeliveries: z.array(transportDeliverySchema).optional(),
 })
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>
