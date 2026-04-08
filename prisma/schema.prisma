@@ -120,6 +120,39 @@ model Quote {
   transportTotal                     Float?            // total transport HT
   transportShipments                 TransportShipment[]
   transportDeliveries                QuoteTransportDelivery[]
+  actuals                            QuoteActuals?
+}
+
+model QuoteActuals {
+  id        Int      @id @default(autoincrement())
+  quoteId   Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Temps réels par pièce (méthode principale — affichée dans l'UI) ──
+  actualCuttingTimePerPoseSeconds   Float?   // Découpe réelle (sec/pose)
+  actualAssemblyTimePerPieceSeconds Float?   // Façonnage réel (sec/pce)
+  actualPackTimePerPieceSeconds     Float?   // Conditionnement réel (sec/pce)
+
+  // ── Temps globaux (réservé — non affiché, au cas où la méthode change) ──
+  actualCuttingTotalMinutes         Float?
+  actualAssemblyTotalMinutes        Float?
+  actualPackTotalMinutes            Float?
+  actualPrintTotalMinutes           Float?
+
+  // ── Matière réelle ──
+  actualPlatesUsed                  Int?     // Plaques réellement consommées
+  actualWastePercent                Float?   // % de chutes constatées
+
+  // ── Transport réel ──
+  actualTransportMode               String?
+  actualTransportCost               Float?
+  actualWeightKg                    Float?
+
+  // ── Notes libres ──
+  notes                             String?
+
+  quote     Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 

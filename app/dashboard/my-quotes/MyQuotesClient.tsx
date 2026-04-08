@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye } from 'lucide-react'
+import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye, ClipboardCheck } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { deleteQuote } from '@/app/actions/get-data'
@@ -129,16 +129,20 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                 filtered.map((quote) => (
                   <TableRow key={quote.id} className="hover:bg-slate-50">
                     <TableCell>
-                      {quote.reference ? (
-                        <span className="font-mono text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">
-                          {quote.reference}
-                        </span>
-                      ) : (
-                        <span className="text-slate-400 italic text-xs">—</span>
-                      )}
+                      <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                        {quote.reference ? (
+                          <span className="font-mono text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded hover:bg-emerald-100 transition-colors cursor-pointer">
+                            {quote.reference}
+                          </span>
+                        ) : (
+                          <span className="text-slate-400 italic text-xs hover:text-slate-600 transition-colors cursor-pointer">—</span>
+                        )}
+                      </Link>
                     </TableCell>
                     <TableCell className="font-medium">
-                      {quote.study?.number}
+                      <Link href={`/dashboard/my-quotes/${quote.id}`} className="hover:text-emerald-700 transition-colors">
+                        {quote.study?.number}
+                      </Link>
                     </TableCell>
                     <TableCell className="text-slate-500">
                       <div className="flex items-center gap-1.5 whitespace-nowrap">
@@ -161,6 +165,11 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                     </TableCell>
                     <TableCell className="text-right">
                       <div className="flex justify-end gap-1">
+                        <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-sky-600" title="Données réelles">
+                            <ClipboardCheck className="h-4 w-4" />
+                          </Button>
+                        </Link>
                         <Link href={`/?viewId=${quote.id}`}>
                           <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir le récapitulatif">
                             <Eye className="h-4 w-4" />
