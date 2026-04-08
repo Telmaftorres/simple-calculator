@@ -654,6 +654,7 @@ function SettingRowContent({
 
 export function SettingsClient({ settings }: { settings: Setting[] }) {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label)
+  const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null)
   const [values, setValues] = useState<Record<string, string>>(
     Object.fromEntries(settings.map((s) => [s.key, s.value]))
   )
@@ -663,7 +664,6 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s]))
 
   const handleSave = async (key: string) => {
-
     setSaving(key)
     try {
       await updateSetting(key, values[key])
@@ -680,14 +680,27 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
     setExpandedFormulas((prev) => ({ ...prev, [key]: !prev[key] }))
   }
 
+  const handleCategoryChange = (label: string) => {
+    setActiveCategory(label)
+    setActiveSubcategory(null)
+  }
+
   const activeConfig = CATEGORIES.find((c) => c.label === activeCategory)!
   const activeColors = COLOR_MAP[activeConfig.color]
+
+  const activeSub = activeConfig.subcategories
+    ? (activeSubcategory
+        ? activeConfig.subcategories.find((s) => s.label === activeSubcategory)
+        : activeConfig.subcategories[0])
+    : null
 
   const allKeys = activeConfig.subcategories
     ? activeConfig.subcategories.flatMap((s) => s.keys)
     : (activeConfig.keys ?? [])
 
-  const categorySettings = allKeys.map((key) => settingsMap[key]).filter(Boolean)
+  const categorySettings = activeSub
+    ? activeSub.keys.map((key) => settingsMap[key]).filter(Boolean)
+    : allKeys.map((key) => settingsMap[key]).filter(Boolean)
 
   return (
     <div className="flex gap-6 pb-8">
@@ -709,7 +722,7 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
                 return (
                   <button
                     key={cat.label}
-                    onClick={() => setActiveCategory(cat.label)}
+                    onClick={() => handleCategoryChange(cat.label)}
                     className={`
                       w-full text-left px-3 py-2.5 rounded-lg text-sm transition-all duration-150
                       flex items-center justify-between gap-2
@@ -758,43 +771,30 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
             </div>
           </CardHeader>
 
+          {activeConfig.subcategories && (
+            <div className={`flex gap-1 px-6 pt-4 border-b ${activeColors.border}`}>
+              {activeConfig.subcategories.map((sub) => {
+                const isActiveSub = (activeSub?.label ?? activeConfig.subcategories![0].label) === sub.label
+                return (
+                  <button
+                    key={sub.label}
+                    onClick={() => setActiveSubcategory(sub.label)}
+                    className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors border-b-2 -mb-px ${
+                      isActiveSub
+                        ? `${activeColors.badgeText} border-current bg-white`
+                        : 'text-slate-500 border-transparent hover:text-slate-700'
+                    }`}
+                  >
+                    {sub.label}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+
           <CardContent className="px-6 py-4 space-y-4">
 
-            {activeConfig.subcategories ? (
-              activeConfig.subcategories.map((sub, subIndex) => {
-                const subSettings = sub.keys.map((k) => settingsMap[k]).filter(Boolean)
-                if (subSettings.length === 0) return null
-                return (
-                  <div key={sub.label}>
-                    {subIndex > 0 && <div className="border-t border-slate-100 mt-2 mb-4" />}
-                    <div className={`text-xs font-semibold uppercase tracking-wide mb-3 ${activeColors.badgeText}`}>
-                      {sub.label}
-                    </div>
-                    <div className="space-y-4">
-                      {subSettings.map((setting, index) => {
-                        const formula = FORMULAS[setting.key]
-                        const isExpanded = expandedFormulas[setting.key]
-                        return (
-                          <div key={setting.key} className={index < subSettings.length - 1 ? 'pb-4 border-b border-slate-100' : ''}>
-                            <SettingRowContent
-                              setting={setting}
-                              formula={formula}
-                              isExpanded={!!isExpanded}
-                              values={values}
-                              saving={saving}
-                              activeColors={activeColors}
-                              onToggleFormula={() => toggleFormula(setting.key)}
-                              onValueChange={(val) => setValues((prev) => ({ ...prev, [setting.key]: val }))}
-                              onSave={() => handleSave(setting.key)}
-                            />
-                          </div>
-                        )
-                      })}
-                    </div>
-                  </div>
-                )
-              })
-            ) : (
+            {(
               categorySettings.map((setting, index) => {
                 const formula = FORMULAS[setting.key]
                 const isExpanded = expandedFormulas[setting.key]
