@@ -1,11 +1,9 @@
 import { Label } from '@/components/ui/label'
 import { SectionDisplay } from '../shared'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-
-const INK_SHORTCUTS = [10, 25, 50, 75]
-const FINISHING_SHORTCUTS = [10, 25, 50, 75]
+import { INK_SHORTCUTS, FINISHING_SHORTCUTS } from '@/lib/config/ui'
 
 type SetupType = 'none' | 'standard' | 'complexe'
 

@@ -17,7 +17,10 @@ export function useConsumables(
   const handleAddConsumable = () => {
     if (!currentConsumableId || currentConsumableSize <= 0) return
     const c = consumables.find((x) => x.id.toString() === currentConsumableId)
-    if (!c) return
+    if (!c) {
+      console.warn(`useConsumables: consommable introuvable pour l'ID "${currentConsumableId}"`)
+      return
+    }
     const existing = selectedConsumables.find((sc) => sc.id === c.id)
     if (existing) {
       setSelectedConsumables(

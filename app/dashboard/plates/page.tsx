@@ -1,5 +1,5 @@
-import { getPlates } from '../../actions/get-data'
-import PlatesClient from './plates-client'
+import { getPlates } from '../../actions/reference-data'
+import PlatesClient from './PlatesClient'
 
 export const dynamic = 'force-dynamic'
 

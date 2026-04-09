@@ -1,8 +1,8 @@
 import Link from 'next/link'
-import { LayoutDashboard, Layers, Box, Settings, FileText, Package, Calculator, FlaskConical } from 'lucide-react'
-import LogoutButton from '@/components/LogoutButton'
-import { ModeToggle } from '@/components/mode-toggle'
-import { MobileSidebar } from '@/components/mobile-sidebar'
+import { LayoutDashboard, Layers, Box, Settings, FileText, Package, Calculator, FlaskConical, Activity } from 'lucide-react'
+import LogoutButton from '@/components/layout/LogoutButton'
+import { ModeToggle } from '@/components/layout/ModeToggle'
+import { MobileSidebar } from '@/components/layout/MobileSidebar'
 import { auth } from '@/auth'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
@@ -36,7 +36,7 @@ export default async function DashboardLayout({ children }: { children: React.Re
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <FileText className="h-5 w-5" />
-            Mes Devis
+            Mes Dossiers
           </Link>
 
           <div className="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">
@@ -87,6 +87,15 @@ export default async function DashboardLayout({ children }: { children: React.Re
 
 
         <div className="p-4 border-t border-slate-800 space-y-2">
+          {isAdmin && (
+            <Link
+              href="/dashboard/activite"
+              className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
+            >
+              <Activity className="h-5 w-5" />
+              Activité
+            </Link>
+          )}
           {isAdmin && (
             <Link
               href="/settings"

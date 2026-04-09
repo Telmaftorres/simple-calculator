@@ -2,7 +2,7 @@ import { describe, it, expect, vi, beforeEach } from 'vitest'
 import { authenticate } from '../app/actions/auth'
 
 // ── Mocks ──
-vi.mock('../lib/prisma', () => ({
+vi.mock('../lib/server/prisma', () => ({
   prisma: {
     user: {
       findUnique: vi.fn(),
@@ -24,7 +24,7 @@ vi.mock('next-auth', () => ({
   },
 }))
 
-import { prisma } from '../lib/prisma'
+import { prisma } from '../lib/server/prisma'
 import { signIn } from '@/auth'
 
 const mockSignIn = signIn as ReturnType<typeof vi.fn>

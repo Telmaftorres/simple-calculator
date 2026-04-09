@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { createProductType, updateProductType, deleteProductType } from '@/app/actions/admin'
+import { createProductType, updateProductType, deleteProductType } from '@/app/actions/catalog'
 import Link from 'next/link'
 
 type Element = {

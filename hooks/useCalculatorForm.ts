@@ -1,5 +1,5 @@
 import { useReducer } from 'react'
-import { QUOTE_DEFAULTS } from '@/lib/quote-defaults'
+import { QUOTE_DEFAULTS } from '@/lib/quote/defaults'
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import type { ProductSlot, TransportDeliveryForm } from '@/types/calculator'
 import { v4 as uuidv4 } from 'uuid'
@@ -14,7 +14,7 @@ export const initialFormState = {
   flatWidth: 0 as number,
   flatHeight: 0 as number,
   inkMlPerPlate: 20 as number,
-  rectoVersoType: null as string | null,
+  rectoVersoType: null as 'identical' | 'different' | null,
   currentAccessoryId: '' as string,
   currentAccessoryQty: 0 as number,
   currentConsumableId: '' as string,

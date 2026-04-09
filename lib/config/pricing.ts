@@ -33,24 +33,24 @@ export const POSE_SPACING_MM = 10
 export const HOURLY_RATE_PACKAGING = 45
 export const PACKAGING_SETUP_COST = 10
 
-// ── Bureau d'études ──
+// ── Bureau d'etudes ──
 export const HOURLY_RATE_BE = 90
 export const HOURLY_RATE_BAT = 70
 
-// ── Marges Encre ──
+// ── Marges encre ──
 export const INK_MARGIN_STANDARD = 4.5
 export const INK_MARGIN_VARNISH = 7
 export const INK_MARGIN_FLAT_COLOR = 7
 
-// ── Marges Matériel ──
-export const MATERIAL_MARGIN_TIER1 = 3.5  // < 5 €/m²
-export const MATERIAL_MARGIN_TIER2 = 3    // 5-10 €/m²
-export const MATERIAL_MARGIN_TIER3 = 2.5  // 10-20 €/m²
-export const MATERIAL_MARGIN_TIER4 = 2    // > 20 €/m²``
+// ── Marges materiel ──
+export const MATERIAL_MARGIN_TIER1 = 3.5
+export const MATERIAL_MARGIN_TIER2 = 3
+export const MATERIAL_MARGIN_TIER3 = 2.5
+export const MATERIAL_MARGIN_TIER4 = 2
 
 export const DOSSIER_FEE = 8
 
-// ── Marges internes (lecture seule, jamais sauvegardées en DB) ──
+// ── Marges internes (lecture seule, jamais sauvegardees en DB) ──
 export const MARGE_COMMERCIALE_PERCENT = 2.5
 export const MARGE_SOPANO_PERCENT = 5
 

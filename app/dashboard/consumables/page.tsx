@@ -1,5 +1,5 @@
 import { getConsumables } from '@/app/actions/consumables'
-import ConsumablesClient from './consumables-client'
+import ConsumablesClient from './ConsumablesClient'
 
 export const metadata = {
   title: 'Consommables | Admin',

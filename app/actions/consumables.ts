@@ -1,10 +1,10 @@
 'use server'
 
 import { z } from 'zod'
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/server/prisma'
+import { requireAuth } from '@/lib/server/auth'
 import { revalidatePath } from 'next/cache'
-import { revalidateCache } from '@/lib/cache'
+import { revalidateCache } from '@/lib/server/cache'
 import { unstable_cache } from 'next/cache'
 
 const consumableSchema = z.object({

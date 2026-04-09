@@ -1,5 +1,5 @@
 import { getAccessories } from '@/app/actions/accessories'
-import AccessoriesClient from './accessories-client'
+import AccessoriesClient from './AccessoriesClient'
 
 export const dynamic = 'force-dynamic'
 

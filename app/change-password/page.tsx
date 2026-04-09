@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { PASSWORD_MIN_LENGTH } from '@/lib/config/security'
 
 const initialState = { error: '', success: false }
 
@@ -39,7 +40,7 @@ export default function ChangePasswordPage() {
           <form action={formAction} className="space-y-4">
             <div className="space-y-2">
               <Label htmlFor="newPassword">Nouveau mot de passe</Label>
-              <Input id="newPassword" name="newPassword" type="password" required minLength={6} />
+              <Input id="newPassword" name="newPassword" type="password" required minLength={PASSWORD_MIN_LENGTH} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="confirmPassword">Confirmer le nouveau mot de passe</Label>
@@ -48,7 +49,7 @@ export default function ChangePasswordPage() {
                 name="confirmPassword"
                 type="password"
                 required
-                minLength={6}
+                minLength={PASSWORD_MIN_LENGTH}
               />
             </div>
 

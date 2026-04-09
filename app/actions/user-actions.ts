@@ -1,11 +1,13 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/server/prisma'
 import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
+import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { auth, signOut as authSignOut } from '@/auth'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { requireAdmin } from '@/lib/server/auth'
 import { z } from 'zod'
+import { logAction } from '@/lib/server/audit'
 
 const userRoleSchema = z.enum(['ADMIN', 'USER'])
 
@@ -56,6 +58,8 @@ export async function createUser(formData: FormData) {
   const name = `${firstName} ${lastName}`.trim()
   const hashedPassword = await bcrypt.hash(password, 10)
 
+  const adminSession = await auth()
+
   try {
     await prisma.user.create({
       data: {
@@ -69,10 +73,18 @@ export async function createUser(formData: FormData) {
         permissions: role === 'ADMIN' ? ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'] : [],
       },
     })
+    await logAction({
+      userId: adminSession?.user?.id,
+      userName: adminSession?.user?.name ?? adminSession?.user?.email,
+      action: 'CREATE_USER',
+      entityType: 'User',
+      entityRef: email,
+      details: { role },
+    })
     revalidatePath('/settings/users')
     return { success: true }
   } catch (e: unknown) {
-    if (e instanceof Error && 'code' in e && (e as { code: string }).code === 'P2002') {
+    if (e instanceof PrismaClientKnownRequestError && e.code === 'P2002') {
       return { error: 'Cet email existe déjà' }
     }
     return { error: 'Erreur lors de la création' }
@@ -131,8 +143,18 @@ export async function updateUser(formData: FormData) {
     data.password = await bcrypt.hash(password, 10)
   }
 
+  const adminSession = await auth()
+
   try {
     await prisma.user.update({ where: { id }, data })
+    await logAction({
+      userId: adminSession?.user?.id,
+      userName: adminSession?.user?.name ?? adminSession?.user?.email,
+      action: 'UPDATE_USER',
+      entityType: 'User',
+      entityRef: email,
+      details: { role, passwordChanged: !!(password && password.length > 0) },
+    })
     revalidatePath('/settings/users')
     return { success: true }
   } catch {
@@ -149,7 +171,15 @@ export async function deleteUser(userId: string) {
   }
 
   try {
+    const target = await prisma.user.findUnique({ where: { id: userId }, select: { email: true } })
     await prisma.user.delete({ where: { id: userId } })
+    await logAction({
+      userId: session?.user?.id,
+      userName: session?.user?.name ?? session?.user?.email,
+      action: 'DELETE_USER',
+      entityType: 'User',
+      entityRef: target?.email ?? userId,
+    })
     revalidatePath('/settings/users')
     return { success: true }
   } catch {

@@ -2,13 +2,13 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
-import { createQuote, updateQuote } from '@/app/actions/get-data'
-import { createProductType } from '@/app/actions/admin'
+import { createQuote } from '@/app/actions/quotes'
+import { createProductType } from '@/app/actions/catalog'
 import { toast } from 'sonner'
-import { POSE_SPACING_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/constants'
+import { POSE_SPACING_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/config/pricing'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
-import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/constants'
+import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
 import { useCalculatorForm } from './useCalculatorForm'
 import { useAccessories } from './useAccessories'
 import { useConsumables } from './useConsumables'
@@ -17,6 +17,19 @@ import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, Scree
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import { createAccessory } from '@/app/actions/accessories'
 import { v4 as uuidv4 } from 'uuid'
+
+function resolveVerso(
+  isRectoVerso: boolean,
+  rectoVersoType: string | null,
+  inkMlPerPlate: number,
+  inkMlVerso: number
+) {
+  const isDifferent = isRectoVerso && rectoVersoType === 'different' && inkMlVerso > 0
+  return {
+    effectiveInkMl: isDifferent ? inkMlPerPlate + inkMlVerso : inkMlPerPlate,
+    effectiveIsRectoVerso: isRectoVerso && (rectoVersoType !== 'different' || inkMlVerso === 0),
+  }
+}
 
 export function useCalculator(
   initialProductTypes: ProductType[],
@@ -134,6 +147,7 @@ export function useCalculator(
 
     loadQuote({
       studyNumber: initialQuote.study?.number || 'ET',
+      client: initialQuote.client || '',
       selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
       quantity: initialQuote.quantity,
       selectedPlateId: initialQuote.plateId?.toString() || '',
@@ -145,7 +159,7 @@ export function useCalculator(
       flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
       printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
       isRectoVerso: initialQuote.isRectoVerso || false,
-      rectoVersoType: initialQuote.rectoVersoType || null,
+      rectoVersoType: (initialQuote.rectoVersoType as 'identical' | 'different' | null) || null,
       hasVarnish: initialQuote.hasVarnish || false,
       hasFlatColor: initialQuote.hasFlatColor || false,
       cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
@@ -173,7 +187,7 @@ export function useCalculator(
       showMargeSopano: initialQuote.showMargeSopano ?? false,
       transportDeliveries: initialQuote.transportDeliveries?.map((d): TransportDeliveryForm => ({
         id: uuidv4(),
-        mode: d.transportMode,
+        mode: d.transportMode as 'PACK30' | 'MESSAGERIE_PLUS' | 'AFFRETEMENT' | undefined,
         department: d.department,
         weightKg: d.weightKg ?? undefined,
         units: d.units,
@@ -189,8 +203,9 @@ export function useCalculator(
         selectedPlateId: p.plateId?.toString() || '',
         printMode: (p.printMode as 'production' | 'quality') || 'production',
         isRectoVerso: p.isRectoVerso || false,
-        rectoVersoType: p.rectoVersoType || null,
+        rectoVersoType: (p.rectoVersoType as 'identical' | 'different' | null) || null,
         inkMlPerPlate: p.inkMlPerPlate || 0,
+        inkMlVerso: p.inkMlVerso || 0,
         varnishSurfacePercent: p.varnishSurfacePercent || 0,
         flatColorSurfacePercent: p.flatColorSurfacePercent || 0,
         hasVarnish: p.hasVarnish || false,
@@ -274,15 +289,18 @@ export function useCalculator(
           }
         }
 
+        const { effectiveInkMl: slotEffectiveInkMl, effectiveIsRectoVerso: slotEffectiveIsRectoVerso } =
+          resolveVerso(slot.isRectoVerso, slot.rectoVersoType, slot.inkMlPerPlate, slot.inkMlVerso)
+
         const slotCosts = calculateCosts({
           quantity: slot.quantity,
           impositionResult: slotImposition,
           selectedPlate: plate,
-          inkMlPerPlate: slot.inkMlPerPlate,
+          inkMlPerPlate: slotEffectiveInkMl,
           varnishSurfacePercent: slot.varnishSurfacePercent,
           flatColorSurfacePercent: slot.flatColorSurfacePercent,
           printMode: slot.printMode,
-          isRectoVerso: slot.isRectoVerso,
+          isRectoVerso: slotEffectiveIsRectoVerso,
           hasVarnish: slot.hasVarnish,
           hasFlatColor: slot.hasFlatColor,
           printSetupType: slot.printSetupType,
@@ -347,11 +365,10 @@ export function useCalculator(
     return sum + (calc?.total ?? 0)
   }, 0)
 
-  // Pour recto-verso "différent", l'encre totale = recto + verso (multiplier=1)
-  const effectiveInkMlPerPlate = isRectoVerso && rectoVersoType === 'different'
-    ? inkMlPerPlate + inkMlVerso
-    : inkMlPerPlate
-  const effectiveIsRectoVerso = isRectoVerso && rectoVersoType !== 'different'
+  // Pour recto-verso "différent" avec jauge verso renseignée : encre = recto+verso, multiplier=1
+  // Si inkMlVerso=0 (anciens devis sauvegardés avant la jauge verso) : comportement legacy multiplier=2
+  const { effectiveInkMl: effectiveInkMlPerPlate, effectiveIsRectoVerso } =
+    resolveVerso(isRectoVerso, rectoVersoType, inkMlPerPlate, inkMlVerso)
 
   const costResult = calculateCosts({
     quantity: isMultiProduct ? totalQuantityMulti : quantity,
@@ -496,6 +513,7 @@ export function useCalculator(
 
       await createQuote({
         studyNumber,
+        client: formState.client || undefined,
         productTypeId: isMultiProduct ? parseInt(products[0].productTypeId) : parsedProductId,
         quantity: isMultiProduct ? totalQuantityMulti : quantity,
         plateId: isMultiProduct ? parseInt(products[0].selectedPlateId) : parseInt(selectedPlateId),
@@ -645,7 +663,7 @@ export function useCalculator(
     isRectoVerso, setIsRectoVerso: (v: boolean) => setField('isRectoVerso', v),
     hasVarnish, setHasVarnish: (v: boolean) => setField('hasVarnish', v),
     hasFlatColor, setHasFlatColor: (v: boolean) => setField('hasFlatColor', v),
-    rectoVersoType, setRectoVersoType: (v: string | null) => setField('rectoVersoType', v),
+    rectoVersoType, setRectoVersoType: (v: 'identical' | 'different' | null) => setField('rectoVersoType', v),
     hasImpression, setHasImpression: (v: boolean) => setField('hasImpression', v),
     printSetupType, setPrintSetupType: (v: 'none' | 'standard' | 'complexe') => setField('printSetupType', v),
     cuttingSetupType, setCuttingSetupType: (v: 'none' | 'standard' | 'complexe') => setField('cuttingSetupType', v),

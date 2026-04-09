@@ -1,11 +1,11 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSettings } from '@/app/actions/settings'
-import { SettingsClient } from './settings-client'
+import { SettingsClient } from './SettingsClient'
 import Link from 'next/link'
 import { ArrowLeft, LayoutDashboard } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { ModeToggle } from '@/components/mode-toggle'
+import { ModeToggle } from '@/components/layout/ModeToggle'
 
 export default async function CalculatorSettingsPage() {
   const session = await auth()

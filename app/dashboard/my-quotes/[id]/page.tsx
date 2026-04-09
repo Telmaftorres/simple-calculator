@@ -1,5 +1,5 @@
 import { notFound, redirect } from 'next/navigation'
-import { getQuoteDetail } from '@/app/actions/actuals'
+import { getQuoteDetail } from '@/app/actions/quotes'
 import { auth } from '@/auth'
 import { QuoteDetailClient } from './QuoteDetailClient'
 import Link from 'next/link'
@@ -18,13 +18,13 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
   if (!quote) notFound()
 
   return (
-    <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
+    <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
             <Link href="/dashboard/my-quotes">
               <Button variant="ghost" size="sm" className="gap-1 text-slate-500 -ml-2">
-                <ArrowLeft className="h-4 w-4" /> Mes devis
+                <ArrowLeft className="h-4 w-4" /> Mes dossiers
               </Button>
             </Link>
           </div>
@@ -33,6 +33,11 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
             {quote.study && (
               <span className="ml-3 text-base font-normal text-slate-500">
                 Dossier {quote.study.number}
+              </span>
+            )}
+            {quote.client && (
+              <span className="ml-2 text-base font-normal text-emerald-600">
+                — {quote.client}
               </span>
             )}
           </h1>

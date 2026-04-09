@@ -1,12 +1,12 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-
-const CUTTING_SHORTCUTS = [30, 45, 60, 90, 120]
+import { CUTTING_SHORTCUTS } from '@/lib/config/ui'
+import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 export function SectionEmballage() {
   const {
@@ -131,21 +131,13 @@ export function SectionEmballage() {
               formatValue={formatTimeSeconds}
               gradientColors="from-amber-300 to-orange-500"
             />
-            <div className="flex gap-2">
-              {CUTTING_SHORTCUTS.map((val) => (
-                <button
-                  key={val}
-                  onClick={() => setPackagingCuttingTimePerPoseSeconds(val)}
-                  className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    packagingCuttingTimePerPoseSeconds === val
-                      ? 'bg-amber-500 text-white border-amber-500'
-                      : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                  }`}
-                >
-                  {val === 0 ? '0s' : formatTimeSeconds(val)}
-                </button>
-              ))}
-            </div>
+            <ShortcutButtons
+              values={CUTTING_SHORTCUTS}
+              selected={packagingCuttingTimePerPoseSeconds}
+              onSelect={setPackagingCuttingTimePerPoseSeconds}
+              activeClass="bg-amber-500 text-white border-amber-500"
+              formatValue={(val) => val === 0 ? '0s' : formatTimeSeconds(val)}
+            />
           </div>
 
           {/* ── Récap coûts ── */}

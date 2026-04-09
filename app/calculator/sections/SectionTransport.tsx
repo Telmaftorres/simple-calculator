@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { calculateTransport, suggestTransportMode, type TransportMode } from '@/lib/transport/geodis-rates'
-import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/constants'
+import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
 import { Plus, Trash2 } from 'lucide-react'
 import type { TransportDeliveryForm } from '@/types/calculator'
 
@@ -62,11 +62,11 @@ function DeliveryRow({
       <div className="space-y-2">
         <Label className="text-slate-700 font-medium text-sm">Mode d'expédition</Label>
         <div className="flex gap-2 flex-wrap">
-          {[
+          {([
             { id: 'PACK30', label: 'Pack 30' },
             { id: 'MESSAGERIE_PLUS', label: 'Messagerie Plus' },
             { id: 'AFFRETEMENT', label: 'Affrètement' },
-          ].map(m => (
+          ] as const).map(m => (
             <button
               key={m.id}
               onClick={() => onUpdate('mode', m.id)}

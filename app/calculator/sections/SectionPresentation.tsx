@@ -9,6 +9,7 @@ import { useCalculatorContext } from '../context/CalculatorContext'
 export function SectionPresentation() {
   const {
     studyNumber, setStudyNumber,
+    formState, setField,
     productSearch, setProductSearch,
     isProductDropdownOpen, setIsProductDropdownOpen,
     productTypes, setSelectedProductTypeId,
@@ -62,7 +63,7 @@ export function SectionPresentation() {
       }
     >
 
-      {/* ── Numéro de dossier ── */}
+      {/* ── Numéro de dossier + Client ── */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div className="space-y-2">
           <Label>Numéro de Dossier</Label>
@@ -70,6 +71,14 @@ export function SectionPresentation() {
             value={studyNumber}
             onChange={(e) => setStudyNumber(e.target.value)}
             placeholder="Ex: ET-2024-001"
+          />
+        </div>
+        <div className="space-y-2">
+          <Label>Client</Label>
+          <Input
+            value={formState.client ?? ''}
+            onChange={(e) => setField('client', e.target.value)}
+            placeholder="Nom du client"
           />
         </div>
 

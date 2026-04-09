@@ -58,6 +58,7 @@ model Quote {
   id                                 Int               @id @default(autoincrement())
   reference                          String?           @unique
   parentReference                    String?
+  client                             String?
   studyId                            Int
   productTypeId                      Int
   quantity                           Int
@@ -112,16 +113,43 @@ model Quote {
   showMargeCommerciale               Boolean           @default(false)
   showMargeSopano                    Boolean           @default(false)
   // ── Transport ──
-  transportMode                      String?           // "PACK30" | "MESSAGERIE_PLUS" | "AFFRETEMENT"
-  transportDepartment                String?           // ex: "76", "75", "13"
-  transportWeight                    Float?            // poids total en kg
-  transportUnits                     Int?              // nombre de colis ou palettes
-  transportBasePrice                 Float?            // prix base HT calculé
-  transportOptions                   Float?            // options manuelles HT
-  transportTotal                     Float?            // total transport HT
+  transportTotal                     Float?            // total HT toutes livraisons confondues
   transportShipments                 TransportShipment[]
   transportDeliveries                QuoteTransportDelivery[]
   actuals                            QuoteActuals?
+  productionSheet                    ProductionSheet?
+
+  @@index([userId, createdAt])
+}
+
+model ProductionSheet {
+  id        Int      @id @default(autoincrement())
+  quoteId   Int      @unique
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // ── Façonnage ──
+  nbCollages        Int?     // Nombre de collages
+  collagePerPLV     Float?   // Mt. collage / PLV
+  faconnageNotes    String?  // Description façonnage (ex: "aucun", "pliage simple"...)
+
+  // ── Conditionnement ──
+  conditionnementType  String?  // "kit_unitaire" | "caisse" | "palette" | autre
+  conditionnementNotes String?  // Description libre
+
+  // ── Achats / Accessoires ──
+  achatsNotes  String?  // Texte libre accessoires à commander
+
+  // ── Remarques générales ──
+  remarques    String?
+
+  // ── Plan technique ──
+  planImageUrl String?  // URL de l'image téléversée
+
+  // ── Statut ──
+  status       String   @default("en_attente") // "en_attente" | "en_cours" | "termine"
+
+  quote        Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 
 model QuoteActuals {
@@ -134,12 +162,6 @@ model QuoteActuals {
   actualCuttingTimePerPoseSeconds   Float?   // Découpe réelle (sec/pose)
   actualAssemblyTimePerPieceSeconds Float?   // Façonnage réel (sec/pce)
   actualPackTimePerPieceSeconds     Float?   // Conditionnement réel (sec/pce)
-
-  // ── Temps globaux (réservé — non affiché, au cas où la méthode change) ──
-  actualCuttingTotalMinutes         Float?
-  actualAssemblyTotalMinutes        Float?
-  actualPackTotalMinutes            Float?
-  actualPrintTotalMinutes           Float?
 
   // ── Matière réelle ──
   actualPlatesUsed                  Int?     // Plaques réellement consommées
@@ -262,6 +284,17 @@ model QuoteTransportDelivery {
   basePriceHT   Float   @default(0)
   totalHT       Float   @default(0)
   quote         Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+}
+
+model AuditLog {
+  id         Int      @id @default(autoincrement())
+  createdAt  DateTime @default(now())
+  userId     String?
+  userName   String?
+  action     String   // "CREATE_QUOTE" | "DELETE_QUOTE" | "UPSERT_ACTUALS" | "CREATE_USER" | "UPDATE_USER" | "DELETE_USER" | "UPDATE_SETTING"
+  entityType String   // "Quote" | "User" | "Setting"
+  entityRef  String?  // référence lisible : numéro de devis, email, clé setting
+  details    String?  // JSON libre
 }
 
 model TransportShipment {

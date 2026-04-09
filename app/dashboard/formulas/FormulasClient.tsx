@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { updateProductType } from '@/app/actions/admin'
+import { updateProductType } from '@/app/actions/catalog'
 
 type Element = {
   id: number

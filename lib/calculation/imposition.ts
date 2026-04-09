@@ -92,7 +92,7 @@ export function calculateImposition(
 
       if (remainingHeight <= 0) continue
 
-      const rowsR = calcFit(remainingHeight + spacing, iW)
+      const rowsR = calcFit(remainingHeight, iW)
       const colsR = calcFit(pW, iH)
 
       if (rowsR <= 0 || colsR <= 0) continue
@@ -119,7 +119,7 @@ export function calculateImposition(
 
       if (remainingHeight <= 0) continue
 
-      const rowsN = calcFit(remainingHeight + spacing, iH)
+      const rowsN = calcFit(remainingHeight, iH)
       const colsN = calcFit(pW, iW)
 
       if (rowsN <= 0 || colsN <= 0) continue

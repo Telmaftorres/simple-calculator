@@ -21,6 +21,7 @@ import { SectionTransport } from './sections/SectionTransport'
 import { RecapSidebar } from './sections/RecapSidebar'
 import { SectionDisplay } from './shared'
 import { SectionMultiProduct } from './sections/SectionMultiProduct'
+import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 import type { ImpositionResult } from '@/types/calculator'
 
 function ImpositionDisplay({
@@ -147,6 +148,7 @@ export default function Calculator({
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             <div className="lg:col-span-2 space-y-8">
+              <ErrorBoundary>
               {/* ── Marges internes ── */}
               <div className="flex items-center gap-3 bg-slate-800 text-white px-6 py-3 rounded-lg">
                 <span className="text-sm font-medium text-slate-300 mr-2">Marges internes :</span>
@@ -203,6 +205,7 @@ export default function Calculator({
               <SectionAccessoires />
               <SectionEmballage />
               <SectionTransport />
+              </ErrorBoundary>
             </div>
 
             <RecapSidebar />

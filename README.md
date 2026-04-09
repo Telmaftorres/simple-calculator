@@ -81,6 +81,26 @@ ScreenRecap / QuotePDF (consomment costResult directement)
 | `productSlotResults` | résultats par produit en mode multi |
 | `totalCostMulti` | total global en mode multi |
 
+#### Fiche de production (`ProductionSheet`)
+
+Chaque devis peut avoir une fiche de production attachée (relation 1-1 optionnelle). Elle est destinée à l'atelier et s'exporte en PDF A4 paysage via `components/pdf/ProductionSheetPDF.tsx`.
+
+| Section PDF | Contenu |
+|---|---|
+| En-tête | Référence, client, type PLV, quantité, montant HT, date, statut |
+| Nomenclature | Tableau matières/formats/plaques (mono ou multi-produits) |
+| Impression | Nb plaques, type (R/V, vernis, blanc), encre/plaque |
+| Découpe | Nb plaques, temps/pose estimé |
+| Façonnage | Temps estimé, nb collages, montant collage/PLV, notes |
+| Conditionnement | Temps estimé, type (kit/caisse/palette/autre), notes |
+| Achats | Accessoires du devis + notes libres |
+| Remarques | Champ libre |
+| Plan technique | Image uploadée (JPEG/PNG/WEBP/GIF, max 5 Mo) |
+
+**Upload d'image :** `POST /api/upload` — authentification requise, fichier sauvegardé dans `public/uploads/{folder}/`. Nom de fichier généré avec `Date.now() + randomUUID()` (crypto built-in). Retourne l'URL relative `/uploads/{folder}/{filename}` stockée dans `planImageUrl`.
+
+**Statuts disponibles :** `en_attente` (défaut) · `en_cours` · `termine`
+
 #### Invalidation cache factorisée
 
 `lib/cache.ts` expose `revalidateEntity()` qui regroupe `revalidateCache()` + `revalidatePath()` en un seul appel :
@@ -109,7 +129,11 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │   │   ├── get-data.ts           # Lectures + createQuote (Zod + buildQuoteData) + deleteQuote
 │   │   ├── settings.ts           # Lecture/modification constantes métier (sans unstable_cache)
 │   │   ├── stats.ts              # Stats dashboard (USER voit son CA, ADMIN voit tout)
+│   │   ├── production-sheet.ts   # upsertProductionSheet (propriétaire ou ADMIN)
 │   │   └── auth.ts               # Action de connexion (signIn)
+│   ├── api/
+│   │   └── upload/
+│   │       └── route.ts          # POST /api/upload — sauvegarde fichier dans public/uploads/
 │   ├── calculator/
 │   │   ├── Calculator.tsx
 │   │   ├── shared.tsx
@@ -138,7 +162,8 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │   │   ├── products/
 │   │   ├── accessories/
 │   │   ├── consumables/
-│   │   └── formulas/
+│   │   ├── formulas/
+│   │   └── activite/              # Journal d'activité (ADMIN only)
 │   ├── settings/
 │   │   ├── calculator/
 │   │   └── users/
@@ -147,21 +172,35 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │   └── page.tsx
 ├── components/
 │   ├── ui/                       # Composants shadcn/ui
-│   ├── QuotePDF.tsx              # Support mono et multi-produits
-│   ├── GaugeSlider.tsx
-│   ├── PlateVisualizer.tsx
-│   ├── LogoutButton.tsx
-│   └── MobileSidebar.tsx
+│   ├── calculator/
+│   │   ├── GaugeSlider.tsx       # Prop step optionnelle (défaut 1)
+│   │   ├── ShortcutButtons.tsx   # Boutons raccourcis réutilisables (jauges temps)
+│   │   └── PlateVisualizer.tsx
+│   ├── feedback/
+│   │   └── ErrorBoundary.tsx     # Boundary React (class component) autour des sections
+│   ├── layout/
+│   │   ├── LogoutButton.tsx
+│   │   ├── MobileSidebar.tsx
+│   │   └── ModeToggle.tsx
+│   ├── pdf/
+│   │   ├── QuotePDF.tsx          # Support mono et multi-produits
+│   │   └── ProductionSheetPDF.tsx # Fiche de production A4 paysage
+│   └── providers/
+│       └── ThemeProvider.tsx
 ├── hooks/
-│   ├── useCalculator.ts          # Gère mono et multi-produits, expose productSlotResults
+│   ├── useCalculator.ts          # Gère mono et multi-produits — resolveVerso() factorisé
 │   ├── useCalculatorForm.ts      # Reducer avec actions ADD/REMOVE/UPDATE_PRODUCT + TRANSPORT_DELIVERY
 │   ├── useAccessories.ts
 │   └── useConsumables.ts
 ├── lib/
 │   ├── auth-helpers.ts
+│   ├── audit.ts                  # logAction() — insère dans AuditLog, try/catch silencieux
 │   ├── cache.ts                  # revalidateCache() + revalidateEntity() avec CacheTag typé
-│   ├── constants.ts              # HOURLY_RATE_BE=90, HOURLY_RATE_BAT=70 ajoutés
-│   ├── format.ts
+│   ├── constants.ts              # Constantes raccourcis (BE/BAT/CUTTING_SHORTCUTS…) + PASSWORD_MIN_LENGTH
+│   ├── format/
+│   │   ├── index.ts
+│   │   ├── numbers.ts
+│   │   └── calculator-details.ts
 │   ├── quote-schema.ts           # quoteProductSchema ajouté pour le multi-produits
 │   ├── quote-defaults.ts         # hasBE, beTimeMinutes, batTimeMinutes, isMultiProduct
 │   ├── quote-cost-rows.ts        # Lignes BE/BAT ajoutées
@@ -176,13 +215,17 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │       ├── ... (migrations précédentes)
 │       ├── 20260325131752_add_parent_reference_and_new_format/
 │       ├── 20260325000002_add_multi_product/
-│       └── 20260325000003_add_be_bat_fields/
+│       ├── 20260325000003_add_be_bat_fields/
+│       └── 20260409114345_add_quote_user_date_index/
 ├── types/
 │   ├── calculator.ts             # ProductSlot, ProductSlotResult, DEFAULT_PRODUCT_SLOT
 │   └── next-auth.d.ts
 └── __tests__/
     ├── imposition.test.ts
-    ├── costs.test.ts
+    ├── costs.test.ts             # +BE/BAT, emballage, coefficients matière, frais dossier
+    ├── transport.test.ts         # getPack30Rate, getMessagerieRate, calculateTransport
+    ├── cost-rows.test.ts         # buildCostRows — apparition/valeur de chaque ligne PDF/récap
+    ├── multi-product.test.ts     # Calculs par slot, agrégation, cohérence mono↔multi
     └── actions.test.ts
 ```
 
@@ -198,20 +241,38 @@ Study (dossier client)
         ├── QuoteTransportDelivery[]    (points de livraison transport, onDelete: Cascade)
         ├── QuoteAccessory[] → Accessory   (onDelete: Cascade)
         ├── QuoteConsumable[] → Consumable (onDelete: Cascade)
-        └── QuoteElement[]                 (onDelete: Cascade)
+        ├── QuoteElement[]                 (onDelete: Cascade)
+        ├── QuoteActuals?                  (données réelles, onDelete: Cascade)
+        └── ProductionSheet?               (fiche de production, onDelete: Cascade)
+              ├── status                   ('en_attente' | 'en_cours' | 'termine')
+              ├── nbCollages / collagePerPLV
+              ├── faconnageNotes / conditionnementNotes / achatsNotes / remarques
+              └── planImageUrl             (image uploadée via /api/upload)
 
 User
   └── Quote[]
 
 Setting (constantes métier modifiables en DB)
+
+AuditLog (journal d'activité — indépendant, pas de FK)
+  ├── userId / userName   (dénormalisé — survit à la suppression d'un utilisateur)
+  ├── action              ('CREATE_QUOTE' | 'DELETE_QUOTE' | 'UPSERT_ACTUALS' | 'CREATE_USER' | 'UPDATE_USER' | 'DELETE_USER' | 'UPDATE_SETTING')
+  ├── entityType          ('Quote' | 'User' | 'Setting')
+  ├── entityRef           (référence lisible : numéro devis, email, clé setting)
+  └── details             (JSON libre : quantité, rôle, valeur modifiée…)
 ```
+
+**Champ `client` :** ajouté directement sur `Quote` (TEXT nullable) — affiché dans la fiche de production et l'en-tête du PDF.
+
+**Index DB :** `Quote` possède un `@@index([userId, createdAt])` pour optimiser la liste "Mes dossiers" (filtrée par utilisateur, triée par date).
 
 **Règles métier :**
 > 🛡️ **Note de sécurité :** Il est parfaitement normal et **voulu** que TOUS les utilisateurs identifiés puissent effectuer des opérations CRUD complètes sur l'ensemble de la base de données métier (Matières, Modèles PLV, Éléments, Accessoires, Consommables). Les Server Actions correspondantes n'ont volontairement pas de `requireAdmin()`.
 
 - `Consumable` = matériaux de façonnage vendus au mètre. `size` = taille totale du rouleau, `sizePerItem` = consommation par pièce.
 - `QuoteProduct` = produit individuel dans un devis multi-produits. Contient ses propres champs PLV, format, matière, impression, découpe.
-- `Setting` = constantes métier modifiables depuis l'interface admin sans redéploiement. Fallback sur `lib/constants.ts` si DB indisponible.
+- `ProductionSheet` = fiche de production liée à un devis (relation 1-1, optionnelle). Créée/mise à jour via `upsertProductionSheet()` (Server Action). Seul le propriétaire du devis ou un ADMIN peut y accéder.
+- `Setting` = constantes métier modifiables depuis l'interface admin sans redéploiement. Fallback sur `lib/config/pricing.ts` si DB indisponible.
 - Référence devis générée via une **séquence PostgreSQL atomique** (`quote_reference_seq`).
 - Format référence : `C001-0326` (3 chiffres séquence + mois + 2 derniers chiffres année).
 - **Versioning** : modifier un devis `C001-0326` crée une version `C001-0326-A`, puis `C001-0326-B`, etc. L'original est conservé intact via `parentReference`.
@@ -233,6 +294,7 @@ Setting (constantes métier modifiables en DB)
 | Modifier constantes métier | ✗ | ✓ |
 | Gérer les utilisateurs | ✗ | ✓ |
 | `/settings/*` | ✗ | ✓ |
+| Journal d'activité `/dashboard/activite` | ✗ | ✓ |
 
 **First Login Policy :** `mustChangePassword: true` à la création → redirection forcée vers `/change-password`.
 
@@ -278,6 +340,16 @@ SEED_ADMIN_PASSWORD="<mot de passe fort>"
 ---
 
 ## 🧮 Moteur de calcul
+
+### Utilitaires de formatage (`lib/format/`)
+
+| Fonction | Exemple de sortie |
+|---|---|
+| `formatCurrency(12.5)` | `"12.50 €"` |
+| `formatMargin(2.5)` | `"×2.5 (+150%)"` |
+| `formatTimeSeconds(90)` | `"1 min 30 sec"` |
+| `formatMinutes(1.5)` | `"1 min 30 sec"` |
+| `formatCuttingDetails(...)` | `"3 min (20s/pose + calage standard)"` |
 
 ### Imposition (calepinage 2D)
 
@@ -357,13 +429,34 @@ Modifiables depuis `/settings/calculator` sans redéploiement.
 | `PACKAGING_SETUP_COST` | 10 € | Forfait calage emballage (fixe, hors taux horaire) |
 | `HOURLY_RATE_BE` | 90 €/h | Taux horaire Bureau d'études / Création |
 | `HOURLY_RATE_BAT` | 70 €/h | Taux horaire BAT |
-| `MATERIAL_MARGIN_TIER*` | — | Coefficients de marge selon le coût de la matière |
+| `MATERIAL_MARGIN_TIER1` | 3.5 | Coeff. matière si coût < 5 €/plaque |
+| `MATERIAL_MARGIN_TIER2` | 3   | Coeff. matière si coût 5–10 €/plaque |
+| `MATERIAL_MARGIN_TIER3` | 2.5 | Coeff. matière si coût 10–20 €/plaque |
+| `MATERIAL_MARGIN_TIER4` | 2   | Coeff. matière si coût > 20 €/plaque |
+| `INK_MARGIN_STANDARD`   | 4.5 | Coeff. marge encre standard |
+| `INK_MARGIN_VARNISH`    | 7   | Coeff. marge encre vernis |
+| `INK_MARGIN_FLAT_COLOR` | 7   | Coeff. marge encre blanc / aplat |
 | `DOSSIER_FEE` | 8 € | Frais de dossier forfaitaires administratifs |
 | `MARGE_COMMERCIALE_PERCENT` | 2.5 % | Marge interne commerciale (affichage indicatif) |
 | `MARGE_SOPANO_PERCENT` | 5 % | Marge interne Sopano (affichage indicatif) |
 | `GEODIS_FUEL_SURCHARGE_PERCENT` | 2.9 % | Surcharge carburant GEODIS (mensuel) |
 
 > ⚠️ Après l'ajout de nouvelles clés en DB via seed, relancer le serveur. `getSettings` n'utilise pas `unstable_cache` donc les nouvelles clés apparaissent immédiatement.
+
+---
+
+## ⚠️ Décisions intentionnelles — pièges à ne pas "corriger"
+
+Ces patterns peuvent sembler incorrects à première vue mais sont **voulus**.
+
+| Fichier | Pattern | Pourquoi c'est voulu |
+|---|---|---|
+| `app/settings/users/UserManagement.tsx` | `createSuccess` + `setTimeout(() => setCreateSuccess(false), 3000)` | Ce n'est **pas** un doublon de Sonner. C'est un bloc vert inline dans le formulaire (`<p className="text-green-600">`) qui disparaît après 3s. Sonner n'est pas utilisé pour cet message. Le `setTimeout` est nécessaire. |
+| `app/actions/accessories.ts` / `consumables.ts` | Pas de `requireAdmin()` | Tous les utilisateurs connectés peuvent faire du CRUD sur les accessoires et consommables — c'est un choix métier délibéré (outil interne). |
+| `lib/get-data.ts` (`getSettings`) | Pas de `unstable_cache` | Intentionnel — ce cache Next.js persiste entre redémarrages et empêche l'apparition de nouveaux settings. |
+| `app/calculator/context/CalculatorContext.tsx` | Type inféré `ReturnType<typeof useCalculator>` | Zéro maintenance manuelle : le contexte se met à jour automatiquement quand `useCalculator` évolue. |
+| `app/actions/auth.ts` | Requête DB dans `authenticate()` avant `signIn()` pour lire `mustChangePassword` | Pas une duplication de la requête dans `authorize()`. Les deux ont des rôles différents : la première détermine le `redirectTo` avant le `signIn`, la seconde vérifie les credentials. Le middleware dans `auth.config.ts` redirige aussi, mais supprimer cette requête demanderait de refactorer le flux de redirection Auth.js v5 (bêta) — risque inutile. |
+| `MyQuotesClient.tsx` / `PlatesClient.tsx` | Confirmation de suppression inline (state `confirmingDeleteId`) | `window.confirm()` est bloquant et non stylé. Le composant AlertDialog (shadcn) n'est pas installé. Pattern choisi : premier clic → affiche "Confirmer / Annuler" dans la ligne, deuxième clic confirme. |
 
 ---
 
@@ -487,6 +580,24 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Création PLV inline en multi-produits** : le `<select>` du type de PLV remplacé par un champ de recherche avec dropdown + option `+ Créer "..."`, identique au mode simple produit
 - ✅ **Encre recto/verso différenciée** : en mode Recto/Verso "Différent", deux jauges indépendantes (Recto + Verso) remplacent la jauge unique. Encre effective = `inkMlRecto + inkMlVerso` (multiplier ×1 au lieu de ×2). Champ `inkMlVerso` ajouté en DB (`migration add_ink_ml_verso`)
 - ✅ **Override orientation imposition** : clic sur le badge Horizontal/Vertical/Mix → menu contextuel pour forcer l'orientation ("Forcer Horizontal" / "Forcer Vertical" / "↩ Remettre en auto"). Fonctionne en mono et multi-produits (par slot)
+
+### Sprint 10 — Marges encre, fiche de production & Mes Dossiers (avril 2026)
+- ✅ **Marges encre** : coefficients appliqués sur l'encre standard (×4.5), vernis (×7) et blanc (×7). Configurables depuis `/settings/calculator` (clés `INK_MARGIN_STANDARD`, `INK_MARGIN_VARNISH`, `INK_MARGIN_FLAT_COLOR`). Seeder mis à jour (`npx prisma db seed` requis en prod)
+- ✅ **Coefficients matière €/plaque** : la logique de marge matière passe de €/m² à €/plaque (< 5€ → ×3.5, 5–10€ → ×3, 10–20€ → ×2.5, > 20€ → ×2). Appliqué au devis mono **et** à la matière d'emballage. Labels des Settings mis à jour en DB
+- ✅ **Champ Client** : ajout du champ `client` (texte libre) dans `SectionPresentation`. Affiché dans la liste "Mes dossiers", dans l'en-tête de la fiche et dans le PDF. Migration Prisma `client String?`
+- ✅ **Mes Dossiers (ex "Mes Devis")** : renommage complet UI + navigation. Liste enrichie d'une colonne **Client**, tri cliquable par Référence / Client / Date, et recherche étendue au client. Date sans heure
+- ✅ **Fiche de production** : 3ème onglet sur chaque dossier (Résumé devis / Fiche de production / Données réelles). Sections : statut (En attente / En cours / Terminé), Informations devis (auto), Nomenclature (auto), Impression (auto), Découpe (auto), Façonnage (nb collages + montant/PLV + notes éditables), Conditionnement (type boutons + notes éditables), Achats (accessoires auto + notes), Remarques, Plan technique (upload image). Table `ProductionSheet` (Prisma, onDelete Cascade)
+- ✅ **PDF Fiche de production** : export PDF A4 **paysage** avec header dark, nomenclature table, 2 colonnes (Impression/Découpe/Façonnage à gauche, Conditionnement/Achats/Remarques/Plan technique à droite), pied de page avec pagination. Composant `ProductionSheetPDF.tsx`
+- ✅ **Upload image** : API route `/api/upload` (JPEG/PNG/WEBP/GIF, max 5 Mo) sauvegardant dans `public/uploads/production-sheets/`. Champ `planImageUrl String?` sur `ProductionSheet`
+- ✅ **Fix backward-compat recto/verso** : les anciens devis sauvegardés avec `rectoVersoType='different'` et `inkMlVerso=0` (avant l'ajout de la jauge verso) conservent le multiplicateur ×2. Le nouveau comportement (multiplier=1 + encre combinée) ne s'active que si `inkMlVerso > 0`
+- ✅ **Tests mis à jour** : `costs.test.ts` aligné avec les marges encre, les nouveaux forfaits de calage fixes et `HOURLY_RATE_CONDITIONING`
+
+### Sprint 11 — Audit technique & journal d'activité (avril 2026)
+- ✅ **Fix bug imposition `tryMixed()`** : espacement double-compté dans `calcFit(remainingHeight + spacing, iW)` → corrigé en `calcFit(remainingHeight, iW)` (lignes 95 et 122). Tests de régression ajoutés (`describe('mixed orientation')`, 4 cas)
+- ✅ **Validation Zod enums** : remplacement des `.string()` libres par des `.z.enum([...])` dans `quoteFieldsSchema`, `quoteProductSchema` et `transportDeliverySchema` (`printMode`, `rectoVersoType`, `printSetupType`, `cuttingSetupType`, `transportMode`). Types TypeScript resserrés en cascade (`types/calculator.ts`, `useCalculatorForm.ts`, `useCalculator.ts`, `SectionTransport.tsx`)
+- ✅ **Nettoyage schéma Prisma** : suppression de 6 colonnes mortes legacy sur `Quote` (ancien système mono-livraison : `transportMode`, `transportDepartment`, `transportWeight`, `transportUnits`, `transportBasePrice`, `transportOptions`) et de 4 colonnes réservées inutilisées sur `QuoteActuals` (`actualCuttingTotalMinutes`, `actualAssemblyTotalMinutes`, `actualPackTotalMinutes`, `actualPrintTotalMinutes`)
+- ✅ **Transport dans les PDFs** : section "Transport GEODIS" ajoutée dans `QuotePDF.tsx` (tableau par livraison : mode, département, quantité, poids, options HT) et dans `ProductionSheetPDF.tsx` (colonne droite, entre Conditionnement et Achats, avec total consolidé si plusieurs livraisons)
+- ✅ **Journal d'activité** (`AuditLog`) : table Prisma sans FK (résistante aux suppressions), helper `lib/audit.ts` avec `logAction()` try/catch silencieux, instrumentation de `createQuote`, `deleteQuote`, `upsertQuoteActuals`, `createUser`, `updateUser`, `deleteUser`, `updateSetting`. Page `/dashboard/activite` (ADMIN only, 200 dernières actions, badges colorés par type). Lien "Activité" dans la sidebar desktop et mobile
 
 ---
 

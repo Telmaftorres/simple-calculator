@@ -26,7 +26,7 @@ import {
   INK_MARGIN_FLAT_COLOR,
   DOSSIER_FEE,
   HOURLY_RATE_CONDITIONING,
-} from '@/lib/constants'
+} from '@/lib/config/pricing'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
   ImpositionResult,

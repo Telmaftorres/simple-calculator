@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { createElement, updateElement, deleteElement } from '@/app/actions/admin' // updateElement needs to be added to actions
+import { createElement, updateElement, deleteElement } from '@/app/actions/catalog'
 import Link from 'next/link'
 
 type Element = {
@@ -73,7 +73,6 @@ export default function ElementsClient({ product }: { product: ProductType }) {
 
     try {
       if (editingElement) {
-        // Need to add updateElement to actions/admin.ts
         await updateElement(editingElement.id, product.id, payload)
       } else {
         await createElement({
