@@ -493,6 +493,7 @@ const COLOR_MAP: Record<string, {
   badgeText: string
   dot: string
   formulaBg: string
+  formulaBgHover: string
   formulaBorder: string
   formulaText: string
 }> = {
@@ -505,6 +506,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-purple-700',
     dot: 'bg-purple-500',
     formulaBg: 'bg-purple-50',
+    formulaBgHover: 'hover:bg-purple-50',
     formulaBorder: 'border-purple-100',
     formulaText: 'text-purple-800',
   },
@@ -517,6 +519,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-orange-700',
     dot: 'bg-orange-500',
     formulaBg: 'bg-orange-50',
+    formulaBgHover: 'hover:bg-orange-50',
     formulaBorder: 'border-orange-100',
     formulaText: 'text-orange-800',
   },
@@ -529,6 +532,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-pink-700',
     dot: 'bg-pink-500',
     formulaBg: 'bg-pink-50',
+    formulaBgHover: 'hover:bg-pink-50',
     formulaBorder: 'border-pink-100',
     formulaText: 'text-pink-800',
   },
@@ -541,6 +545,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-teal-700',
     dot: 'bg-teal-500',
     formulaBg: 'bg-teal-50',
+    formulaBgHover: 'hover:bg-teal-50',
     formulaBorder: 'border-teal-100',
     formulaText: 'text-teal-800',
   },
@@ -553,6 +558,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-blue-700',
     dot: 'bg-blue-500',
     formulaBg: 'bg-blue-50',
+    formulaBgHover: 'hover:bg-blue-50',
     formulaBorder: 'border-blue-100',
     formulaText: 'text-blue-800',
   },
@@ -565,6 +571,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-amber-700',
     dot: 'bg-amber-500',
     formulaBg: 'bg-amber-50',
+    formulaBgHover: 'hover:bg-amber-50',
     formulaBorder: 'border-amber-100',
     formulaText: 'text-amber-800',
   },
@@ -577,6 +584,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-slate-500',
     dot: 'bg-slate-400',
     formulaBg: 'bg-slate-50',
+    formulaBgHover: 'hover:bg-slate-50',
     formulaBorder: 'border-slate-200',
     formulaText: 'text-slate-600',
   },
@@ -589,6 +597,7 @@ const COLOR_MAP: Record<string, {
     badgeText: 'text-sky-700',
     dot: 'bg-sky-500',
     formulaBg: 'bg-sky-50',
+    formulaBgHover: 'hover:bg-sky-50',
     formulaBorder: 'border-sky-100',
     formulaText: 'text-sky-800',
   },
@@ -628,7 +637,7 @@ function SettingRowContent({
             <Button
               size="sm"
               variant="ghost"
-              className={`text-xs gap-1 h-8 px-2 ${activeColors.formulaText} hover:${activeColors.formulaBg}`}
+              className={`text-xs gap-1 h-8 px-2 ${activeColors.formulaText} ${activeColors.formulaBgHover}`}
               onClick={onToggleFormula}
             >
               <FlaskConical className="h-3 w-3" />

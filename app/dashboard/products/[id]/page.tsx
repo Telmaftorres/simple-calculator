@@ -1,5 +1,5 @@
-import { prisma } from '@/lib/prisma'
-import ElementsClient from './elements-client'
+import { prisma } from '@/lib/server/prisma'
+import ElementsClient from './ElementsClient'
 import { notFound } from 'next/navigation'
 
 interface PageProps {

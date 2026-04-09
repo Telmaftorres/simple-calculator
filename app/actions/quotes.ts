@@ -1,13 +1,13 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/server/prisma'
 import { type Prisma } from '@prisma/client'
-import { requireAuth } from '@/lib/auth-helpers'
+import { requireAuth } from '@/lib/server/auth'
 import { revalidatePath } from 'next/cache'
-import { unstable_cache } from 'next/cache'
 import { z } from 'zod'
-import { revalidateCache } from '@/lib/cache'
-import { createQuoteSchema, type CreateQuoteInput } from '@/lib/quote-schema'
+import { revalidateCache } from '@/lib/server/cache'
+import { createQuoteSchema, type CreateQuoteInput } from '@/lib/quote/schema'
+import { logAction } from '@/lib/server/audit'
 
 function buildQuoteData(
   validated: CreateQuoteInput,
@@ -35,24 +35,6 @@ function buildQuoteData(
     isMultiProduct: validated.isMultiProduct ?? false,
   }
 }
-
-export const getStudies = unstable_cache(
-  async () => prisma.study.findMany({ orderBy: { createdAt: 'desc' } }),
-  ['studies'],
-  { tags: ['studies'] }
-)
-
-export const getProductTypes = unstable_cache(
-  async () => prisma.productType.findMany({ include: { elements: true }, orderBy: { name: 'asc' } }),
-  ['product-types'],
-  { tags: ['product-types'] }
-)
-
-export const getPlates = unstable_cache(
-  async () => prisma.plate.findMany({ orderBy: { name: 'asc' } }),
-  ['plates'],
-  { tags: ['plates'] }
-)
 
 async function generateReference(parentReference?: string): Promise<string> {
   const now = new Date()
@@ -129,12 +111,12 @@ export async function createQuote(data: CreateQuoteInput) {
       transportDeliveries: transportDeliveries && transportDeliveries.length > 0 ? {
         create: transportDeliveries.map((d) => ({
           transportMode: d.transportMode,
-          department:    d.department,
-          weightKg:      d.weightKg ?? null,
-          units:         d.units,
-          optionsHT:     d.optionsHT,
-          basePriceHT:   d.basePriceHT,
-          totalHT:       d.totalHT,
+          department: d.department,
+          weightKg: d.weightKg ?? null,
+          units: d.units,
+          optionsHT: d.optionsHT,
+          basePriceHT: d.basePriceHT,
+          totalHT: d.totalHT,
         })),
       } : undefined,
       products: validated.products && validated.products.length > 0 ? {
@@ -166,6 +148,15 @@ export async function createQuote(data: CreateQuoteInput) {
     },
   })
 
+  await logAction({
+    userId: session.user.id,
+    userName: session.user.name ?? session.user.email,
+    action: 'CREATE_QUOTE',
+    entityType: 'Quote',
+    entityRef: reference,
+    details: { studyNumber: validated.studyNumber, productTypeId: validated.productTypeId, quantity: validated.quantity },
+  })
+
   revalidateCache('quotes')
   return quote
 }
@@ -185,7 +176,18 @@ export async function deleteQuote(id: number) {
   const whereClause = session.user.role === 'ADMIN'
     ? { id: validId }
     : { id: validId, userId: session.user.id }
+
+  const quote = await prisma.quote.findUnique({ where: { id: validId }, select: { reference: true } })
   await prisma.quote.delete({ where: whereClause })
+
+  await logAction({
+    userId: session.user.id,
+    userName: session.user.name ?? session.user.email,
+    action: 'DELETE_QUOTE',
+    entityType: 'Quote',
+    entityRef: quote?.reference ?? String(validId),
+  })
+
   revalidateCache('quotes')
   revalidatePath('/dashboard/my-quotes')
 }
@@ -212,5 +214,31 @@ export async function getQuoteById(id: number) {
   if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
     throw new Error('Non autorisé')
   }
+  return quote
+}
+
+export async function getQuoteDetail(id: number) {
+  const session = await requireAuth()
+
+  const quote = await prisma.quote.findUnique({
+    where: { id },
+    include: {
+      study: true,
+      productType: { include: { elements: true } },
+      plate: true,
+      packagingPlate: true,
+      accessories: { include: { accessory: true } },
+      products: { include: { plate: true } },
+      transportDeliveries: true,
+      actuals: true,
+      productionSheet: true,
+    },
+  })
+
+  if (!quote) return null
+  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
+    throw new Error('Non autorisé')
+  }
+
   return quote
 }

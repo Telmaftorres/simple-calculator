@@ -2,7 +2,7 @@
 
 import { signIn } from '@/auth'
 import { AuthError } from 'next-auth'
-import { prisma } from '@/lib/prisma'
+import { prisma } from '@/lib/server/prisma'
 
 export async function authenticate(prevState: string | undefined, formData: FormData) {
   try {

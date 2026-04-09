@@ -1,9 +1,11 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
-import { requireAdmin } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/server/prisma'
+import { requireAdmin } from '@/lib/server/auth'
 import { revalidatePath } from 'next/cache'
 import { z } from 'zod'
+import { logAction } from '@/lib/server/audit'
+import { auth } from '@/auth'
 
 export async function getSettings() {
   return await prisma.setting.findMany({
@@ -29,12 +31,23 @@ export async function updateSetting(key: string, value: string) {
     ),
   }).parse({ key, value })
 
+  const session = await auth()
+
   await prisma.setting.update({
     where: { key: validated.key },
     data: {
       value: validated.value,
       updatedAt: new Date(),
     },
+  })
+
+  await logAction({
+    userId: session?.user?.id,
+    userName: session?.user?.name ?? session?.user?.email,
+    action: 'UPDATE_SETTING',
+    entityType: 'Setting',
+    entityRef: validated.key,
+    details: { value: validated.value },
   })
 
   revalidatePath('/settings/calculator')

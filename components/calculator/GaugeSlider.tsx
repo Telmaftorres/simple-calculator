@@ -8,6 +8,7 @@ interface GaugeSliderProps {
   value: number
   max: number
   min?: number
+  step?: number
   unit: string
   onChange: (value: number) => void
   className?: string
@@ -20,6 +21,7 @@ export function GaugeSlider({
   value,
   max,
   min = 0,
+  step = 1,
   unit,
   onChange,
   className,
@@ -48,7 +50,7 @@ export function GaugeSlider({
           value={[value]}
           max={max}
           min={min}
-          step={1}
+          step={step}
           onValueChange={(vals: number[]) => onChange(vals[0])}
           className="absolute top-0 w-full"
         />

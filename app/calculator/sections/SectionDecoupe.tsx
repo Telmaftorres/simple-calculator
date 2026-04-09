@@ -1,12 +1,12 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-
-const CUTTING_SHORTCUTS = [30, 45, 60, 90, 120]
+import { CUTTING_SHORTCUTS } from '@/lib/config/ui'
+import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 export function SectionDecoupe() {
   const {
@@ -79,21 +79,13 @@ export function SectionDecoupe() {
             formatValue={formatTimeSeconds}
             gradientColors="from-yellow-300 to-orange-600"
           />
-          <div className="flex gap-2">
-            {CUTTING_SHORTCUTS.map((val) => (
-              <button
-                key={val}
-                onClick={() => setCuttingTimePerPoseSeconds(val)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  cuttingTimePerPoseSeconds === val
-                    ? 'bg-orange-500 text-white border-orange-500'
-                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {formatTimeSeconds(val)}
-              </button>
-            ))}
-          </div>
+          <ShortcutButtons
+            values={CUTTING_SHORTCUTS}
+            selected={cuttingTimePerPoseSeconds}
+            onSelect={setCuttingTimePerPoseSeconds}
+            activeClass="bg-orange-500 text-white border-orange-500"
+            formatValue={formatTimeSeconds}
+          />
         </div>
 
         {/* ── Résumé temps ── */}

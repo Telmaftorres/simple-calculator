@@ -1,9 +1,9 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/server/prisma'
+import { requireAuth } from '@/lib/server/auth'
 import { z } from 'zod'
-import { revalidateEntity } from '@/lib/cache'
+import { revalidateEntity } from '@/lib/server/cache'
 
 const plateSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),

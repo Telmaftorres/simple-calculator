@@ -4,13 +4,14 @@ import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { Trash2, Plus } from 'lucide-react'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { formatTimeSeconds } from '@/lib/format'
 import type { ProductSlot } from '@/types/calculator'
 
 import type { ImpositionResult } from '@/types/calculator'
+import { INK_SHORTCUTS, FINISHING_SHORTCUTS, CUTTING_SHORTCUTS } from '@/lib/config/ui'
 
 function SlotImpositionDisplay({
   impositionResult,
@@ -66,9 +67,6 @@ function SlotImpositionDisplay({
   )
 }
 
-const INK_SHORTCUTS = [10, 25, 50, 75]
-const FINISHING_SHORTCUTS = [10, 25, 50, 75]
-const CUTTING_SHORTCUTS = [0, 20, 60, 120]
 
 export function SectionMultiProduct() {
   const {
@@ -314,32 +312,89 @@ export function SectionMultiProduct() {
                 )}
 
                 {/* Encre */}
-                <div className="space-y-2">
-                  <GaugeSlider
-                    label="Encre (ml / plaque)"
-                    value={activeSlot.inkMlPerPlate}
-                    min={0}
-                    max={100}
-                    unit="ml"
-                    onChange={(v) => updateProduct(activeProductIndex, 'inkMlPerPlate', v)}
-                    gradientColors="from-indigo-300 to-purple-600"
-                  />
-                  <div className="flex gap-2">
-                    {INK_SHORTCUTS.map((val) => (
-                      <button
-                        key={val}
-                        onClick={() => updateProduct(activeProductIndex, 'inkMlPerPlate', val)}
-                        className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                          activeSlot.inkMlPerPlate === val
-                            ? 'bg-purple-600 text-white border-purple-600'
-                            : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                        }`}
-                      >
-                        {val} ml
-                      </button>
-                    ))}
+                {activeSlot.rectoVersoType === 'different' ? (
+                  <div className="space-y-4">
+                    <div className="space-y-2">
+                      <GaugeSlider
+                        label="Encre Recto (ml / plaque)"
+                        value={activeSlot.inkMlPerPlate}
+                        min={0}
+                        max={100}
+                        unit="ml"
+                        onChange={(v) => updateProduct(activeProductIndex, 'inkMlPerPlate', v)}
+                        gradientColors="from-indigo-300 to-purple-600"
+                      />
+                      <div className="flex gap-2">
+                        {INK_SHORTCUTS.map((val) => (
+                          <button
+                            key={val}
+                            onClick={() => updateProduct(activeProductIndex, 'inkMlPerPlate', val)}
+                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                              activeSlot.inkMlPerPlate === val
+                                ? 'bg-purple-600 text-white border-purple-600'
+                                : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {val} ml
+                          </button>
+                        ))}
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <GaugeSlider
+                        label="Encre Verso (ml / plaque)"
+                        value={activeSlot.inkMlVerso}
+                        min={0}
+                        max={100}
+                        unit="ml"
+                        onChange={(v) => updateProduct(activeProductIndex, 'inkMlVerso', v)}
+                        gradientColors="from-violet-300 to-fuchsia-600"
+                      />
+                      <div className="flex gap-2">
+                        {INK_SHORTCUTS.map((val) => (
+                          <button
+                            key={val}
+                            onClick={() => updateProduct(activeProductIndex, 'inkMlVerso', val)}
+                            className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                              activeSlot.inkMlVerso === val
+                                ? 'bg-fuchsia-600 text-white border-fuchsia-600'
+                                : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                            }`}
+                          >
+                            {val} ml
+                          </button>
+                        ))}
+                      </div>
+                    </div>
                   </div>
-                </div>
+                ) : (
+                  <div className="space-y-2">
+                    <GaugeSlider
+                      label="Encre (ml / plaque)"
+                      value={activeSlot.inkMlPerPlate}
+                      min={0}
+                      max={100}
+                      unit="ml"
+                      onChange={(v) => updateProduct(activeProductIndex, 'inkMlPerPlate', v)}
+                      gradientColors="from-indigo-300 to-purple-600"
+                    />
+                    <div className="flex gap-2">
+                      {INK_SHORTCUTS.map((val) => (
+                        <button
+                          key={val}
+                          onClick={() => updateProduct(activeProductIndex, 'inkMlPerPlate', val)}
+                          className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+                            activeSlot.inkMlPerPlate === val
+                              ? 'bg-purple-600 text-white border-purple-600'
+                              : 'text-slate-500 border-slate-200 hover:bg-slate-50'
+                          }`}
+                        >
+                          {val} ml
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                )}
 
                 {/* Finitions */}
                 <div className="space-y-2">

@@ -2,12 +2,12 @@
 
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-
-const ASSEMBLY_SHORTCUTS = [30, 45, 60, 90, 120]
+import { ASSEMBLY_SHORTCUTS } from '@/lib/config/ui'
+import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 export function SectionFaconnage() {
   const {
@@ -43,21 +43,13 @@ export function SectionFaconnage() {
             formatValue={formatTimeSeconds}
             gradientColors="from-pink-300 to-rose-600"
           />
-          <div className="flex gap-2">
-            {ASSEMBLY_SHORTCUTS.map((val) => (
-              <button
-                key={val}
-                onClick={() => setAssemblyTimePerPieceSeconds(val)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  assemblyTimePerPieceSeconds === val
-                    ? 'bg-pink-500 text-white border-pink-500'
-                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {val === 0 ? '0s' : formatTimeSeconds(val)}
-              </button>
-            ))}
-          </div>
+          <ShortcutButtons
+            values={ASSEMBLY_SHORTCUTS}
+            selected={assemblyTimePerPieceSeconds}
+            onSelect={setAssemblyTimePerPieceSeconds}
+            activeClass="bg-pink-500 text-white border-pink-500"
+            formatValue={(val) => val === 0 ? '0s' : formatTimeSeconds(val)}
+          />
         </div>
 
         <div className="mt-4 pt-4 border-t border-pink-100">

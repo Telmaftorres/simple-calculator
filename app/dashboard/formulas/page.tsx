@@ -1,5 +1,5 @@
-import { getProductTypes } from '../../actions/get-data'
-import FormulasClient from './formulas-client'
+import { getProductTypes } from '../../actions/reference-data'
+import FormulasClient from './FormulasClient'
 
 export const dynamic = 'force-dynamic'
 

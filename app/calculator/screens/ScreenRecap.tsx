@@ -6,9 +6,9 @@ import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download, Eye } from 'lucide-react'
 import Link from 'next/link'
 import { pdf } from '@react-pdf/renderer'
-import { QuotePDF } from '@/components/QuotePDF'
+import { QuotePDF } from '@/components/pdf/QuotePDF'
 import { useCalculatorContext } from '../context/CalculatorContext'
-import { buildCostRows } from '@/lib/quote-cost-rows'
+import { buildCostRows } from '@/lib/presentation/quote/cost-rows'
 import React from 'react'
 
 export function ScreenRecap() {
@@ -88,13 +88,11 @@ export function ScreenRecap() {
     packagingCuttingCost: costResult.packagingCuttingCost,
     hasDossierFee: formState.hasDossierFee,
     dossierFeeCost: costResult.dossierFeeCost,
+    transportTotal: costResult.transportTotal > 0 ? costResult.transportTotal : undefined,
+    transportDeliveriesCount: formState.transportDeliveries.length,
+    materialCostMarged: costResult.materialCostMarged,
+    materialMarginCoeff: costResult.materialMarginCoeff,
   })
-
-  console.log('assemblyCost:', costResult.assemblyCost)
-  console.log('packagingCost:', costResult.packagingCost)
-  console.log('hasFaconnage:', formState.hasFaconnage)
-  console.log('hasConditionnement:', formState.hasConditionnement)
-  console.log('costRows:', costRows)
 
   const generatePdf = async () => {
     if (pdfUrl) return
@@ -316,7 +314,7 @@ export function ScreenRecap() {
                         <td className="p-3 text-right text-slate-500 italic text-xs">
                           {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
                         </td>
-                        <td className="p-3 text-right font-medium">{result.costResult.materialCost.toFixed(2)} €</td>
+                        <td className="p-3 text-right font-medium">{result.costResult.materialCostMarged.toFixed(2)} €</td>
                       </tr>
                       {result.slot.hasImpression && (
                         <>
@@ -414,7 +412,7 @@ export function ScreenRecap() {
           <div className="flex flex-wrap justify-center gap-4 pt-8 border-t border-slate-100 mt-8">
             <Link href="/dashboard/my-quotes">
               <Button variant="outline" size="lg" className="border-slate-200">
-                <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Devis
+                <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Dossiers
               </Button>
             </Link>
             <Link href="/dashboard">

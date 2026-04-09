@@ -1,9 +1,10 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/server/prisma'
+import { requireAuth } from '@/lib/server/auth'
 import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
+import { logAction } from '@/lib/server/audit'
 
 const actualsSchema = z.object({
   actualCuttingTimePerPoseSeconds:   z.number().min(0).nullable().optional(),
@@ -24,7 +25,7 @@ export async function upsertQuoteActuals(quoteId: number, data: ActualsInput) {
 
   const quote = await prisma.quote.findUnique({
     where: { id: quoteId },
-    select: { userId: true },
+    select: { userId: true, reference: true },
   })
   if (!quote) throw new Error('Devis introuvable')
   if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
@@ -39,26 +40,13 @@ export async function upsertQuoteActuals(quoteId: number, data: ActualsInput) {
     create: { quoteId, ...validated },
   })
 
-  revalidatePath(`/dashboard/my-quotes/${quoteId}`)
-}
-
-export async function getQuoteDetail(id: number) {
-  const session = await requireAuth()
-
-  const quote = await prisma.quote.findUnique({
-    where: { id },
-    include: {
-      study: true,
-      productType: { include: { elements: true } },
-      plate: true,
-      actuals: true,
-    },
+  await logAction({
+    userId: session.user.id,
+    userName: session.user.name ?? session.user.email,
+    action: 'UPSERT_ACTUALS',
+    entityType: 'Quote',
+    entityRef: quote.reference ?? String(quoteId),
   })
 
-  if (!quote) return null
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
-    throw new Error('Non autorisé')
-  }
-
-  return quote
+  revalidatePath(`/dashboard/my-quotes/${quoteId}`)
 }

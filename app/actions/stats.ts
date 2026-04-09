@@ -1,7 +1,7 @@
 'use server'
 
-import { prisma } from '@/lib/prisma'
-import { requireAuth } from '@/lib/auth-helpers'
+import { prisma } from '@/lib/server/prisma'
+import { requireAuth } from '@/lib/server/auth'
 import { unstable_cache } from 'next/cache'
 
 // ✅ Cache créé UNE FOIS hors de la fonction, pas à chaque appel

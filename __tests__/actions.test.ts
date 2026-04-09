@@ -1,9 +1,9 @@
 import { describe, it, expect, vi } from 'vitest'
-import { getPlates, getProductTypes } from '../app/actions/get-data'
-import { prisma } from '../lib/prisma'
+import { getPlates, getProductTypes } from '../app/actions/reference-data'
+import { prisma } from '../lib/server/prisma'
 
 // Mock Prisma
-vi.mock('../lib/prisma', () => ({
+vi.mock('../lib/server/prisma', () => ({
   prisma: {
     plate: {
       findMany: vi.fn(),

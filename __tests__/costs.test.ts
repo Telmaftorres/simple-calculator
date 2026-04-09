@@ -2,14 +2,28 @@ import { describe, it, expect } from 'vitest'
 import { calculateCosts } from '@/lib/calculation/costs'
 import {
   HOURLY_RATE_PRINT,
+  HOURLY_RATE_CUTTING,
   HOURLY_RATE_ASSEMBLY,
+  HOURLY_RATE_CONDITIONING,
+  HOURLY_RATE_BE,
+  HOURLY_RATE_BAT,
+  HOURLY_RATE_PACKAGING,
   INK_COST_PER_LITER,
   INK_COST_VARNISH_PER_LITER,
   INK_COST_FLAT_COLOR_PER_LITER,
-  PRINT_SETUP_TIME_MIN,
-  CUTTING_SETUP_MINUTES,
+  INK_MARGIN_STANDARD,
+  INK_MARGIN_VARNISH,
+  INK_MARGIN_FLAT_COLOR,
+  PRINT_SETUP_STANDARD_COST,
+  CUTTING_SETUP_STANDARD_COST,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
-} from '@/lib/constants'
+  DOSSIER_FEE,
+  MATERIAL_MARGIN_TIER1,
+  MATERIAL_MARGIN_TIER2,
+  MATERIAL_MARGIN_TIER3,
+  MATERIAL_MARGIN_TIER4,
+  PACKAGING_SETUP_COST,
+} from '@/lib/config/pricing'
 
 const mockPlate = {
   id: 1,
@@ -45,8 +59,8 @@ const defaultParams = {
   hasAssemblyNotice: false,
   selectedAccessories: [],
   selectedConsumables: [],
-  hasPrintSetup: true,
-  hasCuttingSetup: true,
+  printSetupType: 'standard' as const,
+  cuttingSetupType: 'standard' as const,
   hasImpression: true,
   hasFaconnage: true,
   hasConditionnement: true,
@@ -73,10 +87,10 @@ describe('calculateCosts', () => {
       expect(result.totalCost).toBeGreaterThanOrEqual(mockImpositionResult.materialCost)
     })
 
-    it('totalCost = matière + impression + découpe + façonnage + conditionnement + accessoires + consommables', () => {
+    it('totalCost = matière (margée) + impression + découpe + façonnage + conditionnement + accessoires + consommables', () => {
       const result = calculateCosts(defaultParams)
       const expected =
-        mockImpositionResult.materialCost +
+        result.materialCostMarged +
         result.printingCost +
         result.cuttingCost +
         result.assemblyCost +
@@ -91,9 +105,8 @@ describe('calculateCosts', () => {
     it('calcule correctement le coût de découpe', () => {
       const result = calculateCosts(defaultParams)
       const machineTimeMin = (20 * 100) / 60
-      const setupTimeMin = CUTTING_SETUP_MINUTES
-      const totalTimeMin = machineTimeMin + setupTimeMin
-      const expected = (totalTimeMin / 60) * HOURLY_RATE_PRINT
+      const machineCost = (machineTimeMin / 60) * HOURLY_RATE_CUTTING
+      const expected = machineCost + CUTTING_SETUP_STANDARD_COST
       expect(result.cuttingCost).toBeCloseTo(expected, 2)
     })
 
@@ -134,7 +147,7 @@ describe('calculateCosts', () => {
         packTimePerPieceSeconds: 30,
         hasAssemblyNotice: true,
       })
-      const timeCost = (30 * 100 / 3600) * HOURLY_RATE_ASSEMBLY
+      const timeCost = (30 * 100 / 3600) * HOURLY_RATE_CONDITIONING
       const noticeCost = ASSEMBLY_NOTICE_COST_PER_PIECE * 100
       expect(result.packagingCost).toBeCloseTo(timeCost + noticeCost, 2)
     })
@@ -142,7 +155,7 @@ describe('calculateCosts', () => {
 
   describe('printingCostData', () => {
     it('retourne coûts à 0 si inkMlPerPlate = 0', () => {
-      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 0 })
+      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 0, printSetupType: 'none' })
       expect(result.printingCostData.inkCost).toBe(0)
       expect(result.printingCostData.setupCost).toBe(0)
     })
@@ -156,9 +169,9 @@ describe('calculateCosts', () => {
     })
 
     it('calcule encre standard seule sans finition', () => {
-      // 20 ml × 5 plaques = 100 ml = 0.1 L × 95 €/L = 9.50 €
+      // 20 ml × 5 plaques = 100 ml = 0.1 L × 95 €/L × marge 4.5
       const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 20 })
-      const expectedInkCost = (20 * 5 / 1000) * INK_COST_PER_LITER
+      const expectedInkCost = (20 * 5 / 1000) * INK_COST_PER_LITER * INK_MARGIN_STANDARD
       expect(result.printingCostData.inkCost).toBeCloseTo(expectedInkCost, 2)
     })
 
@@ -173,7 +186,7 @@ describe('calculateCosts', () => {
       })
       const standardVolumeL = (20 * 1 * 5) / 1000
       const varnishVolumeL = (20 * 0.30 * 5) / 1000
-      const expected = standardVolumeL * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
+      const expected = standardVolumeL * INK_COST_PER_LITER * INK_MARGIN_STANDARD + varnishVolumeL * INK_COST_VARNISH_PER_LITER * INK_MARGIN_VARNISH
       expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
       expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
     })
@@ -188,7 +201,7 @@ describe('calculateCosts', () => {
       })
       const standardVolumeL = (20 * 1 * 5) / 1000
       const flatColorVolumeL = (20 * 0.25 * 5) / 1000
-      const expected = standardVolumeL * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+      const expected = standardVolumeL * INK_COST_PER_LITER * INK_MARGIN_STANDARD + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER * INK_MARGIN_FLAT_COLOR
       expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
       expect(avec.printingCostData.inkCost).toBeGreaterThan(sans.printingCostData.inkCost)
     })
@@ -209,8 +222,8 @@ describe('calculateCosts', () => {
       })
       const varnishVolumeL = (20 * 0.50 * 5) / 1000
       const flatColorVolumeL = (20 * 0.50 * 5) / 1000
-      const expectedVernis = (20 * 1 * 5 / 1000) * INK_COST_PER_LITER + varnishVolumeL * INK_COST_VARNISH_PER_LITER
-      const expectedAplat = (20 * 1 * 5 / 1000) * INK_COST_PER_LITER + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+      const expectedVernis = (20 * 1 * 5 / 1000) * INK_COST_PER_LITER * INK_MARGIN_STANDARD + varnishVolumeL * INK_COST_VARNISH_PER_LITER * INK_MARGIN_VARNISH
+      const expectedAplat = (20 * 1 * 5 / 1000) * INK_COST_PER_LITER * INK_MARGIN_STANDARD + flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER * INK_MARGIN_FLAT_COLOR
       expect(avecVernis.printingCostData.inkCost).toBeCloseTo(expectedVernis, 2)
       expect(avecAplat.printingCostData.inkCost).toBeCloseTo(expectedAplat, 2)
     })
@@ -234,9 +247,9 @@ describe('calculateCosts', () => {
       const varnishVolumeL = (20 * 0.30 * 5) / 1000
       const flatColorVolumeL = (20 * 0.20 * 5) / 1000
       const expected =
-        standardVolumeL * INK_COST_PER_LITER +
-        varnishVolumeL * INK_COST_VARNISH_PER_LITER +
-        flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER
+        standardVolumeL * INK_COST_PER_LITER * INK_MARGIN_STANDARD +
+        varnishVolumeL * INK_COST_VARNISH_PER_LITER * INK_MARGIN_VARNISH +
+        flatColorVolumeL * INK_COST_FLAT_COLOR_PER_LITER * INK_MARGIN_FLAT_COLOR
       expect(avec.printingCostData.inkCost).toBeCloseTo(expected, 2)
       // Volume est plus grand
       expect(avec.inkVolumeL).toBeGreaterThan(sans.inkVolumeL)
@@ -246,14 +259,12 @@ describe('calculateCosts', () => {
 
     it('ajoute le calage si inkMlPerPlate > 0', () => {
       const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 20 })
-      const setupCost = (PRINT_SETUP_TIME_MIN / 60) * HOURLY_RATE_PRINT
-      expect(result.printingCostData.laborCost).toBeGreaterThanOrEqual(setupCost)
+      expect(result.printingCostData.setupCost).toBeCloseTo(PRINT_SETUP_STANDARD_COST, 2)
     })
 
-    it('pas de calage si inkMlPerPlate = 0', () => {
-      const result = calculateCosts({ ...defaultParams, inkMlPerPlate: 0 })
+    it('pas de calage si printSetupType = none', () => {
+      const result = calculateCosts({ ...defaultParams, printSetupType: 'none' })
       expect(result.printingCostData.setupCost).toBe(0)
-      expect(result.printingCostData.setupTimeMin).toBe(0)
     })
   })
 
@@ -288,5 +299,152 @@ describe('calculateCosts', () => {
       expect(result.consumablesCost).toBeCloseTo(expected, 2)
     })
   })
-})
 
+  describe('beCost / batCost', () => {
+    it('retourne 0 si hasBE = false', () => {
+      const result = calculateCosts({ ...defaultParams, hasBE: false, beTimeMinutes: 60, batTimeMinutes: 30 })
+      expect(result.beCost).toBe(0)
+      expect(result.batCost).toBe(0)
+    })
+
+    it('calcule correctement beCost', () => {
+      const result = calculateCosts({ ...defaultParams, hasBE: true, beTimeMinutes: 60, batTimeMinutes: 0 })
+      const expected = (60 / 60) * HOURLY_RATE_BE
+      expect(result.beCost).toBeCloseTo(expected, 2)
+    })
+
+    it('calcule correctement batCost', () => {
+      const result = calculateCosts({ ...defaultParams, hasBE: true, beTimeMinutes: 0, batTimeMinutes: 30 })
+      const expected = (30 / 60) * HOURLY_RATE_BAT
+      expect(result.batCost).toBeCloseTo(expected, 2)
+    })
+
+    it('beTotalCost = beCost + batCost', () => {
+      const result = calculateCosts({ ...defaultParams, hasBE: true, beTimeMinutes: 60, batTimeMinutes: 30 })
+      expect(result.beTotalCost).toBeCloseTo(result.beCost + result.batCost, 2)
+    })
+  })
+
+  describe('dossierFeeCost', () => {
+    it('retourne 0 si hasDossierFee = false', () => {
+      const result = calculateCosts({ ...defaultParams, hasDossierFee: false })
+      expect(result.dossierFeeCost).toBe(0)
+    })
+
+    it('retourne DOSSIER_FEE si hasDossierFee = true', () => {
+      const result = calculateCosts({ ...defaultParams, hasDossierFee: true })
+      expect(result.dossierFeeCost).toBe(DOSSIER_FEE)
+    })
+
+    it('inclut les frais de dossier dans le total', () => {
+      const sans = calculateCosts({ ...defaultParams, hasDossierFee: false })
+      const avec = calculateCosts({ ...defaultParams, hasDossierFee: true })
+      expect(avec.totalCost).toBeCloseTo(sans.totalCost + DOSSIER_FEE, 2)
+    })
+  })
+
+  describe('materialMarginCoeff', () => {
+    it('applique MATERIAL_MARGIN_TIER1 si coût plaque < 5€', () => {
+      const plate = { ...mockPlate, cost: 3 }
+      const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER1)
+    })
+
+    it('applique MATERIAL_MARGIN_TIER2 si coût plaque entre 5 et 10€', () => {
+      const plate = { ...mockPlate, cost: 7 }
+      const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER2)
+    })
+
+    it('applique MATERIAL_MARGIN_TIER3 si coût plaque entre 10 et 20€', () => {
+      const plate = { ...mockPlate, cost: 15 }
+      const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER3)
+    })
+
+    it('applique MATERIAL_MARGIN_TIER4 si coût plaque > 20€', () => {
+      const plate = { ...mockPlate, cost: 25 }
+      const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER4)
+    })
+
+    it('materialCostMarged = materialCostRaw × materialMarginCoeff', () => {
+      const result = calculateCosts({ ...defaultParams })
+      expect(result.materialCostMarged).toBeCloseTo(result.materialCostRaw * result.materialMarginCoeff, 2)
+    })
+  })
+
+  describe('emballage (packaging box)', () => {
+    const packagingPlate = { id: 99, name: 'BC Test', width: 800, height: 600, cost: 5, material: 'BC' }
+
+    it('retourne 0 si hasPackaging = false', () => {
+      const result = calculateCosts({ ...defaultParams, hasPackaging: false })
+      expect(result.packagingTotalCost).toBe(0)
+      expect(result.packagingMaterialCost).toBe(0)
+      expect(result.packagingCuttingCost).toBe(0)
+    })
+
+    it('retourne 0 si dimensions emballage non renseignées', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 0,
+        packagingHeight: 0,
+      })
+      expect(result.packagingMaterialCost).toBe(0)
+    })
+
+    it('calcule le coût matière emballage', () => {
+      // Plaque 800×600, carton 200×150, spacing 10mm
+      // L'imposition avec espacement retourne 13 items/plaque (orientation mixte)
+      // 100 cartons → ceil(100/13) = 8 plaques × 5€ × MATERIAL_MARGIN_TIER2(coût 5€ → tier2=3) = 120€
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 0,
+      })
+      const platesNeeded = Math.ceil(100 / result.packagingItemsPerPlate)
+      expect(result.packagingPlatesNeeded).toBe(platesNeeded)
+      expect(result.packagingMaterialCost).toBeCloseTo(
+        platesNeeded * packagingPlate.cost * MATERIAL_MARGIN_TIER2, 2
+      )
+    })
+
+    it('calcule le coût découpe emballage (inclut setup)', () => {
+      // 100 cartons × 30s = machineMinutes, + PACKAGING_SETUP_COST
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 30,
+      })
+      const machineMinutes = (30 * 100) / 60
+      const expectedCutting = (machineMinutes / 60) * HOURLY_RATE_PACKAGING + PACKAGING_SETUP_COST
+      expect(result.packagingCuttingCost).toBeCloseTo(expectedCutting, 2)
+    })
+
+    it('packagingTotalCost = matière + découpe', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 30,
+      })
+      expect(result.packagingTotalCost).toBeCloseTo(
+        result.packagingMaterialCost + result.packagingCuttingCost, 2
+      )
+    })
+  })
+})

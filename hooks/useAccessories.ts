@@ -16,7 +16,10 @@ export function useAccessories(
   const handleAddAccessory = () => {
     if (!currentAccessoryId || currentAccessoryQty <= 0) return
     const acc = accessories.find((a) => a.id.toString() === currentAccessoryId)
-    if (!acc) return
+    if (!acc) {
+      console.warn(`useAccessories: accessoire introuvable pour l'ID "${currentAccessoryId}"`)
+      return
+    }
     const existing = selectedAccessories.find((sa) => sa.id === acc.id)
     if (existing) {
       setSelectedAccessories(

@@ -1,11 +1,12 @@
 import { auth } from '@/auth'
 import Calculator from './calculator/Calculator'
-import { getProductTypes, getPlates, getQuoteById } from './actions/get-data'
+import { getProductTypes, getPlates } from './actions/reference-data'
+import { getQuoteById } from './actions/quotes'
 import { getAccessories } from './actions/accessories'
 import { getConsumables } from './actions/consumables'
 import { getSettingsMap } from './actions/settings'
 import { version } from '@/package.json'
-import { ModeToggle } from '@/components/mode-toggle'
+import { ModeToggle } from '@/components/layout/ModeToggle'
 
 export const dynamic = 'force-dynamic'
 

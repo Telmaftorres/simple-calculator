@@ -53,13 +53,13 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasDossierFee && p.dossierFeeCost && p.dossierFeeCost > 0 ? [
       { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
     ] : []),
-    {
+    ...(p.selectedPlate ? [{
       label: 'Matière',
       detail: p.materialMarginCoeff && p.materialMarginCoeff !== 1
         ? `${p.impositionResult?.platesNeeded} plaque(s) × coeff. ×${p.materialMarginCoeff.toFixed(1)}`
         : `${p.impositionResult?.platesNeeded} plaque(s) × ${p.selectedPlate?.cost}€`,
       value: p.materialCostMarged ?? p.impositionResult?.materialCost ?? 0,
-    },
+    }] : []),
     ...(p.hasImpression ? [
       { label: 'Impression (Encre)', detail: `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
       { label: 'Impression (temps machine)', detail: `${Math.round(p.printingCostData.machineTimeMin)} min`, value: p.printingCostData.machineCost },

@@ -1,6 +1,7 @@
 import { z } from 'zod'
 
 export const quoteFieldsSchema = z.object({
+  client: z.string().optional(),
   productTypeId: z.number().int().positive(),
   quantity: z.number().int().positive(),
   flatWidth: z.number().int().positive(),
@@ -14,14 +15,14 @@ export const quoteFieldsSchema = z.object({
   inkMlVerso: z.number().min(0).max(100).optional(),
   varnishSurfacePercent: z.number().min(0).max(100).optional(),
   flatColorSurfacePercent: z.number().min(0).max(100).optional(),
-  printMode: z.string().optional(),
+  printMode: z.enum(['production', 'quality']).optional(),
   isRectoVerso: z.boolean().optional(),
-  rectoVersoType: z.string().nullable().optional(),
+  rectoVersoType: z.enum(['identical', 'different']).nullable().optional(),
   hasVarnish: z.boolean().optional(),
   hasFlatColor: z.boolean().optional(),
   hasImpression: z.boolean().optional(),
   printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
-  
+
   cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
 
@@ -66,9 +67,9 @@ const quoteProductSchema = z.object({
   plateId: z.number().int().positive().nullable().optional(),
   itemsPerPlate: z.number().int().positive().nullable().optional(),
   platesCount: z.number().int().positive().nullable().optional(),
-  printMode: z.string().optional(),
+  printMode: z.enum(['production', 'quality']).optional(),
   isRectoVerso: z.boolean().optional(),
-  rectoVersoType: z.string().nullable().optional(),
+  rectoVersoType: z.enum(['identical', 'different']).nullable().optional(),
   inkMlPerPlate: z.number().min(0).max(100).optional(),
   inkMlVerso: z.number().min(0).max(100).optional(),
   varnishSurfacePercent: z.number().min(0).max(100).optional(),
@@ -76,14 +77,14 @@ const quoteProductSchema = z.object({
   hasVarnish: z.boolean().optional(),
   hasFlatColor: z.boolean().optional(),
   hasImpression: z.boolean().optional(),
-  printSetupType: z.string().optional(),
+  printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
-  cuttingSetupType: z.string().optional(),
+  cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   totalCost: z.number().nullable().optional(),
 })
 
 const transportDeliverySchema = z.object({
-  transportMode: z.string(),
+  transportMode: z.enum(['PACK30', 'MESSAGERIE_PLUS', 'AFFRETEMENT']),
   department:    z.string(),
   weightKg:      z.number().nullable().optional(),
   units:         z.number().int().min(1),

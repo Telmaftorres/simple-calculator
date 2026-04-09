@@ -55,7 +55,7 @@ export interface PrintingCostData {
 // ── Transport multi-livraisons ──
 export interface TransportDeliveryForm {
   id: string               // UUID local (clé React)
-  mode: string | undefined
+  mode: 'PACK30' | 'MESSAGERIE_PLUS' | 'AFFRETEMENT' | undefined
   department: string | undefined
   weightKg: number | undefined
   units: number
@@ -111,8 +111,9 @@ export interface ProductSlot {
   selectedPlateId: string
   printMode: 'production' | 'quality'
   isRectoVerso: boolean
-  rectoVersoType: string | null
+  rectoVersoType: 'identical' | 'different' | null
   inkMlPerPlate: number
+  inkMlVerso: number
   varnishSurfacePercent: number
   flatColorSurfacePercent: number
   hasVarnish: boolean
@@ -136,6 +137,7 @@ export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
   isRectoVerso: false,
   rectoVersoType: null,
   inkMlPerPlate: 20,
+  inkMlVerso: 0,
   varnishSurfacePercent: 0,
   flatColorSurfacePercent: 0,
   hasVarnish: false,

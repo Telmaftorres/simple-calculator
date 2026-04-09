@@ -3,7 +3,7 @@
 import {
   Document, Page, Text, View, Image, StyleSheet,
 } from '@react-pdf/renderer'
-import { buildCostRows } from '@/lib/quote-cost-rows'
+import { buildCostRows } from '@/lib/presentation/quote/cost-rows'
 import { calculateCosts } from '@/lib/calculation/costs'
 import type { CalculatorFormState } from '@/hooks/useCalculatorForm'
 import type { ImpositionResult, SelectedAccessory, SelectedConsumable, Plate, ProductSlotResult } from '@/types/calculator'
@@ -461,6 +461,39 @@ export function QuotePDF({
                   <Text style={styles.tableCell}>{acc.name}</Text>
                   <Text style={{ ...styles.tableCell, textAlign: 'center' }}>× {acc.quantity}</Text>
                   <Text style={styles.tableCellRight}>{(acc.price * acc.quantity).toFixed(2)} €</Text>
+                </View>
+              ))}
+            </View>
+          </View>
+        )}
+
+        {/* Transport */}
+        {formValues.transportDeliveries && formValues.transportDeliveries.length > 0 && formValues.transportDeliveries.some(d => d.mode) && (
+          <View style={styles.section}>
+            <Text style={styles.sectionTitle}>Transport GEODIS</Text>
+            <View style={styles.table}>
+              <View style={styles.tableHeader}>
+                <Text style={[styles.tableHeaderText, { flex: 2 }]}>Mode</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Dept.</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Qté</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Poids</Text>
+                <Text style={styles.tableHeaderTextRight}>Options</Text>
+              </View>
+              {formValues.transportDeliveries.filter(d => d.mode).map((d, i) => (
+                <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
+                  <Text style={[styles.tableCell, { flex: 2 }]}>
+                    {d.mode === 'PACK30' ? 'Pack 30' : d.mode === 'MESSAGERIE_PLUS' ? 'Messagerie+' : 'Affrètement'}
+                  </Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>{d.department ?? '—'}</Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>
+                    {d.units} {d.mode === 'AFFRETEMENT' ? 'pal.' : 'colis'}
+                  </Text>
+                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>
+                    {d.mode !== 'AFFRETEMENT' && d.weightKg != null ? `${d.weightKg} kg` : '—'}
+                  </Text>
+                  <Text style={styles.tableCellRight}>
+                    {d.optionsHT ? `${d.optionsHT.toFixed(2)} €` : '—'}
+                  </Text>
                 </View>
               ))}
             </View>

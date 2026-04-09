@@ -1,4 +1,4 @@
-import { getUserQuotes } from '@/app/actions/get-data'
+import { getUserQuotes } from '@/app/actions/quotes'
 import { MyQuotesClient } from './MyQuotesClient'
 
 export default async function MyQuotesPage() {

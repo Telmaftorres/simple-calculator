@@ -1,12 +1,12 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-
-const PACK_SHORTCUTS = [30, 45, 60, 90, 120]
+import { PACK_SHORTCUTS } from '@/lib/config/ui'
+import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 export function SectionConditionnement() {
   const {
@@ -35,21 +35,13 @@ export function SectionConditionnement() {
             formatValue={formatTimeSeconds}
             gradientColors="from-teal-300 to-emerald-600"
           />
-          <div className="flex gap-2">
-            {PACK_SHORTCUTS.map((val) => (
-              <button
-                key={val}
-                onClick={() => setPackTimePerPieceSeconds(val)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  packTimePerPieceSeconds === val
-                    ? 'bg-teal-500 text-white border-teal-500'
-                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {val === 0 ? '0s' : formatTimeSeconds(val)}
-              </button>
-            ))}
-          </div>
+          <ShortcutButtons
+            values={PACK_SHORTCUTS}
+            selected={packTimePerPieceSeconds}
+            onSelect={setPackTimePerPieceSeconds}
+            activeClass="bg-teal-500 text-white border-teal-500"
+            formatValue={(val) => val === 0 ? '0s' : formatTimeSeconds(val)}
+          />
         </div>
 
         <div className="mt-4 flex items-center space-x-2 bg-teal-50 p-3 rounded-lg border border-teal-100">

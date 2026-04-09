@@ -2,7 +2,7 @@ import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
 import { ArrowLeft, Users, Calculator } from 'lucide-react'
 import Link from 'next/link'
-import { ModeToggle } from '@/components/mode-toggle'
+import { ModeToggle } from '@/components/layout/ModeToggle'
 
 export default function SettingsPage() {
   return (

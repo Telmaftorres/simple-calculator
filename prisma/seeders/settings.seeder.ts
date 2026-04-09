@@ -33,7 +33,7 @@ import {
   HOURLY_RATE_CONDITIONING,
   MARGE_COMMERCIALE_PERCENT,
   MARGE_SOPANO_PERCENT,
-} from '../../lib/constants'
+} from '../../lib/config/pricing'
 
 export async function seedSettings(prisma: PrismaClient): Promise<void> {
   console.log('⚙️ Seeding settings...')

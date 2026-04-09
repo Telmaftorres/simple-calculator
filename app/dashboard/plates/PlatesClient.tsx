@@ -21,7 +21,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { createPlate, updatePlate, deletePlate } from '@/app/actions/admin' // Adjust path if needed
+import { createPlate, updatePlate, deletePlate } from '@/app/actions/catalog'
 
 type Plate = {
   id: number
@@ -37,6 +37,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
   const [editingPlate, setEditingPlate] = useState<Plate | null>(null)
   const [isSaving, setIsSaving] = useState(false)
   const [deletingId, setDeletingId] = useState<number | null>(null)
+  const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null)
 
   // Form State
   const [formData, setFormData] = useState({
@@ -97,8 +98,8 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
     }
   }
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('Êtes-vous sûr de vouloir supprimer cette plaque ?')) return
+  const handleDeleteConfirm = async (id: number) => {
+    setConfirmingDeleteId(null)
     setDeletingId(id)
     try {
       await deletePlate(id)
@@ -140,13 +141,32 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
                   {plate.width} x {plate.height}
                 </TableCell>
                 <TableCell className="text-right">{plate.cost.toFixed(2)}</TableCell>
-                <TableCell className="text-right space-x-2">
-                  <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(plate)}>
-                    <Pencil className="h-4 w-4 text-blue-500" />
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={() => handleDelete(plate.id)} disabled={deletingId === plate.id}>
-                    <Trash2 className={`h-4 w-4 text-red-500 ${deletingId === plate.id ? 'animate-pulse' : ''}`} />
-                  </Button>
+                <TableCell className="text-right">
+                  <div className="flex justify-end items-center gap-1">
+                    <Button variant="ghost" size="icon" onClick={() => handleOpenDialog(plate)}>
+                      <Pencil className="h-4 w-4 text-blue-500" />
+                    </Button>
+                    {confirmingDeleteId === plate.id ? (
+                      <div className="flex items-center gap-1">
+                        <button
+                          className="text-xs px-2 py-1 rounded bg-rose-600 text-white hover:bg-rose-700 font-medium"
+                          onClick={() => handleDeleteConfirm(plate.id)}
+                        >
+                          Confirmer
+                        </button>
+                        <button
+                          className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+                          onClick={() => setConfirmingDeleteId(null)}
+                        >
+                          Annuler
+                        </button>
+                      </div>
+                    ) : (
+                      <Button variant="ghost" size="icon" onClick={() => setConfirmingDeleteId(plate.id)} disabled={deletingId === plate.id}>
+                        <Trash2 className={`h-4 w-4 text-red-500 ${deletingId === plate.id ? 'animate-pulse' : ''}`} />
+                      </Button>
+                    )}
+                  </div>
                 </TableCell>
               </TableRow>
             ))}

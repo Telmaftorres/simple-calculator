@@ -1,13 +1,12 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
-import { GaugeSlider } from '@/components/GaugeSlider'
+import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-
-const BE_SHORTCUTS = [30, 45, 60, 120]
-const BAT_SHORTCUTS = [30, 45, 60, 120]
+import { BE_SHORTCUTS, BAT_SHORTCUTS } from '@/lib/config/ui'
+import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 export function SectionBureauEtudes() {
   const {
@@ -45,21 +44,13 @@ export function SectionBureauEtudes() {
             formatValue={formatMinutes}
             gradientColors="from-blue-300 to-blue-600"
           />
-          <div className="flex gap-2">
-            {BE_SHORTCUTS.map((val) => (
-              <button
-                key={val}
-                onClick={() => setBeTimeMinutes(val)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  beTimeMinutes === val
-                    ? 'bg-blue-600 text-white border-blue-600'
-                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {formatMinutes(val)}
-              </button>
-            ))}
-          </div>
+          <ShortcutButtons
+            values={BE_SHORTCUTS}
+            selected={beTimeMinutes}
+            onSelect={setBeTimeMinutes}
+            activeClass="bg-blue-600 text-white border-blue-600"
+            formatValue={formatMinutes}
+          />
           {beTimeMinutes > 0 && (
             <div className="flex justify-between text-xs text-blue-700 bg-blue-50 px-3 py-2 rounded-lg">
               <span>Coût Création/BE</span>
@@ -84,21 +75,13 @@ export function SectionBureauEtudes() {
             formatValue={formatMinutes}
             gradientColors="from-blue-200 to-indigo-500"
           />
-          <div className="flex gap-2">
-            {BAT_SHORTCUTS.map((val) => (
-              <button
-                key={val}
-                onClick={() => setBatTimeMinutes(val)}
-                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  batTimeMinutes === val
-                    ? 'bg-indigo-600 text-white border-indigo-600'
-                    : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                }`}
-              >
-                {formatMinutes(val)}
-              </button>
-            ))}
-          </div>
+          <ShortcutButtons
+            values={BAT_SHORTCUTS}
+            selected={batTimeMinutes}
+            onSelect={setBatTimeMinutes}
+            activeClass="bg-indigo-600 text-white border-indigo-600"
+            formatValue={formatMinutes}
+          />
           {batTimeMinutes > 0 && (
             <div className="flex justify-between text-xs text-indigo-700 bg-indigo-50 px-3 py-2 rounded-lg">
               <span>Coût BAT</span>
