@@ -43,42 +43,49 @@ export type QuoteCostRowsParams = {
   batCost?: number
   beTotalCost?: number
   transportTotal?: number
+  transportCostMarged?: number
+  transportMargin?: number
   transportDeliveriesCount?: number
   materialCostMarged?: number
   materialMarginCoeff?: number
+  mode?: 'internal' | 'client'
 }
 
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
+  const isClient = p.mode === 'client'
+
   return [
     ...(p.hasDossierFee && p.dossierFeeCost && p.dossierFeeCost > 0 ? [
       { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
     ] : []),
     ...(p.selectedPlate ? [{
       label: 'Matière',
-      detail: p.materialMarginCoeff && p.materialMarginCoeff !== 1
-        ? `${p.impositionResult?.platesNeeded} plaque(s) × coeff. ×${p.materialMarginCoeff.toFixed(1)}`
-        : `${p.impositionResult?.platesNeeded} plaque(s) × ${p.selectedPlate?.cost}€`,
+      detail: isClient
+        ? `${p.impositionResult?.platesNeeded ?? 0} plaque(s)`
+        : p.materialMarginCoeff && p.materialMarginCoeff !== 1
+          ? `${p.impositionResult?.platesNeeded} plaque(s) × coeff. ×${p.materialMarginCoeff.toFixed(1)}`
+          : `${p.impositionResult?.platesNeeded} plaque(s) × ${p.selectedPlate?.cost}€`,
       value: p.materialCostMarged ?? p.impositionResult?.materialCost ?? 0,
     }] : []),
     ...(p.hasImpression ? [
-      { label: 'Impression (Encre)', detail: `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
-      { label: 'Impression (temps machine)', detail: `${Math.round(p.printingCostData.machineTimeMin)} min`, value: p.printingCostData.machineCost },
+      { label: 'Impression (Encre)', detail: isClient ? '—' : `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
+      { label: 'Impression (Machine)', detail: isClient ? '—' : `${Math.round(p.printingCostData.machineTimeMin)} min`, value: p.printingCostData.machineCost },
       ...(p.printSetupType !== 'none' && p.printingCostData.setupCost > 0 ? [
         { label: `↳ Calage impression (${p.printSetupType})`, detail: 'forfait', value: p.printingCostData.setupCost, sub: true },
       ] : []),
     ] : []),
-    { label: 'Découpe (temps machine)', detail: `${Math.round(p.cuttingMachineTimeMin)} min`, value: p.cuttingMachineCost },
+    { label: 'Découpe', detail: isClient ? '—' : `${Math.round(p.cuttingMachineTimeMin)} min`, value: p.cuttingMachineCost },
     ...(p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
       { label: `↳ Calage découpe (${p.cuttingSetupType})`, detail: 'forfait', value: p.cuttingSetupCost, sub: true },
     ] : []),
     ...(p.hasBE && p.beTotalCost && p.beTotalCost > 0 ? [
-      { label: 'Bureau d\'études', detail: `${p.beTimeMinutes ?? 0} min`, value: p.beCost ?? 0 },
+      { label: 'Bureau d\'études', detail: isClient ? '—' : `${p.beTimeMinutes ?? 0} min`, value: p.beCost ?? 0 },
       ...(p.batTimeMinutes && p.batTimeMinutes > 0 ? [
-        { label: '↳ BAT', detail: `${p.batTimeMinutes} min`, value: p.batCost ?? 0, sub: true },
+        { label: '↳ BAT', detail: isClient ? '—' : `${p.batTimeMinutes} min`, value: p.batCost ?? 0, sub: true },
       ] : []),
     ] : []),
     ...(p.hasFaconnage ? [
-      { label: 'Façonnage', detail: `${p.assemblyTimePerPieceSeconds}s/pce`, value: p.assemblyCost },
+      { label: 'Façonnage', detail: isClient ? '—' : `${p.assemblyTimePerPieceSeconds}s/pce`, value: p.assemblyCost },
       ...(p.selectedConsumables.length > 0 ? [
         { label: '↳ Consommables', detail: `${p.selectedConsumables.length} type(s)`, value: p.consumablesCost, sub: true },
       ] : []),
@@ -86,7 +93,7 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasConditionnement ? [
       {
         label: 'Conditionnement',
-        detail: p.hasAssemblyNotice ? 'Avec notice' : `${p.packTimePerPieceSeconds}s/pce`,
+        detail: isClient ? '—' : p.hasAssemblyNotice ? 'Avec notice' : `${p.packTimePerPieceSeconds}s/pce`,
         value: p.packagingCost,
       },
     ] : []),
@@ -94,15 +101,28 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
       { label: 'Accessoires', detail: `${p.selectedAccessories.length} réf.`, value: p.accessoriesCost },
     ] : []),
     ...(p.hasPackaging && p.packagingTotalCost > 0 ? [
-      { label: 'Emballage', detail: `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`, value: p.packagingTotalCost },
+      {
+        label: 'Emballage',
+        detail: isClient ? '—' : `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`,
+        value: p.packagingTotalCost,
+      },
     ] : []),
     ...(p.transportTotal !== undefined && p.transportTotal > 0 ? [
       {
         label: 'Transport',
-        detail: p.transportDeliveriesCount && p.transportDeliveriesCount > 1
-          ? `${p.transportDeliveriesCount} livraisons`
-          : 'GEODIS',
-        value: p.transportTotal,
+        detail: isClient
+          ? (p.transportDeliveriesCount && p.transportDeliveriesCount > 1
+              ? `${p.transportDeliveriesCount} livraisons`
+              : 'GEODIS')
+          : (() => {
+              const base = p.transportDeliveriesCount && p.transportDeliveriesCount > 1
+                ? `${p.transportDeliveriesCount} livraisons`
+                : 'GEODIS'
+              return p.transportMargin && p.transportMargin !== 1
+                ? `${base} × coeff. ×${p.transportMargin.toFixed(2)}`
+                : base
+            })(),
+        value: p.transportCostMarged ?? p.transportTotal,
       },
     ] : []),
   ]

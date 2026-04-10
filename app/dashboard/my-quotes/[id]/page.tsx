@@ -24,7 +24,7 @@ export default async function QuoteDetailPage({ params }: { params: Promise<{ id
           <div className="flex items-center gap-3">
             <Link href="/dashboard/my-quotes">
               <Button variant="ghost" size="sm" className="gap-1 text-slate-500 -ml-2">
-                <ArrowLeft className="h-4 w-4" /> Mes dossiers
+                <ArrowLeft className="h-4 w-4" /> Mes chiffrages
               </Button>
             </Link>
           </div>

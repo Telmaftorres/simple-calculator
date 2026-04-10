@@ -364,6 +364,16 @@ const FORMULAS: Record<string, {
       return `Base ${base} € × (1 + ${pct}% / 100) = ${result.toFixed(2)} € TTC surcharge`
     },
   },
+  TRANSPORT_MARGIN: {
+    usedIn: ['Transport — Marge sur prix GEODIS'],
+    formula: 'transport_facturé = transport_GEODIS × coefficient',
+    getExample: (v) => {
+      const coeff = parseFloat(v.TRANSPORT_MARGIN) || 1
+      const geodis = 100
+      const result = geodis * coeff
+      return `GEODIS ${geodis} € × ${coeff} = ${result.toFixed(2)} € facturé`
+    },
+  },
 }
 
 const CATEGORIES: {
@@ -480,7 +490,7 @@ const CATEGORIES: {
     description: 'Paramètres de calcul du transport GEODIS',
     color: 'sky',
     emoji: '🚚',
-    keys: ['GEODIS_FUEL_SURCHARGE_PERCENT'],
+    keys: ['GEODIS_FUEL_SURCHARGE_PERCENT', 'TRANSPORT_MARGIN'],
   },
 ]
 

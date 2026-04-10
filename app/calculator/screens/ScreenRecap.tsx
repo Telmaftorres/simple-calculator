@@ -47,6 +47,8 @@ export function ScreenRecap() {
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
+  const [pdfClientUrl, setPdfClientUrl] = useState<string | null>(null)
+  const [isGeneratingClient, setIsGeneratingClient] = useState(false)
 
   const reference = null
   const displayTotal = isMultiProduct ? totalCostMulti : costResult.totalCost
@@ -89,42 +91,56 @@ export function ScreenRecap() {
     hasDossierFee: formState.hasDossierFee,
     dossierFeeCost: costResult.dossierFeeCost,
     transportTotal: costResult.transportTotal > 0 ? costResult.transportTotal : undefined,
+    transportCostMarged: costResult.transportTotal > 0 ? costResult.transportCostMarged : undefined,
+    transportMargin: costResult.transportMargin,
     transportDeliveriesCount: formState.transportDeliveries.length,
     materialCostMarged: costResult.materialCostMarged,
     materialMarginCoeff: costResult.materialMarginCoeff,
   })
 
+  const pdfProps = {
+    quoteInfo: {
+      studyNumber,
+      reference,
+      productName: isMultiProduct
+        ? `Devis multi-produits (${productSlotResults.length} produits)`
+        : productSearch,
+      quantity: displayQuantity,
+    },
+    formValues: formState,
+    costResult,
+    selectedPlate,
+    impositionResult: impositionResult ?? undefined,
+    selectedAccessories,
+    selectedConsumables,
+    isMultiProduct,
+    productSlotResults,
+    totalCostMulti,
+  }
+
   const generatePdf = async () => {
     if (pdfUrl) return
     setIsGenerating(true)
     try {
-      const blob = await pdf(
-        <QuotePDF
-          quoteInfo={{
-            studyNumber,
-            reference,
-            productName: isMultiProduct
-              ? `Devis multi-produits (${productSlotResults.length} produits)`
-              : productSearch,
-            quantity: displayQuantity,
-          }}
-          formValues={formState}
-          costResult={costResult}
-          selectedPlate={selectedPlate}
-          impositionResult={impositionResult ?? undefined}
-          selectedAccessories={selectedAccessories}
-          selectedConsumables={selectedConsumables}
-          isMultiProduct={isMultiProduct}
-          productSlotResults={productSlotResults}
-          totalCostMulti={totalCostMulti}
-        />
-      ).toBlob()
-      const url = URL.createObjectURL(blob)
-      setPdfUrl(url)
+      const blob = await pdf(<QuotePDF {...pdfProps} mode="internal" />).toBlob()
+      setPdfUrl(URL.createObjectURL(blob))
     } catch (e) {
-      console.error('Erreur génération PDF:', e)
+      console.error('Erreur génération PDF interne:', e)
     } finally {
       setIsGenerating(false)
+    }
+  }
+
+  const generatePdfClient = async () => {
+    if (pdfClientUrl) return
+    setIsGeneratingClient(true)
+    try {
+      const blob = await pdf(<QuotePDF {...pdfProps} mode="client" />).toBlob()
+      setPdfClientUrl(URL.createObjectURL(blob))
+    } catch (e) {
+      console.error('Erreur génération PDF client:', e)
+    } finally {
+      setIsGeneratingClient(false)
     }
   }
 
@@ -156,31 +172,53 @@ export function ScreenRecap() {
             )}
           </div>
 
-          <div className="absolute top-4 right-4 z-20 no-print flex gap-2 items-center">
-            {pdfUrl ? (
-              <>
-                <a href={pdfUrl} download={`devis-${studyNumber}.pdf`}>
-                  <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
-                    <Download className="mr-2 h-4 w-4" /> Télécharger PDF
-                  </Button>
-                </a>
-                <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                  <Button variant="secondary" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
-                    <Eye className="mr-2 h-4 w-4" /> Voir PDF
-                  </Button>
-                </a>
-              </>
-            ) : (
-              <Button
-                variant="secondary"
-                className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm"
-                onClick={generatePdf}
-                disabled={isGenerating}
-              >
-                <Download className="mr-2 h-4 w-4" />
-                {isGenerating ? 'Génération...' : 'Générer PDF'}
-              </Button>
-            )}
+          <div className="absolute top-4 right-4 z-20 no-print flex flex-col gap-2 items-end">
+            {/* PDF Interne */}
+            <div className="flex gap-2 items-center">
+              <span className="text-xs text-slate-400 font-medium">Interne</span>
+              {pdfUrl ? (
+                <>
+                  <a href={pdfUrl} download={`devis-interne-${studyNumber}.pdf`}>
+                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> Télécharger
+                    </Button>
+                  </a>
+                  <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm">
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </a>
+                </>
+              ) : (
+                <Button variant="secondary" size="sm" className="bg-white/10 hover:bg-white/20 text-white border-white/20 backdrop-blur-sm" onClick={generatePdf} disabled={isGenerating}>
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  {isGenerating ? 'Génération...' : 'Générer'}
+                </Button>
+              )}
+            </div>
+            {/* PDF Client */}
+            <div className="flex gap-2 items-center">
+              <span className="text-xs text-emerald-400 font-medium">Client</span>
+              {pdfClientUrl ? (
+                <>
+                  <a href={pdfClientUrl} download={`devis-client-${studyNumber}.pdf`}>
+                    <Button variant="secondary" size="sm" className="bg-emerald-500/20 hover:bg-emerald-500/30 text-white border-emerald-400/30 backdrop-blur-sm">
+                      <Download className="mr-1.5 h-3.5 w-3.5" /> Télécharger
+                    </Button>
+                  </a>
+                  <a href={pdfClientUrl} target="_blank" rel="noopener noreferrer">
+                    <Button variant="secondary" size="sm" className="bg-emerald-500/20 hover:bg-emerald-500/30 text-white border-emerald-400/30 backdrop-blur-sm">
+                      <Eye className="h-3.5 w-3.5" />
+                    </Button>
+                  </a>
+                </>
+              ) : (
+                <Button variant="secondary" size="sm" className="bg-emerald-500/20 hover:bg-emerald-500/30 text-white border-emerald-400/30 backdrop-blur-sm" onClick={generatePdfClient} disabled={isGeneratingClient}>
+                  <Download className="mr-1.5 h-3.5 w-3.5" />
+                  {isGeneratingClient ? 'Génération...' : 'Générer'}
+                </Button>
+              )}
+            </div>
           </div>
 
           <div className="absolute top-0 left-0 w-full h-full bg-grid-white/[0.05] z-0" />
@@ -412,7 +450,7 @@ export function ScreenRecap() {
           <div className="flex flex-wrap justify-center gap-4 pt-8 border-t border-slate-100 mt-8">
             <Link href="/dashboard/my-quotes">
               <Button variant="outline" size="lg" className="border-slate-200">
-                <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Dossiers
+                <FileText className="mr-2 h-5 w-5 text-slate-500" /> Mes Chiffrages
               </Button>
             </Link>
             <Link href="/dashboard">

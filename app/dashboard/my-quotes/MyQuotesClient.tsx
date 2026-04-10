@@ -113,7 +113,7 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
   return (
     <div className="space-y-8">
       <div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Mes Dossiers</h2>
+        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Mes Chiffrages</h2>
         <p className="text-slate-500">Retrouvez ici l&apos;historique de vos dossiers sauvegardés.</p>
       </div>
 

@@ -33,6 +33,7 @@ import {
   HOURLY_RATE_CONDITIONING,
   MARGE_COMMERCIALE_PERCENT,
   MARGE_SOPANO_PERCENT,
+  TRANSPORT_MARGIN,
 } from '../../lib/config/pricing'
 
 export async function seedSettings(prisma: PrismaClient): Promise<void> {
@@ -72,6 +73,7 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
     { key: 'MARGE_COMMERCIALE_PERCENT', value: String(MARGE_COMMERCIALE_PERCENT), label: 'Com. commerciale', unit: '%' },
     { key: 'MARGE_SOPANO_PERCENT', value: String(MARGE_SOPANO_PERCENT), label: 'Com. Sopano', unit: '%' },
     { key: 'GEODIS_FUEL_SURCHARGE_PERCENT', value: '2.9', label: 'Surcharge carburant GEODIS', unit: '%' },
+    { key: 'TRANSPORT_MARGIN', value: String(TRANSPORT_MARGIN), label: 'Coefficient marge transport', unit: 'x' },
   ]
 
   const obsoleteKeys = [
