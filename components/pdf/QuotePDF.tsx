@@ -125,6 +125,7 @@ interface QuotePDFProps {
   isMultiProduct?: boolean
   productSlotResults?: ProductSlotResult[]
   totalCostMulti?: number
+  mode?: 'internal' | 'client'
 }
 
 export function QuotePDF({
@@ -138,7 +139,9 @@ export function QuotePDF({
   isMultiProduct = false,
   productSlotResults = [],
   totalCostMulti = 0,
+  mode = 'internal',
 }: QuotePDFProps) {
+  const isClient = mode === 'client'
 
   const { studyNumber, reference, productName, quantity } = quoteInfo
 
@@ -229,7 +232,10 @@ export function QuotePDF({
     materialCostMarged: costResult.materialCostMarged,
     materialMarginCoeff: costResult.materialMarginCoeff,
     transportTotal: costResult.transportTotal,
+    transportCostMarged: costResult.transportCostMarged,
+    transportMargin: costResult.transportMargin,
     transportDeliveriesCount: formValues.transportDeliveries?.length,
+    mode,
   })
 
   return (
@@ -240,8 +246,8 @@ export function QuotePDF({
         <View style={styles.header}>
           <Image src="/logo.png" style={styles.logo} />
           <View style={styles.headerRight}>
-            <Text style={styles.headerTitle}>Fiche de Devis</Text>
-            <Text style={styles.headerSubtitle}>Calculateur PLV Kontfeel</Text>
+            <Text style={styles.headerTitle}>{isClient ? 'Devis' : 'Fiche de Devis'}</Text>
+            <Text style={styles.headerSubtitle}>{isClient ? 'Kontfeel' : 'Calculateur PLV Kontfeel — Usage interne'}</Text>
             {reference && <Text style={styles.reference}>{reference}</Text>}
             {isMultiProduct && (
               <View style={styles.badgeMulti}>
@@ -293,8 +299,8 @@ export function QuotePDF({
           )}
         </View>
 
-        {/* Impression mono — si activée */}
-        {!isMultiProduct && hasImpression && (
+        {/* Impression mono — si activée (usage interne uniquement) */}
+        {!isClient && !isMultiProduct && hasImpression && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Impression</Text>
             <View style={styles.grid}>
@@ -470,14 +476,14 @@ export function QuotePDF({
         {/* Transport */}
         {formValues.transportDeliveries && formValues.transportDeliveries.length > 0 && formValues.transportDeliveries.some(d => d.mode) && (
           <View style={styles.section}>
-            <Text style={styles.sectionTitle}>Transport GEODIS</Text>
+            <Text style={styles.sectionTitle}>Transport</Text>
             <View style={styles.table}>
               <View style={styles.tableHeader}>
                 <Text style={[styles.tableHeaderText, { flex: 2 }]}>Mode</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Dept.</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Qté</Text>
-                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Poids</Text>
-                <Text style={styles.tableHeaderTextRight}>Options</Text>
+                <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Département</Text>
+                {!isClient && <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Qté</Text>}
+                {!isClient && <Text style={[styles.tableHeaderText, { flex: 1, textAlign: 'center' }]}>Poids</Text>}
+                {!isClient && <Text style={styles.tableHeaderTextRight}>Options GEODIS</Text>}
               </View>
               {formValues.transportDeliveries.filter(d => d.mode).map((d, i) => (
                 <View key={i} style={i % 2 === 0 ? styles.tableRow : styles.tableRowAlt}>
@@ -485,15 +491,21 @@ export function QuotePDF({
                     {d.mode === 'PACK30' ? 'Pack 30' : d.mode === 'MESSAGERIE_PLUS' ? 'Messagerie+' : 'Affrètement'}
                   </Text>
                   <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>{d.department ?? '—'}</Text>
-                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>
-                    {d.units} {d.mode === 'AFFRETEMENT' ? 'pal.' : 'colis'}
-                  </Text>
-                  <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>
-                    {d.mode !== 'AFFRETEMENT' && d.weightKg != null ? `${d.weightKg} kg` : '—'}
-                  </Text>
-                  <Text style={styles.tableCellRight}>
-                    {d.optionsHT ? `${d.optionsHT.toFixed(2)} €` : '—'}
-                  </Text>
+                  {!isClient && (
+                    <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>
+                      {d.units} {d.mode === 'AFFRETEMENT' ? 'pal.' : 'colis'}
+                    </Text>
+                  )}
+                  {!isClient && (
+                    <Text style={[styles.tableCell, { flex: 1, textAlign: 'center' }]}>
+                      {d.mode !== 'AFFRETEMENT' && d.weightKg != null ? `${d.weightKg} kg` : '—'}
+                    </Text>
+                  )}
+                  {!isClient && (
+                    <Text style={styles.tableCellRight}>
+                      {d.optionsHT ? `${d.optionsHT.toFixed(2)} €` : '—'}
+                    </Text>
+                  )}
                 </View>
               ))}
             </View>
@@ -520,7 +532,11 @@ export function QuotePDF({
 
         {/* Footer */}
         <View style={styles.footer} fixed>
-          <Text style={styles.footerText}>© {new Date().getFullYear()} Kontfeel — Document généré automatiquement</Text>
+          <Text style={styles.footerText}>
+            {isClient
+              ? `© ${new Date().getFullYear()} Kontfeel — Document confidentiel`
+              : `© ${new Date().getFullYear()} Kontfeel — Usage interne, ne pas diffuser`}
+          </Text>
           <Text style={styles.footerText}>Dossier : {studyNumber} — {date}</Text>
         </View>
 

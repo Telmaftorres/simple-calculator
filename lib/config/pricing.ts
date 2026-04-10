@@ -56,3 +56,4 @@ export const MARGE_SOPANO_PERCENT = 5
 
 // ── Transport GEODIS ──
 export const GEODIS_FUEL_SURCHARGE_PERCENT = 2.9
+export const TRANSPORT_MARGIN = 1.4

@@ -62,7 +62,7 @@ export function MobileSidebar({ isAdmin }: { isAdmin: boolean }) {
             className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
           >
             <FileText className="h-5 w-5" />
-            Mes Dossiers
+            Mes Chiffrages
           </Link>
 
           <div className="pt-4 pb-2 px-4 text-xs font-semibold text-slate-500 uppercase tracking-wider">

@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { calculateTransport, suggestTransportMode, type TransportMode } from '@/lib/transport/geodis-rates'
-import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
+import { GEODIS_FUEL_SURCHARGE_PERCENT, TRANSPORT_MARGIN } from '@/lib/config/pricing'
 import { Plus, Trash2 } from 'lucide-react'
 import type { TransportDeliveryForm } from '@/types/calculator'
 
@@ -18,6 +18,7 @@ function DeliveryRow({
   onUpdate,
   onRemove,
   fuelSurchargePct,
+  transportMargin,
 }: {
   delivery: TransportDeliveryForm
   index: number
@@ -25,6 +26,7 @@ function DeliveryRow({
   onUpdate: <K extends keyof Omit<TransportDeliveryForm, 'id'>>(field: K, value: TransportDeliveryForm[K]) => void
   onRemove: () => void
   fuelSurchargePct: number
+  transportMargin: number
 }) {
   const calc = useMemo(() => {
     if (!delivery.mode || !delivery.department || delivery.units === undefined) return null
@@ -165,9 +167,15 @@ function DeliveryRow({
               <span>{calc.options.toFixed(2)} €</span>
             </div>
           )}
+          {transportMargin !== 1 && (
+            <div className="flex justify-between text-slate-600">
+              <span>Marge (×{transportMargin.toFixed(2)})</span>
+              <span>+{(calc.total * (transportMargin - 1)).toFixed(2)} €</span>
+            </div>
+          )}
           <div className="flex justify-between font-bold text-sky-900 pt-1 border-t border-sky-200">
             <span>Total HT</span>
-            <span>{calc.total.toFixed(2)} €</span>
+            <span>{(calc.total * transportMargin).toFixed(2)} €</span>
           </div>
         </div>
       ) : (
@@ -185,6 +193,7 @@ export function SectionTransport() {
 
   const { transportDeliveries } = formState
   const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
+  const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
 
   const grandTotal = useMemo(() => {
     return transportDeliveries.reduce((sum, d) => {
@@ -220,6 +229,7 @@ export function SectionTransport() {
             onUpdate={(field, value) => updateTransportDelivery(delivery.id, field, value)}
             onRemove={() => removeTransportDelivery(delivery.id)}
             fuelSurchargePct={fuelSurchargePct}
+            transportMargin={transportMargin}
           />
         ))}
 
@@ -236,7 +246,7 @@ export function SectionTransport() {
         {transportDeliveries.length > 1 && grandTotal > 0 && (
           <div className="flex justify-between items-center bg-sky-100 rounded-lg px-4 py-3 font-bold text-sky-900">
             <span>Total transport HT ({transportDeliveries.length} livraisons)</span>
-            <span>{grandTotal.toFixed(2)} €</span>
+            <span>{(grandTotal * transportMargin).toFixed(2)} €</span>
           </div>
         )}
       </div>

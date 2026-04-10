@@ -26,6 +26,7 @@ import {
   INK_MARGIN_FLAT_COLOR,
   DOSSIER_FEE,
   HOURLY_RATE_CONDITIONING,
+  TRANSPORT_MARGIN,
 } from '@/lib/config/pricing'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
@@ -137,6 +138,7 @@ export function calculateCosts(params: {
   const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
   const materialMarginTier4 = settings?.MATERIAL_MARGIN_TIER4 ?? MATERIAL_MARGIN_TIER4
   const dossierFee = settings?.DOSSIER_FEE ?? DOSSIER_FEE
+  const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
 
 
   // ── Impression ──
@@ -313,9 +315,12 @@ const materialCostMarged = materialCostRaw * materialMarginCoeff
 // ── Frais de dossier ──
 const dossierFeeCost = hasDossierFee ? dossierFee : 0
 
+  // ── Transport (avec marge) ──
+  const transportCostMarged = (transportTotal ?? 0) * transportMargin
+
   // ── Total ──
   const totalCost =
-    dossierFeeCost +  
+    dossierFeeCost +
     materialCostMarged +
     printingCost +
     cuttingCost +
@@ -325,7 +330,7 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     consumablesCost +
     packagingTotalCost +
     beTotalCost +
-    (transportTotal ?? 0)
+    transportCostMarged
 
   return {
     printingCostData,
@@ -356,6 +361,8 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     batCost,
     beTotalCost,
     transportTotal: transportTotal ?? 0,
+    transportCostMarged,
+    transportMargin,
   }
 }
 
