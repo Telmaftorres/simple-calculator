@@ -8,7 +8,7 @@ const base: QuoteCostRowsParams = {
   selectedPlate: { id: 1, name: 'Test', width: 1000, height: 1000, cost: 10, material: 'Test' },
   hasImpression: false,
   inkVolumeL: 0,
-  printingCostData: { inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 0 },
+  printingCostData: { cost: 0, timeMin: 0, inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 0, laborCost: 0, inkVolumeL: 0, setupTimeMin: 0 },
   printSetupType: 'none',
   cuttingSetupType: 'none',
   cuttingSetupCost: 0,
@@ -50,9 +50,9 @@ describe('buildCostRows — lignes toujours présentes', () => {
     expect(labels(rows)).toContain('Matière')
   })
 
-  it('contient toujours la ligne Découpe (temps machine)', () => {
+  it('contient toujours la ligne Découpe', () => {
     const rows = buildCostRows(base)
-    expect(labels(rows)).toContain('Découpe (temps machine)')
+    expect(labels(rows)).toContain('Découpe')
   })
 
   it('n\'apparaît pas si selectedPlate est undefined', () => {
@@ -85,7 +85,7 @@ describe('buildCostRows — Impression', () => {
   it('n\'affiche pas les lignes d\'impression si hasImpression = false', () => {
     const rows = buildCostRows({ ...base, hasImpression: false })
     expect(labels(rows)).not.toContain('Impression (Encre)')
-    expect(labels(rows)).not.toContain('Impression (temps machine)')
+    expect(labels(rows)).not.toContain('Impression (Machine)')
   })
 
   it('affiche les lignes d\'impression si hasImpression = true', () => {
@@ -93,10 +93,10 @@ describe('buildCostRows — Impression', () => {
       ...base,
       hasImpression: true,
       inkVolumeL: 0.1,
-      printingCostData: { inkCost: 45, machineCost: 12, machineTimeMin: 8, setupCost: 0 },
+      printingCostData: { cost: 57, timeMin: 8, inkCost: 45, machineCost: 12, machineTimeMin: 8, setupCost: 0, laborCost: 12, inkVolumeL: 0.1, setupTimeMin: 0 },
     })
     expect(labels(rows)).toContain('Impression (Encre)')
-    expect(labels(rows)).toContain('Impression (temps machine)')
+    expect(labels(rows)).toContain('Impression (Machine)')
   })
 
   it('affiche le calage si printSetupType != none et setupCost > 0', () => {
@@ -104,7 +104,7 @@ describe('buildCostRows — Impression', () => {
       ...base,
       hasImpression: true,
       printSetupType: 'standard',
-      printingCostData: { inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 35 },
+      printingCostData: { cost: 35, timeMin: 0, inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 35, laborCost: 0, inkVolumeL: 0, setupTimeMin: 0 },
     })
     expect(labels(rows)).toContain('↳ Calage impression (standard)')
   })
@@ -114,7 +114,7 @@ describe('buildCostRows — Impression', () => {
       ...base,
       hasImpression: true,
       printSetupType: 'standard',
-      printingCostData: { inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 0 },
+      printingCostData: { cost: 0, timeMin: 0, inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 0, laborCost: 0, inkVolumeL: 0, setupTimeMin: 0 },
     })
     expect(labels(rows)).not.toContain('↳ Calage impression (standard)')
   })
@@ -124,7 +124,7 @@ describe('buildCostRows — Impression', () => {
       ...base,
       hasImpression: true,
       printSetupType: 'none',
-      printingCostData: { inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 35 },
+      printingCostData: { cost: 35, timeMin: 0, inkCost: 0, machineCost: 0, machineTimeMin: 0, setupCost: 35, laborCost: 0, inkVolumeL: 0, setupTimeMin: 0 },
     })
     expect(labels(rows)).not.toContain('↳ Calage impression (none)')
   })
@@ -133,7 +133,7 @@ describe('buildCostRows — Impression', () => {
 describe('buildCostRows — Découpe', () => {
   it('affiche la valeur correcte pour la découpe machine', () => {
     const rows = buildCostRows({ ...base, cuttingMachineCost: 18.5 })
-    const row = rows.find(r => r.label === 'Découpe (temps machine)')!
+    const row = rows.find(r => r.label === 'Découpe')!
     expect(row.value).toBe(18.5)
   })
 
@@ -357,7 +357,7 @@ describe('buildCostRows — ordre et structure globale', () => {
       ...base,
       hasDossierFee: true, dossierFeeCost: 8,
       hasImpression: true,
-      printingCostData: { inkCost: 10, machineCost: 5, machineTimeMin: 3, setupCost: 0 },
+      printingCostData: { cost: 15, timeMin: 3, inkCost: 10, machineCost: 5, machineTimeMin: 3, setupCost: 0, laborCost: 5, inkVolumeL: 0, setupTimeMin: 0 },
       hasBE: true, beTimeMinutes: 30, beCost: 45, beTotalCost: 45,
       hasFaconnage: true, assemblyCost: 20,
       hasConditionnement: true, packagingCost: 10,
@@ -369,7 +369,7 @@ describe('buildCostRows — ordre et structure globale', () => {
     const mainLabels = rows.filter(r => !r.sub).map(r => r.label)
     expect(mainLabels.indexOf('Frais de dossier')).toBeLessThan(mainLabels.indexOf('Matière'))
     expect(mainLabels.indexOf('Matière')).toBeLessThan(mainLabels.indexOf('Impression (Encre)'))
-    expect(mainLabels.indexOf('Découpe (temps machine)')).toBeLessThan(mainLabels.indexOf('Bureau d\'études'))
+    expect(mainLabels.indexOf('Découpe')).toBeLessThan(mainLabels.indexOf('Bureau d\'études'))
     expect(mainLabels.indexOf('Bureau d\'études')).toBeLessThan(mainLabels.indexOf('Façonnage'))
     expect(mainLabels.indexOf('Façonnage')).toBeLessThan(mainLabels.indexOf('Conditionnement'))
     expect(mainLabels.indexOf('Conditionnement')).toBeLessThan(mainLabels.indexOf('Accessoires'))

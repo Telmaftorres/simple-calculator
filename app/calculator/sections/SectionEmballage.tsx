@@ -28,10 +28,20 @@ export function SectionEmballage() {
     packagingPlatesNeeded,
   } = costResult
 
-  const packagingPlates = plates.filter((p) =>
-    p.material.toLowerCase().includes('bc') ||
-    p.material.toLowerCase().includes('carton')
-  )
+  const packagingPlates = plates.filter((p) => {
+    const m = p.material.toLowerCase()
+    return (
+      m.startsWith('bc') ||
+      m.startsWith('c ') ||
+      m.startsWith('c(') ||
+      m === 'c' ||
+      m.startsWith('ee') ||
+      m.startsWith('e ') ||
+      m.startsWith('e(') ||
+      m === 'e' ||
+      m.includes('carton')
+    )
+  })
 
   return (
     <SectionDisplay

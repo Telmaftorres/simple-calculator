@@ -28,6 +28,8 @@ export const QUOTE_DEFAULTS = {
   // ── Marges internes ──
   showMargeCommerciale: false as boolean,
   showMargeSopano: false as boolean,
+  // ── Prix négocié matière ──
+  plateCostOverride: null as number | null,
   // ── Transport ──
   transportDeliveries: [] as import('@/types/calculator').TransportDeliveryForm[],
 }
