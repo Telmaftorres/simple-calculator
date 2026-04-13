@@ -183,6 +183,7 @@ export function useCalculator(
       beTimeMinutes: initialQuote.beTimeMinutes ?? 0,
       batTimeMinutes: initialQuote.batTimeMinutes ?? 0,
       hasDossierFee: initialQuote.hasDossierFee ?? false,
+      plateCostOverride: initialQuote.plateCostOverride ?? null,
       showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
       showMargeSopano: initialQuote.showMargeSopano ?? false,
       transportDeliveries: initialQuote.transportDeliveries?.map((d): TransportDeliveryForm => ({
@@ -240,7 +241,14 @@ export function useCalculator(
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuote])
 
-  const selectedPlate = plates.find((p) => p.id.toString() === selectedPlateId)
+  const selectedPlateBase = plates.find((p) => p.id.toString() === selectedPlateId)
+  const plateCostOverride = formState.plateCostOverride
+  // Si un prix négocié est saisi, on crée un objet plaque virtuel avec ce coût
+  const selectedPlate = selectedPlateBase
+    ? plateCostOverride !== null && plateCostOverride > 0
+      ? { ...selectedPlateBase, cost: plateCostOverride }
+      : selectedPlateBase
+    : undefined
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
@@ -555,6 +563,7 @@ export function useCalculator(
         beTimeMinutes,
         batTimeMinutes,
         hasDossierFee,
+        plateCostOverride: plateCostOverride ?? null,
         isMultiProduct,
         showMargeCommerciale,
         showMargeSopano,

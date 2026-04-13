@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import {
@@ -5,6 +6,7 @@ import {
 } from '@/components/ui/select'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
+import { Pencil, X } from 'lucide-react'
 
 export function SectionPresentation() {
   const {
@@ -24,6 +26,11 @@ export function SectionPresentation() {
     products,
     hasDossierFee, setHasDossierFee,
   } = useCalculatorContext()
+
+  const [showOverrideInput, setShowOverrideInput] = useState(formState.plateCostOverride !== null)
+
+  const selectedPlateBase = plates.find((p) => p.id.toString() === selectedPlateId)
+  const catalogCost = selectedPlateBase?.cost
 
   const handleToggleMultiProduct = (enabled: boolean) => {
     setIsMultiProduct(enabled)
@@ -133,18 +140,80 @@ export function SectionPresentation() {
 
             <div className="space-y-2">
               <Label>Matière</Label>
-              <Select value={selectedPlateId} onValueChange={setSelectedPlateId}>
-                <SelectTrigger className="w-full truncate">
-                  <SelectValue placeholder="Choisir une plaque..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {plates.map((p) => (
-                    <SelectItem key={p.id} value={p.id.toString()}>
-                      {p.name} ({p.width}x{p.height})
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <div className="flex gap-2 items-start">
+                <Select value={selectedPlateId} onValueChange={(v) => {
+                  setSelectedPlateId(v)
+                  // Réinitialiser l'override si on change de matière
+                  setField('plateCostOverride', null)
+                  setShowOverrideInput(false)
+                }}>
+                  <SelectTrigger className="flex-1 truncate">
+                    <SelectValue placeholder="Choisir une plaque..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {plates.map((p) => (
+                      <SelectItem key={p.id} value={p.id.toString()}>
+                        {p.name} ({p.width}x{p.height})
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+
+                {catalogCost !== undefined && (
+                  <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex flex-col items-end">
+                      {formState.plateCostOverride !== null ? (
+                        <span className="text-xs font-semibold text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1 whitespace-nowrap">
+                          {formState.plateCostOverride.toFixed(2)} €/pl.
+                        </span>
+                      ) : (
+                        <span className="text-xs text-slate-500 bg-slate-50 border border-slate-200 rounded px-2 py-1 whitespace-nowrap">
+                          {catalogCost.toFixed(2)} €/pl.
+                        </span>
+                      )}
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => {
+                        if (showOverrideInput) {
+                          setField('plateCostOverride', null)
+                        }
+                        setShowOverrideInput(!showOverrideInput)
+                      }}
+                      title={showOverrideInput ? 'Annuler le prix négocié' : 'Saisir un prix négocié'}
+                      className={`p-1.5 rounded border transition-colors ${
+                        showOverrideInput
+                          ? 'bg-amber-100 border-amber-300 text-amber-700 hover:bg-amber-200'
+                          : 'bg-slate-50 border-slate-200 text-slate-400 hover:text-emerald-600 hover:border-emerald-300'
+                      }`}
+                    >
+                      {showOverrideInput ? <X className="h-3.5 w-3.5" /> : <Pencil className="h-3.5 w-3.5" />}
+                    </button>
+                  </div>
+                )}
+              </div>
+
+              {showOverrideInput && catalogCost !== undefined && (
+                <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2">
+                  <span className="text-xs text-amber-700 font-medium whitespace-nowrap">Prix négocié :</span>
+                  <div className="relative flex-1">
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min={0}
+                      value={formState.plateCostOverride ?? ''}
+                      onChange={(e) => {
+                        const val = parseFloat(e.target.value)
+                        setField('plateCostOverride', isNaN(val) ? null : val)
+                      }}
+                      placeholder={catalogCost.toFixed(2)}
+                      className="pr-8 text-amber-900 border-amber-300 bg-white h-8 text-sm"
+                    />
+                    <span className="absolute right-2.5 top-1.5 text-xs text-amber-500">€</span>
+                  </div>
+                  <span className="text-xs text-slate-400 whitespace-nowrap">catalogue : {catalogCost.toFixed(2)} €</span>
+                </div>
+              )}
             </div>
           </>
         )}

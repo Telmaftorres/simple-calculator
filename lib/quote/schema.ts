@@ -7,6 +7,7 @@ export const quoteFieldsSchema = z.object({
   flatWidth: z.number().int().positive(),
   flatHeight: z.number().int().positive(),
   plateId: z.number().int().positive().nullable().optional(),
+  plateCostOverride: z.number().positive().nullable().optional(),
   itemsPerPlate: z.number().int().min(0).nullable().optional(),
   platesCount: z.number().int().min(0).nullable().optional(),
   totalCost: z.number().min(0),
