@@ -62,6 +62,9 @@ type Quote = {
   hasPackaging: boolean
   packagingQuantity: number | null
   packagingPlate: { name: string } | null
+  packagingBoxType: string | null
+  packagingMaterialType: string | null
+  packagingExternalSize: string | null
   study: { number: string } | null
   productType: { name: string } | null
   plate: { name: string; cost: number; width: number; height: number } | null

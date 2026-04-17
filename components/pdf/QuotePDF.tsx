@@ -166,6 +166,10 @@ export function QuotePDF({
     hasAssemblyNotice,
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
+    packagingBoxType,
+    packagingMaterialType,
+    packagingExternalSize,
+    packagingQuantity,
   } = formValues
 
   const {
@@ -184,6 +188,7 @@ export function QuotePDF({
     packagingTotalCost,
     packagingMaterialCost,
     packagingCuttingCost,
+    packagingExternalUnitPrice,
   } = costResult
 
   const date = new Date().toLocaleDateString('fr-FR', {
@@ -227,6 +232,11 @@ export function QuotePDF({
     packagingTotalCost,
     packagingMaterialCost,
     packagingCuttingCost,
+    packagingBoxType,
+    packagingMaterialType,
+    packagingExternalSize,
+    packagingExternalUnitPrice,
+    packagingQuantity,
     hasDossierFee: formValues.hasDossierFee,
     dossierFeeCost: costResult.dossierFeeCost,
     materialCostMarged: costResult.materialCostMarged,

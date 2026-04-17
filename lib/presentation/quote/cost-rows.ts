@@ -34,6 +34,11 @@ export type QuoteCostRowsParams = {
   packagingTotalCost: number
   packagingMaterialCost: number
   packagingCuttingCost: number
+  packagingBoxType?: string | null
+  packagingMaterialType?: string | null
+  packagingExternalSize?: string | null
+  packagingExternalUnitPrice?: number
+  packagingQuantity?: number
   hasBE?: boolean
   beTimeMinutes?: number
   batTimeMinutes?: number
@@ -49,6 +54,18 @@ export type QuoteCostRowsParams = {
   materialCostMarged?: number
   materialMarginCoeff?: number
   mode?: 'internal' | 'client'
+}
+
+function boxTypeLabel(t: string | null | undefined): string {
+  if (t === 'etui') return 'Étui'
+  if (t === 'caisse') return 'Caisse'
+  if (t === 'plaque_rainee') return 'Plaque rainée'
+  return t ?? ''
+}
+
+function sizeLabel(s: string | null | undefined): string {
+  if (!s) return ''
+  return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
@@ -102,8 +119,26 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ] : []),
     ...(p.hasPackaging && p.packagingTotalCost > 0 ? [
       {
-        label: 'Emballage',
-        detail: isClient ? '—' : `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`,
+        label: (() => {
+          const parts: string[] = ['Emballage']
+          if (p.packagingBoxType) parts.push(`— ${boxTypeLabel(p.packagingBoxType)}`)
+          if (p.packagingMaterialType) {
+            const isExternal = p.packagingMaterialType === 'B' || p.packagingMaterialType === 'EB'
+            const sizePart = isExternal && p.packagingExternalSize ? ` (${sizeLabel(p.packagingExternalSize)})` : ''
+            parts.push(`${p.packagingMaterialType}${sizePart}`)
+          }
+          return parts.join(' ')
+        })(),
+        detail: (() => {
+          const isExternal = p.packagingMaterialType === 'B' || p.packagingMaterialType === 'EB'
+          if (isExternal) {
+            if (isClient) return 'Fournisseur externe'
+            return p.packagingExternalUnitPrice && p.packagingExternalUnitPrice > 0
+              ? `Fournisseur externe — ${p.packagingExternalUnitPrice.toFixed(4)} €/pce`
+              : 'Fournisseur externe'
+          }
+          return isClient ? '—' : `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`
+        })(),
         value: p.packagingTotalCost,
       },
     ] : []),

@@ -12,6 +12,7 @@ import {
   PRINT_SPEED_QUALITY,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   POSE_SPACING_MM,
+  PLATE_BORDER_MM,
   PACKAGING_SETUP_COST,
   PRINT_SETUP_STANDARD_COST,
   PRINT_SETUP_COMPLEX_COST,
@@ -27,7 +28,22 @@ import {
   DOSSIER_FEE,
   HOURLY_RATE_CONDITIONING,
   TRANSPORT_MARGIN,
+  PACKAGING_B_PETIT_PRICE,
+  PACKAGING_B_MOYEN_PRICE,
+  PACKAGING_B_GRAND_PRICE,
+  PACKAGING_EB_PETIT_PRICE,
+  PACKAGING_EB_MOYEN_PRICE,
+  PACKAGING_EB_GRAND_PRICE,
 } from '@/lib/config/pricing'
+
+const B_EB_PRICE_DEFAULTS: Record<string, number> = {
+  PACKAGING_B_PETIT_PRICE,
+  PACKAGING_B_MOYEN_PRICE,
+  PACKAGING_B_GRAND_PRICE,
+  PACKAGING_EB_PETIT_PRICE,
+  PACKAGING_EB_MOYEN_PRICE,
+  PACKAGING_EB_GRAND_PRICE,
+}
 import { calculateImposition } from '@/lib/calculation/imposition'
 import type {
   ImpositionResult,
@@ -64,6 +80,8 @@ export function calculateCosts(params: {
   selectedConsumables: SelectedConsumable[]
   settings?: Record<string, number>
   hasPackaging: boolean
+  packagingMaterialType?: string  // 'B' | 'EB' | 'C' | 'BC'
+  packagingExternalSize?: string | null  // 'petit' | 'moyen' | 'grand'
   hasBE?: boolean
   beTimeMinutes?: number
   batTimeMinutes?: number
@@ -99,6 +117,8 @@ export function calculateCosts(params: {
     selectedConsumables,
     settings,
     hasPackaging,
+    packagingMaterialType = 'BC',
+    packagingExternalSize = null,
     hasBE = false,
     beTimeMinutes = 0,
     batTimeMinutes = 0,
@@ -129,6 +149,7 @@ export function calculateCosts(params: {
   const cuttingSetupComplexCost = settings?.CUTTING_SETUP_COMPLEX_COST ?? CUTTING_SETUP_COMPLEX_COST
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
+  const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
   const packagingSetupCost = settings?.PACKAGING_SETUP_COST ?? PACKAGING_SETUP_COST
   const inkMarginStandard = settings?.INK_MARGIN_STANDARD ?? INK_MARGIN_STANDARD
   const inkMarginVarnish = settings?.INK_MARGIN_VARNISH ?? INK_MARGIN_VARNISH
@@ -258,12 +279,18 @@ export function calculateCosts(params: {
     : 0
 
   // ── Emballage ──
+  const isExternalPackaging = packagingMaterialType === 'B' || packagingMaterialType === 'EB'
+
+  // Imposition C/BC
   const packagingItemsPerPlate = (() => {
-    if (!hasPackaging || !packagingPlate || packagingWidth <= 0 || packagingHeight <= 0) return 0
+    if (!hasPackaging || isExternalPackaging) return 0
+    if (!packagingPlate || packagingWidth <= 0 || packagingHeight <= 0) return 0
     const imp = calculateImposition(
       { width: packagingWidth, height: packagingHeight },
       { width: packagingPlate.width, height: packagingPlate.height },
-      poseSpacingMm
+      poseSpacingMm,
+      undefined,
+      plateBorderMm
     )
     return imp.itemsPerPlate
   })()
@@ -281,14 +308,25 @@ export function calculateCosts(params: {
     return materialMarginTier4
   })()
 
+  // Prix unitaire B/EB (depuis settings ou config)
+  const packagingExternalUnitPrice = (() => {
+    if (!isExternalPackaging || !packagingExternalSize) return 0
+    const mat = packagingMaterialType!.toUpperCase()
+    const sz = packagingExternalSize.toUpperCase()
+    const key = `PACKAGING_${mat}_${sz}_PRICE`
+    return settings?.[key] ?? B_EB_PRICE_DEFAULTS[key] ?? 0
+  })()
+
   const packagingMaterialCost = (() => {
-    if (!hasPackaging || !packagingPlate || packagingQuantity <= 0) return 0
-    if (packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
+    if (!hasPackaging || packagingQuantity <= 0) return 0
+    if (isExternalPackaging) return packagingExternalUnitPrice * packagingQuantity
+    if (!packagingPlate || packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
     return packagingPlatesNeeded * packagingPlate.cost * packagingMaterialMarginCoeff
   })()
 
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
+    if (isExternalPackaging) return 0  // Pas de découpe pour B/EB
     const machineMinutes = (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
     return (machineMinutes / 60) * hourlyRatePackaging + packagingSetupCost
   })()
@@ -351,6 +389,7 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     packagingTotalCost,
     packagingItemsPerPlate,
     packagingPlatesNeeded,
+    packagingExternalUnitPrice,
     poseSpacingMm,
     assemblyNoticeCostPerPiece,
     materialCostRaw,

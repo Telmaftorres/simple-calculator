@@ -98,6 +98,7 @@ export default function Calculator({
   initialQuote,
   isViewOnly,
   settings,
+  packagingRules,
 }: CalculatorProps) {
   const calc = useCalculator(
     initialProductTypes,
@@ -106,7 +107,8 @@ export default function Calculator({
     consumables,
     initialQuote,
     isViewOnly,
-    settings
+    settings,
+    packagingRules
   )
 
   if (calc.screenState === 'success') return <ScreenSuccess />

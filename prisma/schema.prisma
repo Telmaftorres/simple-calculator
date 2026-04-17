@@ -16,12 +16,68 @@ model Study {
 }
 
 model ProductType {
-  id                Int       @id @default(autoincrement())
-  name              String    @unique
-  flatWidthFormula  String    @default("l")
-  flatHeightFormula String    @default("L")
+  id                Int               @id @default(autoincrement())
+  name              String            @unique
+  flatWidthFormula  String            @default("l")
+  flatHeightFormula String            @default("L")
   elements          Element[]
   quotes            Quote[]
+  templates         ProductTemplate[]
+}
+
+model ProductTemplate {
+  id                          Int                       @id @default(autoincrement())
+  productTypeId               Int?
+  name                        String
+  // ── Format à plat ──
+  flatWidth                   Int?
+  flatHeight                  Int?
+  // ── Matière par défaut ──
+  plateId                     Int?
+  // ── Impression ──
+  hasImpression               Boolean                   @default(true)
+  printMode                   String                    @default("production")
+  printSetupType              String                    @default("none")
+  isRectoVerso                Boolean                   @default(false)
+  rectoVersoType              String?
+  hasVarnish                  Boolean                   @default(false)
+  hasFlatColor                Boolean                   @default(false)
+  inkMlPerPlate               Int                       @default(20)
+  inkMlVerso                  Int                       @default(0)
+  varnishSurfacePercent       Int                       @default(0)
+  flatColorSurfacePercent     Int                       @default(0)
+  // ── Découpe ──
+  cuttingTimePerPoseSeconds   Int                       @default(0)
+  cuttingSetupType            String                    @default("none")
+  // ── Façonnage ──
+  hasFaconnage                Boolean                   @default(true)
+  assemblyTimePerPieceSeconds Int                       @default(0)
+  // ── Conditionnement ──
+  hasConditionnement          Boolean                   @default(true)
+  packTimePerPieceSeconds     Int                       @default(0)
+  hasAssemblyNotice           Boolean                   @default(false)
+  // ── Accessoires ──
+  hasAccessoires              Boolean                   @default(false)
+  // ── Transport ──
+  hasTransport                Boolean                   @default(false)
+  defaultTransportMode        String?
+  // ── Notes ──
+  notes                       String?
+  createdAt                   DateTime                  @default(now())
+  updatedAt                   DateTime                  @updatedAt
+  productType                 ProductType?              @relation(fields: [productTypeId], references: [id], onDelete: SetNull)
+  plate                       Plate?                    @relation(fields: [plateId], references: [id], onDelete: SetNull)
+  quotes                      Quote[]
+  accessories                 ProductTemplateAccessory[]
+}
+
+model ProductTemplateAccessory {
+  id          Int             @id @default(autoincrement())
+  templateId  Int
+  accessoryId Int
+  quantity    Int             @default(1)
+  template    ProductTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  accessory   Accessory       @relation(fields: [accessoryId], references: [id])
 }
 
 model Element {
@@ -32,26 +88,52 @@ model Element {
   productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
 }
 
+// ── Tarification emballage ──
+
+model PackagingPricingRule {
+  id            Int      @id @default(autoincrement())
+  category      String   // 'ETUI' | 'CAISSE' | 'PLAQUE_RAINEE'
+  material      String   // 'B' | 'EB' | 'C' | 'BC'
+  size          String   // 'PETIT' | 'MOYEN' | 'GRAND'
+  baseUnitPrice Float
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@unique([category, material, size])
+}
+
+model QuantityCoefficient {
+  id           Int      @id @default(autoincrement())
+  quantityBand String   @unique // 'PETITE_SERIE' | 'MOYENNE_SERIE' | 'GRANDE_SERIE'
+  minQuantity  Int
+  maxQuantity  Int?     // null = pas de borne sup (GRANDE_SERIE)
+  coefficient  Float
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
 model Plate {
-  id              Int     @id @default(autoincrement())
-  name            String  @unique
-  width           Int
-  height          Int
-  cost            Float
-  material        String
-  quotes          Quote[]
-  packagingQuotes Quote[] @relation("PackagingPlate")
-  quoteProducts   QuoteProduct[]
+  id               Int               @id @default(autoincrement())
+  name             String            @unique
+  width            Int
+  height           Int
+  cost             Float
+  material         String
+  quotes           Quote[]
+  packagingQuotes  Quote[]           @relation("PackagingPlate")
+  quoteProducts    QuoteProduct[]
+  templates        ProductTemplate[]
 }
 
 model Accessory {
-  id               Int              @id @default(autoincrement())
-  name             String
-  description      String?
-  price            Float
-  supplier         String?
-  weight           Float?
-  quoteAccessories QuoteAccessory[]
+  id                 Int                        @id @default(autoincrement())
+  name               String
+  description        String?
+  price              Float
+  supplier           String?
+  weight             Float?
+  quoteAccessories   QuoteAccessory[]
+  templateAccessories ProductTemplateAccessory[]
 }
 
 model Quote {
@@ -83,11 +165,18 @@ model Quote {
   platesCount                        Int?
   totalCost                          Float?
   hasPackaging                       Boolean           @default(false)
+  packagingBoxType                   String?           // 'etui' | 'caisse' | 'plaque_rainee'
+  packagingMaterialType              String?           // 'B' | 'EB' | 'C' | 'BC'
+  packagingExternalSize              String?           // 'petit' | 'moyen' | 'grand' (pour B/EB)
+  packagingProductLength             Int?              // longueur du produit fini (mm)
+  packagingProductWidth              Int?              // largeur du produit fini (mm)
+  packagingProductHeight             Int?              // hauteur du produit fini (mm, pour caisse)
+  packagingProductThickness          Int?              // épaisseur du produit fini (mm, pour étui)
   packagingPlateId                   Int?
   packagingQuantity                  Int?
   packagingCuttingTimePerPoseSeconds Int               @default(20)
-  packagingWidth                     Int?
-  packagingHeight                    Int?
+  packagingWidth                     Int?              // longueur carton calculée (mm)
+  packagingHeight                    Int?              // largeur carton calculée (mm)
   createdAt                          DateTime          @default(now())
   updatedAt                          DateTime          @updatedAt
   userId                             String?
@@ -119,6 +208,8 @@ model Quote {
   transportDeliveries                QuoteTransportDelivery[]
   actuals                            QuoteActuals?
   productionSheet                    ProductionSheet?
+  templateId                         Int?              // modèle standard utilisé à la création
+  template                           ProductTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
 
   @@index([userId, createdAt])
 }

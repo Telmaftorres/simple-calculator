@@ -1,6 +1,6 @@
 import { PrismaClient } from '@prisma/client'
 import bcrypt from 'bcryptjs'
-import { seedSettings, seedTransportShipments } from './seeders'
+import { seedSettings, seedTransportShipments, seedPackagingPricing } from './seeders'
 
 const prisma = new PrismaClient({
   log: process.env.NODE_ENV === 'development' ? ['query', 'info', 'warn', 'error'] : ['warn', 'error'],
@@ -114,6 +114,9 @@ async function main() {
 
   // 7. Transport Shipments
   await seedTransportShipments(prisma)
+
+  // 8. Packaging Pricing
+  await seedPackagingPricing(prisma)
 
   console.log('✅ Seed terminé avec succès !')
 }

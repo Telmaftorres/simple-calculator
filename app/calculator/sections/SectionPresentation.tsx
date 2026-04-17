@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/select'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
-import { Pencil, X } from 'lucide-react'
+import { Pencil, X, LayoutTemplate } from 'lucide-react'
 
 export function SectionPresentation() {
   const {
@@ -25,12 +25,18 @@ export function SectionPresentation() {
     addProduct,
     products,
     hasDossierFee, setHasDossierFee,
+    applyTemplate,
   } = useCalculatorContext()
 
   const [showOverrideInput, setShowOverrideInput] = useState(formState.plateCostOverride !== null)
 
   const selectedPlateBase = plates.find((p) => p.id.toString() === selectedPlateId)
   const catalogCost = selectedPlateBase?.cost
+
+  const selectedProductType = productTypes.find(
+    (pt) => pt.id.toString() === formState.selectedProductTypeId
+  )
+  const availableTemplates = selectedProductType?.templates ?? []
 
   const handleToggleMultiProduct = (enabled: boolean) => {
     setIsMultiProduct(enabled)
@@ -128,6 +134,35 @@ export function SectionPresentation() {
                 </div>
               )}
             </div>
+
+            {availableTemplates.length > 0 && (
+              <div className="space-y-2 md:col-span-2">
+                <Label className="flex items-center gap-1.5 text-emerald-700">
+                  <LayoutTemplate className="h-3.5 w-3.5" />
+                  Modèle standard
+                </Label>
+                <Select
+                  value=""
+                  onValueChange={(v) => {
+                    const tpl = availableTemplates.find((t) => t.id.toString() === v)
+                    if (tpl) applyTemplate(tpl)
+                  }}
+                >
+                  <SelectTrigger className="border-emerald-200 bg-emerald-50 text-emerald-700">
+                    <SelectValue placeholder="Choisir un modèle (optionnel)…" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {availableTemplates.map((tpl) => (
+                      <SelectItem key={tpl.id} value={tpl.id.toString()}>
+                        {tpl.name}
+                        {tpl.flatWidth && tpl.flatHeight ? ` — ${tpl.flatWidth}×${tpl.flatHeight} mm` : ''}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-slate-400">Pré-remplit le format, la matière, la découpe et le façonnage. Vous pouvez ensuite modifier chaque valeur.</p>
+              </div>
+            )}
 
             <div className="space-y-2">
               <Label>Quantité</Label>

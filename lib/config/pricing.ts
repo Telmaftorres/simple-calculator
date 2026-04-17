@@ -28,6 +28,7 @@ export const ASSEMBLY_NOTICE_COST_PER_PIECE = 0.10
 
 // ── Imposition ──
 export const POSE_SPACING_MM = 10
+export const PLATE_BORDER_MM = 10   // marge de bord de plaque, chaque côté (mm)
 
 // ── Emballage ──
 export const HOURLY_RATE_PACKAGING = 45
@@ -57,3 +58,12 @@ export const MARGE_SOPANO_PERCENT = 5
 // ── Transport GEODIS ──
 export const GEODIS_FUEL_SURCHARGE_PERCENT = 2.9
 export const TRANSPORT_MARGIN = 1.4
+
+// ── Emballage B/EB (fournisseur externe, prix unitaire €/pce) ──
+// À configurer dans les paramètres (valeurs 0 = non configuré)
+export const PACKAGING_B_PETIT_PRICE = 0
+export const PACKAGING_B_MOYEN_PRICE = 0
+export const PACKAGING_B_GRAND_PRICE = 0
+export const PACKAGING_EB_PETIT_PRICE = 0
+export const PACKAGING_EB_MOYEN_PRICE = 0
+export const PACKAGING_EB_GRAND_PRICE = 0

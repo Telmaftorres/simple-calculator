@@ -23,6 +23,7 @@ import {
   MATERIAL_MARGIN_TIER3,
   MATERIAL_MARGIN_TIER4,
   PACKAGING_SETUP_COST,
+  TRANSPORT_MARGIN,
 } from '@/lib/config/pricing'
 
 const mockPlate = {
@@ -445,6 +446,233 @@ describe('calculateCosts', () => {
       expect(result.packagingTotalCost).toBeCloseTo(
         result.packagingMaterialCost + result.packagingCuttingCost, 2
       )
+    })
+  })
+
+  describe('emballage B/EB (externe, prix unitaire)', () => {
+    const packagingPlate = { id: 99, name: 'BC Test', width: 800, height: 600, cost: 5, material: 'BC' }
+
+    it('coût matière = prix unitaire × quantité pour type B', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'B',
+        packagingExternalSize: 'petit',
+        packagingQuantity: 100,
+        packagingPlate,
+        packagingWidth: 0,
+        packagingHeight: 0,
+        settings: { PACKAGING_B_PETIT_PRICE: 1.5 },
+      })
+      expect(result.packagingExternalUnitPrice).toBe(1.5)
+      expect(result.packagingMaterialCost).toBeCloseTo(1.5 * 100, 2)
+    })
+
+    it('coût matière = prix unitaire × quantité pour type EB', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'EB',
+        packagingExternalSize: 'moyen',
+        packagingQuantity: 50,
+        packagingPlate,
+        packagingWidth: 0,
+        packagingHeight: 0,
+        settings: { PACKAGING_EB_MOYEN_PRICE: 2.18 },
+      })
+      expect(result.packagingExternalUnitPrice).toBe(2.18)
+      expect(result.packagingMaterialCost).toBeCloseTo(2.18 * 50, 2)
+    })
+
+    it('pas de découpe pour B/EB même si temps de découpe renseigné', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'EB',
+        packagingExternalSize: 'grand',
+        packagingQuantity: 100,
+        packagingPlate,
+        packagingWidth: 0,
+        packagingHeight: 0,
+        packagingCuttingTimePerPoseSeconds: 30,
+        settings: { PACKAGING_EB_GRAND_PRICE: 4.95 },
+      })
+      expect(result.packagingCuttingCost).toBe(0)
+    })
+
+    it('pas d\'imposition pour B/EB (packagingItemsPerPlate = 0)', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'B',
+        packagingExternalSize: 'moyen',
+        packagingQuantity: 100,
+        packagingPlate,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        settings: { PACKAGING_B_MOYEN_PRICE: 2.04 },
+      })
+      expect(result.packagingItemsPerPlate).toBe(0)
+      expect(result.packagingPlatesNeeded).toBe(0)
+    })
+
+    it('prix à 0 si taille non renseignée (packagingExternalSize null)', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'B',
+        packagingExternalSize: null,
+        packagingQuantity: 100,
+        packagingPlate,
+        packagingWidth: 0,
+        packagingHeight: 0,
+        settings: { PACKAGING_B_PETIT_PRICE: 1.5 },
+      })
+      expect(result.packagingExternalUnitPrice).toBe(0)
+      expect(result.packagingMaterialCost).toBe(0)
+    })
+
+    it('prix à 0 si setting non configuré (valeur par défaut = 0)', () => {
+      // Pas de settings → fallback sur B_EB_PRICE_DEFAULTS qui valent tous 0
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'EB',
+        packagingExternalSize: 'petit',
+        packagingQuantity: 100,
+        packagingPlate,
+        packagingWidth: 0,
+        packagingHeight: 0,
+        settings: undefined,
+      })
+      expect(result.packagingExternalUnitPrice).toBe(0)
+      expect(result.packagingMaterialCost).toBe(0)
+    })
+
+    it('packagingTotalCost = coût matière seul pour B/EB', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'B',
+        packagingExternalSize: 'grand',
+        packagingQuantity: 75,
+        packagingPlate,
+        packagingWidth: 0,
+        packagingHeight: 0,
+        packagingCuttingTimePerPoseSeconds: 20,
+        settings: { PACKAGING_B_GRAND_PRICE: 3.13 },
+      })
+      expect(result.packagingTotalCost).toBeCloseTo(3.13 * 75, 2)
+      expect(result.packagingCuttingCost).toBe(0)
+    })
+  })
+
+  describe('plateBorderMm dans l\'imposition emballage C/BC', () => {
+    const packagingPlate = { id: 99, name: 'BC Test', width: 800, height: 600, cost: 5, material: 'BC' }
+
+    it('PLATE_BORDER_MM=0 : 13 items/plaque (orientation mixte, surface pleine)', () => {
+      // pW=800, pH=600, spacing=10 (POSE_SPACING_MM par défaut)
+      // Normal (200×150): cols=floor(810/210)=3, rows=floor(610/160)=3 → 9
+      // Rotated (150×200): cols=floor(810/160)=5, rows=floor(610/210)=2 → 10
+      // Mixed Cas A rN=1: usedH=150, remaining=600-150-10=440
+      //   rowsR=calcFit(440,200)=floor(450/210)=2, colsR=5 → total=3+10=13 ✓
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'BC',
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 0,
+        settings: { PLATE_BORDER_MM: 0 },
+      })
+      expect(result.packagingItemsPerPlate).toBe(13)
+    })
+
+    it('PLATE_BORDER_MM=50 réduit la surface utile → moins de poses par plaque', () => {
+      // surface utile : 800-100=700 × 600-100=500
+      // Normal (200×150, spacing 10) : cols=floor(710/210)=3, rows=floor(510/160)=3 → 9
+      // (orientation normale gagne, mixte ne dépasse pas 9)
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'BC',
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 0,
+        settings: { PLATE_BORDER_MM: 50 },
+      })
+      expect(result.packagingItemsPerPlate).toBe(9)
+    })
+
+    it('plus de marge = plus de plaques nécessaires', () => {
+      const sansBord = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'BC',
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 0,
+        settings: { PLATE_BORDER_MM: 0 },
+      })
+      const avecBord = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingMaterialType: 'BC',
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingTimePerPoseSeconds: 0,
+        settings: { PLATE_BORDER_MM: 50 },
+      })
+      // Sans bord : ceil(100/13)=8, avec bord : ceil(100/9)=12
+      expect(avecBord.packagingPlatesNeeded).toBeGreaterThan(sansBord.packagingPlatesNeeded)
+      expect(sansBord.packagingPlatesNeeded).toBe(8)
+      expect(avecBord.packagingPlatesNeeded).toBe(12)
+    })
+  })
+
+  describe('transport (avec marge)', () => {
+    it('transportCostMarged = transportTotal × TRANSPORT_MARGIN', () => {
+      const result = calculateCosts({ ...defaultParams, transportTotal: 100 })
+      expect(result.transportCostMarged).toBeCloseTo(100 * TRANSPORT_MARGIN, 2)
+    })
+
+    it('transportCostMarged = 0 si transportTotal absent', () => {
+      const result = calculateCosts({ ...defaultParams })
+      expect(result.transportCostMarged).toBe(0)
+    })
+
+    it('transportCostMarged = 0 si transportTotal = 0', () => {
+      const result = calculateCosts({ ...defaultParams, transportTotal: 0 })
+      expect(result.transportCostMarged).toBe(0)
+    })
+
+    it('transport est inclus dans totalCost', () => {
+      const sans = calculateCosts({ ...defaultParams, transportTotal: 0 })
+      const avec = calculateCosts({ ...defaultParams, transportTotal: 100 })
+      expect(avec.totalCost).toBeCloseTo(sans.totalCost + avec.transportCostMarged, 2)
+    })
+
+    it('marge transport configurable via settings', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        transportTotal: 100,
+        settings: { TRANSPORT_MARGIN: 2 },
+      })
+      expect(result.transportCostMarged).toBeCloseTo(200, 2)
+    })
+
+    it('expose transportTotal et transportMargin dans le résultat', () => {
+      const result = calculateCosts({ ...defaultParams, transportTotal: 80 })
+      expect(result.transportTotal).toBe(80)
+      expect(result.transportMargin).toBe(TRANSPORT_MARGIN)
     })
   })
 })

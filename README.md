@@ -599,6 +599,52 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Transport dans les PDFs** : section "Transport GEODIS" ajoutée dans `QuotePDF.tsx` (tableau par livraison : mode, département, quantité, poids, options HT) et dans `ProductionSheetPDF.tsx` (colonne droite, entre Conditionnement et Achats, avec total consolidé si plusieurs livraisons)
 - ✅ **Journal d'activité** (`AuditLog`) : table Prisma sans FK (résistante aux suppressions), helper `lib/audit.ts` avec `logAction()` try/catch silencieux, instrumentation de `createQuote`, `deleteQuote`, `upsertQuoteActuals`, `createUser`, `updateUser`, `deleteUser`, `updateSetting`. Page `/dashboard/activite` (ADMIN only, 200 dernières actions, badges colorés par type). Lien "Activité" dans la sidebar desktop et mobile
 
+### Sprint 12 — Emballage avancé, templates & marge de bord (avril 2026)
+
+#### Section Emballage — refonte complète
+- ✅ **Choix du type de boîte** : 3 options sélectionnables (Étui / Caisse / Plaque rainée), chacune avec une formule de dimensions différente
+- ✅ **Choix de la matière** : B / EB (fournisseur externe, prix à l'unité) vs C / BC (carton découpé en interne)
+- ✅ **Formules de dimensions carton** automatiques selon le type de boîte :
+  - Étui → `{width: 2W+2T, height: L+2T+100}`
+  - Caisse → `{width: H+W, height: 2L+2W+50}`
+  - Plaque rainée → `{width: W, height: 2L}`
+- ✅ **Flux B/EB (externe)** : sélection Petit / Moyen / Grand, saisie quantité, prix unitaire automatique depuis la table `PackagingPricingRule`
+- ✅ **Flux C/BC (interne)** : saisie des dimensions du produit fini (L, W, épaisseur pour étui, hauteur pour caisse), format carton calculé automatiquement, sélecteur de plaque filtré par matière, imposition, jauge découpe
+- ✅ **Auto-remplissage** : bouton "↑ Auto depuis le produit" (ou "↑ Auto depuis plus grand produit" en multi), qui reporte les dimensions du plus grand produit (surface × surface max)
+- ✅ **Persistance DB** : 6 champs ajoutés sur `Quote` (`packagingBoxType`, `packagingMaterialType`, `packagingExternalSize`, `packagingProductLength`, `packagingProductWidth`, `packagingProductHeight`, `packagingProductThickness`)
+
+#### Base de prix emballage B/EB
+- ✅ **Nouveaux modèles Prisma** : `PackagingPricingRule` (prix de base par catégorie × matière × taille) + `QuantityCoefficient` (coefficient multiplicateur par tranche de quantité)
+- ✅ **Seeder** (`prisma/seeders/packaging-pricing.seeder.ts`) : 6 règles ETUI/EB et ETUI/B + 3 coefficients (PETITE_SERIE ×1.00, MOYENNE_SERIE ×0.97, GRANDE_SERIE ×0.92)
+- ✅ **`getSuggestedUnitPricePure()`** : fonction synchrone pour les tests (données injectées)
+- ✅ **`getSuggestedUnitPrice()`** : version async lisant la DB via Prisma
+- ✅ **Intégration dans le calculateur** : `getPackagingRules()` chargé au démarrage (`page.tsx`), transmis jusqu'à `useCalculator`. Prix injecté dynamiquement dans les settings selon (boxType × material × size × quantité) → coefficient appliqué → `PACKAGING_${mat}_${sz}_PRICE` injecté dans `settings` avant `calculateCosts()`
+
+#### Marge de bord plaque (PLATE_BORDER_MM)
+- ✅ **Paramètre `plateBorderMm`** ajouté comme 5e argument de `calculateImposition()` — réduit la surface utile de la plaque de 2 × bord sur chaque axe : `pW = max(0, plate.width − 2 × plateBorderMm)`
+- ✅ **Valeur par défaut** : 10 mm (configurable via `PLATE_BORDER_MM` dans les Settings)
+- ✅ **Appliqué** dans `costs.ts` (emballage C/BC) et `useCalculator.ts` (imposition principale et multi-produits)
+- ✅ **Seeder** mis à jour : nouvelle entrée `PLATE_BORDER_MM` dans la table `Setting`
+
+#### Templates produits — refonte TemplateForm
+- ✅ **Section Impression** dans TemplateForm réécrite pour correspondre à `SectionImpression.tsx` : pill buttons calage (Aucun/Standard/Complexe), pill buttons mode impression et recto/verso, GaugeSlider encre (dégradé indigo→violet), raccourcis `INK_SHORTCUTS` et `FINISHING_SHORTCUTS`, tableau de finitions (vernis, blanc), affichage "Temps machine / plaque" calculé à la volée depuis les dimensions de la plaque
+- ✅ **Sections Découpe, Façonnage, Conditionnement** dans TemplateForm : GaugeSliders avec dégradés propres (orange, rose, teal), raccourcis `CUTTING_SHORTCUTS`, `ASSEMBLY_SHORTCUTS`, `PACK_SHORTCUTS`, checkbox notice de montage pour Conditionnement
+- ✅ **Section Accessoires** dans TemplateForm : correspond à `SectionAccessoires.tsx`, affiche le total calculé
+- ✅ **Section Transport** dans TemplateForm (nouveau) : toggle activé/désactivé + 3 boutons mode (Pack 30 / Messagerie+ / Affrètement). Champs `hasTransport Boolean` et `defaultTransportMode String?` ajoutés sur `ProductTemplate`
+- ✅ **Section Notes supprimée** de TemplateForm
+
+#### PDFs — enrichissement emballage
+- ✅ **Ligne "Emballage" enrichie** dans `buildCostRows()` (utilisé par QuotePDF et RecapSidebar) :
+  - Label : `Emballage — Étui B (Petit)` au lieu de juste "Emballage"
+  - Détail (devis interne) : `Fournisseur externe — 0.9506 €/pce` pour B/EB | `Mat. X€ + Déc. X€` pour C/BC
+  - Détail (devis client) : `Fournisseur externe` pour B/EB | `—` pour C/BC
+- ✅ **Section EMBALLAGE** ajoutée dans `ProductionSheetPDF.tsx` (fiche de prod) : type d'emballage, matière + taille, "Fournisseur externe" si B/EB ou nom de la plaque si C/BC, quantité
+
+#### Tests
+- ✅ **`imposition.test.ts`** : 7 nouveaux tests `plateBorderMm` (rétrocompatibilité, réduction poses, calculs exacts avec et sans espacement, bord > plaque → 0 items, vérification hors marge, `forceOrientation` avec bord)
+- ✅ **`costs.test.ts`** : 16 nouveaux tests (B/EB externe : prix × quantité, pas de découpe, pas d'imposition, prix à 0 si non configuré ; `plateBorderMm` C/BC : 13 vs 9 items, 8 vs 12 plaques ; transport : marge configurable, inclusion dans total)
+- ✅ **`packaging-pricing.test.ts`** (nouveau fichier) : 19 tests couvrant `resolveSize` (B/EB/C-BC), `resolveQuantityBand` (tranches + erreurs), `getSuggestedUnitPricePure` (6 cas requis + structure + erreur règle absente)
+
 ---
 
 ## 🗺 Roadmap (à venir)
