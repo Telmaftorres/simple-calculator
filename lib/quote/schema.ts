@@ -37,6 +37,13 @@ export const quoteFieldsSchema = z.object({
   hasAccessoires: z.boolean().optional(),
 
   hasPackaging: z.boolean().optional(),
+  packagingBoxType: z.enum(['etui', 'caisse', 'plaque_rainee']).optional(),
+  packagingMaterialType: z.enum(['B', 'EB', 'C', 'BC']).optional(),
+  packagingExternalSize: z.enum(['petit', 'moyen', 'grand']).nullable().optional(),
+  packagingProductLength: z.number().int().min(0).nullable().optional(),
+  packagingProductWidth: z.number().int().min(0).nullable().optional(),
+  packagingProductHeight: z.number().int().min(0).nullable().optional(),
+  packagingProductThickness: z.number().int().min(0).nullable().optional(),
   packagingPlateId: z.number().int().positive().nullable().optional(),
   packagingQuantity: z.number().int().positive().nullable().optional(),
   packagingCuttingTimePerPoseSeconds: z.number().int().optional(),

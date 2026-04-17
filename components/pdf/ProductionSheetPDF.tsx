@@ -62,6 +62,9 @@ type Quote = {
   hasPackaging: boolean
   packagingQuantity: number | null
   packagingPlate: { name: string } | null
+  packagingBoxType: string | null
+  packagingMaterialType: string | null
+  packagingExternalSize: string | null
   study: { number: string } | null
   productType: { name: string } | null
   plate: { name: string; cost: number; width: number; height: number } | null
@@ -491,6 +494,42 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
               )}
               <Notes text={productionSheet.conditionnementNotes} />
             </SectionCard>
+
+            {/* EMBALLAGE */}
+            {quote.hasPackaging && (
+              <SectionCard title="EMBALLAGE" bgColor={C.amberBg} textColor={C.amber}>
+                {(() => {
+                  const boxLabel =
+                    quote.packagingBoxType === 'etui' ? 'Étui'
+                    : quote.packagingBoxType === 'caisse' ? 'Caisse'
+                    : quote.packagingBoxType === 'plaque_rainee' ? 'Plaque rainée'
+                    : quote.packagingBoxType ?? '—'
+                  const mat = quote.packagingMaterialType ?? '—'
+                  const isExternal = mat === 'B' || mat === 'EB'
+                  const sizeLabel = quote.packagingExternalSize
+                    ? quote.packagingExternalSize.charAt(0).toUpperCase() + quote.packagingExternalSize.slice(1)
+                    : null
+                  return (
+                    <>
+                      <DataRow label="Type d'emballage" value={boxLabel} />
+                      <DataRow label="Matière" value={isExternal
+                        ? `${mat}${sizeLabel ? ` — ${sizeLabel}` : ''}`
+                        : mat}
+                      />
+                      {isExternal && (
+                        <DataRow label="Approvisionnement" value="Fournisseur externe" />
+                      )}
+                      {!isExternal && quote.packagingPlate && (
+                        <DataRow label="Plaque" value={quote.packagingPlate.name} />
+                      )}
+                      {quote.packagingQuantity != null && (
+                        <DataRow label="Quantité" value={`${quote.packagingQuantity} pce(s)`} />
+                      )}
+                    </>
+                  )
+                })()}
+              </SectionCard>
+            )}
 
             {/* TRANSPORT */}
             {quote.transportDeliveries.length > 0 && (

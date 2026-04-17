@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import Calculator from './calculator/Calculator'
-import { getProductTypes, getPlates } from './actions/reference-data'
+import { getProductTypes, getPlates, getPackagingRules } from './actions/reference-data'
 import { getQuoteById } from './actions/quotes'
 import { getAccessories } from './actions/accessories'
 import { getConsumables } from './actions/consumables'
@@ -29,13 +29,14 @@ export default async function Home({
   const session = await auth()
   const userName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'Inconnu'
 
-  const [productTypes, plates, accessories, consumables, initialQuote, settings] = await Promise.all([
+  const [productTypes, plates, accessories, consumables, initialQuote, settings, packagingRules] = await Promise.all([
     getProductTypes(),
     getPlates(),
     getAccessories(),
     getConsumables(),
     idToFetch && !isNaN(parseInt(idToFetch)) ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
     getSettingsMap(),
+    getPackagingRules(),
   ])
 
   return (
@@ -64,6 +65,7 @@ export default async function Home({
             initialQuote={initialQuote || undefined}
             isViewOnly={isViewOnly}
             settings={settings}
+            packagingRules={packagingRules}
           />
         </section>
       </div>

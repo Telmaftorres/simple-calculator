@@ -1,5 +1,11 @@
 import { PrismaClient } from '@prisma/client'
 import {
+  PACKAGING_B_PETIT_PRICE,
+  PACKAGING_B_MOYEN_PRICE,
+  PACKAGING_B_GRAND_PRICE,
+  PACKAGING_EB_PETIT_PRICE,
+  PACKAGING_EB_MOYEN_PRICE,
+  PACKAGING_EB_GRAND_PRICE,
   INK_MARGIN_STANDARD,
   INK_MARGIN_VARNISH,
   INK_MARGIN_FLAT_COLOR,
@@ -34,6 +40,7 @@ import {
   MARGE_COMMERCIALE_PERCENT,
   MARGE_SOPANO_PERCENT,
   TRANSPORT_MARGIN,
+  PLATE_BORDER_MM,
 } from '../../lib/config/pricing'
 
 export async function seedSettings(prisma: PrismaClient): Promise<void> {
@@ -61,8 +68,15 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
     { key: 'HOURLY_RATE_CONDITIONING', value: String(HOURLY_RATE_CONDITIONING), label: 'Taux horaire conditionnement', unit: '€/h' },
     { key: 'ASSEMBLY_NOTICE_COST_PER_PIECE', value: String(ASSEMBLY_NOTICE_COST_PER_PIECE), label: 'Coût notice de montage', unit: '€/pce' },
     { key: 'POSE_SPACING_MM', value: String(POSE_SPACING_MM), label: 'Espacement entre poses', unit: 'mm' },
+    { key: 'PLATE_BORDER_MM', value: String(PLATE_BORDER_MM), label: 'Marge de bord de plaque (chaque côté)', unit: 'mm' },
     { key: 'HOURLY_RATE_PACKAGING', value: String(HOURLY_RATE_PACKAGING), label: 'Taux horaire emballage', unit: '€/h' },
     { key: 'PACKAGING_SETUP_COST', value: String(PACKAGING_SETUP_COST), label: 'Calage emballage', unit: '€' },
+    { key: 'PACKAGING_B_PETIT_PRICE', value: String(PACKAGING_B_PETIT_PRICE), label: 'Emballage B – Petit (€/pce)', unit: '€/pce' },
+    { key: 'PACKAGING_B_MOYEN_PRICE', value: String(PACKAGING_B_MOYEN_PRICE), label: 'Emballage B – Moyen (€/pce)', unit: '€/pce' },
+    { key: 'PACKAGING_B_GRAND_PRICE', value: String(PACKAGING_B_GRAND_PRICE), label: 'Emballage B – Grand (€/pce)', unit: '€/pce' },
+    { key: 'PACKAGING_EB_PETIT_PRICE', value: String(PACKAGING_EB_PETIT_PRICE), label: 'Emballage EB – Petit (€/pce)', unit: '€/pce' },
+    { key: 'PACKAGING_EB_MOYEN_PRICE', value: String(PACKAGING_EB_MOYEN_PRICE), label: 'Emballage EB – Moyen (€/pce)', unit: '€/pce' },
+    { key: 'PACKAGING_EB_GRAND_PRICE', value: String(PACKAGING_EB_GRAND_PRICE), label: 'Emballage EB – Grand (€/pce)', unit: '€/pce' },
     { key: 'HOURLY_RATE_BE', value: String(HOURLY_RATE_BE), label: 'Taux horaire Bureau d\'études', unit: '€/h' },
     { key: 'HOURLY_RATE_BAT', value: String(HOURLY_RATE_BAT), label: 'Taux horaire BAT', unit: '€/h' },
     { key: 'MATERIAL_MARGIN_TIER1', value: String(MATERIAL_MARGIN_TIER1), label: 'Coefficient matière < 5 €/plaque', unit: 'x' },

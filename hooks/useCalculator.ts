@@ -5,7 +5,7 @@ import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/quotes'
 import { createProductType } from '@/app/actions/catalog'
 import { toast } from 'sonner'
-import { POSE_SPACING_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/config/pricing'
+import { POSE_SPACING_MM, PLATE_BORDER_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/config/pricing'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
 import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
@@ -13,7 +13,8 @@ import { useCalculatorForm } from './useCalculatorForm'
 import { useAccessories } from './useAccessories'
 import { useConsumables } from './useConsumables'
 import { formatCuttingDetails, formatAssemblyDetails, formatPackDetails } from '@/lib/format'
-import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlot, ProductSlotResult, TransportDeliveryForm } from '@/types/calculator'
+import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlotResult, TransportDeliveryForm } from '@/types/calculator'
+import type { PackagingRulesData } from '@/app/actions/reference-data'
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import { createAccessory } from '@/app/actions/accessories'
 import { v4 as uuidv4 } from 'uuid'
@@ -38,7 +39,8 @@ export function useCalculator(
   consumables: Consumable[],
   initialQuote?: Quote,
   isViewOnly?: boolean,
-  settings?: Record<string, number>
+  settings?: Record<string, number>,
+  packagingRules?: PackagingRulesData
 ) {
   const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
   const [isServing, setIsServing] = useState(false)
@@ -90,11 +92,16 @@ export function useCalculator(
     currentConsumableId,
     currentConsumableSize,
     hasPackaging,
+    packagingBoxType,
+    packagingMaterialType,
+    packagingExternalSize,
+    packagingProductLength,
+    packagingProductWidth,
+    packagingProductHeight,
+    packagingProductThickness,
     packagingPlateId,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
-    packagingWidth,
-    packagingHeight,
     printSetupType,
     cuttingSetupType,
     hasImpression,
@@ -167,6 +174,13 @@ export function useCalculator(
       packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
       hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
       hasPackaging: initialQuote.hasPackaging || false,
+      packagingBoxType: (initialQuote.packagingBoxType as 'etui' | 'caisse' | 'plaque_rainee') || 'etui',
+      packagingMaterialType: (initialQuote.packagingMaterialType as 'B' | 'EB' | 'C' | 'BC') || 'BC',
+      packagingExternalSize: (initialQuote.packagingExternalSize as 'petit' | 'moyen' | 'grand' | null) || null,
+      packagingProductLength: initialQuote.packagingProductLength || 0,
+      packagingProductWidth: initialQuote.packagingProductWidth || 0,
+      packagingProductHeight: initialQuote.packagingProductHeight || 0,
+      packagingProductThickness: initialQuote.packagingProductThickness || 0,
       packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
       packagingQuantity: initialQuote.packagingQuantity || 0,
       packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
@@ -251,7 +265,43 @@ export function useCalculator(
     : undefined
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
+
+  // ── Dimensions emballage ──
+  // En multi-produit : on prend le plus grand produit (par surface à plat)
+  const largestProduct = isMultiProduct && products.length > 0
+    ? products.reduce((max, p) =>
+        p.flatWidth * p.flatHeight > max.flatWidth * max.flatHeight ? p : max,
+        products[0]
+      )
+    : null
+
+  const effectivePackagingProductLength = isMultiProduct && largestProduct
+    ? largestProduct.flatHeight
+    : packagingProductLength
+  const effectivePackagingProductWidth = isMultiProduct && largestProduct
+    ? largestProduct.flatWidth
+    : packagingProductWidth
+
+  const computedPackagingDimensions = (() => {
+    const L = effectivePackagingProductLength
+    const W = effectivePackagingProductWidth
+    const H = packagingProductHeight
+    const T = packagingProductThickness
+    if (L <= 0 || W <= 0) return { width: 0, height: 0 }
+    switch (packagingBoxType) {
+      case 'etui':
+        return { width: 2 * W + 2 * T, height: L + 2 * T + 100 }
+      case 'caisse':
+        if (H <= 0) return { width: 0, height: 0 }
+        return { width: H + W, height: 2 * L + 2 * W + 50 }
+      case 'plaque_rainee':
+        return { width: W, height: 2 * L }
+      default:
+        return { width: 0, height: 0 }
+    }
+  })()
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
+  const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
 
   useEffect(() => {
     if (isMultiProduct) return
@@ -260,7 +310,8 @@ export function useCalculator(
         { width: flatWidth, height: flatHeight },
         { width: selectedPlate.width, height: selectedPlate.height },
         poseSpacingMm,
-        orientationOverride ?? undefined
+        orientationOverride ?? undefined,
+        plateBorderMm
       )
       const platesNeeded = Math.ceil(quantity / imp.itemsPerPlate) || 0
       setImpositionResult({
@@ -285,7 +336,8 @@ export function useCalculator(
             { width: slot.flatWidth, height: slot.flatHeight },
             { width: plate.width, height: plate.height },
             poseSpacingMm,
-            slot.orientationOverride ?? undefined
+            slot.orientationOverride ?? undefined,
+            plateBorderMm
           )
           const platesNeeded = Math.ceil(slot.quantity / imp.itemsPerPlate) || 0
           slotImposition = {
@@ -378,6 +430,32 @@ export function useCalculator(
   const { effectiveInkMl: effectiveInkMlPerPlate, effectiveIsRectoVerso } =
     resolveVerso(isRectoVerso, rectoVersoType, inkMlPerPlate, inkMlVerso)
 
+  // ── Prix unitaire B/EB depuis PackagingPricingRule (avec coefficient quantité) ──
+  const settingsWithPackagingPrice = (() => {
+    const isExternal = packagingMaterialType === 'B' || packagingMaterialType === 'EB'
+    if (!isExternal || !packagingExternalSize || packagingQuantity <= 0) return settings
+    if (!packagingRules?.rules?.length) return settings
+
+    const category = (packagingBoxType || 'etui').toUpperCase()
+    const mat = packagingMaterialType.toUpperCase()
+    const sz = packagingExternalSize.toUpperCase()
+    const rule = packagingRules.rules.find(
+      (r) => r.category === category && r.material === mat && r.size === sz
+    )
+    if (!rule) return settings
+
+    let price = rule.baseUnitPrice
+    if (packagingRules.coefficients?.length) {
+      const band = packagingRules.coefficients.find(
+        (c) => packagingQuantity >= c.minQuantity && (c.maxQuantity === null || packagingQuantity <= c.maxQuantity)
+      )
+      if (band) price = Math.round(price * band.coefficient * 10000) / 10000
+    }
+
+    const key = `PACKAGING_${mat}_${sz}_PRICE`
+    return { ...settings, [key]: price }
+  })()
+
   const costResult = calculateCosts({
     quantity: isMultiProduct ? totalQuantityMulti : quantity,
     impositionResult: isMultiProduct ? null : impositionResult,
@@ -401,8 +479,10 @@ export function useCalculator(
     hasAssemblyNotice,
     selectedAccessories,
     selectedConsumables,
-    settings,
+    settings: settingsWithPackagingPrice,
     hasPackaging,
+    packagingMaterialType,
+    packagingExternalSize,
     hasBE,
     beTimeMinutes,
     batTimeMinutes,
@@ -410,8 +490,8 @@ export function useCalculator(
     packagingPlate,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
-    packagingWidth,
-    packagingHeight,
+    packagingWidth: computedPackagingDimensions.width,
+    packagingHeight: computedPackagingDimensions.height,
     transportTotal: transportTotal > 0 ? transportTotal : undefined,
   })
 
@@ -445,6 +525,41 @@ export function useCalculator(
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
   }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece])
 
+  const applyTemplate = useCallback((template: ProductType['templates'][number]) => {
+    if (template.flatWidth) setField('flatWidth', template.flatWidth)
+    if (template.flatHeight) setField('flatHeight', template.flatHeight)
+    if (template.plateId) setField('selectedPlateId', template.plateId.toString())
+    setField('hasImpression', template.hasImpression)
+    setField('printMode', template.printMode as 'production' | 'quality')
+    setField('printSetupType', template.printSetupType as 'none' | 'standard' | 'complexe')
+    setField('isRectoVerso', template.isRectoVerso)
+    setField('rectoVersoType', (template.rectoVersoType ?? null) as 'identical' | 'different' | null)
+    setField('hasVarnish', template.hasVarnish)
+    setField('hasFlatColor', template.hasFlatColor)
+    setField('inkMlPerPlate', template.inkMlPerPlate)
+    setField('inkMlVerso', template.inkMlVerso)
+    setField('varnishSurfacePercent', template.varnishSurfacePercent)
+    setField('flatColorSurfacePercent', template.flatColorSurfacePercent)
+    setField('cuttingTimePerPoseSeconds', template.cuttingTimePerPoseSeconds)
+    setField('cuttingSetupType', template.cuttingSetupType as 'none' | 'standard' | 'complexe')
+    setField('hasFaconnage', template.hasFaconnage)
+    setField('assemblyTimePerPieceSeconds', template.assemblyTimePerPieceSeconds)
+    setField('hasConditionnement', template.hasConditionnement)
+    setField('packTimePerPieceSeconds', template.packTimePerPieceSeconds)
+    setField('hasAssemblyNotice', template.hasAssemblyNotice)
+    setField('hasAccessoires', template.hasAccessoires)
+    // Pré-remplir les accessoires si le template en a
+    if (template.accessories.length > 0) {
+      setSelectedAccessories(template.accessories.map((a) => ({
+        id: a.accessory.id,
+        name: a.accessory.name,
+        price: a.accessory.price,
+        quantity: a.quantity,
+      })))
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [setField])
+
   const handleCreateProductType = async () => {
     if (!productSearch) return
     try {
@@ -452,7 +567,7 @@ export function useCalculator(
       if (!productTypes.find((pt) => pt.id === newType.id)) {
         setProductTypes([
           ...productTypes,
-          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [] },
+          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [], templates: [] },
         ])
       }
       setField('selectedProductTypeId', newType.id.toString())
@@ -471,7 +586,7 @@ export function useCalculator(
       if (!productTypes.find((pt) => pt.id === newType.id)) {
         setProductTypes([
           ...productTypes,
-          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [] },
+          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [], templates: [] },
         ])
       }
       updateProduct(slotIndex, 'productTypeId', newType.id.toString())
@@ -548,11 +663,18 @@ export function useCalculator(
         packTimePerPieceSeconds,
         hasAssemblyNotice,
         hasPackaging,
+        packagingBoxType,
+        packagingMaterialType,
+        packagingExternalSize,
+        packagingProductLength: packagingProductLength || null,
+        packagingProductWidth: packagingProductWidth || null,
+        packagingProductHeight: packagingProductHeight || null,
+        packagingProductThickness: packagingProductThickness || null,
         packagingPlateId: packagingPlateId ? parseInt(packagingPlateId) : null,
         packagingQuantity: packagingQuantity || null,
         packagingCuttingTimePerPoseSeconds,
-        packagingWidth: packagingWidth || null,
-        packagingHeight: packagingHeight || null,
+        packagingWidth: computedPackagingDimensions.width || null,
+        packagingHeight: computedPackagingDimensions.height || null,
         printSetupType: isMultiProduct ? 'none' : printSetupType,
         cuttingSetupType: isMultiProduct ? 'none' : cuttingSetupType,
         hasImpression: isMultiProduct ? false : hasImpression,
@@ -690,18 +812,25 @@ export function useCalculator(
     currentConsumableId, setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
     currentConsumableSize, setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),
     hasPackaging, setHasPackaging: (v: boolean) => setField('hasPackaging', v),
+    packagingBoxType, setPackagingBoxType: (v: 'etui' | 'caisse' | 'plaque_rainee') => setField('packagingBoxType', v),
+    packagingMaterialType, setPackagingMaterialType: (v: 'B' | 'EB' | 'C' | 'BC') => setField('packagingMaterialType', v),
+    packagingExternalSize, setPackagingExternalSize: (v: 'petit' | 'moyen' | 'grand' | null) => setField('packagingExternalSize', v),
+    packagingProductLength, setPackagingProductLength: (v: number) => setField('packagingProductLength', v),
+    packagingProductWidth, setPackagingProductWidth: (v: number) => setField('packagingProductWidth', v),
+    packagingProductHeight, setPackagingProductHeight: (v: number) => setField('packagingProductHeight', v),
+    packagingProductThickness, setPackagingProductThickness: (v: number) => setField('packagingProductThickness', v),
+    computedPackagingDimensions,
+    largestProduct,
     hasBE, setHasBE: (v: boolean) => setField('hasBE', v),
     beTimeMinutes, setBeTimeMinutes: (v: number) => setField('beTimeMinutes', v),
     batTimeMinutes, setBatTimeMinutes: (v: number) => setField('batTimeMinutes', v),
     packagingPlateId, setPackagingPlateId: (v: string) => setField('packagingPlateId', v),
     packagingQuantity, setPackagingQuantity: (v: number) => setField('packagingQuantity', v),
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
-    packagingWidth, setPackagingWidth: (v: number) => setField('packagingWidth', v),
-    packagingHeight, setPackagingHeight: (v: number) => setField('packagingHeight', v),
     hasDossierFee, setHasDossierFee: (v: boolean) => setField('hasDossierFee', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
-    handleCreateProductType, handleCreateProductTypeForSlot, handleCreateAccessory, handleSave, handleReset,
+    handleCreateProductType, handleCreateProductTypeForSlot, handleCreateAccessory, handleSave, handleReset, applyTemplate,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState,
     costResult,

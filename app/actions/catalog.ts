@@ -94,6 +94,99 @@ export async function deleteProductType(id: number) {
   revalidateEntity('product-types', '/dashboard/products', '/')
 }
 
+// ── PRODUCT TEMPLATES ──
+
+const productTemplateSchema = z.object({
+  productTypeId: z.number().int().positive().nullable().optional(),
+  name: z.string().min(1, 'Le nom est requis'),
+  flatWidth: z.number().int().positive().nullable().optional(),
+  flatHeight: z.number().int().positive().nullable().optional(),
+  plateId: z.number().int().positive().nullable().optional(),
+  hasImpression: z.boolean().optional(),
+  printMode: z.enum(['production', 'quality']).optional(),
+  printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  isRectoVerso: z.boolean().optional(),
+  rectoVersoType: z.enum(['identical', 'different']).nullable().optional(),
+  hasVarnish: z.boolean().optional(),
+  hasFlatColor: z.boolean().optional(),
+  inkMlPerPlate: z.number().int().min(0).max(100).optional(),
+  inkMlVerso: z.number().int().min(0).max(100).optional(),
+  varnishSurfacePercent: z.number().int().min(0).max(100).optional(),
+  flatColorSurfacePercent: z.number().int().min(0).max(100).optional(),
+  cuttingTimePerPoseSeconds: z.number().int().min(0).optional(),
+  cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  hasFaconnage: z.boolean().optional(),
+  assemblyTimePerPieceSeconds: z.number().int().min(0).optional(),
+  hasConditionnement: z.boolean().optional(),
+  packTimePerPieceSeconds: z.number().int().min(0).optional(),
+  hasAssemblyNotice: z.boolean().optional(),
+  hasAccessoires: z.boolean().optional(),
+  hasTransport: z.boolean().optional(),
+  defaultTransportMode: z.enum(['PACK30', 'MESSAGERIE_PLUS', 'AFFRETEMENT']).nullable().optional(),
+  notes: z.string().optional(),
+})
+
+const templateAccessorySchema = z.object({
+  accessoryId: z.number().int().positive(),
+  quantity: z.number().int().positive(),
+})
+
+export async function createProductTemplate(
+  data: z.infer<typeof productTemplateSchema>,
+  accessories: z.infer<typeof templateAccessorySchema>[] = [],
+) {
+  await requireAuth()
+  const validated = productTemplateSchema.parse(data)
+  const validatedAccessories = accessories.map((a) => templateAccessorySchema.parse(a))
+  const result = await prisma.productTemplate.create({
+    data: {
+      ...validated,
+      accessories: validatedAccessories.length > 0
+        ? { create: validatedAccessories }
+        : undefined,
+    },
+  })
+  if (validated.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${validated.productTypeId}`, '/dashboard/products')
+  }
+  return result
+}
+
+export async function updateProductTemplate(
+  id: number,
+  data: z.infer<typeof productTemplateSchema>,
+  accessories: z.infer<typeof templateAccessorySchema>[] = [],
+) {
+  await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const validated = productTemplateSchema.parse(data)
+  const validatedAccessories = accessories.map((a) => templateAccessorySchema.parse(a))
+  const result = await prisma.productTemplate.update({
+    where: { id: validId },
+    data: {
+      ...validated,
+      accessories: {
+        deleteMany: {},
+        create: validatedAccessories,
+      },
+    },
+  })
+  if (validated.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${validated.productTypeId}`, '/dashboard/products')
+  }
+  return result
+}
+
+export async function deleteProductTemplate(id: number) {
+  await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const tpl = await prisma.productTemplate.findUnique({ where: { id: validId }, select: { productTypeId: true } })
+  await prisma.productTemplate.delete({ where: { id: validId } })
+  if (tpl?.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${tpl.productTypeId}`, '/dashboard/products')
+  }
+}
+
 // ── ELEMENTS ──
 
 export async function createElement(data: z.infer<typeof elementSchema>) {

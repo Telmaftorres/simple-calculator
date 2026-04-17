@@ -246,6 +246,18 @@ const FORMULAS: Record<string, {
       return `⌊(${platW} + ${spacing}) / (${poseW} + ${spacing})⌋ = ⌊${platW + spacing} / ${poseW + spacing}⌋ = ${result} poses/colonne`
     },
   },
+  PLATE_BORDER_MM: {
+    usedIn: ['Imposition — marge de bord (tous types)'],
+    formula: 'surface_utile = (largeur_plaque - 2×marge) × (hauteur_plaque - 2×marge)',
+    getExample: (v) => {
+      const border = parseFloat(v.PLATE_BORDER_MM) || 0
+      const platW = 1200
+      const platH = 1600
+      const effW = Math.max(0, platW - 2 * border)
+      const effH = Math.max(0, platH - 2 * border)
+      return `Plaque ${platW}×${platH} mm → zone utile (${platW} - 2×${border}) × (${platH} - 2×${border}) = ${effW}×${effH} mm`
+    },
+  },
   HOURLY_RATE_PACKAGING: {
     usedIn: ['Emballage (découpe)'],
     formula: 'coût_découpe_emballage = (temps_total_min / 60) × taux_horaire_emballage',
@@ -447,10 +459,10 @@ const CATEGORIES: {
   },
   {
     label: 'Imposition',
-    description: 'Espacement entre poses',
+    description: 'Espacement entre poses et marge de bord de plaque',
     color: 'blue',
     emoji: '📐',
-    keys: ['POSE_SPACING_MM'],
+    keys: ['POSE_SPACING_MM', 'PLATE_BORDER_MM'],
   },
   {
     label: 'Emballage',

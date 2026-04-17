@@ -13,8 +13,43 @@ export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost
 export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'>
 export type Consumable = Pick<PrismaConsumable, 'id' | 'name' | 'price' | 'size'>
 export type PLVElement = Pick<PrismaElement, 'id' | 'name' | 'quantity'>
+export type ProductTemplate = {
+  id: number
+  name: string
+  flatWidth: number | null
+  flatHeight: number | null
+  plateId: number | null
+  hasImpression: boolean
+  printMode: string
+  printSetupType: string
+  isRectoVerso: boolean
+  rectoVersoType: string | null
+  hasVarnish: boolean
+  hasFlatColor: boolean
+  inkMlPerPlate: number
+  inkMlVerso: number
+  varnishSurfacePercent: number
+  flatColorSurfacePercent: number
+  cuttingTimePerPoseSeconds: number
+  cuttingSetupType: string
+  hasFaconnage: boolean
+  assemblyTimePerPieceSeconds: number
+  hasConditionnement: boolean
+  packTimePerPieceSeconds: number
+  hasAssemblyNotice: boolean
+  hasAccessoires: boolean
+  hasTransport: boolean
+  defaultTransportMode: string | null
+  accessories: Array<{
+    accessoryId: number
+    quantity: number
+    accessory: { id: number; name: string; price: number }
+  }>
+}
+
 export type ProductType = Pick<PrismaProductType, 'id' | 'name' | 'flatWidthFormula' | 'flatHeightFormula'> & {
   elements: PLVElement[]
+  templates: ProductTemplate[]
 }
 
 // ── ImpositionResult étendu ──
@@ -94,6 +129,7 @@ export interface CalculatorProps {
   initialQuote?: Quote
   isViewOnly?: boolean
   settings?: Record<string, number>
+  packagingRules?: import('@/app/actions/reference-data').PackagingRulesData
 }
 
 export type ScreenState = 'form' | 'success' | 'recap'

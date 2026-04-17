@@ -35,10 +35,13 @@ export function calculateImposition(
   item: Dimensions,
   plate: Plate,
   spacing: number = 0,
-  forceOrientation?: 'normal' | 'rotated'
+  forceOrientation?: 'normal' | 'rotated',
+  plateBorderMm: number = 0
 ): ImpositionResult {
   const { width: iW, height: iH } = item
-  const { width: pW, height: pH } = plate
+  // Surface utile = dimensions plaque - 2 bords (haut+bas, gauche+droite)
+  const pW = Math.max(0, plate.width - 2 * plateBorderMm)
+  const pH = Math.max(0, plate.height - 2 * plateBorderMm)
 
   const calcFit = (available: number, size: number) => {
     if (size <= 0) return 0
