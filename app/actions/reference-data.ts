@@ -1,8 +1,9 @@
 'use server'
 
 import { prisma } from '@/lib/server/prisma'
-import { unstable_cache, revalidateTag } from 'next/cache'
+import { unstable_cache } from 'next/cache'
 import { requireAdmin } from '@/lib/server/auth'
+import { revalidateCache } from '@/lib/server/cache'
 
 export const getStudies = unstable_cache(
   async () => prisma.study.findMany({ orderBy: { createdAt: 'desc' } }),
@@ -117,7 +118,7 @@ export async function updatePackagingPricingRule(id: number, baseUnitPrice: numb
     where: { id },
     data: { baseUnitPrice },
   })
-  revalidateTag('packaging-rules')
+  revalidateCache('packaging-rules')
 }
 
 export async function updateQuantityCoefficient(id: number, coefficient: number): Promise<void> {
@@ -126,5 +127,5 @@ export async function updateQuantityCoefficient(id: number, coefficient: number)
     where: { id },
     data: { coefficient },
   })
-  revalidateTag('packaging-rules')
+  revalidateCache('packaging-rules')
 }
