@@ -9,6 +9,7 @@ export type CacheTag =
   | 'product-types'
   | 'consumables'
   | 'accessories'
+  | 'packaging-rules'
 
 export function revalidateCache(tag: CacheTag) {
   // @ts-expect-error - Next.js type mismatch sur revalidateTag
