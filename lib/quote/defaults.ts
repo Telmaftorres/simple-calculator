@@ -37,6 +37,8 @@ export const QUOTE_DEFAULTS = {
   showMargeSopano: false as boolean,
   // ── Prix négocié matière ──
   plateCostOverride: null as number | null,
+  // ── Matière personnalisée (non enregistrée en DB) ──
+  customPlate: null as { name: string; width: number; height: number; cost: number } | null,
   // ── Transport ──
   transportDeliveries: [] as import('@/types/calculator').TransportDeliveryForm[],
 }
