@@ -23,7 +23,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
-import { Trash2, UserPlus, Pencil } from 'lucide-react'
+import { Trash2, UserPlus, Pencil, Eye, EyeOff } from 'lucide-react'
 
 interface User {
   id: string
@@ -41,6 +41,8 @@ interface User {
 export function UserManagement({ users }: { users: User[] }) {
   const [isEditOpen, setIsEditOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<User | null>(null)
+  const [showPasswordCreate, setShowPasswordCreate] = useState(false)
+  const [showPasswordEdit, setShowPasswordEdit] = useState(false)
   const [createError, setCreateError] = useState<string | null>(null)
   const [createSuccess, setCreateSuccess] = useState(false)
   const [isCreating, setIsCreating] = useState(false)
@@ -115,13 +117,24 @@ export function UserManagement({ users }: { users: User[] }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="password">Mot de passe</Label>
-                <Input
-                  id="password"
-                  name="password"
-                  type="password"
-                  required
-                  minLength={8}
-                />
+                <div className="relative">
+                  <Input
+                    id="password"
+                    name="password"
+                    type={showPasswordCreate ? 'text' : 'password'}
+                    required
+                    minLength={8}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordCreate(!showPasswordCreate)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPasswordCreate ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 <p className="text-xs text-slate-400">Minimum 8 caractères</p>
               </div>
 
@@ -314,13 +327,24 @@ export function UserManagement({ users }: { users: User[] }) {
               </div>
               <div className="space-y-2">
                 <Label htmlFor="edit-password">Nouveau mot de passe (optionnel)</Label>
-                <Input
-                  id="edit-password"
-                  name="password"
-                  type="password"
-                  placeholder="Laisser vide pour ne pas changer"
-                  minLength={8}
-                />
+                <div className="relative">
+                  <Input
+                    id="edit-password"
+                    name="password"
+                    type={showPasswordEdit ? 'text' : 'password'}
+                    placeholder="Laisser vide pour ne pas changer"
+                    minLength={8}
+                    className="pr-10"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPasswordEdit(!showPasswordEdit)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+                    tabIndex={-1}
+                  >
+                    {showPasswordEdit ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+                  </button>
+                </div>
                 <p className="text-xs text-slate-400">Minimum 8 caractères si renseigné</p>
               </div>
 
