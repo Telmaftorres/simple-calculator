@@ -313,7 +313,7 @@ export function useCalculator(
         orientationOverride ?? undefined,
         plateBorderMm
       )
-      const platesNeeded = Math.ceil(quantity / imp.itemsPerPlate) || 0
+      const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(quantity / imp.itemsPerPlate) : 0
       setImpositionResult({
         itemsPerPlate: imp.itemsPerPlate,
         platesNeeded,
@@ -339,7 +339,7 @@ export function useCalculator(
             slot.orientationOverride ?? undefined,
             plateBorderMm
           )
-          const platesNeeded = Math.ceil(slot.quantity / imp.itemsPerPlate) || 0
+          const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(slot.quantity / imp.itemsPerPlate) : 0
           slotImposition = {
             itemsPerPlate: imp.itemsPerPlate,
             platesNeeded,
