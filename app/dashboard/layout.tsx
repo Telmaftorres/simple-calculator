@@ -12,8 +12,8 @@ export default async function DashboardLayout({ children }: { children: React.Re
   return (
     <div className="min-h-screen flex bg-slate-50">
       {/* Sidebar */}
-      <aside className="w-64 bg-indigo-900 text-white flex-shrink-0 hidden md:flex flex-col">
-        <div className="p-6 border-b border-indigo-800">
+      <aside className="w-64 bg-slate-900 text-white flex-shrink-0 hidden md:flex flex-col">
+        <div className="p-6 border-b border-slate-800">
           <Link href="/dashboard" className="hover:opacity-80 transition-opacity">
             <h1 className="text-xl font-bold flex items-center gap-2">
               <LayoutDashboard className="h-6 w-6 text-emerald-400" />
