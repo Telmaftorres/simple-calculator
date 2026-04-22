@@ -161,6 +161,10 @@ model Quote {
   hasAssemblyNotice                  Boolean           @default(false)
   plateId                            Int?
   plateCostOverride                  Float?            // prix/plaque négocié, écrase le tarif catalogue
+  customPlateName                    String?           // matière personnalisée (non enregistrée en DB)
+  customPlateWidth                   Int?
+  customPlateHeight                  Int?
+  customPlateCost                    Float?
   itemsPerPlate                      Int?
   platesCount                        Int?
   totalCost                          Float?

@@ -198,6 +198,9 @@ export function useCalculator(
       batTimeMinutes: initialQuote.batTimeMinutes ?? 0,
       hasDossierFee: initialQuote.hasDossierFee ?? false,
       plateCostOverride: initialQuote.plateCostOverride ?? null,
+      customPlate: initialQuote.customPlateName && initialQuote.customPlateWidth && initialQuote.customPlateHeight && initialQuote.customPlateCost
+        ? { name: initialQuote.customPlateName, width: initialQuote.customPlateWidth, height: initialQuote.customPlateHeight, cost: initialQuote.customPlateCost }
+        : null,
       showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
       showMargeSopano: initialQuote.showMargeSopano ?? false,
       transportDeliveries: initialQuote.transportDeliveries?.map((d): TransportDeliveryForm => ({
@@ -257,12 +260,15 @@ export function useCalculator(
 
   const selectedPlateBase = plates.find((p) => p.id.toString() === selectedPlateId)
   const plateCostOverride = formState.plateCostOverride
-  // Si un prix négocié est saisi, on crée un objet plaque virtuel avec ce coût
-  const selectedPlate = selectedPlateBase
-    ? plateCostOverride !== null && plateCostOverride > 0
-      ? { ...selectedPlateBase, cost: plateCostOverride }
-      : selectedPlateBase
-    : undefined
+  const customPlate = formState.customPlate
+  // Matière personnalisée > prix négocié > plaque catalogue
+  const selectedPlate = customPlate
+    ? { id: -1, name: customPlate.name, width: customPlate.width, height: customPlate.height, cost: customPlate.cost, material: customPlate.name }
+    : selectedPlateBase
+      ? plateCostOverride !== null && plateCostOverride > 0
+        ? { ...selectedPlateBase, cost: plateCostOverride }
+        : selectedPlateBase
+      : undefined
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
 
@@ -639,7 +645,11 @@ export function useCalculator(
         client: formState.client || undefined,
         productTypeId: isMultiProduct ? parseInt(products[0].productTypeId) : parsedProductId,
         quantity: isMultiProduct ? totalQuantityMulti : quantity,
-        plateId: isMultiProduct ? parseInt(products[0].selectedPlateId) : parseInt(selectedPlateId),
+        plateId: customPlate ? null : (isMultiProduct ? parseInt(products[0].selectedPlateId) : parseInt(selectedPlateId)),
+        customPlateName: customPlate?.name ?? null,
+        customPlateWidth: customPlate?.width ?? null,
+        customPlateHeight: customPlate?.height ?? null,
+        customPlateCost: customPlate?.cost ?? null,
         itemsPerPlate: isMultiProduct
           ? (productSlotResults[0]?.impositionResult?.itemsPerPlate || 0)
           : (impositionResult?.itemsPerPlate || 0),
@@ -854,5 +864,6 @@ export function useCalculator(
     totalNet,
     settings,
     setField,
+    customPlate, setCustomPlate: (v: { name: string; width: number; height: number; cost: number } | null) => setField('customPlate', v),
   }
 }
