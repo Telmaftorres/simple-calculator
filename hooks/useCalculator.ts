@@ -42,7 +42,7 @@ export function useCalculator(
   settings?: Record<string, number>,
   packagingRules?: PackagingRulesData
 ) {
-  const [screenState, setScreenState] = useState<ScreenState>(isViewOnly ? 'recap' : 'form')
+  const [screenState, setScreenState] = useState<ScreenState>('form')
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
@@ -255,6 +255,8 @@ export function useCalculator(
         quantity: initialQuote.quantity,
       })))
     }
+
+    if (isViewOnly) setScreenState('recap')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuote])
 

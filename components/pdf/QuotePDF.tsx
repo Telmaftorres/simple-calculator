@@ -618,18 +618,6 @@ export function QuotePDF({
               </View>
             ))}
 
-            {/* Total en bas du tableau — mode interne uniquement */}
-            {!isClient && (
-              <View style={styles.tableFooter}>
-                <Text style={styles.tableFooterLabel}>Total HT</Text>
-                <View>
-                  <Text style={styles.tableFooterValue}>{displayTotal.toFixed(2)} €</Text>
-                  <Text style={{ ...styles.footerText, color: '#94a3b8', textAlign: 'right' }}>
-                    soit {(displayTotal / (displayQuantity || 1)).toFixed(2)} € / pce
-                  </Text>
-                </View>
-              </View>
-            )}
           </View>
         </View>
 
@@ -688,7 +676,7 @@ export function QuotePDF({
           </View>
         )}
 
-        {/* ── Consommables (interne) ── */}
+        {/* ── Consommables (mode interne) ── */}
         {!isClient && hasFaconnage && selectedConsumables.length > 0 && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Consommables</Text>
@@ -702,6 +690,19 @@ export function QuotePDF({
                   </Text>
                 </View>
               ))}
+            </View>
+          </View>
+        )}
+
+        {/* ── Total HT (mode interne, après transport/consommables) ── */}
+        {!isClient && (
+          <View style={styles.tableFooter} wrap={false}>
+            <Text style={styles.tableFooterLabel}>Total HT</Text>
+            <View>
+              <Text style={styles.tableFooterValue}>{displayTotal.toFixed(2)} €</Text>
+              <Text style={{ ...styles.footerText, color: '#94a3b8', textAlign: 'right' }}>
+                soit {(displayTotal / (displayQuantity || 1)).toFixed(2)} € / pce
+              </Text>
             </View>
           </View>
         )}
