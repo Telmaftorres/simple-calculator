@@ -145,6 +145,9 @@ export async function createQuote(data: CreateQuoteInput) {
           totalCost: p.totalCost ?? null,
         })),
       } : undefined,
+      productionSheet: {
+        create: { status: 'en_attente' },
+      },
     },
   })
 
