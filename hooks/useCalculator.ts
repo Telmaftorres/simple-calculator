@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback, useRef } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/quotes'
 import { createProductType } from '@/app/actions/catalog'
@@ -265,13 +265,17 @@ export function useCalculator(
   const plateCostOverride = formState.plateCostOverride
   const customPlate = formState.customPlate
   // Matière personnalisée > prix négocié > plaque catalogue
-  const selectedPlate = customPlate
-    ? { id: -1, name: customPlate.name, width: customPlate.width, height: customPlate.height, cost: customPlate.cost, material: customPlate.name }
-    : selectedPlateBase
-      ? plateCostOverride !== null && plateCostOverride > 0
-        ? { ...selectedPlateBase, cost: plateCostOverride }
-        : selectedPlateBase
-      : undefined
+  // useMemo évite de recréer l'objet à chaque render (sinon boucle infinie dans l'effect d'imposition)
+  const selectedPlate = useMemo(() => {
+    if (customPlate) {
+      return { id: -1, name: customPlate.name, width: customPlate.width, height: customPlate.height, cost: customPlate.cost, material: customPlate.name }
+    }
+    if (!selectedPlateBase) return undefined
+    return plateCostOverride !== null && plateCostOverride > 0
+      ? { ...selectedPlateBase, cost: plateCostOverride }
+      : selectedPlateBase
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [customPlate?.name, customPlate?.width, customPlate?.height, customPlate?.cost, selectedPlateBase, plateCostOverride])
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
 

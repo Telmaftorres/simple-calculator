@@ -1,14 +1,16 @@
 'use client'
 
-import { useActionState } from 'react'
+import { useActionState, useState } from 'react'
 import { useFormStatus } from 'react-dom'
 import { authenticate } from '@/app/actions/auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Eye, EyeOff } from 'lucide-react'
 
 export default function LoginForm() {
   const [errorMessage, dispatch] = useActionState(authenticate, undefined)
+  const [showPassword, setShowPassword] = useState(false)
 
   return (
     <form action={dispatch} className="space-y-4">
@@ -18,14 +20,25 @@ export default function LoginForm() {
       </div>
       <div className="space-y-2">
         <Label htmlFor="password">Mot de passe</Label>
-        <Input
-          id="password"
-          type="password"
-          name="password"
-          placeholder="******"
-          required
-          minLength={8}
-        />
+        <div className="relative">
+          <Input
+            id="password"
+            type={showPassword ? 'text' : 'password'}
+            name="password"
+            placeholder="******"
+            required
+            minLength={8}
+            className="pr-10"
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 transition-colors"
+            tabIndex={-1}
+          >
+            {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+          </button>
+        </div>
       </div>
       <div className="pt-4">
         <LoginButton />
