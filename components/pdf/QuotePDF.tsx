@@ -448,7 +448,7 @@ export function QuotePDF({
           <View style={styles.grid}>
             <View style={styles.gridItem}>
               <Text style={styles.gridItemTitle}>Destinataire</Text>
-              <View style={styles.row}><Text style={styles.label}>A l'attention de</Text><Text style={styles.value}>{formValues.client || '—'}</Text></View>
+              <View style={styles.row}><Text style={styles.label}>A l'attention de</Text><Text style={styles.value}>{formValues.contactName || formValues.client || '—'}</Text></View>
               <View style={styles.row}><Text style={styles.label}>Réalisé par</Text><Text style={styles.value}>{authorName || '—'}</Text></View>
               <View style={styles.rowLast}><Text style={styles.label}>Édité le</Text><Text style={styles.value}>{date}</Text></View>
             </View>

@@ -2,6 +2,7 @@ import { z } from 'zod'
 
 export const quoteFieldsSchema = z.object({
   client: z.string().optional(),
+  contactName: z.string().optional(),
   productTypeId: z.number().int().positive(),
   quantity: z.number().int().positive(),
   flatWidth: z.number().int().positive(),

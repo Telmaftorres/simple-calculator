@@ -145,6 +145,9 @@ export async function createQuote(data: CreateQuoteInput) {
           totalCost: p.totalCost ?? null,
         })),
       } : undefined,
+      productionSheet: {
+        create: { status: 'en_attente' },
+      },
     },
   })
 
@@ -222,7 +225,13 @@ export async function getUserQuotes() {
   const session = await requireAuth()
   return await prisma.quote.findMany({
     where: { userId: session.user.id },
-    include: { study: true, productType: true, plate: true },
+    include: {
+      study: true,
+      productType: true,
+      plate: true,
+      productionSheet: { select: { status: true, updatedAt: true } },
+      actuals: { select: { id: true, updatedAt: true } },
+    },
     orderBy: { createdAt: 'desc' },
   })
 }
