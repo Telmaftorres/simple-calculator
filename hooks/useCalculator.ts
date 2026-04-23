@@ -155,7 +155,7 @@ export function useCalculator(
     loadQuote({
       studyNumber: initialQuote.study?.number || 'ET',
       client: initialQuote.client || '',
-      contactName: (initialQuote as any).contactName || '',
+      contactName: initialQuote.contactName || '',
       selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
       quantity: initialQuote.quantity,
       selectedPlateId: initialQuote.plateId?.toString() || '',
@@ -637,7 +637,8 @@ export function useCalculator(
       }
     } else {
       const parsedProductId = parseInt(selectedProductTypeId)
-      if (!impositionResult || !selectedPlateId || !selectedProductTypeId || isNaN(parsedProductId)) {
+      const hasPlate = !!selectedPlateId || !!customPlate
+      if (!impositionResult || !hasPlate || !selectedProductTypeId || isNaN(parsedProductId)) {
         toast.error('Veuillez sélectionner un Type de PLV valide.')
         return
       }
