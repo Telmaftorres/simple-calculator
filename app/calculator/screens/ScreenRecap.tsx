@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download, Eye } from 'lucide-react'
@@ -49,6 +49,7 @@ export function ScreenRecap() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [pdfClientUrl, setPdfClientUrl] = useState<string | null>(null)
   const [isGeneratingClient, setIsGeneratingClient] = useState(false)
+  const pdfGeneratedRef = useRef(false)
 
   const reference = null
   const displayTotal = isMultiProduct ? totalCostMulti : costResult.totalCost
@@ -145,9 +146,15 @@ export function ScreenRecap() {
   }
 
   useEffect(() => {
+    if (pdfGeneratedRef.current) return
+    const isReady = isMultiProduct
+      ? productSlotResults.length > 0
+      : impositionResult !== null
+    if (!isReady) return
+    pdfGeneratedRef.current = true
     generatePdf()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [impositionResult, productSlotResults])
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 animate-in slide-in-from-bottom duration-500">
