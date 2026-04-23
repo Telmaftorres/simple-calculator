@@ -120,6 +120,8 @@ export type Quote = Prisma.QuoteGetPayload<{
   }
 }>
 
+export type CalculatorMode = 'quote' | 'production' | 'actuals'
+
 export interface CalculatorProps {
   productTypes: ProductType[]
   plates: Plate[]
@@ -130,6 +132,20 @@ export interface CalculatorProps {
   isViewOnly?: boolean
   settings?: Record<string, number>
   packagingRules?: import('@/app/actions/reference-data').PackagingRulesData
+  mode?: CalculatorMode
+  targetQuoteId?: number
+  // Extra data passed when in production/actuals mode
+  productionSheetExtra?: {
+    status?: string
+    remarques?: string | null
+    planImageUrl?: string | null
+    nbCollages?: number | null
+    collagePerPLV?: number | null
+    faconnageNotes?: string | null
+    conditionnementType?: string | null
+    conditionnementNotes?: string | null
+    achatsNotes?: string | null
+  } | null
 }
 
 export type ScreenState = 'form' | 'success' | 'recap'

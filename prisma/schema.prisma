@@ -255,6 +255,9 @@ model ProductionSheet {
   // ── Statut ──
   status       String   @default("en_attente") // "en_attente" | "en_cours" | "termine"
 
+  // ── Snapshot calculateur (JSON) ──
+  formDataJson String?  // Sérialisation complète de l'état du calculateur en mode fiche de prod
+
   quote        Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }
 

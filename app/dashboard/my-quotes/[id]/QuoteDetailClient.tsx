@@ -9,14 +9,14 @@ import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { upsertQuoteActuals, type ActualsInput } from '@/app/actions/actuals'
 import { upsertProductionSheet, type ProductionSheetInput } from '@/app/actions/production-sheet'
-import { ClipboardCheck, TrendingUp, FileText, Download, Upload, X, ImageIcon, Euro, TrendingDown } from 'lucide-react'
+import { ClipboardCheck, TrendingUp, FileText, Download, Upload, X, ImageIcon, Euro, TrendingDown, ExternalLink } from 'lucide-react'
 import { pdf } from '@react-pdf/renderer'
 import { ProductionSheetPDF } from '@/components/pdf/ProductionSheetPDF'
+import Link from 'next/link'
 import {
   HOURLY_RATE_CUTTING,
   HOURLY_RATE_ASSEMBLY,
   HOURLY_RATE_CONDITIONING,
-  HOURLY_RATE_PRINT,
   INK_COST_PER_LITER,
 } from '@/lib/config/pricing'
 
@@ -159,7 +159,7 @@ const CONDITIONNEMENT_OPTIONS = [
 ]
 
 // ── Onglet Fiche de production ──
-function ProductionSheetTab({ quote }: { quote: Quote }) {
+function ProductionSheetTab({ quote }: { quote: Quote }) {  // eslint-disable-line @typescript-eslint/no-unused-vars
   const ps = quote.productionSheet
   const [saving, setSaving] = useState(false)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
@@ -957,8 +957,46 @@ export function QuoteDetailClient({ quote }: { quote: Quote }) {
         </Card>
       )}
 
-      {activeTab === 'production' && <ProductionSheetTab quote={quote} />}
-      {activeTab === 'actuals' && <ActualsTab quote={quote} />}
+      {activeTab === 'production' && (
+        <div className="space-y-4">
+          {/* ── Accès calculateur ── */}
+          <Card className="border-emerald-200 bg-emerald-50">
+            <CardContent className="pt-5 pb-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-emerald-800">Modifier la fiche de production dans le calculateur</p>
+                <p className="text-sm text-emerald-600 mt-0.5">Toutes les sections du devis, pré-remplies et modifiables pour la production.</p>
+              </div>
+              <Link href={`/?prodId=${quote.id}`}>
+                <Button className="bg-emerald-600 hover:bg-emerald-700 text-white gap-2 whitespace-nowrap">
+                  <ExternalLink className="h-4 w-4" /> Ouvrir dans le calculateur
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+          {/* ── Données actuelles de la fiche ── */}
+          <ProductionSheetTab quote={quote} />
+        </div>
+      )}
+      {activeTab === 'actuals' && (
+        <div className="space-y-4">
+          {/* ── Accès calculateur ── */}
+          <Card className="border-sky-200 bg-sky-50">
+            <CardContent className="pt-5 pb-5 flex flex-col sm:flex-row items-center justify-between gap-4">
+              <div>
+                <p className="font-semibold text-sky-800">Saisir les données réelles dans le calculateur</p>
+                <p className="text-sm text-sky-600 mt-0.5">Pré-rempli depuis la fiche de production. Modifiez avec les valeurs réelles et sauvegardez.</p>
+              </div>
+              <Link href={`/?actualsId=${quote.id}`}>
+                <Button className="bg-sky-600 hover:bg-sky-700 text-white gap-2 whitespace-nowrap">
+                  <ExternalLink className="h-4 w-4" /> Ouvrir dans le calculateur
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+          {/* ── Comparatif financier et données sauvegardées ── */}
+          <ActualsTab quote={quote} />
+        </div>
+      )}
     </div>
   )
 }

@@ -50,3 +50,51 @@ export async function upsertQuoteActuals(quoteId: number, data: ActualsInput) {
 
   revalidatePath(`/dashboard/my-quotes/${quoteId}`)
 }
+
+// Sauvegarde depuis le calculateur en mode "données réelles"
+export async function saveActualsFromCalc(
+  quoteId: number,
+  data: {
+    cuttingTimePerPoseSeconds: number
+    assemblyTimePerPieceSeconds: number
+    packTimePerPieceSeconds: number
+    platesCount: number | null
+    transportTotal: number | null
+    transportMode: string | null
+    notes: string | null
+  }
+) {
+  const session = await requireAuth()
+  const quote = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    select: { userId: true, reference: true },
+  })
+  if (!quote) throw new Error('Devis introuvable')
+  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
+
+  const actuals: ActualsInput = {
+    actualCuttingTimePerPoseSeconds:   data.cuttingTimePerPoseSeconds || null,
+    actualAssemblyTimePerPieceSeconds: data.assemblyTimePerPieceSeconds || null,
+    actualPackTimePerPieceSeconds:     data.packTimePerPieceSeconds || null,
+    actualPlatesUsed:                  data.platesCount,
+    actualTransportMode:               data.transportMode,
+    actualTransportCost:               data.transportTotal,
+    notes:                             data.notes,
+  }
+
+  await prisma.quoteActuals.upsert({
+    where: { quoteId },
+    update: { ...actuals, updatedAt: new Date() },
+    create: { quoteId, ...actuals },
+  })
+
+  await logAction({
+    userId: session.user.id,
+    userName: session.user.name ?? session.user.email,
+    action: 'UPSERT_ACTUALS',
+    entityType: 'Quote',
+    entityRef: quote.reference ?? String(quoteId),
+  })
+
+  revalidatePath(`/dashboard/my-quotes/${quoteId}`)
+}

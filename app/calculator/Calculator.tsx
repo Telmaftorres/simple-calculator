@@ -21,6 +21,8 @@ import { SectionTransport } from './sections/SectionTransport'
 import { RecapSidebar } from './sections/RecapSidebar'
 import { SectionDisplay } from './shared'
 import { SectionMultiProduct } from './sections/SectionMultiProduct'
+import { SectionProductionExtra } from './sections/SectionProductionExtra'
+import { SectionActualsExtra } from './sections/SectionActualsExtra'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 import type { ImpositionResult } from '@/types/calculator'
 
@@ -99,6 +101,9 @@ export default function Calculator({
   isViewOnly,
   settings,
   packagingRules,
+  mode = 'quote',
+  targetQuoteId,
+  productionSheetExtra,
 }: CalculatorProps) {
   const calc = useCalculator(
     initialProductTypes,
@@ -108,7 +113,10 @@ export default function Calculator({
     initialQuote,
     isViewOnly,
     settings,
-    packagingRules
+    packagingRules,
+    mode,
+    targetQuoteId,
+    productionSheetExtra,
   )
 
   if (calc.screenState === 'success') return <ScreenSuccess />
@@ -125,26 +133,42 @@ export default function Calculator({
       ) : (
         <div className="space-y-8 max-w-5xl mx-auto pb-20">
           {/* Header */}
-          <div className="flex justify-between items-center bg-slate-900 text-white p-6 rounded-lg shadow-lg">
+          <div className={`flex justify-between items-center p-6 rounded-lg shadow-lg ${
+            mode === 'production' ? 'bg-emerald-900' : mode === 'actuals' ? 'bg-sky-900' : 'bg-slate-900'
+          } text-white`}>
             <div>
               <h1 className="text-2xl font-bold flex items-center gap-2">
-                <CalcIcon className="h-6 w-6 text-emerald-400" />
-                Calculateur Kontfeel
+                <CalcIcon className={`h-6 w-6 ${mode === 'production' ? 'text-emerald-300' : mode === 'actuals' ? 'text-sky-300' : 'text-emerald-400'}`} />
+                {mode === 'production' && 'Fiche de production'}
+                {mode === 'actuals' && 'Données réelles'}
+                {mode === 'quote' && 'Calculateur Kontfeel'}
               </h1>
+              {mode !== 'quote' && initialQuote?.reference && (
+                <p className="text-sm text-slate-300 mt-0.5">Devis {initialQuote.reference} — {initialQuote.client ?? ''}</p>
+              )}
             </div>
             <div className="flex gap-2">
-              {isAdmin && (
+              {mode !== 'quote' && targetQuoteId && (
+                <Link href={`/dashboard/my-quotes/${targetQuoteId}`}>
+                  <Button variant="outline" className="text-slate-900 border-white hover:bg-slate-200">
+                    ← Retour au devis
+                  </Button>
+                </Link>
+              )}
+              {isAdmin && mode === 'quote' && (
                 <Link href="/settings">
                   <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-800">
                     <Settings className="h-5 w-5" />
                   </Button>
                 </Link>
               )}
-              <Link href="/dashboard">
-                <Button variant="outline" className="text-slate-900 border-white hover:bg-slate-200">
-                  <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
-                </Button>
-              </Link>
+              {mode === 'quote' && (
+                <Link href="/dashboard">
+                  <Button variant="outline" className="text-slate-900 border-white hover:bg-slate-200">
+                    <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
+                  </Button>
+                </Link>
+              )}
             </div>
           </div>
 
@@ -207,6 +231,33 @@ export default function Calculator({
               <SectionAccessoires />
               <SectionEmballage />
               <SectionTransport />
+
+              {/* ── Sections spécifiques au mode fiche de production ── */}
+              {mode === 'production' && <SectionProductionExtra />}
+
+              {/* ── Notes données réelles ── */}
+              {mode === 'actuals' && <SectionActualsExtra />}
+
+              {/* ── Bouton sauvegarde en mode prod/actuals ── */}
+              {(mode === 'production' || mode === 'actuals') && (
+                <div className="sticky bottom-4 z-10">
+                  <button
+                    onClick={mode === 'production' ? calc.handleSaveProd : calc.handleSaveActuals}
+                    disabled={calc.isServing}
+                    className={`w-full py-4 text-white font-bold text-base rounded-xl shadow-lg transition-all ${
+                      mode === 'production'
+                        ? 'bg-emerald-600 hover:bg-emerald-700 disabled:bg-emerald-400'
+                        : 'bg-sky-600 hover:bg-sky-700 disabled:bg-sky-400'
+                    }`}
+                  >
+                    {calc.isServing
+                      ? 'Sauvegarde…'
+                      : mode === 'production'
+                        ? '✓ Sauvegarder la fiche de production'
+                        : '✓ Sauvegarder les données réelles'}
+                  </button>
+                </div>
+              )}
               </ErrorBoundary>
             </div>
 
