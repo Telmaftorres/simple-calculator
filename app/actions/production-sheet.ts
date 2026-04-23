@@ -6,12 +6,24 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 
 const productionSheetSchema = z.object({
+  // Production planning overrides
+  prodCuttingTimePerPoseSeconds:   z.number().min(0).nullable().optional(),
+  prodAssemblyTimePerPieceSeconds: z.number().min(0).nullable().optional(),
+  prodPackTimePerPieceSeconds:     z.number().min(0).nullable().optional(),
+  prodInkMlPerPlate:               z.number().min(0).nullable().optional(),
+  prodPlatesCount:                 z.number().int().min(0).nullable().optional(),
+  prodTransportCost:               z.number().min(0).nullable().optional(),
+  prodTransportNotes:              z.string().nullable().optional(),
+  // Façonnage
   nbCollages:           z.number().int().min(0).nullable().optional(),
   collagePerPLV:        z.number().min(0).nullable().optional(),
   faconnageNotes:       z.string().nullable().optional(),
+  // Conditionnement
   conditionnementType:  z.string().nullable().optional(),
   conditionnementNotes: z.string().nullable().optional(),
+  // Achats
   achatsNotes:          z.string().nullable().optional(),
+  // Divers
   remarques:            z.string().nullable().optional(),
   planImageUrl:         z.string().nullable().optional(),
   status:               z.enum(['en_attente', 'en_cours', 'termine']).optional(),

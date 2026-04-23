@@ -11,7 +11,7 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye, ClipboardCheck, ArrowUpDown, ArrowUp, ArrowDown } from 'lucide-react'
+import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye, ClipboardCheck, ArrowUpDown, ArrowUp, ArrowDown, AlertCircle } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { deleteQuote } from '@/app/actions/quotes'
@@ -56,7 +56,7 @@ function SortIcon({ field, current, dir }: { field: SortField; current: SortFiel
     : <ArrowDown className="h-3 w-3 text-emerald-500" />
 }
 
-type TabId = 'devis' | 'production' | 'actuals'
+type TabId = 'devis' | 'production' | 'actuals' | 'a_valider'
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   en_attente: { label: 'En attente', className: 'bg-yellow-100 text-yellow-800' },
@@ -75,6 +75,7 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
 
   const quotesWithProd = quotes.filter(q => q.productionSheet !== null)
   const quotesWithActuals = quotes.filter(q => q.actuals !== null)
+  const quotesToValidate = quotes.filter(q => q.productionSheet?.status === 'termine' && !q.actuals)
 
   const handleDeleteClick = (id: number) => {
     setConfirmingDeleteId(id)
@@ -132,12 +133,13 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
       </div>
 
       {/* ── Onglets ── */}
-      <div className="flex gap-1 border-b border-slate-200">
+      <div className="flex gap-1 border-b border-slate-200 flex-wrap">
         {([
           { id: 'devis',      label: 'Mes devis',       count: quotes.length },
           { id: 'production', label: 'Fiches de prod',  count: quotesWithProd.length },
           { id: 'actuals',    label: 'Données réelles', count: quotesWithActuals.length },
-        ] as { id: TabId; label: string; count: number }[]).map(tab => (
+          { id: 'a_valider',  label: 'À valider',       count: quotesToValidate.length, alert: quotesToValidate.length > 0 },
+        ] as { id: TabId; label: string; count: number; alert?: boolean }[]).map(tab => (
           <button
             key={tab.id}
             onClick={() => setActiveTab(tab.id)}
@@ -147,9 +149,12 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                 : 'text-slate-500 hover:text-slate-700'
             }`}
           >
+            {tab.alert && <AlertCircle className="h-3.5 w-3.5 text-amber-500" />}
             {tab.label}
             <span className={`text-xs px-1.5 py-0.5 rounded-full ${
-              activeTab === tab.id ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
+              tab.alert && activeTab !== tab.id
+                ? 'bg-amber-100 text-amber-700'
+                : activeTab === tab.id ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-500'
             }`}>
               {tab.count}
             </span>
@@ -166,11 +171,13 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                 {activeTab === 'devis' && <>Historique ({filtered.length}{search ? ` / ${quotes.length}` : ''})</>}
                 {activeTab === 'production' && <>Fiches de production ({quotesWithProd.length})</>}
                 {activeTab === 'actuals' && <>Données réelles ({quotesWithActuals.length})</>}
+                {activeTab === 'a_valider' && <>À valider — données réelles en attente ({quotesToValidate.length})</>}
               </CardTitle>
               <CardDescription>
                 {activeTab === 'devis' && 'Cliquez sur les en-têtes pour trier. Recherche par dossier, référence ou client.'}
                 {activeTab === 'production' && 'Dossiers avec une fiche de production créée.'}
                 {activeTab === 'actuals' && 'Dossiers avec des données réelles saisies.'}
+                {activeTab === 'a_valider' && 'Fiches terminées sans données réelles — à compléter après production.'}
               </CardDescription>
             </div>
             {activeTab === 'devis' && (
@@ -279,6 +286,53 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                       <Link href={`/dashboard/my-quotes/${quote.id}`}>
                         <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600" title="Voir les données réelles">
                           <Eye className="h-4 w-4" />
+                        </Button>
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          )}
+
+          {activeTab === 'a_valider' && (
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Référence</TableHead>
+                  <TableHead>Dossier</TableHead>
+                  <TableHead>Client</TableHead>
+                  <TableHead>Produit</TableHead>
+                  <TableHead>Montant HT</TableHead>
+                  <TableHead>Fiche terminée le</TableHead>
+                  <TableHead className="text-right">Actions</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {quotesToValidate.length === 0 ? (
+                  <TableRow>
+                    <TableCell colSpan={7} className="text-center py-8 text-slate-500 italic">
+                      Aucun dossier en attente de données réelles.
+                    </TableCell>
+                  </TableRow>
+                ) : quotesToValidate.map((quote) => (
+                  <TableRow key={quote.id} className="hover:bg-amber-50 border-l-2 border-amber-300">
+                    <TableCell>
+                      <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                        {quote.reference
+                          ? <span className="font-mono text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded">{quote.reference}</span>
+                          : <span className="text-slate-400 italic text-xs">—</span>}
+                      </Link>
+                    </TableCell>
+                    <TableCell className="font-medium">{quote.study?.number}</TableCell>
+                    <TableCell className="text-slate-600 text-sm">{quote.client || <span className="text-slate-300 italic text-xs">—</span>}</TableCell>
+                    <TableCell className="text-sm">{quote.productType?.name}</TableCell>
+                    <TableCell className="font-bold text-slate-900">{quote.totalCost ? `${quote.totalCost.toFixed(2)} €` : '—'}</TableCell>
+                    <TableCell className="text-slate-500 text-xs">{formatDate(quote.productionSheet!.updatedAt)}</TableCell>
+                    <TableCell className="text-right">
+                      <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                        <Button variant="ghost" size="sm" className="h-8 gap-1.5 text-amber-600 hover:text-amber-700 hover:bg-amber-50 text-xs font-semibold border border-amber-200">
+                          <ClipboardCheck className="h-3.5 w-3.5" /> Saisir les données réelles
                         </Button>
                       </Link>
                     </TableCell>
