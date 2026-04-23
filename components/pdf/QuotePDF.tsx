@@ -151,17 +151,19 @@ const styles = StyleSheet.create({
   legalText: { fontSize: 7, color: '#94a3b8', marginTop: 6, textAlign: 'center' },
   // ── CGV page ──
   cgvPage: {
-    padding: 40,
+    padding: 30,
     fontFamily: 'Helvetica',
-    fontSize: 7,
+    fontSize: 6,
     color: '#1e293b',
     backgroundColor: '#ffffff',
   },
-  cgvMainTitle: { fontSize: 11, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 4 },
-  cgvLegal: { fontSize: 7, color: '#64748b', marginBottom: 12 },
-  cgvSection: { marginBottom: 6 },
-  cgvSectionTitle: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 2 },
-  cgvText: { fontSize: 7, lineHeight: 1.5, color: '#374151' },
+  cgvMainTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 3 },
+  cgvLegal: { fontSize: 6, color: '#64748b', marginBottom: 8 },
+  cgvColumns: { flexDirection: 'row', gap: 14 },
+  cgvColumn: { flex: 1 },
+  cgvSection: { marginBottom: 5 },
+  cgvSectionTitle: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: '#0f172a', marginBottom: 1 },
+  cgvText: { fontSize: 6, lineHeight: 1.4, color: '#374151' },
 })
 
 interface QuotePDFProps {
@@ -704,25 +706,22 @@ export function QuotePDF({
           </View>
         )}
 
-        {/* ── Total HT (mode client, après transport/accessoires) ── */}
+        {/* ── Total HT + validité + signature (mode client, après transport/accessoires) ── */}
         {isClient && (
-          <View style={styles.totalBlock}>
-            <View style={styles.totalBlockLeft}>
-              <Text style={styles.totalBlockLabel}>Total HT</Text>
-              <Text style={styles.totalBlockSubLabel}>Hors taxes — TVA non applicable</Text>
+          <View wrap={false}>
+            <View style={styles.totalBlock}>
+              <View style={styles.totalBlockLeft}>
+                <Text style={styles.totalBlockLabel}>Total HT</Text>
+                <Text style={styles.totalBlockSubLabel}>Hors taxes — TVA non applicable</Text>
+              </View>
+              <View>
+                <Text style={styles.totalBlockValue}>{displayTotal.toFixed(2)} €</Text>
+                <Text style={styles.totalBlockPerUnit}>
+                  soit {(displayTotal / (displayQuantity || 1)).toFixed(2)} € / pce
+                </Text>
+              </View>
             </View>
-            <View>
-              <Text style={styles.totalBlockValue}>{displayTotal.toFixed(2)} €</Text>
-              <Text style={styles.totalBlockPerUnit}>
-                soit {(displayTotal / (displayQuantity || 1)).toFixed(2)} € / pce
-              </Text>
-            </View>
-          </View>
-        )}
 
-        {/* ── Validité + signature (mode client) ── */}
-        {isClient && (
-          <>
             <View style={styles.validityBlock}>
               <Text style={styles.validityText}>Devis valable 1 mois à compter de la date d'édition.</Text>
               <Text style={styles.salutationText}>Sincères salutations,</Text>
@@ -755,7 +754,7 @@ export function QuotePDF({
             <Text style={styles.legalText}>
               SARL KONTFEEL au capital de 5000 EUROS — RCS Rouen 838 361 905 — TVA FR 818 383 619 05
             </Text>
-          </>
+          </View>
         )}
 
         {/* ── Footer ── */}
@@ -778,12 +777,24 @@ export function QuotePDF({
             SARL KONTFEEL au capital de 5000 EUROS — RCS Rouen 838 361 905 — TVA FR 818 383 619 05
           </Text>
 
-          {CGV_SECTIONS.map((section, i) => (
-            <View key={i} style={styles.cgvSection}>
-              <Text style={styles.cgvSectionTitle}>{section.title}</Text>
-              <Text style={styles.cgvText}>{section.text}</Text>
+          <View style={styles.cgvColumns}>
+            <View style={styles.cgvColumn}>
+              {CGV_SECTIONS.slice(0, 6).map((section, i) => (
+                <View key={i} style={styles.cgvSection}>
+                  <Text style={styles.cgvSectionTitle}>{section.title}</Text>
+                  <Text style={styles.cgvText}>{section.text}</Text>
+                </View>
+              ))}
             </View>
-          ))}
+            <View style={styles.cgvColumn}>
+              {CGV_SECTIONS.slice(6).map((section, i) => (
+                <View key={i} style={styles.cgvSection}>
+                  <Text style={styles.cgvSectionTitle}>{section.title}</Text>
+                  <Text style={styles.cgvText}>{section.text}</Text>
+                </View>
+              ))}
+            </View>
+          </View>
 
           <View style={styles.footer} fixed>
             <Text style={styles.footerText}>© {new Date().getFullYear()} Kontfeel — CGV</Text>
