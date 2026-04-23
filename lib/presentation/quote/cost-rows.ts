@@ -86,13 +86,23 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     }] : []),
     ...(p.hasImpression ? [
       { label: 'Impression (Encre)', detail: isClient ? '—' : `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
-      { label: 'Impression (Machine)', detail: isClient ? '—' : `${Math.round(p.printingCostData.machineTimeMin)} min`, value: p.printingCostData.machineCost },
-      ...(p.printSetupType !== 'none' && p.printingCostData.setupCost > 0 ? [
+      {
+        label: 'Impression (Machine)',
+        detail: isClient ? '—' : `${Math.round(p.printingCostData.machineTimeMin)} min`,
+        value: isClient
+          ? p.printingCostData.machineCost + (p.printSetupType !== 'none' ? (p.printingCostData.setupCost ?? 0) : 0)
+          : p.printingCostData.machineCost,
+      },
+      ...(!isClient && p.printSetupType !== 'none' && p.printingCostData.setupCost > 0 ? [
         { label: `↳ Calage impression (${p.printSetupType})`, detail: 'forfait', value: p.printingCostData.setupCost, sub: true },
       ] : []),
     ] : []),
-    { label: 'Découpe', detail: isClient ? '—' : `${Math.round(p.cuttingMachineTimeMin)} min`, value: p.cuttingMachineCost },
-    ...(p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
+    {
+      label: 'Découpe',
+      detail: isClient ? '—' : `${Math.round(p.cuttingMachineTimeMin)} min`,
+      value: isClient ? p.cuttingMachineCost + p.cuttingSetupCost : p.cuttingMachineCost,
+    },
+    ...(!isClient && p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
       { label: `↳ Calage découpe (${p.cuttingSetupType})`, detail: 'forfait', value: p.cuttingSetupCost, sub: true },
     ] : []),
     ...(p.hasBE && p.beTotalCost && p.beTotalCost > 0 ? [
