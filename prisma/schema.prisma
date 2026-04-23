@@ -141,6 +141,7 @@ model Quote {
   reference                          String?           @unique
   parentReference                    String?
   client                             String?
+  contactName                        String?
   studyId                            Int
   productTypeId                      Int
   quantity                           Int

@@ -155,6 +155,7 @@ export function useCalculator(
     loadQuote({
       studyNumber: initialQuote.study?.number || 'ET',
       client: initialQuote.client || '',
+      contactName: (initialQuote as any).contactName || '',
       selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
       quantity: initialQuote.quantity,
       selectedPlateId: initialQuote.plateId?.toString() || '',
@@ -645,6 +646,7 @@ export function useCalculator(
       await createQuote({
         studyNumber,
         client: formState.client || undefined,
+        contactName: formState.contactName || undefined,
         productTypeId: isMultiProduct ? parseInt(products[0].productTypeId) : parsedProductId,
         quantity: isMultiProduct ? totalQuantityMulti : quantity,
         plateId: customPlate ? null : (isMultiProduct ? parseInt(products[0].selectedPlateId) : parseInt(selectedPlateId)),

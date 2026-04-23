@@ -1,5 +1,6 @@
 export const QUOTE_DEFAULTS = {
   client: '' as string,
+  contactName: '' as string,
   printMode: 'production' as 'production' | 'quality',
   isRectoVerso: false as boolean,
   inkMlVerso: 0 as number,
