@@ -10,7 +10,7 @@ Application web de calcul de devis pour la PLV (Publicité sur Lieu de Vente), d
 
 | Technologie | Version | Usage |
 |---|---|---|
-| **Next.js** | 15.x | Framework Fullstack, App Router |
+| **Next.js** | 16.x | Framework Fullstack, App Router |
 | **React** | 19.2.3 | UI |
 | **Prisma** | 5.22 | ORM PostgreSQL |
 | **Tailwind CSS** | 4 | Styles |
@@ -216,7 +216,8 @@ revalidateEntity('plates', '/dashboard/plates', '/')
 │       ├── 20260325131752_add_parent_reference_and_new_format/
 │       ├── 20260325000002_add_multi_product/
 │       ├── 20260325000003_add_be_bat_fields/
-│       └── 20260409114345_add_quote_user_date_index/
+│       ├── 20260409114345_add_quote_user_date_index/
+      └── 20260422000000_add_custom_plate_to_quote/
 ├── types/
 │   ├── calculator.ts             # ProductSlot, ProductSlotResult, DEFAULT_PRODUCT_SLOT
 │   └── next-auth.d.ts
@@ -263,6 +264,8 @@ AuditLog (journal d'activité — indépendant, pas de FK)
 ```
 
 **Champ `client` :** ajouté directement sur `Quote` (TEXT nullable) — affiché dans la fiche de production et l'en-tête du PDF.
+
+**Matière personnalisée :** 4 champs optionnels sur `Quote` (`customPlateName`, `customPlateWidth`, `customPlateHeight`, `customPlateCost`) permettant de tester une matière "hors catalogue" sans créer d'entrée en DB.
 
 **Index DB :** `Quote` possède un `@@index([userId, createdAt])` pour optimiser la liste "Mes dossiers" (filtrée par utilisateur, triée par date).
 
@@ -598,6 +601,38 @@ Bugs, sécurité, architecture, refonte encre, UX & modernisation.
 - ✅ **Nettoyage schéma Prisma** : suppression de 6 colonnes mortes legacy sur `Quote` (ancien système mono-livraison : `transportMode`, `transportDepartment`, `transportWeight`, `transportUnits`, `transportBasePrice`, `transportOptions`) et de 4 colonnes réservées inutilisées sur `QuoteActuals` (`actualCuttingTotalMinutes`, `actualAssemblyTotalMinutes`, `actualPackTotalMinutes`, `actualPrintTotalMinutes`)
 - ✅ **Transport dans les PDFs** : section "Transport GEODIS" ajoutée dans `QuotePDF.tsx` (tableau par livraison : mode, département, quantité, poids, options HT) et dans `ProductionSheetPDF.tsx` (colonne droite, entre Conditionnement et Achats, avec total consolidé si plusieurs livraisons)
 - ✅ **Journal d'activité** (`AuditLog`) : table Prisma sans FK (résistante aux suppressions), helper `lib/audit.ts` avec `logAction()` try/catch silencieux, instrumentation de `createQuote`, `deleteQuote`, `upsertQuoteActuals`, `createUser`, `updateUser`, `deleteUser`, `updateSetting`. Page `/dashboard/activite` (ADMIN only, 200 dernières actions, badges colorés par type). Lien "Activité" dans la sidebar desktop et mobile
+
+### Sprint 13 — Infrastructure, PDF client refonte & correctifs (avril 2026)
+
+#### Infrastructure & déploiement
+- ✅ **Migration VPS** : expiration du VPS précédent → nouveau serveur OVH (IP 51.77.211.143), mise à jour DNS A + reconfiguration Nginx/PM2
+- ✅ **Webhook de déploiement** : remplacement de GitHub Actions SSH (cassé) par un webhook Node.js PM2 (port 9001) avec vérification HMAC-SHA256. Push sur `main` → déploiement automatique en 2-3 min. Script `deploy.sh` : `git pull` → `npm install` → `prisma migrate deploy` → `prisma generate` → `npm run build` → `pm2 reload`
+
+#### Correctifs calcul
+- ✅ **Fix NaN/Infinity** : guard `imp.itemsPerPlate > 0 ? Math.ceil(qty / imp.itemsPerPlate) : 0` (2 endroits dans `useCalculator.ts`, mono et multi). Avant, `Math.ceil(qty / 0) = Infinity` → `0 * Infinity = NaN` pour l'encre → tous les totaux NaN/Infinity pour les devis avec imposition à 0 pose
+
+#### Matière personnalisée ("Test fournisseur")
+- ✅ **Bouton "Test fournisseur"** dans `SectionPresentation.tsx` : bascule vers un mode violet avec 4 champs (nom, largeur, hauteur, coût). La matière est utilisée pour le calcul mais **non enregistrée en DB** — pratique pour tester un nouveau fournisseur sans polluer le catalogue
+- ✅ **Priorité de sélection** : `customPlate` > `plateCostOverride` > catalogue
+- ✅ **Persistence en base** : 4 champs `customPlateName / Width / Height / Cost` ajoutés sur `Quote` (migration `20260422000000`), rechargés en mode édition/vue
+- ✅ **Schema Zod** mis à jour (`quoteFieldsSchema`) + `QUOTE_DEFAULTS` mis à jour
+
+#### UX — Toggle visibilité mot de passe
+- ✅ **Page login** (`LoginForm.tsx`) : icône Eye/EyeOff sur le champ mot de passe
+- ✅ **Gestion utilisateurs** (`UserManagement.tsx`) : icônes Eye/EyeOff sur les deux champs mot de passe (création + édition)
+
+#### Refonte PDF devis client
+- ✅ **En-tête** : logo + adresse complète Kontfeel (rue, CP, tél, mail, web) à gauche — titre "Devis" + référence + date à droite
+- ✅ **Bloc destinataire** : "A l'attention de" (depuis champ Client), "Réalisé par" (prop `authorName`), "Édité le" (date du jour) + infos dossier/matière/format/plaques dans une grille 2 colonnes
+- ✅ **Orientation supprimée** du PDF client (non pertinent pour le destinataire)
+- ✅ **Calage** (impression et découpe) : fusionné dans la ligne parent en mode client (coût intégré, pas de sous-ligne visible). Toujours affiché en mode interne
+- ✅ **Total HT** déplacé **après** transport et accessoires dans les deux modes (interne et client), avec `wrap={false}` pour éviter la coupure entre pages
+- ✅ **Bloc signature** : "Devis valable 1 mois", salutations, champs Date / Bon pour accord / Signature, délai de fabrication, conditions de règlement
+- ✅ **Page 2 CGV** : 12 articles en 2 colonnes (police 6pt, sections 1–6 à gauche / 7–12 à droite) pour tenir sur une page A4
+- ✅ **Prop `authorName`** ajoutée à `QuotePDF` (optionnelle, affiche `—` si absente)
+
+#### Correctifs PDF interne
+- ✅ **Valeurs à zéro** lors de l'ouverture d'un devis sauvegardé (vue `/?viewId=...`) : le `ScreenRecap` montait avant que l'`impositionResult` soit calculé. Fix : `screenState='recap'` déclenché à la fin de l'effect `initialQuote`, et génération PDF conditionnée à `impositionResult !== null` (ou `productSlotResults.length > 0` en multi) via `useRef`
 
 ### Sprint 12 — Emballage avancé, templates & marge de bord (avril 2026)
 
