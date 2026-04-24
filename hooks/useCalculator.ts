@@ -30,8 +30,10 @@ function resolveVerso(
 ) {
   const isDifferent = isRectoVerso && rectoVersoType === 'different' && inkMlVerso > 0
   return {
-    effectiveInkMl: isDifferent ? inkMlPerPlate + inkMlVerso : inkMlPerPlate,
-    effectiveIsRectoVerso: isRectoVerso && (rectoVersoType !== 'different' || inkMlVerso === 0),
+    // "différent": divise par 2 car calculateCosts multipliera par 2 (machine tourne 2×)
+    effectiveInkMl: isDifferent ? (inkMlPerPlate + inkMlVerso) / 2 : inkMlPerPlate,
+    // Machine tourne toujours 2× en R/V, peu importe identique ou différent
+    effectiveIsRectoVerso: isRectoVerso,
   }
 }
 
