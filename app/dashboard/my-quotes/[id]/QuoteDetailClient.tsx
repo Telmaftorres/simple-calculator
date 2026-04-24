@@ -8,7 +8,7 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { upsertQuoteActuals, type ActualsInput } from '@/app/actions/actuals'
-import { type ProductionSheetInput } from '@/app/actions/production-sheet'
+import { upsertProductionSheet, type ProductionSheetInput } from '@/app/actions/production-sheet'
 import { ClipboardCheck, TrendingUp, FileText, Download, Euro, TrendingDown, ExternalLink } from 'lucide-react'
 import { pdf } from '@react-pdf/renderer'
 import { ProductionSheetPDF } from '@/components/pdf/ProductionSheetPDF'
@@ -163,6 +163,24 @@ function ProductionSheetTab({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [status, setStatus] = useState<ProductionSheetInput['status']>(
+    (ps?.status as ProductionSheetInput['status']) ?? 'en_attente'
+  )
+  const [savingStatus, setSavingStatus] = useState(false)
+
+  const handleStatusChange = async (newStatus: ProductionSheetInput['status']) => {
+    setStatus(newStatus)
+    setSavingStatus(true)
+    try {
+      await upsertProductionSheet(quote.id, { status: newStatus })
+      toast.success('Statut mis à jour')
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+      setStatus(status)
+    } finally {
+      setSavingStatus(false)
+    }
+  }
 
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true)
@@ -214,12 +232,22 @@ function ProductionSheetTab({ quote }: { quote: Quote }) {
 
       {/* ── Statut + PDF ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2">
-          <span className="text-sm text-slate-500">Statut :</span>
-          {(() => {
-            const s = STATUS_OPTIONS.find(o => o.value === (ps?.status ?? 'en_attente'))
-            return s ? <span className={`px-3 py-1 text-xs font-semibold rounded-full ${s.color}`}>{s.label}</span> : null
-          })()}
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="text-sm text-slate-500">{savingStatus ? 'Sauvegarde…' : 'Statut :'}</span>
+          {STATUS_OPTIONS.map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => handleStatusChange(opt.value as ProductionSheetInput['status'])}
+              disabled={savingStatus}
+              className={`px-3 py-1 text-xs font-semibold rounded-full transition-all border ${
+                status === opt.value
+                  ? `${opt.color} border-transparent`
+                  : 'border-slate-200 text-slate-400 hover:border-slate-300'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
         <div className="flex gap-2">
           {pdfUrl ? (

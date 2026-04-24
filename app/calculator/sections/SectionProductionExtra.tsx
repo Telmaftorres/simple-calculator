@@ -15,13 +15,6 @@ const STATUS_OPTIONS = [
   { value: 'termine',    label: 'Terminé',    color: 'bg-emerald-100 text-emerald-800 border-emerald-200' },
 ]
 
-const COND_OPTIONS = [
-  { value: 'kit_unitaire', label: 'Kit unitaire' },
-  { value: 'caisse',       label: 'En caisse' },
-  { value: 'palette',      label: 'Sur palette' },
-  { value: 'autre',        label: 'Autre' },
-]
-
 export function SectionProductionExtra() {
   const {
     prodStatus, setProdStatus,
@@ -30,9 +23,6 @@ export function SectionProductionExtra() {
     prodNbCollages, setProdNbCollages,
     prodCollagePerPLV, setProdCollagePerPLV,
     prodFaconnageNotes, setProdFaconnageNotes,
-    prodConditionnementType, setProdConditionnementType,
-    prodConditionnementNotes, setProdConditionnementNotes,
-    prodAchatsNotes, setProdAchatsNotes,
   } = useCalculatorContext()
 
   const [isUploading, setIsUploading] = useState(false)
@@ -78,7 +68,7 @@ export function SectionProductionExtra() {
         </div>
       </SectionDisplay>
 
-      {/* ── Informations façonnage complémentaires ── */}
+      {/* ── Façonnage infos production ── */}
       <SectionDisplay number="★" title="Façonnage — infos production" color="slate">
         <div className="space-y-4">
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -111,47 +101,6 @@ export function SectionProductionExtra() {
             />
           </div>
         </div>
-      </SectionDisplay>
-
-      {/* ── Conditionnement infos production ── */}
-      <SectionDisplay number="★" title="Conditionnement — infos production" color="slate">
-        <div className="space-y-4">
-          <div className="flex flex-wrap gap-2">
-            {COND_OPTIONS.map(opt => (
-              <button
-                key={opt.value}
-                type="button"
-                onClick={() => setProdConditionnementType(prodConditionnementType === opt.value ? null : opt.value)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                  prodConditionnementType === opt.value
-                    ? 'bg-slate-800 text-white border-slate-800'
-                    : 'border-slate-200 text-slate-500 hover:border-slate-400'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea
-              value={prodConditionnementNotes ?? ''}
-              onChange={e => setProdConditionnementNotes(e.target.value || null)}
-              placeholder="Ex : kit unitaire, 5 par caisse..."
-              rows={2}
-            />
-          </div>
-        </div>
-      </SectionDisplay>
-
-      {/* ── Achats / Accessoires complémentaires ── */}
-      <SectionDisplay number="★" title="Achats — notes" color="slate">
-        <Textarea
-          value={prodAchatsNotes ?? ''}
-          onChange={e => setProdAchatsNotes(e.target.value || null)}
-          placeholder="Ex : 252 potences magnétiques, 5 grips..."
-          rows={3}
-        />
       </SectionDisplay>
 
       {/* ── Remarques générales ── */}
