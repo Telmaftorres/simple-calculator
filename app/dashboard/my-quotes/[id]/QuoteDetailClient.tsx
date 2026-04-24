@@ -8,8 +8,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
 import { upsertQuoteActuals, type ActualsInput } from '@/app/actions/actuals'
-import { upsertProductionSheet, type ProductionSheetInput } from '@/app/actions/production-sheet'
-import { ClipboardCheck, TrendingUp, FileText, Download, Upload, X, ImageIcon, Euro, TrendingDown, ExternalLink } from 'lucide-react'
+import { type ProductionSheetInput } from '@/app/actions/production-sheet'
+import { ClipboardCheck, TrendingUp, FileText, Download, Euro, TrendingDown, ExternalLink } from 'lucide-react'
 import { pdf } from '@react-pdf/renderer'
 import { ProductionSheetPDF } from '@/components/pdf/ProductionSheetPDF'
 import Link from 'next/link'
@@ -158,84 +158,40 @@ const CONDITIONNEMENT_OPTIONS = [
   { value: 'autre',        label: 'Autre' },
 ]
 
-// ── Onglet Fiche de production ──
-function ProductionSheetTab({ quote }: { quote: Quote }) {  // eslint-disable-line @typescript-eslint/no-unused-vars
+// ── Onglet Fiche de production (lecture seule) ──
+function ProductionSheetTab({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
-  const [saving, setSaving] = useState(false)
   const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
-  const [isUploading, setIsUploading] = useState(false)
-
-  const [form, setForm] = useState<ProductionSheetInput>({
-    // Planning production — pré-rempli depuis le devis
-    prodCuttingTimePerPoseSeconds:   ps?.prodCuttingTimePerPoseSeconds   ?? quote.cuttingTimePerPoseSeconds   ?? null,
-    prodAssemblyTimePerPieceSeconds: ps?.prodAssemblyTimePerPieceSeconds ?? quote.assemblyTimePerPieceSeconds ?? null,
-    prodPackTimePerPieceSeconds:     ps?.prodPackTimePerPieceSeconds     ?? quote.packTimePerPieceSeconds     ?? null,
-    prodInkMlPerPlate:               ps?.prodInkMlPerPlate               ?? quote.inkMlPerPlate               ?? null,
-    prodPlatesCount:                 ps?.prodPlatesCount                 ?? quote.platesCount                 ?? null,
-    prodTransportCost:               ps?.prodTransportCost               ?? quote.transportTotal              ?? null,
-    prodTransportNotes:              ps?.prodTransportNotes              ?? null,
-    // Façonnage
-    nbCollages:           ps?.nbCollages           ?? null,
-    collagePerPLV:        ps?.collagePerPLV        ?? null,
-    faconnageNotes:       ps?.faconnageNotes       ?? null,
-    // Conditionnement
-    conditionnementType:  ps?.conditionnementType  ?? null,
-    conditionnementNotes: ps?.conditionnementNotes ?? null,
-    // Achats
-    achatsNotes:          ps?.achatsNotes          ?? null,
-    // Divers
-    remarques:            ps?.remarques            ?? null,
-    planImageUrl:         ps?.planImageUrl         ?? null,
-    status:               (ps?.status as ProductionSheetInput['status']) ?? 'en_attente',
-  })
-
-  const set = <K extends keyof ProductionSheetInput>(field: K, value: ProductionSheetInput[K]) =>
-    setForm(f => ({ ...f, [field]: value }))
-
-  const handleSave = async () => {
-    setSaving(true)
-    try {
-      await upsertProductionSheet(quote.id, form)
-      toast.success('Fiche de production sauvegardée !')
-    } catch {
-      toast.error('Erreur lors de la sauvegarde')
-    } finally {
-      setSaving(false)
-    }
-  }
 
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true)
     try {
-      const blob = await pdf(<ProductionSheetPDF quote={quote} productionSheet={form} />).toBlob()
+      const psInput: ProductionSheetInput = {
+        prodCuttingTimePerPoseSeconds:   ps?.prodCuttingTimePerPoseSeconds   ?? null,
+        prodAssemblyTimePerPieceSeconds: ps?.prodAssemblyTimePerPieceSeconds ?? null,
+        prodPackTimePerPieceSeconds:     ps?.prodPackTimePerPieceSeconds     ?? null,
+        prodInkMlPerPlate:               ps?.prodInkMlPerPlate               ?? null,
+        prodPlatesCount:                 ps?.prodPlatesCount                 ?? null,
+        prodTransportCost:               ps?.prodTransportCost               ?? null,
+        prodTransportNotes:              ps?.prodTransportNotes              ?? null,
+        nbCollages:           ps?.nbCollages           ?? null,
+        collagePerPLV:        ps?.collagePerPLV        ?? null,
+        faconnageNotes:       ps?.faconnageNotes       ?? null,
+        conditionnementType:  ps?.conditionnementType  ?? null,
+        conditionnementNotes: ps?.conditionnementNotes ?? null,
+        achatsNotes:          ps?.achatsNotes          ?? null,
+        remarques:            ps?.remarques            ?? null,
+        planImageUrl:         ps?.planImageUrl         ?? null,
+        status:               (ps?.status as ProductionSheetInput['status']) ?? 'en_attente',
+      }
+      const blob = await pdf(<ProductionSheetPDF quote={quote} productionSheet={psInput} />).toBlob()
       setPdfUrl(URL.createObjectURL(blob))
     } catch (e) {
       console.error(e)
       toast.error('Erreur génération PDF')
     } finally {
       setIsGeneratingPdf(false)
-    }
-  }
-
-  const handleUploadImage = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (!file) return
-    setIsUploading(true)
-    try {
-      const fd = new FormData()
-      fd.append('file', file)
-      fd.append('folder', 'production-sheets')
-      const res = await fetch('/api/upload', { method: 'POST', body: fd })
-      const json = await res.json()
-      if (!res.ok) throw new Error(json.error)
-      set('planImageUrl', json.url)
-      toast.success('Image téléversée')
-    } catch (err: unknown) {
-      toast.error(err instanceof Error ? err.message : 'Erreur lors du téléversement')
-    } finally {
-      setIsUploading(false)
-      e.target.value = ''
     }
   }
 
@@ -248,43 +204,22 @@ function ProductionSheetTab({ quote }: { quote: Quote }) {  // eslint-disable-li
     : quote.plate ? [{
         designation: quote.productType?.name || '—',
         matiere: `${quote.plate.name} — ${quote.plate.width}×${quote.plate.height}`,
-        qte: form.prodPlatesCount ?? quote.platesCount ?? '—',
+        qte: ps?.prodPlatesCount ?? quote.platesCount ?? '—',
       }] : []
 
-  const numInput = (
-    field: keyof ProductionSheetInput,
-    placeholder: string,
-    step = '1',
-    min = '0'
-  ) => (
-    <Input
-      type="number" min={min} step={step}
-      value={(form[field] as number | null) ?? ''}
-      onChange={e => set(field, e.target.value ? parseFloat(e.target.value) : null as never)}
-      placeholder={placeholder}
-    />
-  )
+  const condLabel = CONDITIONNEMENT_OPTIONS.find(o => o.value === ps?.conditionnementType)?.label
 
   return (
     <div className="space-y-5">
 
       {/* ── Statut + PDF ── */}
       <div className="flex items-center justify-between flex-wrap gap-3">
-        <div className="flex items-center gap-2 flex-wrap">
+        <div className="flex items-center gap-2">
           <span className="text-sm text-slate-500">Statut :</span>
-          {STATUS_OPTIONS.map(opt => (
-            <button
-              key={opt.value}
-              onClick={() => set('status', opt.value as ProductionSheetInput['status'])}
-              className={`px-3 py-1 text-xs font-semibold rounded-full transition-all border ${
-                form.status === opt.value
-                  ? `${opt.color} border-transparent`
-                  : 'border-slate-200 text-slate-400 hover:border-slate-300'
-              }`}
-            >
-              {opt.label}
-            </button>
-          ))}
+          {(() => {
+            const s = STATUS_OPTIONS.find(o => o.value === (ps?.status ?? 'en_attente'))
+            return s ? <span className={`px-3 py-1 text-xs font-semibold rounded-full ${s.color}`}>{s.label}</span> : null
+          })()}
         </div>
         <div className="flex gap-2">
           {pdfUrl ? (
@@ -305,8 +240,8 @@ function ProductionSheetTab({ quote }: { quote: Quote }) {  // eslint-disable-li
         </div>
       </div>
 
-      {/* ── 1. Informations générales ── */}
-      <SectionCard title="1 — Informations générales">
+      {/* ── Informations générales ── */}
+      <SectionCard title="Informations générales">
         <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
           <InfoCell label="Étude" value={quote.study?.number} />
           <InfoCell label="Client" value={quote.client} />
@@ -317,11 +252,11 @@ function ProductionSheetTab({ quote }: { quote: Quote }) {  // eslint-disable-li
         </div>
       </SectionCard>
 
-      {/* ── 2. Nomenclature ── */}
+      {/* ── Nomenclature ── */}
       {nomenclature.length > 0 && (
         <Card className="border-slate-200">
           <CardHeader className="pb-2 bg-slate-50 border-b border-slate-100">
-            <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700">2 — Nomenclature matière</CardTitle>
+            <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700">Nomenclature matière</CardTitle>
           </CardHeader>
           <CardContent className="pt-0 p-0">
             <table className="w-full text-sm">
@@ -346,236 +281,57 @@ function ProductionSheetTab({ quote }: { quote: Quote }) {  // eslint-disable-li
         </Card>
       )}
 
-      {/* ── 3. Impression ── */}
-      {quote.hasImpression && (
-        <Card className="border-purple-100">
-          <CardHeader className="pb-2 bg-purple-50 border-b border-purple-100">
-            <CardTitle className="text-xs uppercase tracking-wide font-semibold text-purple-800">3 — Impression</CardTitle>
-          </CardHeader>
-          <CardContent className="pt-4 space-y-4">
-            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+      {/* ── Valeurs de production ── */}
+      <SectionCard title="Valeurs de production">
+        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 text-sm">
+          {quote.hasImpression && (
+            <>
               <InfoCell label="Recto/Verso" value={quote.isRectoVerso ? `R/V — ${quote.rectoVersoType === 'identical' ? 'Identique' : 'Différent'}` : 'Recto seul'} />
-              {(quote.hasVarnish || quote.hasFlatColor) && (
-                <InfoCell label="Finitions" value={[quote.hasVarnish && 'Vernis', quote.hasFlatColor && 'Blanc'].filter(Boolean).join(' + ')} />
-              )}
-            </div>
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-500">Nb plaques (devis : {quote.platesCount ?? '—'})</Label>
-                {numInput('prodPlatesCount', String(quote.platesCount ?? 0))}
-              </div>
-              <div className="space-y-1.5">
-                <Label className="text-xs text-slate-500">Encre (ml/plaque — devis : {quote.inkMlPerPlate ?? '—'} ml)</Label>
-                {numInput('prodInkMlPerPlate', String(quote.inkMlPerPlate ?? 0), '0.1')}
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+              <InfoCell label="Nb plaques" value={ps?.prodPlatesCount ?? quote.platesCount ?? '—'} />
+              <InfoCell label="Encre (ml/plaque)" value={ps?.prodInkMlPerPlate != null ? `${ps.prodInkMlPerPlate} ml` : (quote.inkMlPerPlate != null ? `${quote.inkMlPerPlate} ml` : '—')} />
+            </>
+          )}
+          <InfoCell label="Découpe (sec/pose)" value={ps?.prodCuttingTimePerPoseSeconds != null ? `${ps.prodCuttingTimePerPoseSeconds} s` : (quote.cuttingTimePerPoseSeconds != null ? `${quote.cuttingTimePerPoseSeconds} s` : '—')} />
+          {quote.hasFaconnage && <InfoCell label="Façonnage (sec/pce)" value={ps?.prodAssemblyTimePerPieceSeconds != null ? `${ps.prodAssemblyTimePerPieceSeconds} s` : (quote.assemblyTimePerPieceSeconds != null ? `${quote.assemblyTimePerPieceSeconds} s` : '—')} />}
+          {quote.hasConditionnement && <InfoCell label="Conditionnement (sec/pce)" value={ps?.prodPackTimePerPieceSeconds != null ? `${ps.prodPackTimePerPieceSeconds} s` : (quote.packTimePerPieceSeconds != null ? `${quote.packTimePerPieceSeconds} s` : '—')} />}
+          {ps?.nbCollages != null && <InfoCell label="Nb collages" value={ps.nbCollages} />}
+          {ps?.collagePerPLV != null && <InfoCell label="Mt. collage / PLV" value={`${ps.collagePerPLV.toFixed(2)} €`} />}
+          {ps?.prodTransportCost != null && <InfoCell label="Transport planifié" value={`${ps.prodTransportCost.toFixed(2)} €`} />}
+        </div>
+      </SectionCard>
+
+      {/* ── Conditionnement ── */}
+      {(condLabel || ps?.conditionnementNotes) && (
+        <SectionCard title="Conditionnement">
+          <div className="space-y-1 text-sm">
+            {condLabel && <p className="font-medium text-slate-700">{condLabel}</p>}
+            {ps?.conditionnementNotes && <p className="text-slate-500">{ps.conditionnementNotes}</p>}
+          </div>
+        </SectionCard>
       )}
 
-      {/* ── 4. Découpe ── */}
-      <Card className="border-orange-100">
-        <CardHeader className="pb-2 bg-orange-50 border-b border-orange-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-orange-800">4 — Découpe</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-4">
-          <InfoCell label="Nb plaques" value={form.prodPlatesCount ?? quote.platesCount ?? '—'} />
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Temps/pose (sec) — devis : {quote.cuttingTimePerPoseSeconds ?? '—'} sec</Label>
-            {numInput('prodCuttingTimePerPoseSeconds', String(quote.cuttingTimePerPoseSeconds ?? 0))}
+      {/* ── Notes ── */}
+      {(ps?.faconnageNotes || ps?.achatsNotes || ps?.prodTransportNotes || ps?.remarques) && (
+        <SectionCard title="Notes">
+          <div className="space-y-3 text-sm">
+            {ps?.faconnageNotes && <div><p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Façonnage</p><p className="text-slate-700">{ps.faconnageNotes}</p></div>}
+            {ps?.achatsNotes && <div><p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Achats</p><p className="text-slate-700">{ps.achatsNotes}</p></div>}
+            {ps?.prodTransportNotes && <div><p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Transport</p><p className="text-slate-700">{ps.prodTransportNotes}</p></div>}
+            {ps?.remarques && <div><p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-0.5">Remarques générales</p><p className="text-slate-700">{ps.remarques}</p></div>}
           </div>
-        </CardContent>
-      </Card>
+        </SectionCard>
+      )}
 
-      {/* ── 5. Façonnage ── */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-2 bg-slate-50 border-b border-slate-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700">5 — Façonnage</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Temps/pce (sec) — devis : {quote.assemblyTimePerPieceSeconds ?? 0} sec</Label>
-              {numInput('prodAssemblyTimePerPieceSeconds', String(quote.assemblyTimePerPieceSeconds ?? 0))}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Nb collages</Label>
-              {numInput('nbCollages', '0')}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Mt. collage / PLV (€)</Label>
-              {numInput('collagePerPLV', '0.00', '0.01')}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Notes façonnage</Label>
-            <Textarea
-              value={form.faconnageNotes ?? ''}
-              onChange={e => set('faconnageNotes', e.target.value || null)}
-              placeholder="Ex : aucun, pliage simple, assemblage kit..."
-              rows={2}
-            />
-          </div>
-        </CardContent>
-      </Card>
+      {/* ── Plan technique ── */}
+      {ps?.planImageUrl && (
+        <SectionCard title="Plan technique">
+          <img src={ps.planImageUrl} alt="Plan technique" className="rounded-md border border-slate-200 max-h-64 w-auto object-contain" />
+        </SectionCard>
+      )}
 
-      {/* ── 6. Conditionnement ── */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-2 bg-slate-50 border-b border-slate-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700">6 — Conditionnement</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-4">
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Temps/pce (sec) — devis : {quote.packTimePerPieceSeconds ?? 0} sec{quote.hasAssemblyNotice ? ' + notice' : ''}</Label>
-            {numInput('prodPackTimePerPieceSeconds', String(quote.packTimePerPieceSeconds ?? 0))}
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Type de conditionnement</Label>
-            <div className="flex flex-wrap gap-2">
-              {CONDITIONNEMENT_OPTIONS.map(opt => (
-                <button
-                  key={opt.value}
-                  onClick={() => set('conditionnementType', form.conditionnementType === opt.value ? null : opt.value)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    form.conditionnementType === opt.value
-                      ? 'bg-slate-800 text-white border-slate-800'
-                      : 'border-slate-200 text-slate-500 hover:border-slate-400'
-                  }`}
-                >
-                  {opt.label}
-                </button>
-              ))}
-            </div>
-          </div>
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Description conditionnement</Label>
-            <Textarea
-              value={form.conditionnementNotes ?? ''}
-              onChange={e => set('conditionnementNotes', e.target.value || null)}
-              placeholder="Ex : kit unitaire, 5 par caisse..."
-              rows={2}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── 7. Transport ── */}
-      <Card className="border-sky-100">
-        <CardHeader className="pb-2 bg-sky-50 border-b border-sky-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-sky-800">7 — Transport</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-4">
-          {quote.transportDeliveries.length > 0 && (
-            <div className="text-sm space-y-1 p-3 bg-sky-50 rounded-lg border border-sky-100">
-              <p className="text-xs font-semibold text-sky-700 mb-2">Points de livraison (devis)</p>
-              {quote.transportDeliveries.map((d, i) => (
-                <div key={i} className="flex justify-between text-slate-600">
-                  <span>{d.department} — {d.transportMode} × {d.units}</span>
-                  <span className="font-medium">{d.totalHT.toFixed(2)} €</span>
-                </div>
-              ))}
-              <div className="flex justify-between font-semibold text-slate-800 pt-1 border-t border-sky-100 mt-1">
-                <span>Total transport estimé</span>
-                <span>{quote.transportTotal?.toFixed(2) ?? '—'} €</span>
-              </div>
-            </div>
-          )}
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Coût transport planifié (€ HT)</Label>
-              {numInput('prodTransportCost', quote.transportTotal ? `${quote.transportTotal.toFixed(2)}` : '0', '0.01')}
-            </div>
-            <div className="space-y-1.5">
-              <Label className="text-xs text-slate-500">Notes transport</Label>
-              <Input
-                value={form.prodTransportNotes ?? ''}
-                onChange={e => set('prodTransportNotes', e.target.value || null)}
-                placeholder="Mode, prestataire, instructions..."
-              />
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── 8. Achats / Accessoires ── */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-2 bg-slate-50 border-b border-slate-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700">8 — Achats</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-3">
-          {quote.accessories.length > 0 && (
-            <div className="text-sm space-y-1 mb-3 p-3 bg-slate-50 rounded-lg border border-slate-100">
-              {quote.accessories.map((a, i) => (
-                <div key={i} className="flex justify-between text-slate-600">
-                  <span>{a.accessory.name}</span>
-                  <div className="flex items-center gap-3">
-                    <span className="text-xs text-slate-400">× {a.quantity}</span>
-                    <span className="font-medium">{(a.accessory.price * a.quantity).toFixed(2)} €</span>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div className="space-y-1.5">
-            <Label className="text-xs text-slate-500">Notes achats complémentaires</Label>
-            <Textarea
-              value={form.achatsNotes ?? ''}
-              onChange={e => set('achatsNotes', e.target.value || null)}
-              placeholder="Ex : 252 potences magnétiques, 5 grips..."
-              rows={3}
-            />
-          </div>
-        </CardContent>
-      </Card>
-
-      {/* ── 9. Remarques ── */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-2 bg-slate-50 border-b border-slate-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700">9 — Remarques générales</CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4">
-          <Textarea
-            value={form.remarques ?? ''}
-            onChange={e => set('remarques', e.target.value || null)}
-            placeholder="Observations générales, points d'attention..."
-            rows={3}
-          />
-        </CardContent>
-      </Card>
-
-      {/* ── 10. Plan technique ── */}
-      <Card className="border-slate-200">
-        <CardHeader className="pb-2 bg-slate-50 border-b border-slate-100">
-          <CardTitle className="text-xs uppercase tracking-wide font-semibold text-slate-700 flex items-center gap-2">
-            <ImageIcon className="h-3.5 w-3.5" /> 10 — Plan technique
-          </CardTitle>
-        </CardHeader>
-        <CardContent className="pt-4 space-y-3">
-          {form.planImageUrl ? (
-            <div className="relative group">
-              <img src={form.planImageUrl} alt="Plan technique" className="rounded-md border border-slate-200 max-h-64 w-auto object-contain" />
-              <button
-                onClick={() => set('planImageUrl', null)}
-                className="absolute top-2 right-2 bg-white border border-slate-200 rounded-full p-1 shadow-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-red-50 hover:border-red-200"
-                title="Supprimer l'image"
-              >
-                <X className="h-3.5 w-3.5 text-slate-500 hover:text-red-500" />
-              </button>
-            </div>
-          ) : (
-            <label className={`flex flex-col items-center justify-center gap-2 border-2 border-dashed rounded-lg p-8 cursor-pointer transition-colors ${isUploading ? 'border-emerald-300 bg-emerald-50' : 'border-slate-200 hover:border-emerald-300 hover:bg-emerald-50/50'}`}>
-              <Upload className={`h-6 w-6 ${isUploading ? 'text-emerald-500 animate-bounce' : 'text-slate-400'}`} />
-              <span className="text-sm text-slate-500">{isUploading ? 'Téléversement…' : 'Cliquer pour ajouter une image'}</span>
-              <span className="text-xs text-slate-400">JPEG, PNG, WEBP — max 5 Mo</span>
-              <input type="file" accept="image/jpeg,image/png,image/webp,image/gif" className="hidden" onChange={handleUploadImage} disabled={isUploading} />
-            </label>
-          )}
-        </CardContent>
-      </Card>
-
-      <Button onClick={handleSave} disabled={saving} className="bg-emerald-600 hover:bg-emerald-700 text-white w-full sm:w-auto">
-        {saving ? 'Sauvegarde…' : 'Sauvegarder la fiche de production'}
-      </Button>
+      {!ps && (
+        <p className="text-sm text-slate-400 italic text-center py-6">Aucune fiche de production enregistrée. Utilisez le bouton ci-dessus pour en créer une.</p>
+      )}
     </div>
   )
 }
