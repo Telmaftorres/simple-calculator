@@ -225,10 +225,19 @@ model ProductionSheet {
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
+  // ── Paramètres de production (overrides du devis) ──
+  prodCuttingTimePerPoseSeconds   Float?   // Temps découpe planifié (sec/pose)
+  prodAssemblyTimePerPieceSeconds Float?   // Temps façonnage planifié (sec/pce)
+  prodPackTimePerPieceSeconds     Float?   // Temps conditionnement planifié (sec/pce)
+  prodInkMlPerPlate               Float?   // Encre planifiée (ml/plaque)
+  prodPlatesCount                 Int?     // Nb plaques planifié
+  prodTransportCost               Float?   // Coût transport planifié (€ HT)
+  prodTransportNotes              String?  // Notes transport / mode prévu
+
   // ── Façonnage ──
   nbCollages        Int?     // Nombre de collages
   collagePerPLV     Float?   // Mt. collage / PLV
-  faconnageNotes    String?  // Description façonnage (ex: "aucun", "pliage simple"...)
+  faconnageNotes    String?  // Description façonnage
 
   // ── Conditionnement ──
   conditionnementType  String?  // "kit_unitaire" | "caisse" | "palette" | autre
@@ -245,6 +254,9 @@ model ProductionSheet {
 
   // ── Statut ──
   status       String   @default("en_attente") // "en_attente" | "en_cours" | "termine"
+
+  // ── Snapshot calculateur (JSON) ──
+  formDataJson String?  // Sérialisation complète de l'état du calculateur en mode fiche de prod
 
   quote        Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
 }

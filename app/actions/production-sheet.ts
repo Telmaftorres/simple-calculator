@@ -6,6 +6,13 @@ import { z } from 'zod'
 import { revalidatePath } from 'next/cache'
 
 const productionSheetSchema = z.object({
+  prodCuttingTimePerPoseSeconds:   z.number().min(0).nullable().optional(),
+  prodAssemblyTimePerPieceSeconds: z.number().min(0).nullable().optional(),
+  prodPackTimePerPieceSeconds:     z.number().min(0).nullable().optional(),
+  prodInkMlPerPlate:               z.number().min(0).nullable().optional(),
+  prodPlatesCount:                 z.number().int().min(0).nullable().optional(),
+  prodTransportCost:               z.number().min(0).nullable().optional(),
+  prodTransportNotes:              z.string().nullable().optional(),
   nbCollages:           z.number().int().min(0).nullable().optional(),
   collagePerPLV:        z.number().min(0).nullable().optional(),
   faconnageNotes:       z.string().nullable().optional(),
@@ -15,29 +22,72 @@ const productionSheetSchema = z.object({
   remarques:            z.string().nullable().optional(),
   planImageUrl:         z.string().nullable().optional(),
   status:               z.enum(['en_attente', 'en_cours', 'termine']).optional(),
+  formDataJson:         z.string().nullable().optional(),
 })
 
 export type ProductionSheetInput = z.infer<typeof productionSheetSchema>
 
-export async function upsertProductionSheet(quoteId: number, data: ProductionSheetInput) {
+async function assertOwner(quoteId: number) {
   const session = await requireAuth()
-
-  const quote = await prisma.quote.findUnique({
-    where: { id: quoteId },
-    select: { userId: true },
-  })
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, select: { userId: true } })
   if (!quote) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
-    throw new Error('Non autorisé')
-  }
+  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
+  return session
+}
 
+export async function upsertProductionSheet(quoteId: number, data: ProductionSheetInput) {
+  await assertOwner(quoteId)
   const validated = productionSheetSchema.parse(data)
-
   await prisma.productionSheet.upsert({
     where: { quoteId },
     update: { ...validated, updatedAt: new Date() },
     create: { quoteId, ...validated },
   })
-
   revalidatePath(`/dashboard/my-quotes/${quoteId}`)
+}
+
+// Sauvegarde depuis le calculateur en mode "fiche de prod"
+export async function saveProductionSheetFull(
+  quoteId: number,
+  formDataJson: string,
+  extra: {
+    status?: 'en_attente' | 'en_cours' | 'termine'
+    remarques?: string | null
+    planImageUrl?: string | null
+    nbCollages?: number | null
+    collagePerPLV?: number | null
+    faconnageNotes?: string | null
+    conditionnementType?: string | null
+    conditionnementNotes?: string | null
+    achatsNotes?: string | null
+  }
+) {
+  await assertOwner(quoteId)
+  await prisma.productionSheet.upsert({
+    where: { quoteId },
+    update: { formDataJson, ...extra, updatedAt: new Date() },
+    create: { quoteId, formDataJson, ...extra },
+  })
+  revalidatePath(`/dashboard/my-quotes/${quoteId}`)
+}
+
+// Charge le devis + fiche de production (formDataJson) pour le calculateur
+export async function getQuoteWithProductionSheet(quoteId: number) {
+  const session = await requireAuth()
+  const quote = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    include: {
+      study: true,
+      productType: { include: { elements: true } },
+      plate: true,
+      accessories: { include: { accessory: true } },
+      elements: true,
+      products: { include: { plate: true }, orderBy: { position: 'asc' } },
+      transportDeliveries: true,
+      productionSheet: true,
+    },
+  })
+  if (!quote) return null
+  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
+  return quote
 }

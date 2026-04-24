@@ -2,11 +2,13 @@ import { auth } from '@/auth'
 import Calculator from './calculator/Calculator'
 import { getProductTypes, getPlates, getPackagingRules } from './actions/reference-data'
 import { getQuoteById } from './actions/quotes'
+import { getQuoteWithProductionSheet } from './actions/production-sheet'
 import { getAccessories } from './actions/accessories'
 import { getConsumables } from './actions/consumables'
 import { getSettingsMap } from './actions/settings'
 import { version } from '@/package.json'
 import { ModeToggle } from '@/components/layout/ModeToggle'
+import type { CalculatorMode } from '@/types/calculator'
 
 export const dynamic = 'force-dynamic'
 
@@ -20,40 +22,90 @@ export const metadata: Metadata = {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ editId?: string; viewId?: string }>
+  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string }>
 }) {
-  const { editId, viewId } = await searchParams
-  const idToFetch = editId || viewId
+  const { editId, viewId, prodId, actualsId } = await searchParams
+
+  // Determine mode
+  let mode: CalculatorMode = 'quote'
+  let targetQuoteId: number | undefined
+  if (prodId && !isNaN(parseInt(prodId))) { mode = 'production'; targetQuoteId = parseInt(prodId) }
+  else if (actualsId && !isNaN(parseInt(actualsId))) { mode = 'actuals'; targetQuoteId = parseInt(actualsId) }
+
+  const idToFetch = editId || viewId || prodId || actualsId
   const isViewOnly = !!viewId
 
   const session = await auth()
   const userName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'Inconnu'
 
-  const [productTypes, plates, accessories, consumables, initialQuote, settings, packagingRules] = await Promise.all([
+  const [productTypes, plates, accessories, consumables, settings, packagingRules] = await Promise.all([
     getProductTypes(),
     getPlates(),
     getAccessories(),
     getConsumables(),
-    idToFetch && !isNaN(parseInt(idToFetch)) ? getQuoteById(parseInt(idToFetch)) : Promise.resolve(null),
     getSettingsMap(),
     getPackagingRules(),
   ])
 
+  // For production/actuals mode, load the quote with its production sheet
+  let initialQuote = null
+  let productionSheetExtra = null
+  if (idToFetch && !isNaN(parseInt(idToFetch))) {
+    if (mode === 'production') {
+      const quoteWithPS = await getQuoteWithProductionSheet(parseInt(idToFetch))
+      initialQuote = quoteWithPS
+      if (quoteWithPS?.productionSheet) {
+        const ps = quoteWithPS.productionSheet
+        // If formDataJson exists, it will be applied via the initialQuote mechanism
+        productionSheetExtra = {
+          status: ps.status,
+          remarques: ps.remarques,
+          planImageUrl: ps.planImageUrl,
+          nbCollages: ps.nbCollages,
+          collagePerPLV: ps.collagePerPLV,
+          faconnageNotes: ps.faconnageNotes,
+          conditionnementType: ps.conditionnementType,
+          conditionnementNotes: ps.conditionnementNotes,
+          achatsNotes: ps.achatsNotes,
+        }
+      }
+    } else if (mode === 'actuals') {
+      // For actuals, load from production sheet's formDataJson if available, else from quote
+      const quoteWithPS = await getQuoteWithProductionSheet(parseInt(idToFetch))
+      if (quoteWithPS?.productionSheet?.formDataJson) {
+        // Use production sheet snapshot as initial values
+        try {
+          const snap = JSON.parse(quoteWithPS.productionSheet.formDataJson)
+          // Merge snap into the quote object for pre-filling
+          initialQuote = { ...quoteWithPS, ...snap }
+        } catch {
+          initialQuote = quoteWithPS
+        }
+      } else {
+        initialQuote = quoteWithPS
+      }
+    } else {
+      initialQuote = await getQuoteById(parseInt(idToFetch))
+    }
+  }
+
   return (
     <main className="min-h-screen bg-slate-50 p-8">
       <div className="max-w-6xl mx-auto space-y-8">
-        <header className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Coucou {userName} !</h1>
-            <p className="text-slate-500 dark:text-slate-400">Outil de chiffrage PLV</p>
-          </div>
-          <div className="flex flex-col items-end gap-2">
-            <div className="flex items-center gap-4">
-              <ModeToggle />
+        {mode === 'quote' && (
+          <header className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-slate-900 dark:text-white">Coucou {userName} !</h1>
+              <p className="text-slate-500 dark:text-slate-400">Outil de chiffrage PLV</p>
             </div>
-            <div className="text-sm text-slate-400">v{version}</div>
-          </div>
-        </header>
+            <div className="flex flex-col items-end gap-2">
+              <div className="flex items-center gap-4">
+                <ModeToggle />
+              </div>
+              <div className="text-sm text-slate-400">v{version}</div>
+            </div>
+          </header>
+        )}
 
         <section>
           <Calculator
@@ -66,6 +118,9 @@ export default async function Home({
             isViewOnly={isViewOnly}
             settings={settings}
             packagingRules={packagingRules}
+            mode={mode}
+            targetQuoteId={targetQuoteId}
+            productionSheetExtra={productionSheetExtra}
           />
         </section>
       </div>

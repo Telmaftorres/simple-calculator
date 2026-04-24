@@ -1,8 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
+import { useRouter } from 'next/navigation'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createQuote } from '@/app/actions/quotes'
+import { saveProductionSheetFull } from '@/app/actions/production-sheet'
+import { saveActualsFromCalc } from '@/app/actions/actuals'
 import { createProductType } from '@/app/actions/catalog'
 import { toast } from 'sonner'
 import { POSE_SPACING_MM, PLATE_BORDER_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/config/pricing'
@@ -13,7 +16,7 @@ import { useCalculatorForm } from './useCalculatorForm'
 import { useAccessories } from './useAccessories'
 import { useConsumables } from './useConsumables'
 import { formatCuttingDetails, formatAssemblyDetails, formatPackDetails } from '@/lib/format'
-import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlotResult, TransportDeliveryForm } from '@/types/calculator'
+import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlotResult, TransportDeliveryForm, CalculatorMode } from '@/types/calculator'
 import type { PackagingRulesData } from '@/app/actions/reference-data'
 import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import { createAccessory } from '@/app/actions/accessories'
@@ -27,8 +30,10 @@ function resolveVerso(
 ) {
   const isDifferent = isRectoVerso && rectoVersoType === 'different' && inkMlVerso > 0
   return {
-    effectiveInkMl: isDifferent ? inkMlPerPlate + inkMlVerso : inkMlPerPlate,
-    effectiveIsRectoVerso: isRectoVerso && (rectoVersoType !== 'different' || inkMlVerso === 0),
+    // "différent": divise par 2 car calculateCosts multipliera par 2 (machine tourne 2×)
+    effectiveInkMl: isDifferent ? (inkMlPerPlate + inkMlVerso) / 2 : inkMlPerPlate,
+    // Machine tourne toujours 2× en R/V, peu importe identique ou différent
+    effectiveIsRectoVerso: isRectoVerso,
   }
 }
 
@@ -40,14 +45,42 @@ export function useCalculator(
   initialQuote?: Quote,
   isViewOnly?: boolean,
   settings?: Record<string, number>,
-  packagingRules?: PackagingRulesData
+  packagingRules?: PackagingRulesData,
+  mode: CalculatorMode = 'quote',
+  targetQuoteId?: number,
+  productionSheetExtra?: {
+    status?: string
+    remarques?: string | null
+    planImageUrl?: string | null
+    nbCollages?: number | null
+    collagePerPLV?: number | null
+    faconnageNotes?: string | null
+    conditionnementType?: string | null
+    conditionnementNotes?: string | null
+    achatsNotes?: string | null
+  } | null
 ) {
+  const router = useRouter()
   const [screenState, setScreenState] = useState<ScreenState>('form')
   const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
   const [orientationOverride, setOrientationOverride] = useState<'normal' | 'rotated' | null>(null)
   const quoteLoaded = useRef(false)
+
+  // ── Extra état pour mode production ──
+  const [prodStatus, setProdStatus] = useState<'en_attente' | 'en_cours' | 'termine'>(
+    (productionSheetExtra?.status as 'en_attente' | 'en_cours' | 'termine') ?? 'en_attente'
+  )
+  const [prodRemarques, setProdRemarques] = useState<string | null>(productionSheetExtra?.remarques ?? null)
+  const [prodPlanImageUrl, setProdPlanImageUrl] = useState<string | null>(productionSheetExtra?.planImageUrl ?? null)
+  const [prodNbCollages, setProdNbCollages] = useState<number | null>(productionSheetExtra?.nbCollages ?? null)
+  const [prodCollagePerPLV, setProdCollagePerPLV] = useState<number | null>(productionSheetExtra?.collagePerPLV ?? null)
+  const [prodFaconnageNotes, setProdFaconnageNotes] = useState<string | null>(productionSheetExtra?.faconnageNotes ?? null)
+  const [prodConditionnementType, setProdConditionnementType] = useState<string | null>(productionSheetExtra?.conditionnementType ?? null)
+  const [prodConditionnementNotes, setProdConditionnementNotes] = useState<string | null>(productionSheetExtra?.conditionnementNotes ?? null)
+  const [prodAchatsNotes, setProdAchatsNotes] = useState<string | null>(productionSheetExtra?.achatsNotes ?? null)
+  const [actualsNotes, setActualsNotes] = useState<string | null>(null)
 
 
 
@@ -783,6 +816,73 @@ export function useCalculator(
     }
   }
 
+  const handleSaveProd = async () => {
+    if (!targetQuoteId) return
+    setIsServing(true)
+    try {
+      const snapshot = {
+        cuttingTimePerPoseSeconds,
+        assemblyTimePerPieceSeconds,
+        packTimePerPieceSeconds,
+        inkMlPerPlate,
+        platesCount: impositionResult?.platesNeeded ?? null,
+        transportTotal: costResult.transportTotal ?? null,
+        printMode,
+        isRectoVerso,
+        hasVarnish,
+        hasFlatColor,
+        hasImpression,
+        hasFaconnage,
+        hasConditionnement,
+        printSetupType,
+        cuttingSetupType,
+      }
+      await saveProductionSheetFull(
+        targetQuoteId,
+        JSON.stringify(snapshot),
+        {
+          status: prodStatus,
+          remarques: prodRemarques,
+          planImageUrl: prodPlanImageUrl,
+          nbCollages: prodNbCollages,
+          collagePerPLV: prodCollagePerPLV,
+          faconnageNotes: prodFaconnageNotes,
+          conditionnementType: prodConditionnementType,
+          conditionnementNotes: prodConditionnementNotes,
+          achatsNotes: prodAchatsNotes,
+        }
+      )
+      toast.success('Fiche de production sauvegardée !')
+      router.push(`/dashboard/my-quotes/${targetQuoteId}?tab=production`)
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setIsServing(false)
+    }
+  }
+
+  const handleSaveActuals = async () => {
+    if (!targetQuoteId) return
+    setIsServing(true)
+    try {
+      await saveActualsFromCalc(targetQuoteId, {
+        cuttingTimePerPoseSeconds,
+        assemblyTimePerPieceSeconds,
+        packTimePerPieceSeconds,
+        platesCount: impositionResult?.platesNeeded ?? null,
+        transportTotal: costResult.transportTotal ?? null,
+        transportMode: formState.transportDeliveries?.[0]?.mode ?? null,
+        notes: actualsNotes,
+      })
+      toast.success('Données réelles sauvegardées !')
+      router.push(`/dashboard/my-quotes/${targetQuoteId}?tab=actuals`)
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setIsServing(false)
+    }
+  }
+
   const handleReset = () => {
     setScreenState('form')
     resetForm()
@@ -874,5 +974,20 @@ export function useCalculator(
     settings,
     setField,
     customPlate, setCustomPlate: (v: { name: string; width: number; height: number; cost: number } | null) => setField('customPlate', v),
+    // Mode production/actuals
+    mode,
+    targetQuoteId,
+    prodStatus, setProdStatus,
+    prodRemarques, setProdRemarques,
+    prodPlanImageUrl, setProdPlanImageUrl,
+    prodNbCollages, setProdNbCollages,
+    prodCollagePerPLV, setProdCollagePerPLV,
+    prodFaconnageNotes, setProdFaconnageNotes,
+    prodConditionnementType, setProdConditionnementType,
+    prodConditionnementNotes, setProdConditionnementNotes,
+    prodAchatsNotes, setProdAchatsNotes,
+    actualsNotes, setActualsNotes,
+    handleSaveProd,
+    handleSaveActuals,
   }
 }
