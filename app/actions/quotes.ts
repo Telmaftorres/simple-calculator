@@ -189,7 +189,7 @@ export async function updateQuote(id: number, data: CreateQuoteInput) {
     prisma.quote.update({
       where: { id },
       data: {
-        ...buildQuoteData(validated, { reference: existing.reference!, studyId: study.id, userId: session.user.id }),
+        ...buildQuoteData(validated, { reference: existing.reference!, studyId: study.id, userId: existing.userId! }),
         accessories: { create: validated.accessories?.map((acc) => ({ accessoryId: acc.id, quantity: acc.quantity })) },
         consumables: { create: validated.consumables?.map((c) => ({ consumableId: c.id, sizePerItem: c.sizePerItem })) },
         elements: { create: validated.elements.map((el) => ({ name: el.name, quantity: el.quantity })) },

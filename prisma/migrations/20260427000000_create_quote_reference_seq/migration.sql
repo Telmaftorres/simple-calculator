@@ -1,0 +1,1 @@
+CREATE SEQUENCE IF NOT EXISTS "quote_reference_seq" START 1 INCREMENT 1;

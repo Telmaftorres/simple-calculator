@@ -15,7 +15,9 @@ export async function POST(req: NextRequest) {
 
   const formData = await req.formData()
   const file = formData.get('file') as File | null
-  const folder = (formData.get('folder') as string) || 'misc'
+  const ALLOWED_FOLDERS = ['production-sheets', 'misc']
+  const rawFolder = (formData.get('folder') as string) || 'misc'
+  const folder = ALLOWED_FOLDERS.includes(rawFolder) ? rawFolder : 'misc'
 
   if (!file) {
     return NextResponse.json({ error: 'Aucun fichier fourni' }, { status: 400 })

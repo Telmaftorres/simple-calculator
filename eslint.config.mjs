@@ -14,7 +14,15 @@ const eslintConfig = defineConfig([
     'out/**',
     'build/**',
     'next-env.d.ts',
+    // Node.js CommonJS webhook server — not part of the Next.js app
+    'webhook/**',
   ]),
+  {
+    rules: {
+      // French app: apostrophes in JSX text are valid, not a bug
+      'react/no-unescaped-entities': 'off',
+    },
+  },
 ])
 
 export default eslintConfig
