@@ -5,7 +5,7 @@ import bcrypt from 'bcryptjs'
 import { revalidatePath } from 'next/cache'
 import { PrismaClientKnownRequestError } from '@prisma/client/runtime/library'
 import { auth, signOut as authSignOut } from '@/auth'
-import { requireAdmin } from '@/lib/server/auth'
+import { requireAdmin, requireAuth } from '@/lib/server/auth'
 import { z } from 'zod'
 import { logAction } from '@/lib/server/audit'
 
@@ -185,6 +185,15 @@ export async function deleteUser(userId: string) {
   } catch {
     return { error: 'Erreur lors de la suppression' }
   }
+}
+
+export async function getUsersForSharing() {
+  const session = await requireAuth()
+  return await prisma.user.findMany({
+    where: { id: { not: session.user.id } },
+    select: { id: true, name: true, firstName: true, lastName: true },
+    orderBy: { firstName: 'asc' },
+  })
 }
 
 // ── Changement de mot de passe forcé (premier login) ──

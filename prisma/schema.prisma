@@ -215,6 +215,8 @@ model Quote {
   productionSheet                    ProductionSheet?
   templateId                         Int?              // modèle standard utilisé à la création
   template                           ProductTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
+  sentByUserId                       String?
+  sentByUserName                     String?
 
   @@index([userId, createdAt])
 }

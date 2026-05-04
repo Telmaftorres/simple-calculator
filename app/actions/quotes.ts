@@ -224,7 +224,12 @@ export async function updateQuote(id: number, data: CreateQuoteInput) {
 export async function getUserQuotes() {
   const session = await requireAuth()
   return await prisma.quote.findMany({
-    where: { userId: session.user.id },
+    where: {
+      OR: [
+        { userId: session.user.id },
+        { productionSheet: { status: 'en_cours' } },
+      ],
+    },
     include: {
       study: true,
       productType: true,
@@ -234,6 +239,79 @@ export async function getUserQuotes() {
     },
     orderBy: { createdAt: 'desc' },
   })
+}
+
+export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
+  const session = await requireAuth()
+
+  const source = await prisma.quote.findUnique({
+    where: { id: quoteId },
+    include: {
+      accessories: true,
+      consumables: true,
+      elements: true,
+      products: true,
+      transportDeliveries: true,
+    },
+  })
+
+  if (!source) throw new Error('Devis introuvable')
+  if (session.user.role !== 'ADMIN' && source.userId !== session.user.id) {
+    throw new Error('Non autorisé')
+  }
+
+  const targetUser = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true } })
+  if (!targetUser) throw new Error('Utilisateur destinataire introuvable')
+
+  const {
+    id: _id,
+    createdAt: _createdAt,
+    updatedAt: _updatedAt,
+    reference: _reference,
+    userId: _userId,
+    sentByUserId: _sentByUserId,
+    sentByUserName: _sentByUserName,
+    accessories: srcAccessories,
+    consumables: srcConsumables,
+    elements: srcElements,
+    products: srcProducts,
+    transportDeliveries: srcTransports,
+    ...scalarFields
+  } = source
+
+  const reference = await generateReference()
+
+  await prisma.quote.create({
+    data: {
+      ...scalarFields,
+      reference,
+      parentReference: null,
+      userId: targetUserId,
+      sentByUserId: session.user.id,
+      sentByUserName: session.user.name ?? session.user.email,
+      accessories: {
+        create: srcAccessories.map((a) => ({ accessoryId: a.accessoryId, quantity: a.quantity })),
+      },
+      consumables: {
+        create: srcConsumables.map((c) => ({ consumableId: c.consumableId, sizePerItem: c.sizePerItem })),
+      },
+      elements: {
+        create: srcElements.map((e) => ({ name: e.name, quantity: e.quantity })),
+      },
+      products: srcProducts.length > 0 ? {
+        create: srcProducts.map(({ id: _pId, quoteId: _qId, ...p }) => p),
+      } : undefined,
+      transportDeliveries: srcTransports.length > 0 ? {
+        create: srcTransports.map(({ id: _tId, quoteId: _qId, ...t }) => t),
+      } : undefined,
+      productionSheet: {
+        create: { status: 'en_attente' },
+      },
+    },
+  })
+
+  revalidateCache('quotes')
+  revalidatePath('/dashboard/my-quotes')
 }
 
 export async function deleteQuote(id: number) {
@@ -274,12 +352,15 @@ export async function getQuoteById(id: number) {
         orderBy: { position: 'asc' },
       },
       transportDeliveries: true,
+      productionSheet: { select: { status: true } },
     },
   })
   if (!quote) return null
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
-    throw new Error('Non autorisé')
-  }
+  const canAccess =
+    session.user.role === 'ADMIN' ||
+    quote.userId === session.user.id ||
+    quote.productionSheet?.status === 'en_cours'
+  if (!canAccess) throw new Error('Non autorisé')
   return quote
 }
 
@@ -302,9 +383,11 @@ export async function getQuoteDetail(id: number) {
   })
 
   if (!quote) return null
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) {
-    throw new Error('Non autorisé')
-  }
+  const canAccess =
+    session.user.role === 'ADMIN' ||
+    quote.userId === session.user.id ||
+    quote.productionSheet?.status === 'en_cours'
+  if (!canAccess) throw new Error('Non autorisé')
 
   return quote
 }

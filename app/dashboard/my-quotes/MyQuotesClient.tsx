@@ -11,10 +11,10 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye, ClipboardCheck, ArrowUpDown, ArrowUp, ArrowDown, AlertCircle } from 'lucide-react'
+import { FileText, Calendar, Box, Search, Pencil, Trash2, Eye, ClipboardCheck, ArrowUpDown, ArrowUp, ArrowDown, AlertCircle, Send } from 'lucide-react'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { deleteQuote } from '@/app/actions/quotes'
+import { deleteQuote, sendQuoteToUser } from '@/app/actions/quotes'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -35,6 +35,8 @@ interface Quote {
   flatWidth: number | null
   flatHeight: number | null
   totalCost: number | null
+  userId: string | null
+  sentByUserName: string | null
   study: { number: string } | null
   productType: { name: string } | null
   plate: { name: string } | null
@@ -42,8 +44,17 @@ interface Quote {
   actuals: { id: number; updatedAt: Date } | null
 }
 
+interface UserForSharing {
+  id: string
+  name: string | null
+  firstName: string | null
+  lastName: string | null
+}
+
 interface MyQuotesClientProps {
   quotes: Quote[]
+  users: UserForSharing[]
+  currentUserId: string
 }
 
 type SortField = 'date' | 'reference' | 'client'
@@ -56,6 +67,11 @@ function SortIcon({ field, current, dir }: { field: SortField; current: SortFiel
     : <ArrowDown className="h-3 w-3 text-emerald-500" />
 }
 
+function userName(user: UserForSharing): string {
+  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`
+  return user.name ?? user.id
+}
+
 type TabId = 'devis' | 'production' | 'actuals' | 'a_valider'
 
 const STATUS_LABELS: Record<string, { label: string; className: string }> = {
@@ -64,13 +80,15 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   termine:    { label: 'Terminé',    className: 'bg-green-100 text-green-800' },
 }
 
-export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
+export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientProps) {
   const [activeTab, setActiveTab] = useState<TabId>('devis')
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<number | null>(null)
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null)
   const [sortField, setSortField] = useState<SortField>('date')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
+  const [sendModalQuoteId, setSendModalQuoteId] = useState<number | null>(null)
+  const [sendingToUserId, setSendingToUserId] = useState<string | null>(null)
   const router = useRouter()
 
   const quotesWithProd = quotes.filter(q => q.productionSheet !== null)
@@ -92,6 +110,22 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
       toast.error('Erreur lors de la suppression')
     } finally {
       setIsDeleting(null)
+    }
+  }
+
+  const handleSendToUser = async (quoteId: number, targetUserId: string) => {
+    setSendingToUserId(targetUserId)
+    try {
+      await sendQuoteToUser(quoteId, targetUserId)
+      const target = users.find(u => u.id === targetUserId)
+      toast.success(`Devis envoyé à ${target ? userName(target) : 'l\'utilisateur'}`)
+      setSendModalQuoteId(null)
+      router.refresh()
+    } catch (error) {
+      console.error('Send error:', error)
+      toast.error('Erreur lors de l\'envoi')
+    } finally {
+      setSendingToUserId(null)
     }
   }
 
@@ -216,8 +250,9 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                   </TableRow>
                 ) : quotesWithProd.map((quote) => {
                   const s = STATUS_LABELS[quote.productionSheet!.status] ?? STATUS_LABELS.en_attente
+                  const isOwned = quote.userId === currentUserId
                   return (
-                    <TableRow key={quote.id} className="hover:bg-slate-50">
+                    <TableRow key={quote.id} className={`hover:bg-slate-50 ${!isOwned ? 'bg-blue-50/40' : ''}`}>
                       <TableCell>
                         <Link href={`/dashboard/my-quotes/${quote.id}`}>
                           {quote.reference
@@ -229,9 +264,16 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                       <TableCell className="text-slate-600 text-sm">{quote.client || <span className="text-slate-300 italic text-xs">—</span>}</TableCell>
                       <TableCell className="text-sm">{quote.productType?.name}</TableCell>
                       <TableCell>
-                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
-                          {s.label}
-                        </span>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
+                            {s.label}
+                          </span>
+                          {!isOwned && (
+                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
+                              En production
+                            </span>
+                          )}
+                        </div>
                       </TableCell>
                       <TableCell className="text-slate-500 text-xs">{formatDate(quote.productionSheet!.updatedAt)}</TableCell>
                       <TableCell className="text-right">
@@ -387,100 +429,169 @@ export function MyQuotesClient({ quotes }: MyQuotesClientProps) {
                   </TableCell>
                 </TableRow>
               ) : (
-                filtered.map((quote) => (
-                  <TableRow key={quote.id} className="hover:bg-slate-50">
-                    <TableCell>
-                      <Link href={`/dashboard/my-quotes/${quote.id}`}>
-                        {quote.reference ? (
-                          <span className="font-mono text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded hover:bg-emerald-100 transition-colors cursor-pointer">
-                            {quote.reference}
+                filtered.map((quote) => {
+                  const isOwned = quote.userId === currentUserId
+                  return (
+                    <TableRow key={quote.id} className={`hover:bg-slate-50 ${!isOwned ? 'bg-blue-50/30' : ''}`}>
+                      <TableCell>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                            {quote.reference ? (
+                              <span className="font-mono text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-0.5 rounded hover:bg-emerald-100 transition-colors cursor-pointer">
+                                {quote.reference}
+                              </span>
+                            ) : (
+                              <span className="text-slate-400 italic text-xs hover:text-slate-600 transition-colors cursor-pointer">—</span>
+                            )}
+                          </Link>
+                          {quote.sentByUserName && (
+                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-100 text-indigo-700 whitespace-nowrap">
+                              Reçu de {quote.sentByUserName}
+                            </span>
+                          )}
+                          {!isOwned && !quote.sentByUserName && (
+                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
+                              En production
+                            </span>
+                          )}
+                        </div>
+                      </TableCell>
+                      <TableCell className="font-medium">
+                        <Link href={`/dashboard/my-quotes/${quote.id}`} className="hover:text-emerald-700 transition-colors">
+                          {quote.study?.number}
+                        </Link>
+                      </TableCell>
+                      <TableCell className="text-slate-600 text-sm">
+                        {quote.client || <span className="text-slate-300 italic text-xs">—</span>}
+                      </TableCell>
+                      <TableCell className="text-slate-500 text-sm whitespace-nowrap">
+                        <div className="flex items-center gap-1.5">
+                          <Calendar className="h-3 w-3" />
+                          {formatDate(quote.createdAt)}
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <div className="flex items-center gap-2 whitespace-nowrap">
+                          <Box className="h-3 w-3 text-emerald-600" />
+                          {quote.productType?.name}
+                          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold border-transparent bg-slate-100 text-slate-900">
+                            {quote.flatWidth}x{quote.flatHeight}
                           </span>
-                        ) : (
-                          <span className="text-slate-400 italic text-xs hover:text-slate-600 transition-colors cursor-pointer">—</span>
-                        )}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      <Link href={`/dashboard/my-quotes/${quote.id}`} className="hover:text-emerald-700 transition-colors">
-                        {quote.study?.number}
-                      </Link>
-                    </TableCell>
-                    <TableCell className="text-slate-600 text-sm">
-                      {quote.client || <span className="text-slate-300 italic text-xs">—</span>}
-                    </TableCell>
-                    <TableCell className="text-slate-500 text-sm whitespace-nowrap">
-                      <div className="flex items-center gap-1.5">
-                        <Calendar className="h-3 w-3" />
-                        {formatDate(quote.createdAt)}
-                      </div>
-                    </TableCell>
-                    <TableCell>
-                      <div className="flex items-center gap-2 whitespace-nowrap">
-                        <Box className="h-3 w-3 text-emerald-600" />
-                        {quote.productType?.name}
-                        <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-[10px] font-semibold border-transparent bg-slate-100 text-slate-900">
-                          {quote.flatWidth}x{quote.flatHeight}
-                        </span>
-                      </div>
-                    </TableCell>
-                    <TableCell className="text-right font-mono">{quote.quantity}</TableCell>
-                    <TableCell className="text-right font-bold text-slate-900">
-                      {quote.totalCost ? `${quote.totalCost.toFixed(2)} €` : '-'}
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-1">
-                        <Link href={`/dashboard/my-quotes/${quote.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-sky-600" title="Données réelles">
-                            <ClipboardCheck className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/?viewId=${quote.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir le récapitulatif">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        <Link href={`/?editId=${quote.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600" title="Modifier">
-                            <Pencil className="h-4 w-4" />
-                          </Button>
-                        </Link>
-                        {confirmingDeleteId === quote.id ? (
-                          <div className="flex items-center gap-1">
-                            <button
-                              className="text-xs px-2 py-1 rounded bg-rose-600 text-white hover:bg-rose-700 font-medium"
-                              onClick={() => handleDeleteConfirm(quote.id)}
-                            >
-                              Confirmer
-                            </button>
-                            <button
-                              className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
-                              onClick={() => setConfirmingDeleteId(null)}
-                            >
-                              Annuler
-                            </button>
-                          </div>
-                        ) : (
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            className="h-8 w-8 text-slate-400 hover:text-rose-600"
-                            onClick={() => handleDeleteClick(quote.id)}
-                            disabled={isDeleting === quote.id}
-                            title="Supprimer"
-                          >
-                            <Trash2 className={`h-4 w-4 ${isDeleting === quote.id ? 'animate-pulse' : ''}`} />
-                          </Button>
-                        )}
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
+                        </div>
+                      </TableCell>
+                      <TableCell className="text-right font-mono">{quote.quantity}</TableCell>
+                      <TableCell className="text-right font-bold text-slate-900">
+                        {quote.totalCost ? `${quote.totalCost.toFixed(2)} €` : '-'}
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          {isOwned && (
+                            <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-sky-600" title="Données réelles">
+                                <ClipboardCheck className="h-4 w-4" />
+                              </Button>
+                            </Link>
+                          )}
+                          <Link href={`/?viewId=${quote.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir le récapitulatif">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          {isOwned && (
+                            <>
+                              <Link href={`/?editId=${quote.id}`}>
+                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600" title="Modifier">
+                                  <Pencil className="h-4 w-4" />
+                                </Button>
+                              </Link>
+                              {users.length > 0 && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                                  title="Envoyer à un utilisateur"
+                                  onClick={() => setSendModalQuoteId(quote.id)}
+                                >
+                                  <Send className="h-4 w-4" />
+                                </Button>
+                              )}
+                              {confirmingDeleteId === quote.id ? (
+                                <div className="flex items-center gap-1">
+                                  <button
+                                    className="text-xs px-2 py-1 rounded bg-rose-600 text-white hover:bg-rose-700 font-medium"
+                                    onClick={() => handleDeleteConfirm(quote.id)}
+                                  >
+                                    Confirmer
+                                  </button>
+                                  <button
+                                    className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                    onClick={() => setConfirmingDeleteId(null)}
+                                  >
+                                    Annuler
+                                  </button>
+                                </div>
+                              ) : (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="h-8 w-8 text-slate-400 hover:text-rose-600"
+                                  onClick={() => handleDeleteClick(quote.id)}
+                                  disabled={isDeleting === quote.id}
+                                  title="Supprimer"
+                                >
+                                  <Trash2 className={`h-4 w-4 ${isDeleting === quote.id ? 'animate-pulse' : ''}`} />
+                                </Button>
+                              )}
+                            </>
+                          )}
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  )
+                })
               )}
             </TableBody>
           </Table>
           )}
         </CardContent>
       </Card>
+
+      {/* ── Modal envoi ── */}
+      {sendModalQuoteId !== null && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setSendModalQuoteId(null)}
+        >
+          <div
+            className="bg-white rounded-xl shadow-2xl p-6 w-80 max-w-full"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="font-semibold text-slate-900 mb-1">Envoyer le devis</h3>
+            <p className="text-sm text-slate-500 mb-4">Choisissez le destinataire :</p>
+            <div className="space-y-1">
+              {users.map((user) => (
+                <button
+                  key={user.id}
+                  disabled={sendingToUserId !== null}
+                  onClick={() => handleSendToUser(sendModalQuoteId, user.id)}
+                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-slate-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                >
+                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                    {(user.firstName?.[0] ?? user.name?.[0] ?? '?').toUpperCase()}
+                  </div>
+                  {sendingToUserId === user.id ? 'Envoi...' : userName(user)}
+                </button>
+              ))}
+            </div>
+            <button
+              onClick={() => setSendModalQuoteId(null)}
+              className="mt-4 text-xs text-slate-400 hover:text-slate-600 transition-colors"
+            >
+              Annuler
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
