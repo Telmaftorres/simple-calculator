@@ -277,11 +277,24 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
                       </TableCell>
                       <TableCell className="text-slate-500 text-xs">{formatDate(quote.productionSheet!.updatedAt)}</TableCell>
                       <TableCell className="text-right">
-                        <Link href={`/dashboard/my-quotes/${quote.id}`}>
-                          <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir la fiche">
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        </Link>
+                        <div className="flex justify-end gap-1">
+                          <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir la fiche">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          {isOwned && (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                              title="Envoyer à un utilisateur"
+                              onClick={() => setSendModalQuoteId(quote.id)}
+                            >
+                              <Send className="h-4 w-4" />
+                            </Button>
+                          )}
+                        </div>
                       </TableCell>
                     </TableRow>
                   )
@@ -504,17 +517,15 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
                                   <Pencil className="h-4 w-4" />
                                 </Button>
                               </Link>
-                              {users.length > 0 && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-slate-400 hover:text-indigo-600"
-                                  title="Envoyer à un utilisateur"
-                                  onClick={() => setSendModalQuoteId(quote.id)}
-                                >
-                                  <Send className="h-4 w-4" />
-                                </Button>
-                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                                title="Envoyer à un utilisateur"
+                                onClick={() => setSendModalQuoteId(quote.id)}
+                              >
+                                <Send className="h-4 w-4" />
+                              </Button>
                               {confirmingDeleteId === quote.id ? (
                                 <div className="flex items-center gap-1">
                                   <button
@@ -569,19 +580,25 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
             <h3 className="font-semibold text-slate-900 mb-1">Envoyer le devis</h3>
             <p className="text-sm text-slate-500 mb-4">Choisissez le destinataire :</p>
             <div className="space-y-1">
-              {users.map((user) => (
-                <button
-                  key={user.id}
-                  disabled={sendingToUserId !== null}
-                  onClick={() => handleSendToUser(sendModalQuoteId, user.id)}
-                  className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-slate-700 disabled:opacity-50 transition-colors flex items-center gap-2"
-                >
-                  <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold shrink-0">
-                    {(user.firstName?.[0] ?? user.name?.[0] ?? '?').toUpperCase()}
-                  </div>
-                  {sendingToUserId === user.id ? 'Envoi...' : userName(user)}
-                </button>
-              ))}
+              {users.length === 0 ? (
+                <p className="rounded-lg bg-slate-50 px-3 py-2.5 text-sm text-slate-500">
+                  Aucun autre utilisateur disponible.
+                </p>
+              ) : (
+                users.map((user) => (
+                  <button
+                    key={user.id}
+                    disabled={sendingToUserId !== null}
+                    onClick={() => handleSendToUser(sendModalQuoteId, user.id)}
+                    className="w-full text-left px-3 py-2.5 rounded-lg hover:bg-indigo-50 text-sm text-slate-700 disabled:opacity-50 transition-colors flex items-center gap-2"
+                  >
+                    <div className="h-7 w-7 rounded-full bg-indigo-100 text-indigo-700 flex items-center justify-center text-xs font-semibold shrink-0">
+                      {(user.firstName?.[0] ?? user.name?.[0] ?? '?').toUpperCase()}
+                    </div>
+                    {sendingToUserId === user.id ? 'Envoi...' : userName(user)}
+                  </button>
+                ))
+              )}
             </div>
             <button
               onClick={() => setSendModalQuoteId(null)}
