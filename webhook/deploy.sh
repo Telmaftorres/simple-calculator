@@ -6,6 +6,7 @@ cd /home/ubuntu/kontfeel-calculator
 
 echo "$(date) - Déploiement lancé..." >> /home/ubuntu/webhook/deploy.log
 
+git checkout -- package-lock.json
 git pull origin main
 npm install
 npx prisma migrate deploy
