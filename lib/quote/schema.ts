@@ -94,6 +94,8 @@ const quoteProductSchema = z.object({
   cuttingTimePerPoseSeconds: z.number().int().optional(),
   cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   totalCost: z.number().nullable().optional(),
+  amalgameGroupIndex: z.number().int().min(0).nullable().optional(),
+  countPerPlateInGroup: z.number().int().positive().nullable().optional(),
 })
 
 const transportDeliverySchema = z.object({
@@ -104,6 +106,36 @@ const transportDeliverySchema = z.object({
   optionsHT:     z.number().min(0),
   basePriceHT:   z.number().min(0),
   totalHT:       z.number().min(0),
+})
+
+const amalgameRunItemSchema = z.object({
+  name: z.string().min(1),
+  flatWidth: z.number().int().positive(),
+  flatHeight: z.number().int().positive(),
+  countPerPlate: z.number().int().positive(),
+  quantityPerUnit: z.number().int().positive(),
+})
+
+const amalgameRunSchema = z.object({
+  name: z.string().min(1),
+  plateId: z.number().int().positive().nullable().optional(),
+  hasImpression: z.boolean(),
+  cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  cuttingTimePerPoseSeconds: z.number().min(0).optional(),
+  printMode: z.enum(['production', 'quality']).optional(),
+  isRectoVerso: z.boolean().optional(),
+  rectoVersoType: z.enum(['identical', 'different']).nullable().optional(),
+  inkMlPerPlate: z.number().min(0).max(100).optional(),
+  inkMlVerso: z.number().min(0).max(100).optional(),
+  hasVarnish: z.boolean().optional(),
+  hasFlatColor: z.boolean().optional(),
+  varnishSurfacePercent: z.number().min(0).max(100).optional(),
+  flatColorSurfacePercent: z.number().min(0).max(100).optional(),
+  printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  mainPerPlate: z.number().int().positive().nullable().optional(),
+  platesCount: z.number().int().min(0).nullable().optional(),
+  position: z.number().int().min(0),
+  items: z.array(amalgameRunItemSchema),
 })
 
 export const createQuoteSchema = quoteFieldsSchema.extend({
@@ -123,6 +155,8 @@ export const createQuoteSchema = quoteFieldsSchema.extend({
   })).optional(),
   products: z.array(quoteProductSchema).optional(),
   transportDeliveries: z.array(transportDeliverySchema).optional(),
+  hasAmalgame: z.boolean().optional(),
+  amalgameRuns: z.array(amalgameRunSchema).optional(),
 })
 
 export type CreateQuoteInput = z.infer<typeof createQuoteSchema>

@@ -72,7 +72,8 @@ export async function updateProductType(
   id: number,
   name: string,
   flatWidthFormula?: string,
-  flatHeightFormula?: string
+  flatHeightFormula?: string,
+  imageUrl?: string | null,
 ) {
   await requireAuth()
   const validated = productTypeSchema.parse({ name, flatWidthFormula, flatHeightFormula })
@@ -82,6 +83,7 @@ export async function updateProductType(
       name: validated.name,
       flatWidthFormula: validated.flatWidthFormula || undefined,
       flatHeightFormula: validated.flatHeightFormula || undefined,
+      ...(imageUrl !== undefined ? { imageUrl } : {}),
     },
   })
   revalidateEntity('product-types', '/dashboard/products', '/')
@@ -99,7 +101,9 @@ export async function deleteProductType(id: number) {
 const productTemplateSchema = z.object({
   productTypeId: z.number().int().positive().nullable().optional(),
   name: z.string().min(1, 'Le nom est requis'),
+  formatType: z.enum(['2d', '3d']).optional(),
   flatWidth: z.number().int().positive().nullable().optional(),
+  flatDepth: z.number().int().positive().nullable().optional(),
   flatHeight: z.number().int().positive().nullable().optional(),
   plateId: z.number().int().positive().nullable().optional(),
   hasImpression: z.boolean().optional(),
@@ -123,7 +127,26 @@ const productTemplateSchema = z.object({
   hasAccessoires: z.boolean().optional(),
   hasTransport: z.boolean().optional(),
   defaultTransportMode: z.enum(['PACK30', 'MESSAGERIE_PLUS', 'AFFRETEMENT']).nullable().optional(),
+  hasAmalgame: z.boolean().optional(),
+  amalgameGroupsJson: z.string().nullable().optional(),
   notes: z.string().optional(),
+})
+
+const amalgameRunItemSchema = z.object({
+  name: z.string().min(1),
+  flatWidth: z.number().int().positive(),
+  flatHeight: z.number().int().positive(),
+  countPerPlate: z.number().int().positive(),
+  quantityPerUnit: z.number().int().positive(),
+})
+
+const amalgameRunSchema = z.object({
+  name: z.string().min(1),
+  plateId: z.number().int().positive().nullable().optional(),
+  hasImpression: z.boolean(),
+  mainPerPlate: z.number().int().positive().nullable().optional(),
+  position: z.number().int().min(0).optional(),
+  items: z.array(amalgameRunItemSchema),
 })
 
 const templateAccessorySchema = z.object({
@@ -131,19 +154,64 @@ const templateAccessorySchema = z.object({
   quantity: z.number().int().positive(),
 })
 
+const templateElementSchema = z.object({
+  elementId: z.number().int().positive(),
+  quantity: z.number().int().positive(),
+  flatWidth: z.number().int().positive().optional().nullable(),
+  flatHeight: z.number().int().positive().optional().nullable(),
+  flatDepth: z.number().int().positive().optional().nullable(),
+  plateId: z.number().int().positive().optional().nullable(),
+  amalgameGroupId: z.string().nullable().optional(),
+  hasImpression: z.boolean().optional(),
+  printMode: z.enum(['production', 'quality']).optional(),
+  printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  isRectoVerso: z.boolean().optional(),
+  rectoVersoType: z.enum(['identical', 'different']).nullable().optional(),
+  hasVarnish: z.boolean().optional(),
+  hasFlatColor: z.boolean().optional(),
+  inkMlPerPlate: z.number().int().min(0).optional(),
+  inkMlVerso: z.number().int().min(0).optional(),
+  varnishSurfacePercent: z.number().int().min(0).max(100).optional(),
+  flatColorSurfacePercent: z.number().int().min(0).max(100).optional(),
+  cuttingTimePerPoseSeconds: z.number().int().min(0).optional(),
+  cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+})
+
+const templateVariantConfigSchema = z.object({
+  variantId: z.number().int().positive(),
+  defaultQuantity: z.number().int().positive(),
+})
+
+const templateOptionConfigSchema = z.object({
+  optionId: z.number().int().positive(),
+  defaultQuantity: z.number().int().min(0),
+})
+
 export async function createProductTemplate(
   data: z.infer<typeof productTemplateSchema>,
   accessories: z.infer<typeof templateAccessorySchema>[] = [],
+  amalgameRuns: z.infer<typeof amalgameRunSchema>[] = [],
+  elements: z.infer<typeof templateElementSchema>[] = [],
+  variantConfigs: z.infer<typeof templateVariantConfigSchema>[] = [],
+  optionConfigs: z.infer<typeof templateOptionConfigSchema>[] = [],
 ) {
   await requireAuth()
   const validated = productTemplateSchema.parse(data)
   const validatedAccessories = accessories.map((a) => templateAccessorySchema.parse(a))
+  const validatedRuns = amalgameRuns.map((r) => amalgameRunSchema.parse(r))
+  const validatedElements = elements.map((e) => templateElementSchema.parse(e))
+  const validatedVariants = variantConfigs.map((v) => templateVariantConfigSchema.parse(v))
+  const validatedOptions = optionConfigs.map((o) => templateOptionConfigSchema.parse(o))
   const result = await prisma.productTemplate.create({
     data: {
       ...validated,
-      accessories: validatedAccessories.length > 0
-        ? { create: validatedAccessories }
+      accessories: validatedAccessories.length > 0 ? { create: validatedAccessories } : undefined,
+      amalgameRuns: validatedRuns.length > 0
+        ? { create: validatedRuns.map(({ items, ...run }) => ({ ...run, items: { create: items } })) }
         : undefined,
+      templateElements: validatedElements.length > 0 ? { create: validatedElements } : undefined,
+      templateVariants: validatedVariants.length > 0 ? { create: validatedVariants } : undefined,
+      templateOptionConfigs: validatedOptions.length > 0 ? { create: validatedOptions } : undefined,
     },
   })
   if (validated.productTypeId) {
@@ -156,19 +224,31 @@ export async function updateProductTemplate(
   id: number,
   data: z.infer<typeof productTemplateSchema>,
   accessories: z.infer<typeof templateAccessorySchema>[] = [],
+  amalgameRuns: z.infer<typeof amalgameRunSchema>[] = [],
+  elements: z.infer<typeof templateElementSchema>[] = [],
+  variantConfigs: z.infer<typeof templateVariantConfigSchema>[] = [],
+  optionConfigs: z.infer<typeof templateOptionConfigSchema>[] = [],
 ) {
   await requireAuth()
   const validId = z.number().int().positive().parse(id)
   const validated = productTemplateSchema.parse(data)
   const validatedAccessories = accessories.map((a) => templateAccessorySchema.parse(a))
+  const validatedRuns = amalgameRuns.map((r) => amalgameRunSchema.parse(r))
+  const validatedElements = elements.map((e) => templateElementSchema.parse(e))
+  const validatedVariants = variantConfigs.map((v) => templateVariantConfigSchema.parse(v))
+  const validatedOptions = optionConfigs.map((o) => templateOptionConfigSchema.parse(o))
   const result = await prisma.productTemplate.update({
     where: { id: validId },
     data: {
       ...validated,
-      accessories: {
+      accessories: { deleteMany: {}, create: validatedAccessories },
+      amalgameRuns: {
         deleteMany: {},
-        create: validatedAccessories,
+        create: validatedRuns.map(({ items, ...run }) => ({ ...run, items: { create: items } })),
       },
+      templateElements: { deleteMany: {}, create: validatedElements },
+      templateVariants: { deleteMany: {}, create: validatedVariants },
+      templateOptionConfigs: { deleteMany: {}, create: validatedOptions },
     },
   })
   if (validated.productTypeId) {
@@ -220,4 +300,84 @@ export async function deleteElement(id: number, productTypeId: number) {
     where: { id: validId, productTypeId: validProductTypeId },
   })
   revalidateEntity('product-types', `/dashboard/products/${validProductTypeId}`, '/dashboard/products')
+}
+
+// ── PRODUCT OPTIONS ──
+
+const productOptionSchema = z.object({
+  productTypeId: z.number().int().positive(),
+  name: z.string().min(1, 'Le nom est requis'),
+  inputType: z.enum(['single_choice', 'multi_item']),
+  priceHT: z.number().min(0).nullable().optional(),
+  position: z.number().int().min(0).optional(),
+})
+
+const productOptionVariantSchema = z.object({
+  optionId: z.number().int().positive(),
+  label: z.string().min(1, 'Le libellé est requis'),
+  priceHT: z.number().min(0).nullable().optional(),
+  position: z.number().int().min(0).optional(),
+})
+
+export async function createProductOption(data: z.infer<typeof productOptionSchema>) {
+  await requireAuth()
+  const validated = productOptionSchema.parse(data)
+  await prisma.productOption.create({ data: validated })
+  revalidateEntity('product-types', `/dashboard/products/${validated.productTypeId}`, '/dashboard/products')
+}
+
+export async function updateProductOption(id: number, data: Partial<z.infer<typeof productOptionSchema>>) {
+  await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const option = await prisma.productOption.findUnique({ where: { id: validId }, select: { productTypeId: true } })
+  await prisma.productOption.update({ where: { id: validId }, data })
+  if (option?.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${option.productTypeId}`, '/dashboard/products')
+  }
+}
+
+export async function deleteProductOption(id: number) {
+  await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const option = await prisma.productOption.findUnique({ where: { id: validId }, select: { productTypeId: true } })
+  await prisma.productOption.delete({ where: { id: validId } })
+  if (option?.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${option.productTypeId}`, '/dashboard/products')
+  }
+}
+
+export async function createProductOptionVariant(data: z.infer<typeof productOptionVariantSchema>) {
+  await requireAuth()
+  const validated = productOptionVariantSchema.parse(data)
+  const option = await prisma.productOption.findUnique({ where: { id: validated.optionId }, select: { productTypeId: true } })
+  await prisma.productOptionVariant.create({ data: validated })
+  if (option?.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${option.productTypeId}`, '/dashboard/products')
+  }
+}
+
+export async function updateProductOptionVariant(id: number, data: { label: string; priceHT?: number | null }) {
+  await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const variant = await prisma.productOptionVariant.findUnique({
+    where: { id: validId },
+    select: { option: { select: { productTypeId: true } } },
+  })
+  await prisma.productOptionVariant.update({ where: { id: validId }, data })
+  if (variant?.option.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${variant.option.productTypeId}`, '/dashboard/products')
+  }
+}
+
+export async function deleteProductOptionVariant(id: number) {
+  await requireAuth()
+  const validId = z.number().int().positive().parse(id)
+  const variant = await prisma.productOptionVariant.findUnique({
+    where: { id: validId },
+    select: { option: { select: { productTypeId: true } } },
+  })
+  await prisma.productOptionVariant.delete({ where: { id: validId } })
+  if (variant?.option.productTypeId) {
+    revalidateEntity('product-types', `/dashboard/products/${variant.option.productTypeId}`, '/dashboard/products')
+  }
 }

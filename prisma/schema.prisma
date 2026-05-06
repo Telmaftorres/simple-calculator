@@ -20,17 +20,44 @@ model ProductType {
   name              String            @unique
   flatWidthFormula  String            @default("l")
   flatHeightFormula String            @default("L")
+  imageUrl          String?
   elements          Element[]
   quotes            Quote[]
   templates         ProductTemplate[]
+  options           ProductOption[]
+}
+
+model ProductOption {
+  id            Int                    @id @default(autoincrement())
+  productTypeId Int
+  name          String
+  inputType     String                 // "single_choice" | "multi_item"
+  priceHT       Float?
+  position      Int                    @default(0)
+  createdAt     DateTime               @default(now())
+  productType   ProductType            @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+  variants              ProductOptionVariant[]
+  templateOptionConfigs ProductTemplateOptionConfig[]
+}
+
+model ProductOptionVariant {
+  id              Int                          @id @default(autoincrement())
+  optionId        Int
+  label           String
+  priceHT         Float?
+  position        Int                          @default(0)
+  option          ProductOption                @relation(fields: [optionId], references: [id], onDelete: Cascade)
+  templateConfigs ProductTemplateVariantConfig[]
 }
 
 model ProductTemplate {
   id                          Int                       @id @default(autoincrement())
   productTypeId               Int?
   name                        String
-  // ── Format à plat ──
+  // ── Format ──
+  formatType                  String                    @default("2d") // "2d" | "3d"
   flatWidth                   Int?
+  flatDepth                   Int?
   flatHeight                  Int?
   // ── Matière par défaut ──
   plateId                     Int?
@@ -61,6 +88,9 @@ model ProductTemplate {
   // ── Transport ──
   hasTransport                Boolean                   @default(false)
   defaultTransportMode        String?
+  // ── Amalgame ──
+  hasAmalgame                 Boolean                   @default(false)
+  amalgameGroupsJson          String?
   // ── Notes ──
   notes                       String?
   createdAt                   DateTime                  @default(now())
@@ -69,6 +99,34 @@ model ProductTemplate {
   plate                       Plate?                    @relation(fields: [plateId], references: [id], onDelete: SetNull)
   quotes                      Quote[]
   accessories                 ProductTemplateAccessory[]
+  amalgameRuns                ProductTemplateAmalgameRun[]
+  templateElements            ProductTemplateElement[]
+  templateVariants            ProductTemplateVariantConfig[]
+  templateOptionConfigs       ProductTemplateOptionConfig[]
+}
+
+model ProductTemplateAmalgameRun {
+  id            Int                              @id @default(autoincrement())
+  templateId    Int
+  name          String
+  plateId       Int?
+  hasImpression Boolean                          @default(true)
+  mainPerPlate  Int?
+  position      Int                              @default(0)
+  template      ProductTemplate                  @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  plate         Plate?                           @relation(fields: [plateId], references: [id], onDelete: SetNull)
+  items         ProductTemplateAmalgameRunItem[]
+}
+
+model ProductTemplateAmalgameRunItem {
+  id              Int                        @id @default(autoincrement())
+  runId           Int
+  name            String
+  flatWidth       Int
+  flatHeight      Int
+  countPerPlate   Int
+  quantityPerUnit Int                        @default(1)
+  run             ProductTemplateAmalgameRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model ProductTemplateAccessory {
@@ -80,12 +138,64 @@ model ProductTemplateAccessory {
   accessory   Accessory       @relation(fields: [accessoryId], references: [id])
 }
 
+model ProductTemplateElement {
+  id                       Int             @id @default(autoincrement())
+  templateId               Int
+  elementId                Int
+  quantity                 Int             @default(1)
+  flatWidth                Int?
+  flatHeight               Int?
+  flatDepth                Int?
+  plateId                  Int?
+  amalgameGroupId          String?
+  hasImpression            Boolean         @default(true)
+  printMode                String          @default("production")
+  printSetupType           String          @default("none")
+  isRectoVerso             Boolean         @default(false)
+  rectoVersoType           String?
+  hasVarnish               Boolean         @default(false)
+  hasFlatColor             Boolean         @default(false)
+  inkMlPerPlate            Int             @default(20)
+  inkMlVerso               Int             @default(0)
+  varnishSurfacePercent    Int             @default(0)
+  flatColorSurfacePercent  Int             @default(0)
+  cuttingTimePerPoseSeconds Int            @default(0)
+  cuttingSetupType         String          @default("none")
+  template   ProductTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  element    Element         @relation(fields: [elementId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, elementId])
+}
+
+model ProductTemplateVariantConfig {
+  id              Int                  @id @default(autoincrement())
+  templateId      Int
+  variantId       Int
+  defaultQuantity Int                  @default(1)
+  template        ProductTemplate      @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  variant         ProductOptionVariant @relation(fields: [variantId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, variantId])
+}
+
+model ProductTemplateOptionConfig {
+  id              Int             @id @default(autoincrement())
+  templateId      Int
+  optionId        Int
+  defaultQuantity Int             @default(1)
+  template        ProductTemplate @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  option          ProductOption   @relation(fields: [optionId], references: [id], onDelete: Cascade)
+
+  @@unique([templateId, optionId])
+}
+
 model Element {
-  id            Int         @id @default(autoincrement())
-  name          String
-  productTypeId Int
-  quantity      Int         @default(1)
-  productType   ProductType @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+  id               Int                      @id @default(autoincrement())
+  name             String
+  productTypeId    Int
+  quantity         Int                      @default(1)
+  productType      ProductType              @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
+  templateElements ProductTemplateElement[]
 }
 
 // ── Tarification emballage ──
@@ -119,10 +229,12 @@ model Plate {
   height           Int
   cost             Float
   material         String
-  quotes           Quote[]
-  packagingQuotes  Quote[]           @relation("PackagingPlate")
-  quoteProducts    QuoteProduct[]
-  templates        ProductTemplate[]
+  quotes                    Quote[]
+  packagingQuotes           Quote[]                        @relation("PackagingPlate")
+  quoteProducts             QuoteProduct[]
+  templates                 ProductTemplate[]
+  templateAmalgameRuns      ProductTemplateAmalgameRun[]
+  quoteAmalgameRuns         QuoteAmalgameRun[]
 }
 
 model Accessory {
@@ -217,8 +329,48 @@ model Quote {
   template                           ProductTemplate?  @relation(fields: [templateId], references: [id], onDelete: SetNull)
   sentByUserId                       String?
   sentByUserName                     String?
+  // ── Amalgame ──
+  hasAmalgame                        Boolean           @default(false)
+  amalgameRuns                       QuoteAmalgameRun[]
 
   @@index([userId, createdAt])
+}
+
+model QuoteAmalgameRun {
+  id                        Int                    @id @default(autoincrement())
+  quoteId                   Int
+  name                      String
+  plateId                   Int?
+  hasImpression             Boolean                @default(true)
+  cuttingSetupType          String                 @default("none")
+  cuttingTimePerPoseSeconds Float                  @default(0)
+  printMode                 String                 @default("production")
+  isRectoVerso              Boolean                @default(false)
+  rectoVersoType            String?
+  inkMlPerPlate             Float                  @default(20)
+  inkMlVerso                Float                  @default(0)
+  hasVarnish                Boolean                @default(false)
+  hasFlatColor              Boolean                @default(false)
+  varnishSurfacePercent     Float                  @default(0)
+  flatColorSurfacePercent   Float                  @default(0)
+  printSetupType            String                 @default("none")
+  mainPerPlate              Int?
+  platesCount               Int?
+  position                  Int                    @default(0)
+  quote         Quote                  @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  plate         Plate?                 @relation(fields: [plateId], references: [id], onDelete: SetNull)
+  items         QuoteAmalgameRunItem[]
+}
+
+model QuoteAmalgameRunItem {
+  id              Int              @id @default(autoincrement())
+  runId           Int
+  name            String
+  flatWidth       Int
+  flatHeight      Int
+  countPerPlate   Int
+  quantityPerUnit Int              @default(1)
+  run             QuoteAmalgameRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model ProductionSheet {
@@ -380,6 +532,8 @@ model QuoteProduct {
   printSetupType            String  @default("none")
   cuttingSetupType          String  @default("none")
   totalCost                 Float?
+  amalgameGroupIndex        Int?
+  countPerPlateInGroup      Int?
   quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   plate                     Plate?  @relation(fields: [plateId], references: [id])
 }

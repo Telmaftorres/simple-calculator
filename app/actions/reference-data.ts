@@ -20,7 +20,9 @@ export const getProductTypes = unstable_cache(
         select: {
           id: true,
           name: true,
+          formatType: true,
           flatWidth: true,
+          flatDepth: true,
           flatHeight: true,
           plateId: true,
           hasImpression: true,
@@ -44,11 +46,78 @@ export const getProductTypes = unstable_cache(
           hasAccessoires: true,
           hasTransport: true,
           defaultTransportMode: true,
+          hasAmalgame: true,
+          amalgameGroupsJson: true,
           accessories: {
             select: {
               accessoryId: true,
               quantity: true,
               accessory: { select: { id: true, name: true, price: true } },
+            },
+          },
+          amalgameRuns: {
+            orderBy: { position: 'asc' },
+            select: {
+              name: true,
+              plateId: true,
+              hasImpression: true,
+              mainPerPlate: true,
+              position: true,
+              items: {
+                select: {
+                  name: true,
+                  flatWidth: true,
+                  flatHeight: true,
+                  countPerPlate: true,
+                  quantityPerUnit: true,
+                },
+              },
+            },
+          },
+          templateElements: {
+            select: {
+              elementId: true,
+              quantity: true,
+              flatWidth: true,
+              flatHeight: true,
+              flatDepth: true,
+              plateId: true,
+              amalgameGroupId: true,
+              hasImpression: true,
+              printMode: true,
+              printSetupType: true,
+              isRectoVerso: true,
+              rectoVersoType: true,
+              hasVarnish: true,
+              hasFlatColor: true,
+              inkMlPerPlate: true,
+              inkMlVerso: true,
+              varnishSurfacePercent: true,
+              flatColorSurfacePercent: true,
+              cuttingTimePerPoseSeconds: true,
+              cuttingSetupType: true,
+              element: { select: { id: true, name: true } },
+            },
+          },
+          templateVariants: {
+            select: {
+              variantId: true,
+              defaultQuantity: true,
+              variant: {
+                select: {
+                  id: true,
+                  label: true,
+                  priceHT: true,
+                  option: { select: { id: true, name: true, inputType: true } },
+                },
+              },
+            },
+          },
+          templateOptionConfigs: {
+            select: {
+              optionId: true,
+              defaultQuantity: true,
+              option: { select: { id: true, name: true, inputType: true, priceHT: true } },
             },
           },
         },

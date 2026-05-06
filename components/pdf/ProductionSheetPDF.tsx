@@ -33,6 +33,14 @@ type TransportDelivery = {
   totalHT: number
 }
 
+type AmalgameRunEntry = {
+  name: string
+  hasImpression: boolean
+  platesCount: number | null
+  plate: { name: string; width: number; height: number } | null
+  items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[]
+}
+
 type Quote = {
   id: number
   reference: string | null
@@ -43,6 +51,8 @@ type Quote = {
   flatHeight: number | null
   totalCost: number | null
   transportTotal: number | null
+  hasAmalgame?: boolean
+  amalgameRuns?: AmalgameRunEntry[]
   transportDeliveries: TransportDelivery[]
   cuttingTimePerPoseSeconds: number | null
   assemblyTimePerPieceSeconds: number | null
@@ -432,6 +442,32 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
                 <Text style={[s.nomCell, { flex: 1.5 }]}>{row.format}</Text>
                 <Text style={[s.nomCell, { flex: 1, textAlign: 'center', color: C.purple }]}>{row.rv}</Text>
                 <Text style={[s.nomCell, { flex: 1, textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>{row.qte}</Text>
+              </View>
+            ))}
+          </View>
+        )}
+
+        {/* ── PASSES D'IMPRESSION (AMALGAME) ── */}
+        {quote.hasAmalgame && quote.amalgameRuns && quote.amalgameRuns.length > 0 && (
+          <View style={s.nomTable}>
+            <View style={s.nomHeader}>
+              <Text style={[s.nomHeaderCell, { flex: 2 }]}>PASSE D'IMPRESSION</Text>
+              <Text style={[s.nomHeaderCell, { flex: 3 }]}>MATIÈRE</Text>
+              <Text style={[s.nomHeaderCell, { flex: 1, textAlign: 'center' }]}>IMPRESSION</Text>
+              <Text style={[s.nomHeaderCell, { flex: 1, textAlign: 'right' }]}>QTÉ PLAQUES</Text>
+            </View>
+            {quote.amalgameRuns.map((run, i) => (
+              <View key={i} style={i % 2 === 0 ? s.nomRow : s.nomRowAlt}>
+                <Text style={[s.nomCell, { flex: 2 }]}>{run.name}</Text>
+                <Text style={[s.nomCell, { flex: 3, color: C.mid }]}>
+                  {run.plate ? `${run.plate.name}  ${run.plate.width}×${run.plate.height}` : 'Chutes / sans plaque'}
+                </Text>
+                <Text style={[s.nomCell, { flex: 1, textAlign: 'center', color: C.purple }]}>
+                  {run.hasImpression ? 'Oui' : 'Non'}
+                </Text>
+                <Text style={[s.nomCell, { flex: 1, textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>
+                  {run.platesCount != null ? String(run.platesCount) : '—'}
+                </Text>
               </View>
             ))}
           </View>

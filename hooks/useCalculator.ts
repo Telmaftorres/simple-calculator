@@ -1,41 +1,28 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
-import { useRouter } from 'next/navigation'
 import { calculateImposition } from '@/lib/calculation/imposition'
-import { createQuote } from '@/app/actions/quotes'
-import { saveProductionSheetFull } from '@/app/actions/production-sheet'
-import { saveActualsFromCalc } from '@/app/actions/actuals'
 import { createProductType } from '@/app/actions/catalog'
 import { toast } from 'sonner'
-import { POSE_SPACING_MM, PLATE_BORDER_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT } from '@/lib/config/pricing'
+import { POSE_SPACING_MM, PLATE_BORDER_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT, GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
-import { GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
 import { useCalculatorForm } from './useCalculatorForm'
 import { useAccessories } from './useAccessories'
 import { useConsumables } from './useConsumables'
 import { formatCuttingDetails, formatAssemblyDetails, formatPackDetails } from '@/lib/format'
-import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, ProductSlotResult, TransportDeliveryForm, CalculatorMode } from '@/types/calculator'
+import type { ProductType, Plate, Accessory, Consumable, ImpositionResult, ScreenState, Quote, CalculatorMode, AmalgameGroup } from '@/types/calculator'
+import { GROUP_COLORS, DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import type { PackagingRulesData } from '@/app/actions/reference-data'
-import { DEFAULT_PRODUCT_SLOT } from '@/types/calculator'
 import { createAccessory } from '@/app/actions/accessories'
 import { v4 as uuidv4 } from 'uuid'
-
-function resolveVerso(
-  isRectoVerso: boolean,
-  rectoVersoType: string | null,
-  inkMlPerPlate: number,
-  inkMlVerso: number
-) {
-  const isDifferent = isRectoVerso && rectoVersoType === 'different' && inkMlVerso > 0
-  return {
-    // "différent": divise par 2 car calculateCosts multipliera par 2 (machine tourne 2×)
-    effectiveInkMl: isDifferent ? (inkMlPerPlate + inkMlVerso) / 2 : inkMlPerPlate,
-    // Machine tourne toujours 2× en R/V, peu importe identique ou différent
-    effectiveIsRectoVerso: isRectoVerso,
-  }
-}
+import { evalFormula, resolveFlatFormula } from '@/lib/utils'
+import { resolveVerso } from './calculator/utils'
+import { parseQuoteForLoad } from './calculator/quoteLoader'
+import { useProductionState } from './calculator/useProductionState'
+import { useImpositionResults } from './calculator/useImpositionResults'
+import { useSaveHandlers } from './calculator/useSaveHandlers'
+import type { TransportDeliveryForm } from '@/types/calculator'
 
 export function useCalculator(
   initialProductTypes: ProductType[],
@@ -60,245 +47,80 @@ export function useCalculator(
     achatsNotes?: string | null
   } | null
 ) {
-  const router = useRouter()
   const [screenState, setScreenState] = useState<ScreenState>('form')
-  const [isServing, setIsServing] = useState(false)
   const [productTypes, setProductTypes] = useState(initialProductTypes)
   const [impositionResult, setImpositionResult] = useState<ImpositionResult | null>(null)
   const [orientationOverride, setOrientationOverride] = useState<'normal' | 'rotated' | null>(null)
+  const [amalgameGroups, setAmalgameGroups] = useState<AmalgameGroup[]>([])
+  const [templateOptionSelections, setTemplateOptionSelections] = useState<{
+    variantId: number
+    label: string
+    priceHT: number
+    quantity: number
+    optionName: string
+    inputType: string
+  }[]>([])
   const quoteLoaded = useRef(false)
 
-  // ── Extra état pour mode production ──
-  const [prodStatus, setProdStatus] = useState<'en_attente' | 'en_cours' | 'termine'>(
-    (productionSheetExtra?.status as 'en_attente' | 'en_cours' | 'termine') ?? 'en_attente'
-  )
-  const [prodRemarques, setProdRemarques] = useState<string | null>(productionSheetExtra?.remarques ?? null)
-  const [prodPlanImageUrl, setProdPlanImageUrl] = useState<string | null>(productionSheetExtra?.planImageUrl ?? null)
-  const [prodNbCollages, setProdNbCollages] = useState<number | null>(productionSheetExtra?.nbCollages ?? null)
-  const [prodCollagePerPLV, setProdCollagePerPLV] = useState<number | null>(productionSheetExtra?.collagePerPLV ?? null)
-  const [prodFaconnageNotes, setProdFaconnageNotes] = useState<string | null>(productionSheetExtra?.faconnageNotes ?? null)
-  const [prodConditionnementType, setProdConditionnementType] = useState<string | null>(productionSheetExtra?.conditionnementType ?? null)
-  const [prodConditionnementNotes, setProdConditionnementNotes] = useState<string | null>(productionSheetExtra?.conditionnementNotes ?? null)
-  const [prodAchatsNotes, setProdAchatsNotes] = useState<string | null>(productionSheetExtra?.achatsNotes ?? null)
-  const [actualsNotes, setActualsNotes] = useState<string | null>(null)
-
-
+  const prodState = useProductionState(productionSheetExtra)
 
   const {
-    formState,
-    setField,
-    loadQuote,
-    resetForm,
-    addProduct,
-    removeProduct,
-    setActiveProduct,
-    updateProduct,
-    addTransportDelivery,
-    removeTransportDelivery,
-    updateTransportDelivery,
+    formState, setField, loadQuote, resetForm,
+    addProduct, removeProduct, setActiveProduct, updateProduct,
+    addTransportDelivery, removeTransportDelivery, updateTransportDelivery,
   } = useCalculatorForm()
 
   const {
-    studyNumber,
-    selectedProductTypeId,
-    productSearch,
-    isProductDropdownOpen,
-    quantity,
-    selectedPlateId,
-    flatWidth,
-    flatHeight,
-    inkMlPerPlate,
-    inkMlVerso,
-    varnishSurfacePercent,
-    flatColorSurfacePercent,
-    printMode,
-    isRectoVerso,
-    hasVarnish,
-    hasFlatColor,
-    rectoVersoType,
-    cuttingTimePerPoseSeconds,
-    assemblyTimePerPieceSeconds,
-    packTimePerPieceSeconds,
-    hasAssemblyNotice,
-    currentAccessoryId,
-    currentAccessoryQty,
-    currentConsumableId,
-    currentConsumableSize,
-    hasPackaging,
-    packagingBoxType,
-    packagingMaterialType,
-    packagingExternalSize,
-    packagingProductLength,
-    packagingProductWidth,
-    packagingProductHeight,
-    packagingProductThickness,
-    packagingPlateId,
-    packagingQuantity,
-    packagingCuttingTimePerPoseSeconds,
-    printSetupType,
-    cuttingSetupType,
-    hasImpression,
-    hasFaconnage,
-    hasConditionnement,
-    hasAccessoires,
-    hasBE,
-    beTimeMinutes,
-    batTimeMinutes,
-    isMultiProduct,
-    products,
-    activeProductIndex,
-    hasDossierFee,
-    showMargeCommerciale,
-    showMargeSopano,
+    studyNumber, selectedProductTypeId, productSearch, isProductDropdownOpen,
+    quantity, selectedPlateId, flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
+    varnishSurfacePercent, flatColorSurfacePercent, printMode, isRectoVerso, hasVarnish,
+    hasFlatColor, rectoVersoType, cuttingTimePerPoseSeconds, assemblyTimePerPieceSeconds,
+    packTimePerPieceSeconds, hasAssemblyNotice, currentAccessoryId, currentAccessoryQty,
+    currentConsumableId, currentConsumableSize, hasPackaging, packagingBoxType,
+    packagingMaterialType, packagingExternalSize, packagingProductLength, packagingProductWidth,
+    packagingProductHeight, packagingProductThickness, packagingPlateId, packagingQuantity,
+    packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
+    hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
+    isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
   } = formState
 
   const {
-    selectedAccessories,
-    setSelectedAccessories,
-    handleAddAccessory,
-    handleRemoveAccessory,
-    resetAccessories,
+    selectedAccessories, setSelectedAccessories,
+    handleAddAccessory, handleRemoveAccessory, resetAccessories,
   } = useAccessories(
-    accessories,
-    currentAccessoryId,
-    currentAccessoryQty,
+    accessories, currentAccessoryId, currentAccessoryQty,
     (v) => setField('currentAccessoryId', v),
     (v) => setField('currentAccessoryQty', v),
   )
 
   const {
-    selectedConsumables,
-    setSelectedConsumables,
-    handleAddConsumable,
-    handleRemoveConsumable,
-    resetConsumables,
+    selectedConsumables, setSelectedConsumables,
+    handleAddConsumable, handleRemoveConsumable, resetConsumables,
   } = useConsumables(
-    consumables,
-    quantity,
-    currentConsumableId,
-    currentConsumableSize,
+    consumables, quantity, currentConsumableId, currentConsumableSize,
     (v) => setField('currentConsumableId', v),
     (v) => setField('currentConsumableSize', v),
   )
 
+  // ── Load initial quote ──
   useEffect(() => {
     if (!initialQuote || quoteLoaded.current) return
     quoteLoaded.current = true
 
-    loadQuote({
-      studyNumber: initialQuote.study?.number || 'ET',
-      client: initialQuote.client || '',
-      contactName: initialQuote.contactName || '',
-      selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
-      quantity: initialQuote.quantity,
-      selectedPlateId: initialQuote.plateId?.toString() || '',
-      flatWidth: initialQuote.flatWidth || 0,
-      flatHeight: initialQuote.flatHeight || 0,
-      inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
-      inkMlVerso: initialQuote.inkMlVerso ?? 0,
-      varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
-      flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
-      printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
-      isRectoVerso: initialQuote.isRectoVerso || false,
-      rectoVersoType: (initialQuote.rectoVersoType as 'identical' | 'different' | null) || null,
-      hasVarnish: initialQuote.hasVarnish || false,
-      hasFlatColor: initialQuote.hasFlatColor || false,
-      cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
-      assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
-      packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
-      hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
-      hasPackaging: initialQuote.hasPackaging || false,
-      packagingBoxType: (initialQuote.packagingBoxType as 'etui' | 'caisse' | 'plaque_rainee') || 'etui',
-      packagingMaterialType: (initialQuote.packagingMaterialType as 'B' | 'EB' | 'C' | 'BC') || 'BC',
-      packagingExternalSize: (initialQuote.packagingExternalSize as 'petit' | 'moyen' | 'grand' | null) || null,
-      packagingProductLength: initialQuote.packagingProductLength || 0,
-      packagingProductWidth: initialQuote.packagingProductWidth || 0,
-      packagingProductHeight: initialQuote.packagingProductHeight || 0,
-      packagingProductThickness: initialQuote.packagingProductThickness || 0,
-      packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
-      packagingQuantity: initialQuote.packagingQuantity || 0,
-      packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
-      packagingWidth: initialQuote.packagingWidth || 0,
-      packagingHeight: initialQuote.packagingHeight || 0,
-      printSetupType: (initialQuote.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
-      cuttingSetupType: (initialQuote.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
-      hasImpression: initialQuote.hasImpression ?? true,
-      hasFaconnage: initialQuote.hasFaconnage ?? true,
-      hasConditionnement: initialQuote.hasConditionnement ?? true,
-      hasAccessoires: initialQuote.hasAccessoires ?? false,
-      isMultiProduct: initialQuote.isMultiProduct ?? false,
-      hasBE: initialQuote.hasBE ?? false,
-      beTimeMinutes: initialQuote.beTimeMinutes ?? 0,
-      batTimeMinutes: initialQuote.batTimeMinutes ?? 0,
-      hasDossierFee: initialQuote.hasDossierFee ?? false,
-      plateCostOverride: initialQuote.plateCostOverride ?? null,
-      customPlate: initialQuote.customPlateName && initialQuote.customPlateWidth && initialQuote.customPlateHeight && initialQuote.customPlateCost
-        ? { name: initialQuote.customPlateName, width: initialQuote.customPlateWidth, height: initialQuote.customPlateHeight, cost: initialQuote.customPlateCost }
-        : null,
-      showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
-      showMargeSopano: initialQuote.showMargeSopano ?? false,
-      transportDeliveries: initialQuote.transportDeliveries?.map((d): TransportDeliveryForm => ({
-        id: uuidv4(),
-        mode: d.transportMode as 'PACK30' | 'MESSAGERIE_PLUS' | 'AFFRETEMENT' | undefined,
-        department: d.department,
-        weightKg: d.weightKg ?? undefined,
-        units: d.units,
-        optionsHT: d.optionsHT,
-      })) || [],
-      products: initialQuote.products?.map((p) => ({
-        id: uuidv4(),
-        productTypeId: p.productTypeId?.toString() || '',
-        productSearch: p.productTypeName || '',
-        flatWidth: p.flatWidth || 0,
-        flatHeight: p.flatHeight || 0,
-        quantity: p.quantity || 0,
-        selectedPlateId: p.plateId?.toString() || '',
-        printMode: (p.printMode as 'production' | 'quality') || 'production',
-        isRectoVerso: p.isRectoVerso || false,
-        rectoVersoType: (p.rectoVersoType as 'identical' | 'different' | null) || null,
-        inkMlPerPlate: p.inkMlPerPlate || 0,
-        inkMlVerso: p.inkMlVerso || 0,
-        varnishSurfacePercent: p.varnishSurfacePercent || 0,
-        flatColorSurfacePercent: p.flatColorSurfacePercent || 0,
-        hasVarnish: p.hasVarnish || false,
-        hasFlatColor: p.hasFlatColor || false,
-        hasImpression: p.hasImpression ?? true,
-        printSetupType: (p.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
-        cuttingSetupType: (p.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
-        cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds || 0,
-        orientationOverride: null,
-      })) || [],
-    })
+    const { formPayload, accessories: accs, consumables: cons, amalgameGroups: groups } = parseQuoteForLoad(initialQuote)
+    loadQuote(formPayload)
 
-    if (initialQuote.accessories) {
-      setSelectedAccessories(initialQuote.accessories.map((qa) => ({
-        id: qa.accessoryId,
-        name: qa.accessory?.name || 'Inconnu',
-        price: qa.accessory?.price || 0,
-        quantity: qa.quantity,
-      })))
-    }
-
-    if (initialQuote.consumables) {
-      setSelectedConsumables(initialQuote.consumables.map((qc) => ({
-        id: qc.consumableId,
-        name: qc.consumable?.name || 'Inconnu',
-        price: qc.consumable?.price || 0,
-        size: qc.consumable?.size || 1,
-        sizePerItem: qc.sizePerItem,
-        quantity: initialQuote.quantity,
-      })))
-    }
-
+    if (accs.length > 0) setSelectedAccessories(accs)
+    if (cons.length > 0) setSelectedConsumables(cons)
+    if (groups.length > 0) setTimeout(() => setAmalgameGroups(groups), 0)
     if (isViewOnly) setScreenState('recap')
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialQuote])
 
+  // ── Resolved plate ──
   const selectedPlateBase = plates.find((p) => p.id.toString() === selectedPlateId)
   const plateCostOverride = formState.plateCostOverride
   const customPlate = formState.customPlate
-  // Matière personnalisée > prix négocié > plaque catalogue
-  // useMemo évite de recréer l'objet à chaque render (sinon boucle infinie dans l'effect d'imposition)
   const selectedPlate = useMemo(() => {
     if (customPlate) {
       return { id: -1, name: customPlate.name, width: customPlate.width, height: customPlate.height, cost: customPlate.cost, material: customPlate.name }
@@ -309,11 +131,11 @@ export function useCalculator(
       : selectedPlateBase
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [customPlate?.name, customPlate?.width, customPlate?.height, customPlate?.cost, selectedPlateBase, plateCostOverride])
+
   const selectedProductType = productTypes.find((pt) => pt.id.toString() === selectedProductTypeId)
   const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
 
-  // ── Dimensions emballage ──
-  // En multi-produit : on prend le plus grand produit (par surface à plat)
+  // ── Packaging dimensions ──
   const largestProduct = isMultiProduct && products.length > 0
     ? products.reduce((max, p) =>
         p.flatWidth * p.flatHeight > max.flatWidth * max.flatHeight ? p : max,
@@ -321,12 +143,8 @@ export function useCalculator(
       )
     : null
 
-  const effectivePackagingProductLength = isMultiProduct && largestProduct
-    ? largestProduct.flatHeight
-    : packagingProductLength
-  const effectivePackagingProductWidth = isMultiProduct && largestProduct
-    ? largestProduct.flatWidth
-    : packagingProductWidth
+  const effectivePackagingProductLength = isMultiProduct && largestProduct ? largestProduct.flatHeight : packagingProductLength
+  const effectivePackagingProductWidth  = isMultiProduct && largestProduct ? largestProduct.flatWidth  : packagingProductWidth
 
   const computedPackagingDimensions = (() => {
     const L = effectivePackagingProductLength
@@ -335,29 +153,24 @@ export function useCalculator(
     const T = packagingProductThickness
     if (L <= 0 || W <= 0) return { width: 0, height: 0 }
     switch (packagingBoxType) {
-      case 'etui':
-        return { width: 2 * W + 2 * T, height: L + 2 * T + 100 }
-      case 'caisse':
-        if (H <= 0) return { width: 0, height: 0 }
-        return { width: H + W, height: 2 * L + 2 * W + 50 }
-      case 'plaque_rainee':
-        return { width: W, height: 2 * L }
-      default:
-        return { width: 0, height: 0 }
+      case 'etui':        return { width: 2 * W + 2 * T, height: L + 2 * T + 100 }
+      case 'caisse':      if (H <= 0) return { width: 0, height: 0 }; return { width: H + W, height: 2 * L + 2 * W + 50 }
+      case 'plaque_rainee': return { width: W, height: 2 * L }
+      default:            return { width: 0, height: 0 }
     }
   })()
+
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
 
+  // ── Single-product imposition ──
   useEffect(() => {
     if (isMultiProduct) return
     if (selectedPlate && flatWidth > 0 && flatHeight > 0 && quantity > 0) {
       const imp = calculateImposition(
         { width: flatWidth, height: flatHeight },
         { width: selectedPlate.width, height: selectedPlate.height },
-        poseSpacingMm,
-        orientationOverride ?? undefined,
-        plateBorderMm
+        poseSpacingMm, orientationOverride ?? undefined, plateBorderMm
       )
       const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(quantity / imp.itemsPerPlate) : 0
       setImpositionResult({
@@ -372,124 +185,33 @@ export function useCalculator(
     }
   }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm, isMultiProduct, orientationOverride])
 
-  const productSlotResults: ProductSlotResult[] = isMultiProduct
-    ? products.map((slot) => {
-        const plate = plates.find((p) => p.id.toString() === slot.selectedPlateId)
-        let slotImposition: ImpositionResult | null = null
+  // ── Memoized multi-product calculations ──
+  const { amalgameGroupResults, productSlotResults } = useImpositionResults({
+    isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm, plateBorderMm,
+  })
 
-        if (plate && slot.flatWidth > 0 && slot.flatHeight > 0 && slot.quantity > 0) {
-          const imp = calculateImposition(
-            { width: slot.flatWidth, height: slot.flatHeight },
-            { width: plate.width, height: plate.height },
-            poseSpacingMm,
-            slot.orientationOverride ?? undefined,
-            plateBorderMm
-          )
-          const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(slot.quantity / imp.itemsPerPlate) : 0
-          slotImposition = {
-            itemsPerPlate: imp.itemsPerPlate,
-            platesNeeded,
-            materialCost: platesNeeded * plate.cost,
-            orientation: imp.orientation,
-            layout: imp.layout,
-          }
-        }
-
-        const { effectiveInkMl: slotEffectiveInkMl, effectiveIsRectoVerso: slotEffectiveIsRectoVerso } =
-          resolveVerso(slot.isRectoVerso, slot.rectoVersoType, slot.inkMlPerPlate, slot.inkMlVerso)
-
-        const slotCosts = calculateCosts({
-          quantity: slot.quantity,
-          impositionResult: slotImposition,
-          selectedPlate: plate,
-          inkMlPerPlate: slotEffectiveInkMl,
-          varnishSurfacePercent: slot.varnishSurfacePercent,
-          flatColorSurfacePercent: slot.flatColorSurfacePercent,
-          printMode: slot.printMode,
-          isRectoVerso: slotEffectiveIsRectoVerso,
-          hasVarnish: slot.hasVarnish,
-          hasFlatColor: slot.hasFlatColor,
-          printSetupType: slot.printSetupType,
-          cuttingSetupType: slot.cuttingSetupType,
-          hasImpression: slot.hasImpression,
-          hasFaconnage: false,
-          hasConditionnement: false,
-          hasAccessoires: false,
-          cuttingTimePerPoseSeconds: slot.cuttingTimePerPoseSeconds,
-          assemblyTimePerPieceSeconds: 0,
-          packTimePerPieceSeconds: 0,
-          hasAssemblyNotice: false,
-          selectedAccessories: [],
-          selectedConsumables: [],
-          settings,
-          hasPackaging: false,
-          packagingPlate: undefined,
-          packagingQuantity: 0,
-          packagingCuttingTimePerPoseSeconds: 20,
-          packagingWidth: 0,
-          packagingHeight: 0,
-          hasDossierFee: false,
-        })
-
-        return {
-          slot,
-          impositionResult: slotImposition,
-          costResult: {
-            materialCost: slotCosts.materialCostRaw,
-            materialCostMarged: slotCosts.materialCostMarged,
-            materialMarginCoeff: slotCosts.materialMarginCoeff,
-            printingCost: slotCosts.printingCost,
-            printingCostData: slotCosts.printingCostData,
-            cuttingCost: slotCosts.cuttingCost,
-            cuttingMachineCost: slotCosts.cuttingMachineCost,
-            cuttingSetupCost: slotCosts.cuttingSetupCost,
-            cuttingMachineTimeMin: slotCosts.cuttingMachineTimeMin,
-            cuttingSetupTimeMin: slotCosts.cuttingSetupTimeMin,
-            inkVolumeL: slotCosts.inkVolumeL,
-            subtotal: slotCosts.totalCost,
-          },
-        }
-      })
-    : []
-
-  const totalQuantityMulti = isMultiProduct
-    ? products.reduce((sum, p) => sum + p.quantity, 0)
-    : 0
+  const totalQuantityMulti = isMultiProduct ? products.reduce((sum, p) => sum + p.quantity, 0) : 0
 
   const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
   const transportTotal = formState.transportDeliveries.reduce((sum, d) => {
     if (!d.mode || !d.department || d.units === undefined) return sum
     if (d.mode !== 'AFFRETEMENT' && d.weightKg === undefined) return sum
-    const calc = calculateTransport(
-      d.mode as TransportMode,
-      d.department,
-      d.weightKg || 0,
-      d.units,
-      fuelSurchargePct,
-      d.optionsHT || 0
-    )
+    const calc = calculateTransport(d.mode as TransportMode, d.department, d.weightKg || 0, d.units, fuelSurchargePct, d.optionsHT || 0)
     return sum + (calc?.total ?? 0)
   }, 0)
 
-  // Pour recto-verso "différent" avec jauge verso renseignée : encre = recto+verso, multiplier=1
-  // Si inkMlVerso=0 (anciens devis sauvegardés avant la jauge verso) : comportement legacy multiplier=2
   const { effectiveInkMl: effectiveInkMlPerPlate, effectiveIsRectoVerso } =
     resolveVerso(isRectoVerso, rectoVersoType, inkMlPerPlate, inkMlVerso)
 
-  // ── Prix unitaire B/EB depuis PackagingPricingRule (avec coefficient quantité) ──
   const settingsWithPackagingPrice = (() => {
     const isExternal = packagingMaterialType === 'B' || packagingMaterialType === 'EB'
     if (!isExternal || !packagingExternalSize || packagingQuantity <= 0) return settings
     if (!packagingRules?.rules?.length) return settings
-
     const category = (packagingBoxType || 'etui').toUpperCase()
     const mat = packagingMaterialType.toUpperCase()
     const sz = packagingExternalSize.toUpperCase()
-    const rule = packagingRules.rules.find(
-      (r) => r.category === category && r.material === mat && r.size === sz
-    )
+    const rule = packagingRules.rules.find((r) => r.category === category && r.material === mat && r.size === sz)
     if (!rule) return settings
-
     let price = rule.baseUnitPrice
     if (packagingRules.coefficients?.length) {
       const band = packagingRules.coefficients.find(
@@ -497,9 +219,7 @@ export function useCalculator(
       )
       if (band) price = Math.round(price * band.coefficient * 10000) / 10000
     }
-
-    const key = `PACKAGING_${mat}_${sz}_PRICE`
-    return { ...settings, [key]: price }
+    return { ...settings, [`PACKAGING_${mat}_${sz}_PRICE`]: price }
   })()
 
   const costResult = calculateCosts({
@@ -516,47 +236,35 @@ export function useCalculator(
     printSetupType: isMultiProduct ? 'none' : printSetupType,
     cuttingSetupType: isMultiProduct ? 'none' : cuttingSetupType,
     hasImpression: isMultiProduct ? false : hasImpression,
-    hasFaconnage,
-    hasConditionnement,
-    hasAccessoires,
+    hasFaconnage, hasConditionnement, hasAccessoires,
     cuttingTimePerPoseSeconds: isMultiProduct ? 0 : cuttingTimePerPoseSeconds,
-    assemblyTimePerPieceSeconds,
-    packTimePerPieceSeconds,
-    hasAssemblyNotice,
-    selectedAccessories,
-    selectedConsumables,
+    assemblyTimePerPieceSeconds, packTimePerPieceSeconds, hasAssemblyNotice,
+    selectedAccessories, selectedConsumables,
     settings: settingsWithPackagingPrice,
-    hasPackaging,
-    packagingMaterialType,
-    packagingExternalSize,
-    hasBE,
-    beTimeMinutes,
-    batTimeMinutes,
-    hasDossierFee,
-    packagingPlate,
-    packagingQuantity,
-    packagingCuttingTimePerPoseSeconds,
+    hasPackaging, packagingMaterialType, packagingExternalSize,
+    hasBE, beTimeMinutes, batTimeMinutes, hasDossierFee,
+    packagingPlate, packagingQuantity, packagingCuttingTimePerPoseSeconds,
     packagingWidth: computedPackagingDimensions.width,
     packagingHeight: computedPackagingDimensions.height,
     transportTotal: transportTotal > 0 ? transportTotal : undefined,
   })
 
-  const multiProductsSubtotal = productSlotResults.reduce(
-    (sum, r) => sum + r.costResult.subtotal, 0
-  )
-  const totalCostMulti = multiProductsSubtotal + costResult.totalCost
+  const templateOptionsCost = templateOptionSelections.reduce((sum, s) => sum + s.priceHT * s.quantity, 0)
 
-  // ── Calcul des marges internes ──
-  const displayTotalForMarges = isMultiProduct ? totalCostMulti : costResult.totalCost
+  const multiProductsSubtotal = productSlotResults.reduce((sum, r) => sum + r.costResult.subtotal, 0)
+  const amalgameGroupsSubtotal = amalgameGroupResults.reduce((sum, r) => sum + r.totalCost, 0)
+  const totalCostMulti = multiProductsSubtotal + amalgameGroupsSubtotal + costResult.totalCost
+
+  const displayTotalForMarges = isMultiProduct ? totalCostMulti : costResult.totalCost + templateOptionsCost
   const margeCommercialeMontant = showMargeCommerciale ? displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100) : 0
   const margeSopanoMontant = showMargeSopano ? displayTotalForMarges * (MARGE_SOPANO_PERCENT / 100) : 0
   const totalNet = displayTotalForMarges - margeCommercialeMontant - margeSopanoMontant
 
+  // ── Formatting callbacks ──
   const getCuttingDetails = useCallback(() => formatCuttingDetails({
     cuttingMachineTimeMin: costResult.cuttingMachineTimeMin,
     cuttingSetupTimeMin: costResult.cuttingSetupTimeMin,
-    cuttingSetupType,
-    cuttingTimePerPoseSeconds,
+    cuttingSetupType, cuttingTimePerPoseSeconds,
   }), [costResult.cuttingMachineTimeMin, costResult.cuttingSetupTimeMin, cuttingSetupType, cuttingTimePerPoseSeconds])
 
   const getAssemblyDetails = useCallback(() => formatAssemblyDetails({
@@ -571,9 +279,54 @@ export function useCalculator(
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
   }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece])
 
+  // ── Save handlers ──
+  const { isServing, handleSave, handleSaveProd, handleSaveActuals } = useSaveHandlers({
+    studyNumber, client: formState.client, contactName: formState.contactName,
+    selectedProductTypeId, quantity, selectedPlateId, customPlate, plateCostOverride,
+    flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
+    varnishSurfacePercent, flatColorSurfacePercent, printMode,
+    isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
+    cuttingTimePerPoseSeconds, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
+    hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
+    packagingExternalSize, packagingProductLength, packagingProductWidth,
+    packagingProductHeight, packagingProductThickness, packagingPlateId,
+    packagingQuantity, packagingCuttingTimePerPoseSeconds,
+    printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
+    hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
+    hasDossierFee, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
+    transportDeliveries: formState.transportDeliveries,
+    impositionResult, productSlotResults, amalgameGroupResults, amalgameGroups,
+    costResult, totalCostMulti, totalQuantityMulti, transportTotal, fuelSurchargePct,
+    computedPackagingDimensions, selectedProductType, selectedAccessories, selectedConsumables,
+    initialQuoteReference: initialQuote?.reference,
+    targetQuoteId, ...prodState,
+    setScreenState,
+  })
+
+  // ── Template / create helpers ──
   const applyTemplate = useCallback((template: ProductType['templates'][number]) => {
-    if (template.flatWidth) setField('flatWidth', template.flatWidth)
-    if (template.flatHeight) setField('flatHeight', template.flatHeight)
+    const resolveTemplateFlatDimensions = (
+      width: number | null | undefined,
+      depth: number | null | undefined,
+      height: number | null | undefined
+    ) => {
+      if (template.formatType !== '3d') {
+        return { width: width ?? null, height: height ?? null }
+      }
+      if (!width || !depth || !height) {
+        return { width: width ?? null, height: height ?? null }
+      }
+      const widthFormula = resolveFlatFormula(selectedProductType?.flatWidthFormula, 'width', '3d')
+      const heightFormula = resolveFlatFormula(selectedProductType?.flatHeightFormula, 'height', '3d')
+      return {
+        width: evalFormula(widthFormula, width, depth, height) ?? width,
+        height: evalFormula(heightFormula, width, depth, height) ?? height,
+      }
+    }
+
+    const templateDims = resolveTemplateFlatDimensions(template.flatWidth, template.flatDepth, template.flatHeight)
+    if (templateDims.width) setField('flatWidth', templateDims.width)
+    if (templateDims.height) setField('flatHeight', templateDims.height)
     if (template.plateId) setField('selectedPlateId', template.plateId.toString())
     setField('hasImpression', template.hasImpression)
     setField('printMode', template.printMode as 'production' | 'quality')
@@ -594,27 +347,83 @@ export function useCalculator(
     setField('packTimePerPieceSeconds', template.packTimePerPieceSeconds)
     setField('hasAssemblyNotice', template.hasAssemblyNotice)
     setField('hasAccessoires', template.hasAccessoires)
-    // Pré-remplir les accessoires si le template en a
     if (template.accessories.length > 0) {
       setSelectedAccessories(template.accessories.map((a) => ({
-        id: a.accessory.id,
-        name: a.accessory.name,
-        price: a.accessory.price,
-        quantity: a.quantity,
+        id: a.accessory.id, name: a.accessory.name, price: a.accessory.price, quantity: a.quantity,
+      })))
+    }
+    if (template.amalgameGroupsJson) {
+      try {
+        const groups = JSON.parse(template.amalgameGroupsJson)
+        setAmalgameGroups(Array.isArray(groups) ? groups : [])
+      } catch {
+        setAmalgameGroups([])
+      }
+    } else if (template.hasAmalgame && template.amalgameRuns.length > 0) {
+      setAmalgameGroups(template.amalgameRuns.map((r, i) => ({
+        id: uuidv4(), name: r.name, colorIndex: i % GROUP_COLORS.length,
+        amalgameType: r.hasImpression ? 'impression_decoupe' as const : 'decoupe' as const,
+        plateId: r.plateId?.toString() ?? '', cuttingSetupType: 'none' as const,
+        cuttingTimePerPoseSeconds: 0, printMode: 'production' as const,
+        isRectoVerso: false, rectoVersoType: null, inkMlPerPlate: 20, inkMlVerso: 0,
+        hasVarnish: false, hasFlatColor: false, varnishSurfacePercent: 0,
+        flatColorSurfacePercent: 0, printSetupType: 'none' as const,
+      })))
+    } else {
+      setAmalgameGroups([])
+    }
+    const variantSelections = (template.templateVariants ?? []).map((tv) => ({
+      variantId: tv.variantId,
+      label: tv.variant.label,
+      priceHT: tv.variant.priceHT ?? 0,
+      quantity: tv.defaultQuantity,
+      optionName: tv.variant.option.name,
+      inputType: tv.variant.option.inputType,
+    }))
+    const optionSelections = (template.templateOptionConfigs ?? []).map((oc) => ({
+      variantId: -(oc.optionId), // negative to distinguish from real variantIds
+      label: oc.option.name,
+      priceHT: oc.option.priceHT ?? 0,
+      quantity: oc.defaultQuantity,
+      optionName: oc.option.name,
+      inputType: oc.option.inputType,
+    }))
+    setTemplateOptionSelections([...variantSelections, ...optionSelections])
+    if (template.templateElements && template.templateElements.length >= 2) {
+      setField('isMultiProduct', true)
+      setField('products', template.templateElements.map((te) => ({
+        ...DEFAULT_PRODUCT_SLOT,
+        id: uuidv4(),
+        productSearch: te.element.name,
+        flatWidth: resolveTemplateFlatDimensions(te.flatWidth, te.flatDepth, te.flatHeight).width ?? 0,
+        flatHeight: resolveTemplateFlatDimensions(te.flatWidth, te.flatDepth, te.flatHeight).height ?? 0,
+        selectedPlateId: te.plateId?.toString() ?? '',
+        quantity: 100,
+        hasImpression: te.hasImpression,
+        printMode: te.printMode as 'production' | 'quality',
+        printSetupType: te.printSetupType as 'none' | 'standard' | 'complexe',
+        isRectoVerso: te.isRectoVerso,
+        rectoVersoType: te.rectoVersoType as 'identical' | 'different' | null,
+        hasVarnish: te.hasVarnish,
+        hasFlatColor: te.hasFlatColor,
+        inkMlPerPlate: te.inkMlPerPlate,
+        inkMlVerso: te.inkMlVerso,
+        varnishSurfacePercent: te.varnishSurfacePercent,
+        flatColorSurfacePercent: te.flatColorSurfacePercent,
+        cuttingTimePerPoseSeconds: te.cuttingTimePerPoseSeconds,
+        cuttingSetupType: te.cuttingSetupType as 'none' | 'standard' | 'complexe',
+        amalgameGroupId: te.amalgameGroupId ?? null,
       })))
     }
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [setField])
+  }, [setField, selectedProductType])
 
   const handleCreateProductType = async () => {
     if (!productSearch) return
     try {
       const newType = await createProductType(productSearch)
       if (!productTypes.find((pt) => pt.id === newType.id)) {
-        setProductTypes([
-          ...productTypes,
-          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [], templates: [] },
-        ])
+        setProductTypes([...productTypes, { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [], templates: [] }])
       }
       setField('selectedProductTypeId', newType.id.toString())
       setField('productSearch', newType.name)
@@ -630,10 +439,7 @@ export function useCalculator(
     try {
       const newType = await createProductType(name.trim())
       if (!productTypes.find((pt) => pt.id === newType.id)) {
-        setProductTypes([
-          ...productTypes,
-          { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [], templates: [] },
-        ])
+        setProductTypes([...productTypes, { ...newType, flatWidthFormula: 'l', flatHeightFormula: 'L', elements: [], templates: [] }])
       }
       updateProduct(slotIndex, 'productTypeId', newType.id.toString())
       updateProduct(slotIndex, 'productSearch', newType.name)
@@ -652,234 +458,6 @@ export function useCalculator(
       console.error(e)
       toast.error('Erreur lors de la création de l\'accessoire')
       return null
-    }
-  }
-
-  const handleSave = async () => {
-    if (isMultiProduct) {
-      if (products.length === 0) {
-        toast.error('Ajoutez au moins un produit.')
-        return
-      }
-      const incomplete = products.find(
-        (p) => !p.productTypeId || !p.selectedPlateId || p.flatWidth <= 0 || p.flatHeight <= 0 || p.quantity <= 0
-      )
-      if (incomplete) {
-        toast.error('Tous les produits doivent être complétés.')
-        return
-      }
-    } else {
-      const parsedProductId = parseInt(selectedProductTypeId)
-      const hasPlate = !!selectedPlateId || !!customPlate
-      if (!impositionResult || !hasPlate || !selectedProductTypeId || isNaN(parsedProductId)) {
-        toast.error('Veuillez sélectionner un Type de PLV valide.')
-        return
-      }
-    }
-
-    setIsServing(true)
-    try {
-      const parsedProductId = isMultiProduct ? 0 : parseInt(selectedProductTypeId)
-
-      await createQuote({
-        studyNumber,
-        client: formState.client || undefined,
-        contactName: formState.contactName || undefined,
-        productTypeId: isMultiProduct ? parseInt(products[0].productTypeId) : parsedProductId,
-        quantity: isMultiProduct ? totalQuantityMulti : quantity,
-        plateId: customPlate ? null : (isMultiProduct ? parseInt(products[0].selectedPlateId) : parseInt(selectedPlateId)),
-        customPlateName: customPlate?.name ?? null,
-        customPlateWidth: customPlate?.width ?? null,
-        customPlateHeight: customPlate?.height ?? null,
-        customPlateCost: customPlate?.cost ?? null,
-        itemsPerPlate: isMultiProduct
-          ? (productSlotResults[0]?.impositionResult?.itemsPerPlate || 0)
-          : (impositionResult?.itemsPerPlate || 0),
-        platesCount: isMultiProduct
-          ? (productSlotResults[0]?.impositionResult?.platesNeeded || 0)
-          : (impositionResult?.platesNeeded || 0),
-        totalCost: isMultiProduct ? totalCostMulti : costResult.totalCost,
-        flatWidth: isMultiProduct ? products[0].flatWidth : flatWidth,
-        flatHeight: isMultiProduct ? products[0].flatHeight : flatHeight,
-        inkMlPerPlate: isMultiProduct ? 0 : inkMlPerPlate,
-        inkMlVerso: isMultiProduct ? 0 : inkMlVerso,
-        varnishSurfacePercent: isMultiProduct ? 0 : varnishSurfacePercent,
-        flatColorSurfacePercent: isMultiProduct ? 0 : flatColorSurfacePercent,
-        printMode: isMultiProduct ? 'production' : printMode,
-        isRectoVerso: isMultiProduct ? false : isRectoVerso,
-        rectoVersoType: isMultiProduct ? null : rectoVersoType,
-        hasVarnish: isMultiProduct ? false : hasVarnish,
-        hasFlatColor: isMultiProduct ? false : hasFlatColor,
-        cuttingTimePerPoseSeconds: isMultiProduct ? 0 : cuttingTimePerPoseSeconds,
-        assemblyTimePerPieceSeconds,
-        packTimePerPieceSeconds,
-        hasAssemblyNotice,
-        hasPackaging,
-        packagingBoxType,
-        packagingMaterialType,
-        packagingExternalSize,
-        packagingProductLength: packagingProductLength || null,
-        packagingProductWidth: packagingProductWidth || null,
-        packagingProductHeight: packagingProductHeight || null,
-        packagingProductThickness: packagingProductThickness || null,
-        packagingPlateId: packagingPlateId ? parseInt(packagingPlateId) : null,
-        packagingQuantity: packagingQuantity || null,
-        packagingCuttingTimePerPoseSeconds,
-        packagingWidth: computedPackagingDimensions.width || null,
-        packagingHeight: computedPackagingDimensions.height || null,
-        printSetupType: isMultiProduct ? 'none' : printSetupType,
-        cuttingSetupType: isMultiProduct ? 'none' : cuttingSetupType,
-        hasImpression: isMultiProduct ? false : hasImpression,
-        hasFaconnage,
-        hasConditionnement,
-        hasAccessoires,
-        hasBE,
-        beTimeMinutes,
-        batTimeMinutes,
-        hasDossierFee,
-        plateCostOverride: plateCostOverride ?? null,
-        isMultiProduct,
-        showMargeCommerciale,
-        showMargeSopano,
-        elements: isMultiProduct ? [] : (selectedProductType?.elements.map((el) => ({
-          name: el.name,
-          quantity: el.quantity,
-        })) || []),
-        accessories: selectedAccessories.map((sa) => ({
-          id: sa.id,
-          quantity: sa.quantity,
-        })),
-        consumables: selectedConsumables.map((sc) => ({
-          id: sc.id,
-          sizePerItem: sc.sizePerItem,
-        })),
-        transportTotal: transportTotal > 0 ? transportTotal : undefined,
-        transportDeliveries: formState.transportDeliveries
-          .filter(d => d.mode && d.department && d.units)
-          .map(d => {
-            const c = calculateTransport(
-              d.mode as TransportMode,
-              d.department!,
-              d.weightKg || 0,
-              d.units,
-              fuelSurchargePct,
-              d.optionsHT || 0
-            )
-            return {
-              transportMode: d.mode!,
-              department: d.department!,
-              weightKg: d.weightKg ?? null,
-              units: d.units,
-              optionsHT: d.optionsHT,
-              basePriceHT: c?.basePrice ?? 0,
-              totalHT: c?.total ?? 0,
-            }
-          }),
-        parentReference: initialQuote?.reference || undefined,
-        products: isMultiProduct ? products.map((p, i) => ({
-          position: i,
-          productTypeId: parseInt(p.productTypeId) || null,
-          productTypeName: p.productSearch,
-          flatWidth: p.flatWidth,
-          flatHeight: p.flatHeight,
-          quantity: p.quantity,
-          plateId: parseInt(p.selectedPlateId) || null,
-          itemsPerPlate: productSlotResults[i]?.impositionResult?.itemsPerPlate || null,
-          platesCount: productSlotResults[i]?.impositionResult?.platesNeeded || null,
-          printMode: p.printMode,
-          isRectoVerso: p.isRectoVerso,
-          rectoVersoType: p.rectoVersoType,
-          inkMlPerPlate: p.inkMlPerPlate,
-          varnishSurfacePercent: p.varnishSurfacePercent,
-          flatColorSurfacePercent: p.flatColorSurfacePercent,
-          hasVarnish: p.hasVarnish,
-          hasFlatColor: p.hasFlatColor,
-          hasImpression: p.hasImpression,
-          printSetupType: p.printSetupType,
-          cuttingSetupType: p.cuttingSetupType,
-          cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds,
-          totalCost: productSlotResults[i]?.costResult.subtotal || null,
-        })) : [],
-      })
-      setScreenState('success')
-      setTimeout(() => setScreenState('recap'), 3000)
-    } catch (error: unknown) {
-      const knownMessages: Record<string, string> = {
-        'Non autorisé': 'Vous devez être connecté pour enregistrer un devis.',
-        'Le type de PLV sélectionné n\'existe plus.': 'Le type de PLV sélectionné n\'existe plus.',
-      }
-      const rawMessage = (error as Error)?.message || ''
-      const displayMessage = knownMessages[rawMessage] || 'Erreur lors de la sauvegarde. Veuillez réessayer.'
-      toast.error(displayMessage)
-    } finally {
-      setIsServing(false)
-    }
-  }
-
-  const handleSaveProd = async () => {
-    if (!targetQuoteId) return
-    setIsServing(true)
-    try {
-      const snapshot = {
-        cuttingTimePerPoseSeconds,
-        assemblyTimePerPieceSeconds,
-        packTimePerPieceSeconds,
-        inkMlPerPlate,
-        platesCount: impositionResult?.platesNeeded ?? null,
-        transportTotal: costResult.transportTotal ?? null,
-        printMode,
-        isRectoVerso,
-        hasVarnish,
-        hasFlatColor,
-        hasImpression,
-        hasFaconnage,
-        hasConditionnement,
-        printSetupType,
-        cuttingSetupType,
-      }
-      await saveProductionSheetFull(
-        targetQuoteId,
-        JSON.stringify(snapshot),
-        {
-          status: prodStatus,
-          remarques: prodRemarques,
-          planImageUrl: prodPlanImageUrl,
-          nbCollages: prodNbCollages,
-          collagePerPLV: prodCollagePerPLV,
-          faconnageNotes: prodFaconnageNotes,
-          conditionnementType: prodConditionnementType,
-          conditionnementNotes: prodConditionnementNotes,
-          achatsNotes: prodAchatsNotes,
-        }
-      )
-      toast.success('Fiche de production sauvegardée !')
-      router.push(`/dashboard/my-quotes/${targetQuoteId}?tab=production`)
-    } catch {
-      toast.error('Erreur lors de la sauvegarde')
-    } finally {
-      setIsServing(false)
-    }
-  }
-
-  const handleSaveActuals = async () => {
-    if (!targetQuoteId) return
-    setIsServing(true)
-    try {
-      await saveActualsFromCalc(targetQuoteId, {
-        cuttingTimePerPoseSeconds,
-        assemblyTimePerPieceSeconds,
-        packTimePerPieceSeconds,
-        platesCount: impositionResult?.platesNeeded ?? null,
-        transportTotal: costResult.transportTotal ?? null,
-        transportMode: formState.transportDeliveries?.[0]?.mode ?? null,
-        notes: actualsNotes,
-      })
-      toast.success('Données réelles sauvegardées !')
-      router.push(`/dashboard/my-quotes/${targetQuoteId}?tab=actuals`)
-    } catch {
-      toast.error('Erreur lors de la sauvegarde')
-    } finally {
-      setIsServing(false)
     }
   }
 
@@ -938,8 +516,7 @@ export function useCalculator(
     packagingProductWidth, setPackagingProductWidth: (v: number) => setField('packagingProductWidth', v),
     packagingProductHeight, setPackagingProductHeight: (v: number) => setField('packagingProductHeight', v),
     packagingProductThickness, setPackagingProductThickness: (v: number) => setField('packagingProductThickness', v),
-    computedPackagingDimensions,
-    largestProduct,
+    computedPackagingDimensions, largestProduct,
     hasBE, setHasBE: (v: boolean) => setField('hasBE', v),
     beTimeMinutes, setBeTimeMinutes: (v: number) => setField('beTimeMinutes', v),
     batTimeMinutes, setBatTimeMinutes: (v: number) => setField('batTimeMinutes', v),
@@ -949,45 +526,25 @@ export function useCalculator(
     hasDossierFee, setHasDossierFee: (v: boolean) => setField('hasDossierFee', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
-    handleCreateProductType, handleCreateProductTypeForSlot, handleCreateAccessory, handleSave, handleReset, applyTemplate,
+    handleCreateProductType, handleCreateProductTypeForSlot, handleCreateAccessory,
+    handleSave, handleReset, applyTemplate,
     getCuttingDetails, getAssemblyDetails, getPackDetails,
-    formState,
-    costResult,
+    formState, costResult,
     isMultiProduct, setIsMultiProduct: (v: boolean) => setField('isMultiProduct', v),
-    products,
-    activeProductIndex,
-    productSlotResults,
-    totalQuantityMulti,
-    totalCostMulti,
-    addProduct,
-    removeProduct,
-    setActiveProduct,
-    updateProduct,
-    addTransportDelivery,
-    removeTransportDelivery,
-    updateTransportDelivery,
+    products, activeProductIndex, productSlotResults,
+    totalQuantityMulti, totalCostMulti,
+    addProduct, removeProduct, setActiveProduct, updateProduct,
+    addTransportDelivery, removeTransportDelivery, updateTransportDelivery,
     showMargeCommerciale, setShowMargeCommerciale: (v: boolean) => setField('showMargeCommerciale', v),
     showMargeSopano, setShowMargeSopano: (v: boolean) => setField('showMargeSopano', v),
-    margeCommercialeMontant,
-    margeSopanoMontant,
-    totalNet,
-    settings,
-    setField,
+    margeCommercialeMontant, margeSopanoMontant, totalNet,
+    settings, setField,
     customPlate, setCustomPlate: (v: { name: string; width: number; height: number; cost: number } | null) => setField('customPlate', v),
-    // Mode production/actuals
-    mode,
-    targetQuoteId,
-    prodStatus, setProdStatus,
-    prodRemarques, setProdRemarques,
-    prodPlanImageUrl, setProdPlanImageUrl,
-    prodNbCollages, setProdNbCollages,
-    prodCollagePerPLV, setProdCollagePerPLV,
-    prodFaconnageNotes, setProdFaconnageNotes,
-    prodConditionnementType, setProdConditionnementType,
-    prodConditionnementNotes, setProdConditionnementNotes,
-    prodAchatsNotes, setProdAchatsNotes,
-    actualsNotes, setActualsNotes,
-    handleSaveProd,
-    handleSaveActuals,
+    mode, targetQuoteId,
+    ...prodState,
+    handleSaveProd, handleSaveActuals,
+    amalgameGroups, setAmalgameGroups,
+    amalgameGroupResults,
+    templateOptionSelections, setTemplateOptionSelections, templateOptionsCost,
   }
 }

@@ -91,6 +91,11 @@ export function calculateCosts(params: {
   packagingWidth: number
   packagingHeight: number
   transportTotal?: number
+  amalgameOverride?: {
+    materialCost: number
+    machineTimeMin: number
+    platesCount: number
+  } | null
 }) {
   const {
     quantity,
@@ -129,6 +134,7 @@ export function calculateCosts(params: {
     packagingWidth,
     packagingHeight,
     transportTotal,
+    amalgameOverride,
   } = params
 
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
@@ -164,18 +170,37 @@ export function calculateCosts(params: {
 
   // ── Impression ──
   const printingCostData: PrintingCostData = (() => {
-    if (!hasImpression || !impositionResult || !selectedPlate)
+    const noImpression = {
+      cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0,
+      setupCost: 0, machineCost: 0, setupTimeMin: 0, machineTimeMin: 0,
+    }
+    if (!hasImpression) return noImpression
+
+    // ── Mode amalgame : machine time fourni en override ──
+    if (amalgameOverride) {
+      const platesNeeded = amalgameOverride.platesCount
+      const multiplier = isRectoVerso ? 2 : 1
+      const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
+      const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
+      const standardVolumeL = (inkMlPerPlate * platesNeeded * multiplier) / 1000
+      const varnishVolumeL = (inkMlPerPlate * varnishRatio * platesNeeded * multiplier) / 1000
+      const flatColorVolumeL = (inkMlPerPlate * flatColorRatio * platesNeeded * multiplier) / 1000
+      const inkCost = standardVolumeL * inkCostPerLiter * inkMarginStandard
+        + varnishVolumeL * inkCostVarnishPerLiter * inkMarginVarnish
+        + flatColorVolumeL * inkCostFlatColorPerLiter * inkMarginFlatColor
+      const machineTimeMin = amalgameOverride.machineTimeMin
+      const machineCost = (machineTimeMin / 60) * hourlyRatePrint
+      const setupCost = printSetupType === 'standard' ? printSetupStandardCost
+        : printSetupType === 'complexe' ? printSetupComplexCost : 0
       return {
-        cost: 0,
-        timeMin: 0,
-        inkCost: 0,
-        laborCost: 0,
-        inkVolumeL: 0,
-        setupCost: 0,
-        machineCost: 0,
-        setupTimeMin: 0,
-        machineTimeMin: 0,
+        cost: inkCost + machineCost + setupCost,
+        timeMin: machineTimeMin, inkCost, laborCost: machineCost,
+        inkVolumeL: standardVolumeL + varnishVolumeL + flatColorVolumeL,
+        setupCost, machineCost, setupTimeMin: 0, machineTimeMin,
       }
+    }
+
+    if (!impositionResult || !selectedPlate) return noImpression
 
     const multiplier = isRectoVerso ? 2 : 1
     const platesNeeded = impositionResult.platesNeeded
@@ -208,7 +233,6 @@ export function calculateCosts(params: {
 
     const machineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
-
 
     const setupCost = (() => {
       if (printSetupType === 'standard') return printSetupStandardCost
@@ -347,7 +371,9 @@ const materialMarginCoeff = (() => {
   return materialMarginTier4
 })()
 
-const materialCostRaw = impositionResult?.materialCost || 0
+const materialCostRaw = amalgameOverride
+  ? amalgameOverride.materialCost
+  : (impositionResult?.materialCost || 0)
 const materialCostMarged = materialCostRaw * materialMarginCoeff
 
 // ── Frais de dossier ──

@@ -6,7 +6,7 @@ import {
 } from '@/components/ui/select'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
-import { Pencil, X, LayoutTemplate, FlaskConical } from 'lucide-react'
+import { Pencil, X, LayoutTemplate, FlaskConical, Minus, Plus } from 'lucide-react'
 
 export function SectionPresentation() {
   const {
@@ -27,6 +27,7 @@ export function SectionPresentation() {
     hasDossierFee, setHasDossierFee,
     applyTemplate,
     customPlate, setCustomPlate,
+    templateOptionSelections, setTemplateOptionSelections, templateOptionsCost,
   } = useCalculatorContext()
 
   const [showOverrideInput, setShowOverrideInput] = useState(formState.plateCostOverride !== null)
@@ -171,6 +172,53 @@ export function SectionPresentation() {
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-slate-400">Pré-remplit le format, la matière, la découpe et le façonnage. Vous pouvez ensuite modifier chaque valeur.</p>
+              </div>
+            )}
+
+            {templateOptionSelections.length > 0 && (
+              <div className="md:col-span-2 rounded-lg border border-sky-200 bg-sky-50 p-4 space-y-3">
+                <div className="flex items-center justify-between">
+                  <Label className="text-sky-700 font-semibold">Options du modèle</Label>
+                  <span className="text-xs font-semibold text-sky-700 bg-sky-100 border border-sky-200 rounded px-2 py-0.5">
+                    + {templateOptionsCost.toFixed(2)} €
+                  </span>
+                </div>
+                <div className="space-y-2">
+                  {templateOptionSelections.map((sel) => (
+                    <div key={sel.variantId} className="flex items-center justify-between gap-3">
+                      <div className="flex-1 min-w-0">
+                        <p className="text-sm font-medium text-slate-700 truncate">{sel.label}</p>
+                        <p className="text-xs text-slate-400">{sel.optionName} — {sel.priceHT.toFixed(2)} €/unité</p>
+                      </div>
+                      {sel.inputType === 'multi_item' ? (
+                        <div className="flex items-center gap-1.5 shrink-0">
+                          <button
+                            type="button"
+                            onClick={() => setTemplateOptionSelections(templateOptionSelections.map((s) =>
+                              s.variantId === sel.variantId ? { ...s, quantity: Math.max(0, s.quantity - 1) } : s
+                            ))}
+                            className="h-7 w-7 rounded border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50 disabled:opacity-40"
+                            disabled={sel.quantity <= 0}
+                          >
+                            <Minus className="h-3 w-3" />
+                          </button>
+                          <span className="w-6 text-center text-sm font-semibold text-slate-700">{sel.quantity}</span>
+                          <button
+                            type="button"
+                            onClick={() => setTemplateOptionSelections(templateOptionSelections.map((s) =>
+                              s.variantId === sel.variantId ? { ...s, quantity: s.quantity + 1 } : s
+                            ))}
+                            className="h-7 w-7 rounded border border-slate-200 bg-white flex items-center justify-center hover:bg-slate-50"
+                          >
+                            <Plus className="h-3 w-3" />
+                          </button>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-slate-500 shrink-0">× {sel.quantity}</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               </div>
             )}
 

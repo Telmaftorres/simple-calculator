@@ -1,8 +1,6 @@
 'use client'
 
 import { useState } from 'react'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Settings } from 'lucide-react'
 import Link from 'next/link'
@@ -28,100 +26,6 @@ import { SectionActualsExtra } from './sections/SectionActualsExtra'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 import type { ImpositionResult } from '@/types/calculator'
 
-function AmalgamePanel() {
-  const [open, setOpen] = useState(false)
-  const [enabled, setEnabled] = useState(false)
-  const [amalgameType, setAmalgameType] = useState<'all' | 'custom' | null>(null)
-  const [nbPlaques, setNbPlaques] = useState('')
-  const [chutesOpen, setChutesOpen] = useState(false)
-  const [chutesDetails, setChutesDetails] = useState('')
-
-  return (
-    <div className="mt-3">
-      <button
-        type="button"
-        onClick={() => setOpen(v => !v)}
-        className="text-xs font-semibold text-blue-600 hover:text-blue-800 flex items-center gap-1"
-      >
-        {open ? '▾' : '▸'} Personnaliser
-      </button>
-
-      {open && (
-        <div className="mt-3 border border-slate-200 rounded-xl overflow-hidden">
-          <div className="flex items-center justify-between bg-slate-100 px-4 py-2.5">
-            <div className="flex items-center gap-2">
-              <span className="text-xs font-bold text-slate-600 uppercase tracking-wide">Amalgame et chutes</span>
-              <span className="text-xs text-slate-400 italic">(en développement)</span>
-            </div>
-            <button
-              type="button"
-              onClick={() => setEnabled(v => !v)}
-              className={`relative inline-flex h-5 w-9 items-center rounded-full transition-colors ${enabled ? 'bg-blue-500' : 'bg-slate-300'}`}
-            >
-              <span className={`inline-block h-3.5 w-3.5 transform rounded-full bg-white shadow transition-transform ${enabled ? 'translate-x-4.5' : 'translate-x-0.5'}`} />
-            </button>
-          </div>
-
-          <div className={`px-4 py-4 space-y-4 ${!enabled ? 'opacity-40 pointer-events-none' : ''}`}>
-            {/* Amalgame */}
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Amalgame</p>
-              <div className="flex gap-2">
-                <button
-                  type="button"
-                  onClick={() => setAmalgameType(amalgameType === 'all' ? null : 'all')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${amalgameType === 'all' ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-500 hover:border-blue-300'}`}
-                >
-                  Amalgamer tous les produits
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setAmalgameType(amalgameType === 'custom' ? null : 'custom')}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${amalgameType === 'custom' ? 'bg-blue-600 text-white border-blue-600' : 'border-slate-200 text-slate-500 hover:border-blue-300'}`}
-                >
-                  Personnaliser l&apos;amalgame
-                </button>
-              </div>
-            </div>
-
-            {/* Nombre de plaques */}
-            <div>
-              <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">Nombre de plaques</p>
-              <Input
-                type="number"
-                min={0}
-                value={nbPlaques}
-                onChange={e => setNbPlaques(e.target.value)}
-                placeholder="Saisir le nombre de plaques utilisées"
-                className="max-w-xs"
-              />
-            </div>
-
-            {/* Utilisation de chutes */}
-            <div>
-              <button
-                type="button"
-                onClick={() => setChutesOpen(v => !v)}
-                className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${chutesOpen ? 'bg-slate-800 text-white border-slate-800' : 'border-slate-200 text-slate-500 hover:border-slate-400'}`}
-              >
-                {chutesOpen ? '✓ ' : ''}Utilisation de chutes
-              </button>
-              {chutesOpen && (
-                <Textarea
-                  className="mt-2"
-                  value={chutesDetails}
-                  onChange={e => setChutesDetails(e.target.value)}
-                  placeholder="Détails des chutes utilisées..."
-                  rows={3}
-                />
-              )}
-            </div>
-          </div>
-        </div>
-      )}
-    </div>
-  )
-}
 
 function ImpositionDisplay({
   impositionResult,
@@ -314,7 +218,6 @@ export default function Calculator({
                         orientationOverride={calc.orientationOverride}
                         onOrientationChange={calc.setOrientationOverride}
                       />
-                      <AmalgamePanel />
                     </SectionDisplay>
                   )}
                   <SectionBureauEtudes />

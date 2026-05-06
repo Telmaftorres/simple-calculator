@@ -1,0 +1,137 @@
+import { v4 as uuidv4 } from 'uuid'
+import { GROUP_COLORS } from '@/types/calculator'
+import type { Quote, AmalgameGroup, TransportDeliveryForm } from '@/types/calculator'
+
+export function parseQuoteForLoad(initialQuote: Quote) {
+  const loadedGroups: AmalgameGroup[] = (initialQuote.amalgameRuns ?? []).map((r, i) => ({
+    id: uuidv4(),
+    name: r.name,
+    colorIndex: i % GROUP_COLORS.length,
+    amalgameType: r.hasImpression ? 'impression_decoupe' as const : 'decoupe' as const,
+    plateId: r.plateId?.toString() ?? '',
+    cuttingSetupType: (r.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+    cuttingTimePerPoseSeconds: r.cuttingTimePerPoseSeconds ?? 0,
+    printMode: (r.printMode as 'production' | 'quality') ?? 'production',
+    isRectoVerso: r.isRectoVerso ?? false,
+    rectoVersoType: (r.rectoVersoType as 'identical' | 'different' | null) ?? null,
+    inkMlPerPlate: r.inkMlPerPlate ?? 20,
+    inkMlVerso: r.inkMlVerso ?? 0,
+    hasVarnish: r.hasVarnish ?? false,
+    hasFlatColor: r.hasFlatColor ?? false,
+    varnishSurfacePercent: r.varnishSurfacePercent ?? 0,
+    flatColorSurfacePercent: r.flatColorSurfacePercent ?? 0,
+    printSetupType: (r.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+  }))
+
+  const products = (initialQuote.products ?? []).map((p) => {
+    const groupId = (p.amalgameGroupIndex != null && loadedGroups[p.amalgameGroupIndex])
+      ? loadedGroups[p.amalgameGroupIndex].id
+      : null
+    return {
+      id: uuidv4(),
+      productTypeId: p.productTypeId?.toString() || '',
+      productSearch: p.productTypeName || '',
+      flatWidth: p.flatWidth || 0,
+      flatHeight: p.flatHeight || 0,
+      quantity: p.quantity || 0,
+      selectedPlateId: p.plateId?.toString() || '',
+      printMode: (p.printMode as 'production' | 'quality') || 'production',
+      isRectoVerso: p.isRectoVerso || false,
+      rectoVersoType: (p.rectoVersoType as 'identical' | 'different' | null) || null,
+      inkMlPerPlate: p.inkMlPerPlate || 0,
+      inkMlVerso: p.inkMlVerso || 0,
+      varnishSurfacePercent: p.varnishSurfacePercent || 0,
+      flatColorSurfacePercent: p.flatColorSurfacePercent || 0,
+      hasVarnish: p.hasVarnish || false,
+      hasFlatColor: p.hasFlatColor || false,
+      hasImpression: p.hasImpression ?? true,
+      printSetupType: (p.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+      cuttingSetupType: (p.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+      cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds || 0,
+      orientationOverride: null as 'normal' | 'rotated' | null,
+      amalgameGroupId: groupId,
+      countPerPlateInGroup: p.countPerPlateInGroup ?? 0,
+    }
+  })
+
+  const formPayload = {
+    studyNumber: initialQuote.study?.number || 'ET',
+    client: initialQuote.client || '',
+    contactName: initialQuote.contactName || '',
+    selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
+    quantity: initialQuote.quantity,
+    selectedPlateId: initialQuote.plateId?.toString() || '',
+    flatWidth: initialQuote.flatWidth || 0,
+    flatHeight: initialQuote.flatHeight || 0,
+    inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
+    inkMlVerso: initialQuote.inkMlVerso ?? 0,
+    varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
+    flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
+    printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
+    isRectoVerso: initialQuote.isRectoVerso || false,
+    rectoVersoType: (initialQuote.rectoVersoType as 'identical' | 'different' | null) || null,
+    hasVarnish: initialQuote.hasVarnish || false,
+    hasFlatColor: initialQuote.hasFlatColor || false,
+    cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
+    assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
+    packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
+    hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
+    hasPackaging: initialQuote.hasPackaging || false,
+    packagingBoxType: (initialQuote.packagingBoxType as 'etui' | 'caisse' | 'plaque_rainee') || 'etui',
+    packagingMaterialType: (initialQuote.packagingMaterialType as 'B' | 'EB' | 'C' | 'BC') || 'BC',
+    packagingExternalSize: (initialQuote.packagingExternalSize as 'petit' | 'moyen' | 'grand' | null) || null,
+    packagingProductLength: initialQuote.packagingProductLength || 0,
+    packagingProductWidth: initialQuote.packagingProductWidth || 0,
+    packagingProductHeight: initialQuote.packagingProductHeight || 0,
+    packagingProductThickness: initialQuote.packagingProductThickness || 0,
+    packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
+    packagingQuantity: initialQuote.packagingQuantity || 0,
+    packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
+    packagingWidth: initialQuote.packagingWidth || 0,
+    packagingHeight: initialQuote.packagingHeight || 0,
+    printSetupType: (initialQuote.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+    cuttingSetupType: (initialQuote.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+    hasImpression: initialQuote.hasImpression ?? true,
+    hasFaconnage: initialQuote.hasFaconnage ?? true,
+    hasConditionnement: initialQuote.hasConditionnement ?? true,
+    hasAccessoires: initialQuote.hasAccessoires ?? false,
+    isMultiProduct: initialQuote.isMultiProduct ?? false,
+    hasBE: initialQuote.hasBE ?? false,
+    beTimeMinutes: initialQuote.beTimeMinutes ?? 0,
+    batTimeMinutes: initialQuote.batTimeMinutes ?? 0,
+    hasDossierFee: initialQuote.hasDossierFee ?? false,
+    plateCostOverride: initialQuote.plateCostOverride ?? null,
+    customPlate: (initialQuote.customPlateName && initialQuote.customPlateWidth && initialQuote.customPlateHeight && initialQuote.customPlateCost)
+      ? { name: initialQuote.customPlateName, width: initialQuote.customPlateWidth, height: initialQuote.customPlateHeight, cost: initialQuote.customPlateCost }
+      : null,
+    showMargeCommerciale: initialQuote.showMargeCommerciale ?? false,
+    showMargeSopano: initialQuote.showMargeSopano ?? false,
+    transportDeliveries: (initialQuote.transportDeliveries ?? []).map((d): TransportDeliveryForm => ({
+      id: uuidv4(),
+      mode: d.transportMode as 'PACK30' | 'MESSAGERIE_PLUS' | 'AFFRETEMENT' | undefined,
+      department: d.department,
+      weightKg: d.weightKg ?? undefined,
+      units: d.units,
+      optionsHT: d.optionsHT,
+    })),
+    products,
+  }
+
+  const accessories = (initialQuote.accessories ?? []).map((qa) => ({
+    id: qa.accessoryId,
+    name: qa.accessory?.name || 'Inconnu',
+    price: qa.accessory?.price || 0,
+    quantity: qa.quantity,
+  }))
+
+  const consumables = (initialQuote.consumables ?? []).map((qc) => ({
+    id: qc.consumableId,
+    name: qc.consumable?.name || 'Inconnu',
+    price: qc.consumable?.price || 0,
+    size: qc.consumable?.size || 1,
+    sizePerItem: qc.sizePerItem,
+    quantity: initialQuote.quantity,
+  }))
+
+  return { formPayload, accessories, consumables, amalgameGroups: loadedGroups }
+}

@@ -81,9 +81,14 @@ export async function getQuoteWithProductionSheet(quoteId: number) {
       productType: { include: { elements: true } },
       plate: true,
       accessories: { include: { accessory: true } },
+      consumables: { include: { consumable: true } },
       elements: true,
       products: { include: { plate: true }, orderBy: { position: 'asc' } },
       transportDeliveries: true,
+      amalgameRuns: {
+        orderBy: { position: 'asc' },
+        include: { plate: true, items: true },
+      },
       productionSheet: true,
     },
   })

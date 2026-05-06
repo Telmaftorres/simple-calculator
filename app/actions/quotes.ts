@@ -21,6 +21,8 @@ function buildQuoteData(
     products,
     transportDeliveries,
     parentReference,
+    hasAmalgame: _hasAmalgame,
+    amalgameRuns: _amalgameRuns,
     ...quoteFields
   } = validated
 
@@ -143,8 +145,19 @@ export async function createQuote(data: CreateQuoteInput) {
           cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds ?? 0,
           cuttingSetupType: p.cuttingSetupType ?? 'none',
           totalCost: p.totalCost ?? null,
+          amalgameGroupIndex: p.amalgameGroupIndex ?? null,
+          countPerPlateInGroup: p.countPerPlateInGroup ?? null,
         })),
       } : undefined,
+      hasAmalgame: validated.hasAmalgame ?? false,
+      amalgameRuns: validated.hasAmalgame && validated.amalgameRuns?.length
+        ? {
+            create: validated.amalgameRuns.map(({ items, ...run }) => ({
+              ...run,
+              items: { create: items },
+            })),
+          }
+        : undefined,
       productionSheet: {
         create: { status: 'en_attente' },
       },
@@ -211,6 +224,8 @@ export async function updateQuote(id: number, data: CreateQuoteInput) {
             hasImpression: p.hasImpression ?? true, printSetupType: p.printSetupType ?? 'none',
             cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds ?? 0, cuttingSetupType: p.cuttingSetupType ?? 'none',
             totalCost: p.totalCost ?? null,
+            amalgameGroupIndex: p.amalgameGroupIndex ?? null,
+            countPerPlateInGroup: p.countPerPlateInGroup ?? null,
           })),
         } : undefined,
       },
@@ -352,6 +367,10 @@ export async function getQuoteById(id: number) {
         orderBy: { position: 'asc' },
       },
       transportDeliveries: true,
+      amalgameRuns: {
+        orderBy: { position: 'asc' },
+        include: { plate: true, items: true },
+      },
       productionSheet: { select: { status: true } },
     },
   })
@@ -377,6 +396,10 @@ export async function getQuoteDetail(id: number) {
       accessories: { include: { accessory: true } },
       products: { include: { plate: true } },
       transportDeliveries: true,
+      amalgameRuns: {
+        orderBy: { position: 'asc' as const },
+        include: { plate: true, items: true },
+      },
       actuals: true,
       productionSheet: true,
     },

@@ -57,9 +57,11 @@ export function calculatorFormReducer(
       return { ...initialFormState }
 
     case 'ADD_PRODUCT': {
+      const suggestedPlateId = state.products.find(p => p.selectedPlateId)?.selectedPlateId ?? ''
       const newSlot: ProductSlot = {
         ...DEFAULT_PRODUCT_SLOT,
         id: uuidv4(),
+        selectedPlateId: suggestedPlateId,
       }
       const newProducts = [...state.products, newSlot]
       return {

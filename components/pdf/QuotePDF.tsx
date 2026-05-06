@@ -6,7 +6,7 @@ import {
 import { buildCostRows } from '@/lib/presentation/quote/cost-rows'
 import { calculateCosts } from '@/lib/calculation/costs'
 import type { CalculatorFormState } from '@/hooks/useCalculatorForm'
-import type { ImpositionResult, SelectedAccessory, SelectedConsumable, Plate, ProductSlotResult } from '@/types/calculator'
+import type { ImpositionResult, SelectedAccessory, SelectedConsumable, Plate, ProductSlotResult, AmalgameGroup, AmalgameGroupResult } from '@/types/calculator'
 
 type CostResult = ReturnType<typeof calculateCosts>
 
@@ -182,6 +182,8 @@ interface QuotePDFProps {
   isMultiProduct?: boolean
   productSlotResults?: ProductSlotResult[]
   totalCostMulti?: number
+  amalgameGroups?: AmalgameGroup[]
+  amalgameGroupResults?: AmalgameGroupResult[]
   mode?: 'internal' | 'client'
   authorName?: string
 }
@@ -248,6 +250,8 @@ export function QuotePDF({
   isMultiProduct = false,
   productSlotResults = [],
   totalCostMulti = 0,
+  amalgameGroups = [],
+  amalgameGroupResults = [],
   mode = 'internal',
   authorName,
 }: QuotePDFProps) {
@@ -432,12 +436,26 @@ export function QuotePDF({
             {isMultiProduct && (
               <View style={styles.gridItem}>
                 <Text style={styles.gridItemTitle}>Produits</Text>
-                {productSlotResults.map((r, i) => (
-                  <View key={i} style={i < productSlotResults.length - 1 ? styles.row : styles.rowLast}>
+                {productSlotResults.filter(r => !r.slot.amalgameGroupId).map((r, i) => (
+                  <View key={i} style={styles.row}>
                     <Text style={styles.label}>{r.slot.productSearch || `Produit ${i + 1}`}</Text>
                     <Text style={styles.value}>{r.slot.quantity} pcs — {r.costResult.subtotal.toFixed(2)} €</Text>
                   </View>
                 ))}
+                {amalgameGroups.map((group, gi) => {
+                  const groupResult = amalgameGroupResults[gi]
+                  if (!groupResult) return null
+                  const slotsInGroup = productSlotResults.filter(r => r.slot.amalgameGroupId === group.id)
+                  if (slotsInGroup.length === 0) return null
+                  return (
+                    <View key={group.id} style={styles.row}>
+                      <Text style={{ ...styles.label, color: '#5b21b6' }}>Amalgame : {group.name}</Text>
+                      <Text style={{ ...styles.value, color: '#5b21b6' }}>
+                        {slotsInGroup.reduce((s, r) => s + r.slot.quantity, 0)} pcs — {groupResult.totalCost.toFixed(2)} €
+                      </Text>
+                    </View>
+                  )
+                })}
               </View>
             )}
           </View>
@@ -533,63 +551,137 @@ export function QuotePDF({
               <Text style={styles.tableHeaderTextRight}>Montant</Text>
             </View>
 
-            {/* Mode multi : lignes par produit */}
-            {isMultiProduct && productSlotResults.map((result, i) => (
-              <View key={i}>
-                <View style={styles.tableRowProduct}>
-                  <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', fontSize: 9 }}>
-                    {result.slot.productSearch || `Produit ${i + 1}`} — {result.slot.quantity} pcs
-                  </Text>
-                  <Text style={{ color: '#64748b', textAlign: 'center', fontSize: 9 }}>
-                    {result.slot.flatWidth}×{result.slot.flatHeight} mm
-                  </Text>
-                  <Text style={{ ...styles.tableCellRight, color: '#475569', fontSize: 9 }}></Text>
+            {/* Mode multi : produits individuels (hors amalgame) */}
+            {isMultiProduct && productSlotResults
+              .map((result, i) => ({ result, i }))
+              .filter(({ result }) => !result.slot.amalgameGroupId)
+              .map(({ result, i }) => (
+                <View key={i}>
+                  <View style={styles.tableRowProduct}>
+                    <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', fontSize: 9 }}>
+                      {result.slot.productSearch || `Produit ${i + 1}`} — {result.slot.quantity} pcs
+                    </Text>
+                    <Text style={{ color: '#64748b', textAlign: 'center', fontSize: 9 }}>
+                      {result.slot.flatWidth}×{result.slot.flatHeight} mm
+                    </Text>
+                    <Text style={{ ...styles.tableCellRight, color: '#475569', fontSize: 9 }}></Text>
+                  </View>
+                  <View style={styles.tableRow}>
+                    <Text style={styles.tableCell}>Matière</Text>
+                    <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                      {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
+                    </Text>
+                    <Text style={styles.tableCellRight}>{result.costResult.materialCost.toFixed(2)} €</Text>
+                  </View>
+                  {result.slot.hasImpression && (
+                    <>
+                      <View style={styles.tableRowAlt}>
+                        <Text style={styles.tableCell}>Impression (encre)</Text>
+                        <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                          {result.costResult.inkVolumeL.toFixed(3)} L
+                        </Text>
+                        <Text style={styles.tableCellRight}>{result.costResult.printingCostData.inkCost.toFixed(2)} €</Text>
+                      </View>
+                      <View style={styles.tableRow}>
+                        <Text style={styles.tableCell}>Impression (machine)</Text>
+                        <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                          {Math.round(result.costResult.printingCostData.machineTimeMin)} min
+                        </Text>
+                        <Text style={styles.tableCellRight}>{result.costResult.printingCostData.machineCost.toFixed(2)} €</Text>
+                      </View>
+                    </>
+                  )}
+                  <View style={styles.tableRowAlt}>
+                    <Text style={styles.tableCell}>Découpe</Text>
+                    <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                      {Math.round(result.costResult.cuttingMachineTimeMin)} min
+                    </Text>
+                    <Text style={styles.tableCellRight}>{result.costResult.cuttingCost.toFixed(2)} €</Text>
+                  </View>
+                  <View style={styles.tableRowSubtotal}>
+                    <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', color: '#059669' }}>
+                      Sous-total {result.slot.productSearch || `Produit ${i + 1}`}
+                    </Text>
+                    <Text style={{ ...styles.tableCell, textAlign: 'center' }}></Text>
+                    <Text style={styles.tableCellRightGreen}>{result.costResult.subtotal.toFixed(2)} €</Text>
+                  </View>
                 </View>
+              ))
+            }
 
-                <View style={styles.tableRow}>
-                  <Text style={styles.tableCell}>Matière</Text>
-                  <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                    {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
-                  </Text>
-                  <Text style={styles.tableCellRight}>{result.costResult.materialCost.toFixed(2)} €</Text>
-                </View>
+            {/* Mode multi : groupes amalgame */}
+            {isMultiProduct && amalgameGroups.map((group, gi) => {
+              const groupResult = amalgameGroupResults[gi]
+              if (!groupResult) return null
+              const slotsInGroup = productSlotResults.filter(r => r.slot.amalgameGroupId === group.id)
+              if (slotsInGroup.length === 0) return null
+              const isImpression = group.amalgameType === 'impression_decoupe'
+              return (
+                <View key={group.id}>
+                  {/* En-tête du groupe */}
+                  <View style={{ ...styles.tableRowProduct, backgroundColor: '#ede9fe' }}>
+                    <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', fontSize: 9, color: '#5b21b6' }}>
+                      Amalgame : {group.name} — {isImpression ? 'Impression + Découpe' : 'Découpe seule'}
+                    </Text>
+                    <Text style={{ color: '#7c3aed', textAlign: 'center', fontSize: 9 }}>
+                      {groupResult.platesCount} plaque{groupResult.platesCount > 1 ? 's' : ''}
+                    </Text>
+                    <Text style={{ ...styles.tableCellRight, color: '#5b21b6', fontSize: 9 }}></Text>
+                  </View>
 
-                {result.slot.hasImpression && (
-                  <>
-                    <View style={styles.tableRowAlt}>
-                      <Text style={styles.tableCell}>Impression (encre)</Text>
-                      <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                        {result.costResult.inkVolumeL.toFixed(3)} L
+                  {/* Produits du groupe */}
+                  {slotsInGroup.map((r, si) => (
+                    <View key={si} style={{ flexDirection: 'row', padding: '3 10 3 20', borderBottomWidth: 1, borderBottomColor: '#f1f5f9', backgroundColor: '#faf5ff' }}>
+                      <Text style={{ ...styles.tableCellSub, color: '#7c3aed' }}>
+                        · {r.slot.productSearch || `Produit`} — {r.slot.quantity} pcs — {r.slot.flatWidth}×{r.slot.flatHeight} mm
                       </Text>
-                      <Text style={styles.tableCellRight}>{result.costResult.printingCostData.inkCost.toFixed(2)} €</Text>
-                    </View>
-                    <View style={styles.tableRow}>
-                      <Text style={styles.tableCell}>Impression (machine)</Text>
-                      <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                        {Math.round(result.costResult.printingCostData.machineTimeMin)} min
+                      <Text style={{ ...styles.tableCellSub, textAlign: 'center' }}>
+                        {r.impositionResult ? `${r.impositionResult.itemsPerPlate} poses/pl.` : '—'}
                       </Text>
-                      <Text style={styles.tableCellRight}>{result.costResult.printingCostData.machineCost.toFixed(2)} €</Text>
+                      <Text style={{ width: 80, textAlign: 'right', color: '#94a3b8', fontSize: 9 }}></Text>
                     </View>
-                  </>
-                )}
+                  ))}
 
-                <View style={styles.tableRowAlt}>
-                  <Text style={styles.tableCell}>Découpe</Text>
-                  <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
-                    {Math.round(result.costResult.cuttingMachineTimeMin)} min
-                  </Text>
-                  <Text style={styles.tableCellRight}>{result.costResult.cuttingCost.toFixed(2)} €</Text>
-                </View>
+                  {/* Coûts du groupe */}
+                  {isImpression && (
+                    <>
+                      <View style={styles.tableRow}>
+                        <Text style={styles.tableCell}>Matière</Text>
+                        <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                          {groupResult.platesCount} plaque{groupResult.platesCount > 1 ? 's' : ''}
+                        </Text>
+                        <Text style={styles.tableCellRight}>{groupResult.materialCostMarged.toFixed(2)} €</Text>
+                      </View>
+                      <View style={styles.tableRowAlt}>
+                        <Text style={styles.tableCell}>Impression</Text>
+                        <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                          {Math.round(groupResult.machineTimeMin)} min
+                        </Text>
+                        <Text style={styles.tableCellRight}>{groupResult.printingCost.toFixed(2)} €</Text>
+                      </View>
+                    </>
+                  )}
+                  <View style={isImpression ? styles.tableRow : styles.tableRowAlt}>
+                    <Text style={styles.tableCell}>Découpe</Text>
+                    <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
+                      {Math.round(groupResult.cuttingMachineTimeMin)} min
+                      {groupResult.cuttingSetupCost > 0 ? ` + calage` : ''}
+                    </Text>
+                    <Text style={styles.tableCellRight}>
+                      {(groupResult.cuttingMachineCost + groupResult.cuttingSetupCost).toFixed(2)} €
+                    </Text>
+                  </View>
 
-                <View style={styles.tableRowSubtotal}>
-                  <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', color: '#059669' }}>
-                    Sous-total {result.slot.productSearch || `Produit ${i + 1}`}
-                  </Text>
-                  <Text style={{ ...styles.tableCell, textAlign: 'center' }}></Text>
-                  <Text style={styles.tableCellRightGreen}>{result.costResult.subtotal.toFixed(2)} €</Text>
+                  <View style={styles.tableRowSubtotal}>
+                    <Text style={{ ...styles.tableCell, fontFamily: 'Helvetica-Bold', color: '#059669' }}>
+                      Sous-total {group.name}
+                    </Text>
+                    <Text style={{ ...styles.tableCell, textAlign: 'center' }}></Text>
+                    <Text style={styles.tableCellRightGreen}>{groupResult.totalCost.toFixed(2)} €</Text>
+                  </View>
                 </View>
-              </View>
-            ))}
+              )
+            })}
 
             {/* Séparateur sections communes en mode multi */}
             {isMultiProduct && commonCostRows.length > 0 && (

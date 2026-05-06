@@ -1,0 +1,11 @@
+-- AlterTable
+ALTER TABLE "QuoteAmalgameRun" ADD COLUMN     "flatColorSurfacePercent" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "hasFlatColor" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "hasVarnish" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "inkMlPerPlate" DOUBLE PRECISION NOT NULL DEFAULT 20,
+ADD COLUMN     "inkMlVerso" DOUBLE PRECISION NOT NULL DEFAULT 0,
+ADD COLUMN     "isRectoVerso" BOOLEAN NOT NULL DEFAULT false,
+ADD COLUMN     "printMode" TEXT NOT NULL DEFAULT 'production',
+ADD COLUMN     "printSetupType" TEXT NOT NULL DEFAULT 'none',
+ADD COLUMN     "rectoVersoType" TEXT,
+ADD COLUMN     "varnishSurfacePercent" DOUBLE PRECISION NOT NULL DEFAULT 0;

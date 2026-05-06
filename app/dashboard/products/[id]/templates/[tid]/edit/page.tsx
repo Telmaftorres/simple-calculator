@@ -15,13 +15,29 @@ export default async function EditTemplatePage({ params }: PageProps) {
   if (isNaN(productTypeId) || isNaN(templateId)) return notFound()
 
   const [productType, template, plates, allAccessories] = await Promise.all([
-    prisma.productType.findUnique({ where: { id: productTypeId } }),
+    prisma.productType.findUnique({
+      where: { id: productTypeId },
+      include: {
+        elements: { orderBy: { name: 'asc' } },
+        options: {
+          orderBy: { position: 'asc' },
+          include: { variants: { orderBy: { position: 'asc' } } },
+        },
+      },
+    }),
     prisma.productTemplate.findUnique({
       where: { id: templateId },
       include: {
         accessories: {
           include: { accessory: { select: { id: true, name: true, price: true } } },
         },
+        amalgameRuns: {
+          orderBy: { position: 'asc' },
+          include: { items: true },
+        },
+        templateElements: true,
+        templateVariants: true,
+        templateOptionConfigs: true,
       },
     }),
     prisma.plate.findMany({ orderBy: { name: 'asc' } }),
@@ -36,10 +52,14 @@ export default async function EditTemplatePage({ params }: PageProps) {
       productTypeName={productType.name}
       plates={plates}
       allAccessories={allAccessories}
+      flatWidthFormula={productType.flatWidthFormula}
+      flatHeightFormula={productType.flatHeightFormula}
       initialData={{
         id: template.id,
         name: template.name,
+        formatType: (template.formatType as '2d' | '3d') ?? '2d',
         flatWidth: template.flatWidth,
+        flatDepth: template.flatDepth,
         flatHeight: template.flatHeight,
         plateId: template.plateId,
         hasImpression: template.hasImpression,
@@ -61,16 +81,41 @@ export default async function EditTemplatePage({ params }: PageProps) {
         packTimePerPieceSeconds: template.packTimePerPieceSeconds,
         hasAssemblyNotice: template.hasAssemblyNotice,
         hasAccessoires: template.hasAccessoires,
-        hasTransport: template.hasTransport,
-        defaultTransportMode: template.defaultTransportMode as 'PACK30' | 'MESSAGERIE_PLUS' | 'AFFRETEMENT' | null,
         notes: template.notes ?? '',
       }}
+      typeElements={productType.elements}
+      typeOptions={productType.options}
+      initialElements={template.templateElements.map((e) => ({
+        elementId: e.elementId,
+        quantity: e.quantity,
+        flatWidth: e.flatWidth ?? null,
+        flatHeight: e.flatHeight ?? null,
+        flatDepth: e.flatDepth ?? null,
+        plateId: e.plateId ?? null,
+        amalgameGroupId: e.amalgameGroupId ?? null,
+        hasImpression: e.hasImpression,
+        printMode: e.printMode as 'production' | 'quality',
+        printSetupType: e.printSetupType as 'none' | 'standard' | 'complexe',
+        isRectoVerso: e.isRectoVerso,
+        rectoVersoType: e.rectoVersoType as 'identical' | 'different' | null,
+        hasVarnish: e.hasVarnish,
+        hasFlatColor: e.hasFlatColor,
+        inkMlPerPlate: e.inkMlPerPlate,
+        inkMlVerso: e.inkMlVerso,
+        varnishSurfacePercent: e.varnishSurfacePercent,
+        flatColorSurfacePercent: e.flatColorSurfacePercent,
+        cuttingTimePerPoseSeconds: e.cuttingTimePerPoseSeconds,
+        cuttingSetupType: e.cuttingSetupType as 'none' | 'standard' | 'complexe',
+      }))}
+      initialVariantConfigs={template.templateVariants.map((v) => ({ variantId: v.variantId, defaultQuantity: v.defaultQuantity }))}
+      initialOptionConfigs={template.templateOptionConfigs.map((o) => ({ optionId: o.optionId, defaultQuantity: o.defaultQuantity }))}
       initialAccessories={template.accessories.map((a) => ({
         accessoryId: a.accessoryId,
         name: a.accessory.name,
         price: a.accessory.price,
         quantity: a.quantity,
       }))}
+      initialAmalgameGroupsJson={template.amalgameGroupsJson}
     />
   )
 }

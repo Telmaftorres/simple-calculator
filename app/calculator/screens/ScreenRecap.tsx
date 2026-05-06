@@ -43,6 +43,8 @@ export function ScreenRecap() {
     margeCommercialeMontant,
     margeSopanoMontant,
     totalNet,
+    amalgameGroups,
+    amalgameGroupResults,
   } = useCalculatorContext()
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -117,6 +119,8 @@ export function ScreenRecap() {
     isMultiProduct,
     productSlotResults,
     totalCostMulti,
+    amalgameGroups,
+    amalgameGroupResults,
   }
 
   const generatePdf = async () => {
@@ -148,13 +152,13 @@ export function ScreenRecap() {
   useEffect(() => {
     if (pdfGeneratedRef.current) return
     const isReady = isMultiProduct
-      ? productSlotResults.length > 0
+      ? productSlotResults.length > 0 && (amalgameGroups.length === 0 || amalgameGroupResults.length > 0)
       : impositionResult !== null
     if (!isReady) return
     pdfGeneratedRef.current = true
     generatePdf()
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [impositionResult, productSlotResults])
+  }, [impositionResult, productSlotResults, amalgameGroupResults])
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 animate-in slide-in-from-bottom duration-500">
@@ -237,30 +241,54 @@ export function ScreenRecap() {
           {isMultiProduct ? (
             <div className="space-y-4">
               <h3 className="font-semibold text-slate-900">Produits</h3>
-              {productSlotResults.map((result, i) => {
-                const plate = result.slot.selectedPlateId
-                  ? undefined
-                  : undefined
+
+              {/* Produits hors amalgame */}
+              {productSlotResults.filter(r => !r.slot.amalgameGroupId).map((result, i) => (
+                <div key={result.slot.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div className="flex justify-between items-center mb-3">
+                    <h4 className="font-semibold text-slate-800">
+                      {result.slot.productSearch || `Produit ${i + 1}`}
+                    </h4>
+                    <span className="text-emerald-700 font-bold">{result.costResult.subtotal.toFixed(2)} €</span>
+                  </div>
+                  <dl className="space-y-1 text-sm">
+                    <div className="flex justify-between"><dt className="text-slate-500">Quantité</dt><dd className="font-medium">{result.slot.quantity}</dd></div>
+                    <div className="flex justify-between"><dt className="text-slate-500">Format</dt><dd className="font-medium">{result.slot.flatWidth}×{result.slot.flatHeight} mm</dd></div>
+                    {result.impositionResult && (
+                      <>
+                        <div className="flex justify-between"><dt className="text-slate-500">Poses / Plaque</dt><dd className="font-medium">{result.impositionResult.itemsPerPlate}</dd></div>
+                        <div className="flex justify-between"><dt className="text-slate-500">Plaques</dt><dd className="font-medium">{result.impositionResult.platesNeeded}</dd></div>
+                      </>
+                    )}
+                    {result.slot.hasImpression && (
+                      <div className="flex justify-between"><dt className="text-slate-500">Encre</dt><dd className="font-medium">{result.slot.inkMlPerPlate} ml/plaque</dd></div>
+                    )}
+                  </dl>
+                </div>
+              ))}
+
+              {/* Groupes amalgame */}
+              {amalgameGroups.map((group, gi) => {
+                const groupResult = amalgameGroupResults[gi]
+                if (!groupResult) return null
+                const slotsInGroup = productSlotResults.filter(r => r.slot.amalgameGroupId === group.id)
+                if (slotsInGroup.length === 0) return null
                 return (
-                  <div key={result.slot.id} className="bg-slate-50 p-4 rounded-xl border border-slate-100">
+                  <div key={group.id} className="bg-violet-50 p-4 rounded-xl border border-violet-200">
                     <div className="flex justify-between items-center mb-3">
-                      <h4 className="font-semibold text-slate-800">
-                        {result.slot.productSearch || `Produit ${i + 1}`}
+                      <h4 className="font-semibold text-violet-800">
+                        Amalgame : {group.name}
                       </h4>
-                      <span className="text-emerald-700 font-bold">{result.costResult.subtotal.toFixed(2)} €</span>
+                      <span className="text-emerald-700 font-bold">{groupResult.totalCost.toFixed(2)} €</span>
                     </div>
                     <dl className="space-y-1 text-sm">
-                      <div className="flex justify-between"><dt className="text-slate-500">Quantité</dt><dd className="font-medium">{result.slot.quantity}</dd></div>
-                      <div className="flex justify-between"><dt className="text-slate-500">Format</dt><dd className="font-medium">{result.slot.flatWidth}×{result.slot.flatHeight} mm</dd></div>
-                      {result.impositionResult && (
-                        <>
-                          <div className="flex justify-between"><dt className="text-slate-500">Poses / Plaque</dt><dd className="font-medium">{result.impositionResult.itemsPerPlate}</dd></div>
-                          <div className="flex justify-between"><dt className="text-slate-500">Plaques</dt><dd className="font-medium">{result.impositionResult.platesNeeded}</dd></div>
-                        </>
-                      )}
-                      {result.slot.hasImpression && (
-                        <div className="flex justify-between"><dt className="text-slate-500">Encre</dt><dd className="font-medium">{result.slot.inkMlPerPlate} ml/plaque</dd></div>
-                      )}
+                      <div className="flex justify-between"><dt className="text-slate-500">Plaques</dt><dd className="font-medium">{groupResult.platesCount}</dd></div>
+                      {slotsInGroup.map(r => (
+                        <div key={r.slot.id} className="flex justify-between text-xs text-violet-700">
+                          <dt>· {r.slot.productSearch || r.slot.id}</dt>
+                          <dd>{r.slot.quantity} pcs — {r.slot.flatWidth}×{r.slot.flatHeight} mm{r.impositionResult ? ` — ${r.impositionResult.itemsPerPlate} poses/pl.` : ''}</dd>
+                        </div>
+                      ))}
                     </dl>
                   </div>
                 )
@@ -346,46 +374,101 @@ export function ScreenRecap() {
                 </thead>
                 <tbody className="divide-y divide-slate-100">
 
-                  {/* En mode multi : sous-totaux par produit */}
-                  {isMultiProduct && productSlotResults.map((result, i) => (
-                    <React.Fragment key={result.slot.id}>
-                      <tr className="bg-slate-100">
-                        <td colSpan={3} className="p-3 font-semibold text-slate-700 text-xs uppercase tracking-wide">
-                          {result.slot.productSearch || `Produit ${i + 1}`} — {result.slot.quantity} pcs
-                        </td>
-                      </tr>
-                      <tr key={`matiere-${i}`}>
-                        <td className="p-3">Matière</td>
-                        <td className="p-3 text-right text-slate-500 italic text-xs">
-                          {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
-                        </td>
-                        <td className="p-3 text-right font-medium">{result.costResult.materialCostMarged.toFixed(2)} €</td>
-                      </tr>
-                      {result.slot.hasImpression && (
-                        <>
-                          <tr key={`impression-encre-${i}`}>
-                            <td className="p-3">Impression (encre)</td>
-                            <td className="p-3 text-right text-slate-500 italic text-xs">{result.costResult.inkVolumeL.toFixed(3)} L</td>
-                            <td className="p-3 text-right font-medium">{result.costResult.printingCostData.inkCost.toFixed(2)} €</td>
+                  {/* En mode multi : sous-totaux par produit (hors amalgame) */}
+                  {isMultiProduct && productSlotResults
+                    .filter(r => !r.slot.amalgameGroupId)
+                    .map((result, i) => (
+                      <React.Fragment key={result.slot.id}>
+                        <tr className="bg-slate-100">
+                          <td colSpan={3} className="p-3 font-semibold text-slate-700 text-xs uppercase tracking-wide">
+                            {result.slot.productSearch || `Produit ${i + 1}`} — {result.slot.quantity} pcs
+                          </td>
+                        </tr>
+                        <tr>
+                          <td className="p-3">Matière</td>
+                          <td className="p-3 text-right text-slate-500 italic text-xs">
+                            {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
+                          </td>
+                          <td className="p-3 text-right font-medium">{result.costResult.materialCostMarged.toFixed(2)} €</td>
+                        </tr>
+                        {result.slot.hasImpression && (
+                          <>
+                            <tr>
+                              <td className="p-3">Impression (encre)</td>
+                              <td className="p-3 text-right text-slate-500 italic text-xs">{result.costResult.inkVolumeL.toFixed(3)} L</td>
+                              <td className="p-3 text-right font-medium">{result.costResult.printingCostData.inkCost.toFixed(2)} €</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3">Impression (machine)</td>
+                              <td className="p-3 text-right text-slate-500 italic text-xs">{Math.round(result.costResult.printingCostData.machineTimeMin)} min</td>
+                              <td className="p-3 text-right font-medium">{result.costResult.printingCostData.machineCost.toFixed(2)} €</td>
+                            </tr>
+                          </>
+                        )}
+                        <tr>
+                          <td className="p-3">Découpe</td>
+                          <td className="p-3 text-right text-slate-500 italic text-xs">{Math.round(result.costResult.cuttingMachineTimeMin)} min</td>
+                          <td className="p-3 text-right font-medium">{result.costResult.cuttingCost.toFixed(2)} €</td>
+                        </tr>
+                        <tr className="bg-emerald-50">
+                          <td className="p-3 font-semibold text-emerald-800" colSpan={2}>Sous-total {result.slot.productSearch || `Produit ${i + 1}`}</td>
+                          <td className="p-3 text-right font-bold text-emerald-700">{result.costResult.subtotal.toFixed(2)} €</td>
+                        </tr>
+                      </React.Fragment>
+                    ))
+                  }
+
+                  {/* En mode multi : groupes amalgame */}
+                  {isMultiProduct && amalgameGroups.map((group, gi) => {
+                    const groupResult = amalgameGroupResults[gi]
+                    if (!groupResult) return null
+                    const slotsInGroup = productSlotResults.filter(r => r.slot.amalgameGroupId === group.id)
+                    if (slotsInGroup.length === 0) return null
+                    const isImpression = group.amalgameType === 'impression_decoupe'
+                    return (
+                      <React.Fragment key={group.id}>
+                        <tr className="bg-violet-100">
+                          <td colSpan={3} className="p-3 font-semibold text-violet-800 text-xs uppercase tracking-wide">
+                            Amalgame : {group.name} — {isImpression ? 'Impression + Découpe' : 'Découpe seule'} — {groupResult.platesCount} plaque{groupResult.platesCount > 1 ? 's' : ''}
+                          </td>
+                        </tr>
+                        {slotsInGroup.map((r) => (
+                          <tr key={r.slot.id} className="bg-violet-50">
+                            <td className="p-3 pl-6 text-violet-700 text-xs" colSpan={2}>
+                              · {r.slot.productSearch || r.slot.id} — {r.slot.quantity} pcs — {r.slot.flatWidth}×{r.slot.flatHeight} mm
+                              {r.impositionResult ? ` — ${r.impositionResult.itemsPerPlate} poses/pl.` : ''}
+                            </td>
+                            <td className="p-3 text-right text-slate-400 italic text-xs">—</td>
                           </tr>
-                          <tr key={`impression-machine-${i}`}>
-                            <td className="p-3">Impression (machine)</td>
-                            <td className="p-3 text-right text-slate-500 italic text-xs">{Math.round(result.costResult.printingCostData.machineTimeMin)} min</td>
-                            <td className="p-3 text-right font-medium">{result.costResult.printingCostData.machineCost.toFixed(2)} €</td>
-                          </tr>
-                        </>
-                      )}
-                      <tr key={`decoupe-${i}`}>
-                        <td className="p-3">Découpe</td>
-                        <td className="p-3 text-right text-slate-500 italic text-xs">{Math.round(result.costResult.cuttingMachineTimeMin)} min</td>
-                        <td className="p-3 text-right font-medium">{result.costResult.cuttingCost.toFixed(2)} €</td>
-                      </tr>
-                      <tr key={`subtotal-${i}`} className="bg-emerald-50">
-                        <td className="p-3 font-semibold text-emerald-800" colSpan={2}>Sous-total {result.slot.productSearch || `Produit ${i + 1}`}</td>
-                        <td className="p-3 text-right font-bold text-emerald-700">{result.costResult.subtotal.toFixed(2)} €</td>
-                      </tr>
-                    </React.Fragment>
-                  ))}
+                        ))}
+                        {isImpression && (
+                          <>
+                            <tr>
+                              <td className="p-3">Matière</td>
+                              <td className="p-3 text-right text-slate-500 italic text-xs">{groupResult.platesCount} plaque{groupResult.platesCount > 1 ? 's' : ''}</td>
+                              <td className="p-3 text-right font-medium">{groupResult.materialCostMarged.toFixed(2)} €</td>
+                            </tr>
+                            <tr>
+                              <td className="p-3">Impression</td>
+                              <td className="p-3 text-right text-slate-500 italic text-xs">{Math.round(groupResult.machineTimeMin)} min</td>
+                              <td className="p-3 text-right font-medium">{groupResult.printingCost.toFixed(2)} €</td>
+                            </tr>
+                          </>
+                        )}
+                        <tr>
+                          <td className="p-3">Découpe</td>
+                          <td className="p-3 text-right text-slate-500 italic text-xs">
+                            {Math.round(groupResult.cuttingMachineTimeMin)} min{groupResult.cuttingSetupCost > 0 ? ' + calage' : ''}
+                          </td>
+                          <td className="p-3 text-right font-medium">{(groupResult.cuttingMachineCost + groupResult.cuttingSetupCost).toFixed(2)} €</td>
+                        </tr>
+                        <tr className="bg-emerald-50">
+                          <td className="p-3 font-semibold text-emerald-800" colSpan={2}>Sous-total {group.name}</td>
+                          <td className="p-3 text-right font-bold text-emerald-700">{groupResult.totalCost.toFixed(2)} €</td>
+                        </tr>
+                      </React.Fragment>
+                    )
+                  })}
 
                   {/* Sections communes (toujours affichées) */}
                   {isMultiProduct && costRows.length > 0 && (

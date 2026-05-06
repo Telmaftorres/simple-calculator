@@ -1,6 +1,6 @@
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2 } from 'lucide-react'
+import { Loader2, Layers } from 'lucide-react'
 import { CostRow } from '../shared'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
@@ -29,6 +29,8 @@ export function RecapSidebar() {
     margeCommercialeMontant,
     margeSopanoMontant,
     totalNet,
+    amalgameGroups,
+    amalgameGroupResults,
   } = useCalculatorContext()
 
   const {
@@ -68,46 +70,142 @@ export function RecapSidebar() {
           {/* ── Mode multi-produits ── */}
           {isMultiProduct ? (
             <>
-              {productSlotResults.map((result, i) => (
-                <div key={result.slot.id} className="space-y-1">
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                    {result.slot.productSearch || `Produit ${i + 1}`}
-                  </div>
-                  <CostRow
-                    label="Matière"
-                    value={result.costResult.materialCostMarged}
-                    details={result.impositionResult
-                      ? `${result.impositionResult.platesNeeded} plaque(s) × coeff. ×${result.costResult.materialMarginCoeff.toFixed(1)}`
-                      : undefined}
-                  />
-                  {result.slot.hasImpression && (
-                    <>
-                      <CostRow
-                        label="Impression (encre)"
-                        value={result.costResult.printingCostData.inkCost}
-                        details={`${result.costResult.inkVolumeL.toFixed(3)} L`}
-                      />
-                      <CostRow
-                        label="Impression (machine)"
-                        value={result.costResult.printingCostData.machineCost}
-                        details={formatMinutes(result.costResult.printingCostData.machineTimeMin)}
-                      />
-                    </>
-                  )}
-                  <CostRow
-                    label="Découpe"
-                    value={result.costResult.cuttingCost}
-                    details={result.costResult.cuttingMachineTimeMin > 0
-                      ? formatMinutes(result.costResult.cuttingMachineTimeMin)
-                      : undefined}
-                  />
-                  <div className="flex justify-between text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-1.5 rounded-md">
-                    <span>Sous-total</span>
-                    <span>{result.costResult.subtotal.toFixed(2)} €</span>
-                  </div>
-                </div>
-              ))}
+              {/* Produits individuels */}
+              {productSlotResults.map((result, i) => {
+                const slot = result.slot
+                const group = slot.amalgameGroupId
+                  ? amalgameGroups.find(g => g.id === slot.amalgameGroupId)
+                  : undefined
+                const isInImpressionGroup = group?.amalgameType === 'impression_decoupe'
+                const isInDecoupeGroup = group?.amalgameType === 'decoupe'
 
+                // Produit entièrement géré par un groupe impression+découpe
+                if (isInImpressionGroup) {
+                  return (
+                    <div key={slot.id} className="space-y-1">
+                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                        {slot.productSearch || `Produit ${i + 1}`}
+                      </div>
+                      <div className="flex items-center gap-1.5 text-xs text-violet-600 bg-violet-50 border border-violet-100 px-2 py-1.5 rounded-md">
+                        <Layers className="h-3 w-3 flex-shrink-0" />
+                        <span>Matière, impression et découpe gérées par <strong>{group!.name}</strong></span>
+                      </div>
+                    </div>
+                  )
+                }
+
+                return (
+                  <div key={slot.id} className="space-y-1">
+                    <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      {slot.productSearch || `Produit ${i + 1}`}
+                    </div>
+                    <CostRow
+                      label="Matière"
+                      value={result.costResult.materialCostMarged}
+                      details={result.impositionResult
+                        ? `${result.impositionResult.platesNeeded} plaque(s) × coeff. ×${result.costResult.materialMarginCoeff.toFixed(1)}`
+                        : undefined}
+                    />
+                    {slot.hasImpression && (
+                      <>
+                        <CostRow
+                          label="Impression (encre)"
+                          value={result.costResult.printingCostData.inkCost}
+                          details={`${result.costResult.inkVolumeL.toFixed(3)} L`}
+                        />
+                        <CostRow
+                          label="Impression (machine)"
+                          value={result.costResult.printingCostData.machineCost}
+                          details={formatMinutes(result.costResult.printingCostData.machineTimeMin)}
+                        />
+                      </>
+                    )}
+                    {isInDecoupeGroup ? (
+                      <div className="flex items-center gap-1.5 text-xs text-orange-600 bg-orange-50 border border-orange-100 px-2 py-1.5 rounded-md">
+                        <Layers className="h-3 w-3 flex-shrink-0" />
+                        <span>Découpe gérée par <strong>{group!.name}</strong></span>
+                      </div>
+                    ) : (
+                      <CostRow
+                        label="Découpe"
+                        value={result.costResult.cuttingCost}
+                        details={result.costResult.cuttingMachineTimeMin > 0
+                          ? formatMinutes(result.costResult.cuttingMachineTimeMin)
+                          : undefined}
+                      />
+                    )}
+                    {/* Sous-total uniquement si le produit a des coûts individuels */}
+                    {result.costResult.subtotal > 0 && (
+                      <div className="flex justify-between text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-1.5 rounded-md">
+                        <span>Sous-total</span>
+                        <span>{result.costResult.subtotal.toFixed(2)} €</span>
+                      </div>
+                    )}
+                  </div>
+                )
+              })}
+
+              {/* Amalgames */}
+              {amalgameGroups.length > 0 && (
+                <div className="border-t border-dashed border-slate-200 pt-3 space-y-3">
+                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
+                    <Layers className="h-3 w-3" /> Amalgames
+                  </div>
+
+                  {amalgameGroups.map(group => {
+                    const result = amalgameGroupResults.find(r => r.groupId === group.id)
+                    if (!result || result.totalCost === 0) return null
+
+                    const cuttingTotal = result.cuttingMachineCost + result.cuttingSetupCost
+
+                    return (
+                      <div key={group.id} className="space-y-1">
+                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
+                          <span className={`w-2 h-2 rounded-full inline-block ${
+                            group.amalgameType === 'impression_decoupe' ? 'bg-violet-500' : 'bg-orange-500'
+                          }`} />
+                          {group.name}
+                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                            group.amalgameType === 'impression_decoupe'
+                              ? 'bg-violet-100 text-violet-700'
+                              : 'bg-orange-100 text-orange-700'
+                          }`}>
+                            {group.amalgameType === 'impression_decoupe' ? 'Impression + Découpe' : 'Découpe uniquement'}
+                          </span>
+                        </div>
+
+                        {group.amalgameType === 'impression_decoupe' && (
+                          <>
+                            <CostRow
+                              label="Matière"
+                              value={result.materialCostMarged}
+                              details={result.platesCount > 0 ? `${result.platesCount} plaque(s)` : undefined}
+                            />
+                            <CostRow
+                              label="Impression"
+                              value={result.printingCost}
+                              details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
+                            />
+                          </>
+                        )}
+
+                        <CostRow
+                          label="Découpe"
+                          value={cuttingTotal}
+                          details={result.cuttingMachineTimeMin > 0 ? formatMinutes(result.cuttingMachineTimeMin) : undefined}
+                        />
+
+                        <div className="flex justify-between text-sm font-semibold text-violet-700 bg-violet-50 px-2 py-1.5 rounded-md">
+                          <span>Sous-total {group.name}</span>
+                          <span>{result.totalCost.toFixed(2)} €</span>
+                        </div>
+                      </div>
+                    )
+                  })}
+                </div>
+              )}
+
+              {/* Séparateur sections communes */}
               {productSlotResults.length > 0 && (
                 <div className="border-t border-dashed border-slate-200 pt-3">
                   <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-2">

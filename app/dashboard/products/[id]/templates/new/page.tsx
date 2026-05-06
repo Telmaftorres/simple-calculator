@@ -14,7 +14,16 @@ export default async function NewTemplatePage({ params }: PageProps) {
   if (isNaN(productTypeId)) return notFound()
 
   const [productType, plates, allAccessories] = await Promise.all([
-    prisma.productType.findUnique({ where: { id: productTypeId } }),
+    prisma.productType.findUnique({
+      where: { id: productTypeId },
+      include: {
+        elements: { orderBy: { name: 'asc' } },
+        options: {
+          orderBy: { position: 'asc' },
+          include: { variants: { orderBy: { position: 'asc' } } },
+        },
+      },
+    }),
     prisma.plate.findMany({ orderBy: { name: 'asc' } }),
     prisma.accessory.findMany({ orderBy: { name: 'asc' }, select: { id: true, name: true, price: true } }),
   ])
@@ -27,6 +36,10 @@ export default async function NewTemplatePage({ params }: PageProps) {
       productTypeName={productType.name}
       plates={plates}
       allAccessories={allAccessories}
+      typeElements={productType.elements}
+      typeOptions={productType.options}
+      flatWidthFormula={productType.flatWidthFormula}
+      flatHeightFormula={productType.flatHeightFormula}
     />
   )
 }
