@@ -18,10 +18,6 @@ export default async function NewTemplatePage({ params }: PageProps) {
       where: { id: productTypeId },
       include: {
         elements: { orderBy: { name: 'asc' } },
-        options: {
-          orderBy: { position: 'asc' },
-          include: { variants: { orderBy: { position: 'asc' } } },
-        },
       },
     }),
     prisma.plate.findMany({ orderBy: { name: 'asc' } }),
@@ -37,8 +33,7 @@ export default async function NewTemplatePage({ params }: PageProps) {
       plates={plates}
       allAccessories={allAccessories}
       typeElements={productType.elements}
-      typeOptions={productType.options}
-      flatWidthFormula={productType.flatWidthFormula}
+flatWidthFormula={productType.flatWidthFormula}
       flatHeightFormula={productType.flatHeightFormula}
     />
   )

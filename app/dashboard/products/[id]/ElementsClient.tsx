@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { toast } from 'sonner'
-import { Plus, Pencil, Trash2, ArrowLeft, LayoutTemplate, Layers, Settings2, ChevronDown, ChevronRight } from 'lucide-react'
+import { Plus, Pencil, Trash2, ArrowLeft, LayoutTemplate, Layers } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -22,23 +22,10 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import {
   createElement,
   updateElement,
   deleteElement,
   deleteProductTemplate,
-  createProductOption,
-  updateProductOption,
-  deleteProductOption,
-  createProductOptionVariant,
-  updateProductOptionVariant,
-  deleteProductOptionVariant,
 } from '@/app/actions/catalog'
 import Link from 'next/link'
 
@@ -63,37 +50,15 @@ type Template = {
   plate: { id: number; name: string; material: string } | null
 }
 
-type ProductOptionVariant = {
-  id: number
-  label: string
-  priceHT: number | null
-  position: number
-}
-
-type ProductOption = {
-  id: number
-  name: string
-  inputType: string
-  priceHT: number | null
-  position: number
-  variants: ProductOptionVariant[]
-}
-
 type ProductType = {
   id: number
   name: string
   elements: Element[]
   templates: Template[]
-  options: ProductOption[]
-}
-
-const INPUT_TYPE_LABELS: Record<string, string> = {
-  single_choice: 'Choix unique',
-  multi_item: 'Ajout multiple',
 }
 
 export default function ElementsClient({ product }: { product: ProductType }) {
-  const [activeTab, setActiveTab] = useState<'elements' | 'templates' | 'options'>('templates')
+  const [activeTab, setActiveTab] = useState<'elements' | 'templates'>('templates')
 
   // ── Elements state ──
   const [isElementDialogOpen, setIsElementDialogOpen] = useState(false)
@@ -147,113 +112,6 @@ export default function ElementsClient({ product }: { product: ProductType }) {
     }
   }
 
-  // ── Options state ──
-  const [expandedOptions, setExpandedOptions] = useState<Set<number>>(new Set())
-
-  // Dialog: option
-  const [isOptionDialogOpen, setIsOptionDialogOpen] = useState(false)
-  const [editingOption, setEditingOption] = useState<ProductOption | null>(null)
-  const [optionForm, setOptionForm] = useState({ name: '', inputType: 'single_choice', priceHT: '' })
-
-  // Dialog: variant
-  const [isVariantDialogOpen, setIsVariantDialogOpen] = useState(false)
-  const [variantParentOptionId, setVariantParentOptionId] = useState<number | null>(null)
-  const [editingVariant, setEditingVariant] = useState<ProductOptionVariant | null>(null)
-  const [variantForm, setVariantForm] = useState({ label: '', priceHT: '' })
-
-  const toggleOption = (id: number) => {
-    setExpandedOptions((prev) => {
-      const next = new Set(prev)
-      if (next.has(id)) next.delete(id)
-      else next.add(id)
-      return next
-    })
-  }
-
-  const handleOpenOptionDialog = (option?: ProductOption) => {
-    if (option) {
-      setEditingOption(option)
-      setOptionForm({
-        name: option.name,
-        inputType: option.inputType,
-        priceHT: option.priceHT != null ? option.priceHT.toString() : '',
-      })
-    } else {
-      setEditingOption(null)
-      setOptionForm({ name: '', inputType: 'single_choice', priceHT: '' })
-    }
-    setIsOptionDialogOpen(true)
-  }
-
-  const handleSubmitOption = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const payload = {
-      productTypeId: product.id,
-      name: optionForm.name,
-      inputType: optionForm.inputType as 'single_choice' | 'multi_item',
-      priceHT: optionForm.priceHT !== '' ? parseFloat(optionForm.priceHT) : null,
-    }
-    try {
-      if (editingOption) {
-        await updateProductOption(editingOption.id, payload)
-      } else {
-        await createProductOption(payload)
-      }
-      setIsOptionDialogOpen(false)
-      toast.success(editingOption ? 'Option modifiée' : 'Option créée')
-    } catch {
-      toast.error('Erreur lors de la sauvegarde')
-    }
-  }
-
-  const handleDeleteOption = async (id: number) => {
-    if (!confirm('Supprimer cette option et toutes ses variantes ?')) return
-    try {
-      await deleteProductOption(id)
-      toast.success('Option supprimée')
-    } catch {
-      toast.error('Erreur lors de la suppression')
-    }
-  }
-
-  const handleOpenVariantDialog = (optionId: number, variant?: ProductOptionVariant) => {
-    setVariantParentOptionId(optionId)
-    if (variant) {
-      setEditingVariant(variant)
-      setVariantForm({ label: variant.label, priceHT: variant.priceHT != null ? variant.priceHT.toString() : '' })
-    } else {
-      setEditingVariant(null)
-      setVariantForm({ label: '', priceHT: '' })
-    }
-    setIsVariantDialogOpen(true)
-  }
-
-  const handleSubmitVariant = async (e: React.FormEvent) => {
-    e.preventDefault()
-    const priceHT = variantForm.priceHT !== '' ? parseFloat(variantForm.priceHT) : null
-    try {
-      if (editingVariant) {
-        await updateProductOptionVariant(editingVariant.id, { label: variantForm.label, priceHT })
-      } else if (variantParentOptionId) {
-        await createProductOptionVariant({ optionId: variantParentOptionId, label: variantForm.label, priceHT })
-      }
-      setIsVariantDialogOpen(false)
-      toast.success(editingVariant ? 'Variante modifiée' : 'Variante ajoutée')
-    } catch {
-      toast.error('Erreur lors de la sauvegarde')
-    }
-  }
-
-  const handleDeleteVariant = async (id: number) => {
-    if (!confirm('Supprimer cette variante ?')) return
-    try {
-      await deleteProductOptionVariant(id)
-      toast.success('Variante supprimée')
-    } catch {
-      toast.error('Erreur lors de la suppression')
-    }
-  }
-
   return (
     <div className="space-y-6">
       {/* ── Header ── */}
@@ -265,7 +123,7 @@ export default function ElementsClient({ product }: { product: ProductType }) {
         </Link>
         <div>
           <h2 className="text-2xl font-bold tracking-tight">{product.name}</h2>
-          <p className="text-slate-500 text-sm">Gérer les éléments, les modèles standards et les options</p>
+          <p className="text-slate-500 text-sm">Gérer les éléments et les modèles standards</p>
         </div>
       </div>
 
@@ -284,22 +142,6 @@ export default function ElementsClient({ product }: { product: ProductType }) {
           {product.templates.length > 0 && (
             <span className="ml-1 bg-emerald-100 text-emerald-700 text-xs rounded-full px-2 py-0.5">
               {product.templates.length}
-            </span>
-          )}
-        </button>
-        <button
-          onClick={() => setActiveTab('options')}
-          className={`flex items-center gap-2 px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            activeTab === 'options'
-              ? 'border-violet-500 text-violet-700'
-              : 'border-transparent text-slate-500 hover:text-slate-700'
-          }`}
-        >
-          <Settings2 className="h-4 w-4" />
-          Options
-          {product.options.length > 0 && (
-            <span className="ml-1 bg-violet-100 text-violet-700 text-xs rounded-full px-2 py-0.5">
-              {product.options.length}
             </span>
           )}
         </button>
@@ -399,118 +241,6 @@ export default function ElementsClient({ product }: { product: ProductType }) {
         </div>
       )}
 
-      {/* ── Tab: Options ── */}
-      {activeTab === 'options' && (
-        <div className="space-y-4">
-          <div className="flex justify-end">
-            <Button className="bg-violet-600 hover:bg-violet-700" onClick={() => handleOpenOptionDialog()}>
-              <Plus className="mr-2 h-4 w-4" /> Ajouter une option
-            </Button>
-          </div>
-
-          {product.options.length === 0 ? (
-            <div className="bg-white rounded-lg border border-dashed border-slate-200 p-12 text-center">
-              <Settings2 className="h-10 w-10 text-slate-300 mx-auto mb-3" />
-              <p className="text-slate-500 font-medium">Aucune option définie</p>
-              <p className="text-slate-400 text-sm mt-1">
-                Les options permettent de configurer les variantes du produit (ex : type de pied, pop-up…)
-              </p>
-              <Button variant="outline" className="mt-4" onClick={() => handleOpenOptionDialog()}>
-                <Plus className="mr-2 h-4 w-4" /> Créer la première option
-              </Button>
-            </div>
-          ) : (
-            <div className="grid gap-3">
-              {product.options.map((opt) => {
-                const isExpanded = expandedOptions.has(opt.id)
-                return (
-                  <div key={opt.id} className="bg-white rounded-lg border border-slate-200 overflow-hidden">
-                    {/* Option header */}
-                    <div className="flex items-center gap-3 p-4">
-                      <button
-                        onClick={() => toggleOption(opt.id)}
-                        className="text-slate-400 hover:text-slate-600 transition-colors"
-                      >
-                        {isExpanded
-                          ? <ChevronDown className="h-4 w-4" />
-                          : <ChevronRight className="h-4 w-4" />
-                        }
-                      </button>
-                      <div className="flex-1">
-                        <div className="flex items-center gap-2">
-                          <span className="font-semibold text-slate-800">{opt.name}</span>
-                          <span className="text-xs bg-violet-100 text-violet-700 rounded-full px-2 py-0.5">
-                            {INPUT_TYPE_LABELS[opt.inputType] ?? opt.inputType}
-                          </span>
-                          {opt.priceHT != null && (
-                            <span className="text-xs text-slate-500">{opt.priceHT.toFixed(2)} € HT (base)</span>
-                          )}
-                        </div>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                          {opt.variants.length === 0
-                            ? 'Aucune variante'
-                            : `${opt.variants.length} variante${opt.variants.length > 1 ? 's' : ''}`}
-                        </p>
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <Button variant="ghost" size="sm" onClick={() => handleOpenVariantDialog(opt.id)}>
-                          <Plus className="h-3.5 w-3.5 mr-1" /> Variante
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleOpenOptionDialog(opt)}>
-                          <Pencil className="h-4 w-4 text-blue-500" />
-                        </Button>
-                        <Button variant="ghost" size="icon" onClick={() => handleDeleteOption(opt.id)}>
-                          <Trash2 className="h-4 w-4 text-red-500" />
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Variants list */}
-                    {isExpanded && (
-                      <div className="border-t border-slate-100 bg-slate-50">
-                        {opt.variants.length === 0 ? (
-                          <p className="text-sm text-slate-400 text-center py-4">
-                            Aucune variante — cliquez sur &quot;+ Variante&quot; pour en ajouter.
-                          </p>
-                        ) : (
-                          <Table>
-                            <TableHeader>
-                              <TableRow className="bg-slate-50">
-                                <TableHead className="text-xs">Libellé</TableHead>
-                                <TableHead className="text-xs text-right">Prix HT</TableHead>
-                                <TableHead className="text-right" />
-                              </TableRow>
-                            </TableHeader>
-                            <TableBody>
-                              {opt.variants.map((v) => (
-                                <TableRow key={v.id} className="bg-white">
-                                  <TableCell className="font-medium text-sm">{v.label}</TableCell>
-                                  <TableCell className="text-right text-sm text-slate-500">
-                                    {v.priceHT != null ? `${v.priceHT.toFixed(2)} €` : '—'}
-                                  </TableCell>
-                                  <TableCell className="text-right space-x-1">
-                                    <Button variant="ghost" size="icon" onClick={() => handleOpenVariantDialog(opt.id, v)}>
-                                      <Pencil className="h-3.5 w-3.5 text-blue-500" />
-                                    </Button>
-                                    <Button variant="ghost" size="icon" onClick={() => handleDeleteVariant(v.id)}>
-                                      <Trash2 className="h-3.5 w-3.5 text-red-500" />
-                                    </Button>
-                                  </TableCell>
-                                </TableRow>
-                              ))}
-                            </TableBody>
-                          </Table>
-                        )}
-                      </div>
-                    )}
-                  </div>
-                )
-              })}
-            </div>
-          )}
-        </div>
-      )}
-
       {/* ── Tab: Éléments composants ── */}
       {activeTab === 'elements' && (
         <div className="space-y-4">
@@ -592,97 +322,6 @@ export default function ElementsClient({ product }: { product: ProductType }) {
           </Dialog>
         </div>
       )}
-
-      {/* ── Dialog: Option ── */}
-      <Dialog open={isOptionDialogOpen} onOpenChange={setIsOptionDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingOption ? "Modifier l'option" : 'Ajouter une option'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmitOption} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="opt-name">Nom de l&apos;option</Label>
-              <Input
-                id="opt-name"
-                value={optionForm.name}
-                onChange={(e) => setOptionForm({ ...optionForm, name: e.target.value })}
-                placeholder="ex: Pied, Pop-up, Tablette..."
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="opt-type">Type de saisie</Label>
-              <Select
-                value={optionForm.inputType}
-                onValueChange={(v) => setOptionForm({ ...optionForm, inputType: v })}
-              >
-                <SelectTrigger id="opt-type">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="single_choice">Choix unique — on sélectionne une seule variante</SelectItem>
-                  <SelectItem value="multi_item">Ajout multiple — on peut en ajouter plusieurs</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="opt-price">Prix de base HT (€) — optionnel</Label>
-              <Input
-                id="opt-price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={optionForm.priceHT}
-                onChange={(e) => setOptionForm({ ...optionForm, priceHT: e.target.value })}
-                placeholder="Laisser vide si pas de prix"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Enregistrer</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
-
-      {/* ── Dialog: Variant ── */}
-      <Dialog open={isVariantDialogOpen} onOpenChange={setIsVariantDialogOpen}>
-        <DialogContent>
-          <DialogHeader>
-            <DialogTitle>
-              {editingVariant ? 'Modifier la variante' : 'Ajouter une variante'}
-            </DialogTitle>
-          </DialogHeader>
-          <form onSubmit={handleSubmitVariant} className="space-y-4">
-            <div className="grid gap-2">
-              <Label htmlFor="var-label">Libellé</Label>
-              <Input
-                id="var-label"
-                value={variantForm.label}
-                onChange={(e) => setVariantForm({ ...variantForm, label: e.target.value })}
-                placeholder="ex: Pied cruciforme, Pop-up A4 paysage..."
-                required
-              />
-            </div>
-            <div className="grid gap-2">
-              <Label htmlFor="var-price">Prix HT (€) — optionnel</Label>
-              <Input
-                id="var-price"
-                type="number"
-                step="0.01"
-                min="0"
-                value={variantForm.priceHT}
-                onChange={(e) => setVariantForm({ ...variantForm, priceHT: e.target.value })}
-                placeholder="Laisser vide si pas de prix"
-              />
-            </div>
-            <DialogFooter>
-              <Button type="submit">Enregistrer</Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
     </div>
   )
 }

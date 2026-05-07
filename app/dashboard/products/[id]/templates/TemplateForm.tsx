@@ -68,16 +68,6 @@ type TemplateFormData = {
 
 type TypeElement = { id: number; name: string; quantity: number }
 
-type TypeOptionVariant = { id: number; label: string; priceHT: number | null }
-
-type TypeOption = {
-  id: number
-  name: string
-  inputType: string
-  priceHT: number | null
-  variants: TypeOptionVariant[]
-}
-
 type TemplateElementEntry = {
   elementId: number
   quantity: number
@@ -123,21 +113,15 @@ const DEFAULT_ELEMENT_SETTINGS: Omit<TemplateElementEntry, 'elementId' | 'quanti
   cuttingTimePerPoseSeconds: 0,
   cuttingSetupType: 'none',
 }
-type TemplateVariantEntry = { variantId: number; defaultQuantity: number }
-type TemplateOptionEntry = { optionId: number; defaultQuantity: number }
-
 type Props = {
   productTypeId: number
   productTypeName: string
   plates: Plate[]
   allAccessories: AccessoryItem[]
   typeElements?: TypeElement[]
-  typeOptions?: TypeOption[]
   initialData?: Partial<TemplateFormData>
   initialAccessories?: SelectedAccessory[]
   initialElements?: Omit<TemplateElementEntry, 'formatType'>[]
-  initialVariantConfigs?: TemplateVariantEntry[]
-  initialOptionConfigs?: TemplateOptionEntry[]
   initialAmalgameGroupsJson?: string | null
   flatWidthFormula?: string
   flatHeightFormula?: string
@@ -196,7 +180,7 @@ function ShortcutRow<T extends number>({ values, current, onSelect, activeClass 
 
 // ── Composant principal ─────────────────────────────────────────────────────
 
-export default function TemplateForm({ productTypeId, productTypeName, plates, allAccessories, typeElements = [], typeOptions = [], initialData, initialAccessories = [], initialElements = [], initialVariantConfigs = [], initialOptionConfigs = [], initialAmalgameGroupsJson, flatWidthFormula = 'l', flatHeightFormula = 'L' }: Props) {
+export default function TemplateForm({ productTypeId, productTypeName, plates, allAccessories, typeElements = [], initialData, initialAccessories = [], initialElements = [], initialAmalgameGroupsJson, flatWidthFormula = 'l', flatHeightFormula = 'L' }: Props) {
   const router = useRouter()
   const [isPending, startTransition] = useTransition()
 
@@ -327,36 +311,6 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
     setSelectedElements((prev) => prev.map((e) => e.elementId === elementId ? { ...e, [field]: value } : e))
   }
 
-  // ── Options / variantes incluses ──
-  const [selectedVariants, setSelectedVariants] = useState<TemplateVariantEntry[]>(initialVariantConfigs)
-
-  const toggleVariant = (variantId: number) => {
-    setSelectedVariants((prev) => {
-      const existing = prev.find((v) => v.variantId === variantId)
-      if (existing) return prev.filter((v) => v.variantId !== variantId)
-      return [...prev, { variantId, defaultQuantity: 1 }]
-    })
-  }
-
-  const updateVariantQty = (variantId: number, qty: number) => {
-    setSelectedVariants((prev) => prev.map((v) => v.variantId === variantId ? { ...v, defaultQuantity: qty } : v))
-  }
-
-  // ── Options directes (sans variantes) ──
-  const [selectedOptionConfigs, setSelectedOptionConfigs] = useState<TemplateOptionEntry[]>(initialOptionConfigs)
-
-  const toggleOptionConfig = (optionId: number) => {
-    setSelectedOptionConfigs((prev) => {
-      const existing = prev.find((o) => o.optionId === optionId)
-      if (existing) return prev.filter((o) => o.optionId !== optionId)
-      return [...prev, { optionId, defaultQuantity: 1 }]
-    })
-  }
-
-  const updateOptionConfigQty = (optionId: number, qty: number) => {
-    setSelectedOptionConfigs((prev) => prev.map((o) => o.optionId === optionId ? { ...o, defaultQuantity: qty } : o))
-  }
-
   // ── Groupes d'amalgame (système multi-produit) ──
   const [amalgameGroups, setAmalgameGroups] = useState<AmalgameGroup[]>(() => {
     if (!initialAmalgameGroupsJson) return []
@@ -429,14 +383,11 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
           amalgameGroupId: amalgameGroupId ?? undefined,
           ...rest,
         }))
-        const variantsPayload = selectedVariants.filter((v) => v.defaultQuantity > 0)
-        const optionConfigsPayload = selectedOptionConfigs.filter((o) => o.defaultQuantity > 0)
-
         if (initialData?.id) {
-          await updateProductTemplate(initialData.id, payload, accPayload, [], elementsPayload, variantsPayload, optionConfigsPayload)
+          await updateProductTemplate(initialData.id, payload, accPayload, [], elementsPayload, [], [])
           toast.success('Modèle mis à jour')
         } else {
-          await createProductTemplate(payload, accPayload, [], elementsPayload, variantsPayload, optionConfigsPayload)
+          await createProductTemplate(payload, accPayload, [], elementsPayload, [], [])
           toast.success('Modèle créé')
         }
         router.push(`/dashboard/products/${productTypeId}`)
@@ -462,12 +413,10 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
       </div>
 
       {/* ── Composition du modèle ── */}
-      {(typeElements.length > 0 || typeOptions.length > 0) && (
+      {typeElements.length > 0 && (
         <div className="bg-white rounded-2xl border border-slate-200 p-6 shadow-sm">
           <h2 className="text-xs font-semibold text-slate-400 uppercase tracking-wider mb-4">Composition du modèle</h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-            {/* Éléments */}
+          <div>
             {typeElements.length > 0 && (
               <div>
                 <p className="text-xs font-medium text-slate-400 mb-2">Éléments</p>
@@ -495,83 +444,6 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
                             <span className="text-sm font-bold text-teal-700 min-w-[20px] text-center">{selected.quantity}</span>
                             <button type="button" onClick={() => updateElementQty(el.id, selected.quantity + 1)}
                               className="w-6 h-6 flex items-center justify-center text-teal-600 hover:bg-teal-50 rounded transition-colors font-medium">+</button>
-                          </div>
-                        ) : (
-                          <span className="text-slate-300 text-base">+</span>
-                        )}
-                      </div>
-                    )
-                  })}
-                </div>
-              </div>
-            )}
-
-            {/* Options */}
-            {typeOptions.length > 0 && (
-              <div>
-                <p className="text-xs font-medium text-slate-400 mb-2">Options</p>
-                <div className="rounded-xl border border-slate-100 overflow-hidden">
-                  {typeOptions.map((option, oi) => {
-                    const hasVariants = option.variants.length > 0
-                    if (hasVariants) {
-                      return option.variants.map((variant, vi) => {
-                        const sel = selectedVariants.find((v) => v.variantId === variant.id)
-                        return (
-                          <div
-                            key={variant.id}
-                            onClick={() => toggleVariant(variant.id)}
-                            className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${(oi > 0 || vi > 0) ? 'border-t border-slate-100' : ''} ${
-                              sel ? 'bg-sky-50' : 'bg-white hover:bg-slate-50'
-                            }`}
-                          >
-                            <div>
-                              <span className={`text-sm transition-colors ${sel ? 'font-semibold text-sky-700' : 'font-medium text-slate-500'}`}>
-                                {variant.label}
-                              </span>
-                              {variant.priceHT != null && (
-                                <span className={`ml-2 text-xs ${sel ? 'text-sky-400' : 'text-slate-400'}`}>{variant.priceHT.toFixed(2)} €/pièce</span>
-                              )}
-                            </div>
-                            {sel ? (
-                              <div className="flex items-center gap-0.5 bg-white border border-sky-200 rounded-lg px-1 py-0.5" onClick={(e) => e.stopPropagation()}>
-                                <button type="button" onClick={() => updateVariantQty(variant.id, Math.max(1, sel.defaultQuantity - 1))}
-                                  className="w-6 h-6 flex items-center justify-center text-sky-600 hover:bg-sky-50 rounded transition-colors font-medium">−</button>
-                                <span className="text-sm font-bold text-sky-700 min-w-[20px] text-center">{sel.defaultQuantity}</span>
-                                <button type="button" onClick={() => updateVariantQty(variant.id, sel.defaultQuantity + 1)}
-                                  className="w-6 h-6 flex items-center justify-center text-sky-600 hover:bg-sky-50 rounded transition-colors font-medium">+</button>
-                              </div>
-                            ) : (
-                              <span className="text-slate-300 text-base">+</span>
-                            )}
-                          </div>
-                        )
-                      })
-                    }
-                    // Option sans variante
-                    const sel = selectedOptionConfigs.find((o) => o.optionId === option.id)
-                    return (
-                      <div
-                        key={option.id}
-                        onClick={() => toggleOptionConfig(option.id)}
-                        className={`flex items-center justify-between px-4 py-3 cursor-pointer transition-colors ${oi > 0 ? 'border-t border-slate-100' : ''} ${
-                          sel ? 'bg-sky-50' : 'bg-white hover:bg-slate-50'
-                        }`}
-                      >
-                        <div>
-                          <span className={`text-sm transition-colors ${sel ? 'font-semibold text-sky-700' : 'font-medium text-slate-500'}`}>
-                            {option.name}
-                          </span>
-                          {option.priceHT != null && (
-                            <span className={`ml-2 text-xs ${sel ? 'text-sky-400' : 'text-slate-400'}`}>{option.priceHT.toFixed(2)} €/pièce</span>
-                          )}
-                        </div>
-                        {sel ? (
-                          <div className="flex items-center gap-0.5 bg-white border border-sky-200 rounded-lg px-1 py-0.5" onClick={(e) => e.stopPropagation()}>
-                            <button type="button" onClick={() => updateOptionConfigQty(option.id, Math.max(1, sel.defaultQuantity - 1))}
-                              className="w-6 h-6 flex items-center justify-center text-sky-600 hover:bg-sky-50 rounded transition-colors font-medium">−</button>
-                            <span className="text-sm font-bold text-sky-700 min-w-[20px] text-center">{sel.defaultQuantity}</span>
-                            <button type="button" onClick={() => updateOptionConfigQty(option.id, sel.defaultQuantity + 1)}
-                              className="w-6 h-6 flex items-center justify-center text-sky-600 hover:bg-sky-50 rounded transition-colors font-medium">+</button>
                           </div>
                         ) : (
                           <span className="text-slate-300 text-base">+</span>

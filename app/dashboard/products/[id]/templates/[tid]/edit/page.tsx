@@ -19,10 +19,6 @@ export default async function EditTemplatePage({ params }: PageProps) {
       where: { id: productTypeId },
       include: {
         elements: { orderBy: { name: 'asc' } },
-        options: {
-          orderBy: { position: 'asc' },
-          include: { variants: { orderBy: { position: 'asc' } } },
-        },
       },
     }),
     prisma.productTemplate.findUnique({
@@ -84,8 +80,7 @@ export default async function EditTemplatePage({ params }: PageProps) {
         notes: template.notes ?? '',
       }}
       typeElements={productType.elements}
-      typeOptions={productType.options}
-      initialElements={template.templateElements.map((e) => ({
+initialElements={template.templateElements.map((e) => ({
         elementId: e.elementId,
         quantity: e.quantity,
         flatWidth: e.flatWidth ?? null,
@@ -107,9 +102,7 @@ export default async function EditTemplatePage({ params }: PageProps) {
         cuttingTimePerPoseSeconds: e.cuttingTimePerPoseSeconds,
         cuttingSetupType: e.cuttingSetupType as 'none' | 'standard' | 'complexe',
       }))}
-      initialVariantConfigs={template.templateVariants.map((v) => ({ variantId: v.variantId, defaultQuantity: v.defaultQuantity }))}
-      initialOptionConfigs={template.templateOptionConfigs.map((o) => ({ optionId: o.optionId, defaultQuantity: o.defaultQuantity }))}
-      initialAccessories={template.accessories.map((a) => ({
+initialAccessories={template.accessories.map((a) => ({
         accessoryId: a.accessoryId,
         name: a.accessory.name,
         price: a.accessory.price,

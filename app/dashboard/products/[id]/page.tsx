@@ -22,12 +22,6 @@ export default async function ProductElementsPage({ params }: PageProps) {
         include: { plate: { select: { id: true, name: true, material: true } } },
         orderBy: { name: 'asc' },
       },
-      options: {
-        orderBy: { position: 'asc' },
-        include: {
-          variants: { orderBy: { position: 'asc' } },
-        },
-      },
     },
   })
 
