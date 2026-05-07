@@ -328,12 +328,34 @@ export function MultiProductSlotEditor() {
                       </div>
                     </div>
 
-                    {activeResult && (
-                      <div className="flex justify-between items-center bg-white p-2 rounded text-xs text-purple-800">
-                        <span>Temps machine :</span>
-                        <span className="font-bold">{Math.round(activeResult.costResult.printingCostData.machineTimeMin)} min</span>
+                    <div className="space-y-1 bg-purple-100/60 p-2 rounded-lg border border-purple-200">
+                      <Label className="text-purple-900 font-medium text-xs">Temps machine impression</Label>
+                      <div className="flex items-center gap-2">
+                        <input
+                          type="number" min={0} step={0.5}
+                          value={activeSlot.machineTimeMinOverride ?? ''}
+                          onChange={(e) => {
+                            const v = parseFloat(e.target.value)
+                            updateProduct(activeProductIndex, 'machineTimeMinOverride', isNaN(v) || e.target.value === '' ? null : v)
+                          }}
+                          placeholder="Forcer le temps (min)…"
+                          className="flex-1 h-8 px-2 text-xs border border-purple-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-purple-400"
+                        />
+                        {activeSlot.machineTimeMinOverride != null && (
+                          <button type="button" onClick={() => updateProduct(activeProductIndex, 'machineTimeMinOverride', null)}
+                            className="text-xs text-slate-400 hover:text-red-500 px-2 py-1 rounded border border-slate-200 bg-white transition-colors">
+                            Auto
+                          </button>
+                        )}
                       </div>
-                    )}
+                      {activeResult && (
+                        <div className="text-xs text-purple-700 font-medium">
+                          {activeSlot.machineTimeMinOverride != null
+                            ? `Forcé : ${activeSlot.machineTimeMinOverride} min`
+                            : `Calculé : ${Math.round(activeResult.costResult.printingCostData.machineTimeMin)} min`}
+                        </div>
+                      )}
+                    </div>
                   </div>
                 )}
               </div>

@@ -222,6 +222,7 @@ export function useImpositionResults({
         hasImpression: isInImpressionGroup ? false : slot.hasImpression,
         hasFaconnage: false, hasConditionnement: false, hasAccessoires: false,
         cuttingTimePerPoseSeconds: (isInImpressionGroup || isInDecoupeGroup) ? 0 : slot.cuttingTimePerPoseSeconds,
+        machineTimeMinOverride: isInImpressionGroup ? null : (slot.machineTimeMinOverride ?? null),
         assemblyTimePerPieceSeconds: 0, packTimePerPieceSeconds: 0, hasAssemblyNotice: false,
         selectedAccessories: [], selectedConsumables: [], settings,
         hasPackaging: false, packagingPlate: undefined, packagingQuantity: 0,

@@ -292,6 +292,7 @@ export interface ProductSlot {
   orientationOverride: 'normal' | 'rotated' | null
   amalgameGroupId: string | null
   countPerPlateInGroup: number
+  machineTimeMinOverride: number | null
 }
 
 export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
@@ -318,6 +319,7 @@ export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
   orientationOverride: null,
   amalgameGroupId: null,
   countPerPlateInGroup: 0,
+  machineTimeMinOverride: null,
 }
 
 export interface ProductSlotResult {

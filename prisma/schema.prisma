@@ -540,6 +540,7 @@ model QuoteProduct {
   totalCost                 Float?
   amalgameGroupIndex        Int?
   countPerPlateInGroup      Int?
+  machineTimeMinOverride    Float?
   quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   plate                     Plate?  @relation(fields: [plateId], references: [id])
 }

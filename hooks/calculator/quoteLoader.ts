@@ -52,6 +52,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
       orientationOverride: null as 'normal' | 'rotated' | null,
       amalgameGroupId: groupId,
       countPerPlateInGroup: p.countPerPlateInGroup ?? 0,
+      machineTimeMinOverride: (p as { machineTimeMinOverride?: number | null }).machineTimeMinOverride ?? null,
     }
   })
 
