@@ -53,6 +53,7 @@ export function RecapSidebar() {
     materialCostMarged,
     materialMarginCoeff,
     transportTotal: transportCost,
+    transportCostMarged,
   } = costResult
 
   const displayTotal = isMultiProduct ? totalCostMulti : totalCost
@@ -316,7 +317,7 @@ export function RecapSidebar() {
           {transportCost > 0 && (
             <CostRow
               label="Transport"
-              value={transportCost}
+              value={transportCostMarged}
               details={formState.transportDeliveries.length > 1
                 ? `${formState.transportDeliveries.length} livraisons`
                 : undefined}
