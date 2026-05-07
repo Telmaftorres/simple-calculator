@@ -342,7 +342,7 @@ export function MultiProductSlotEditor() {
               <div className="space-y-3 pt-4 border-t border-slate-100">
                 <h4 className="text-sm font-semibold text-slate-700">Découpe</h4>
                 <div className="space-y-2">
-                  <GaugeSlider label="Temps par pose" value={activeSlot.cuttingTimePerPoseSeconds} min={0} max={300} unit="sec"
+                  <GaugeSlider label="Temps par plaque" value={activeSlot.cuttingTimePerPoseSeconds} min={0} max={300} unit="sec"
                     onChange={(v) => updateProduct(activeProductIndex, 'cuttingTimePerPoseSeconds', v)}
                     formatValue={formatTimeSeconds} gradientColors="from-yellow-300 to-orange-600" />
                   <div className="flex gap-2">
