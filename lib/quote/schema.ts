@@ -57,6 +57,7 @@ export const quoteFieldsSchema = z.object({
   packagingHeight: z.number().int().positive().nullable().optional(),
 
   isMultiProduct: z.boolean().optional(),
+  plvQuantity: z.number().int().positive().nullable().optional(),
 
   hasBE: z.boolean().optional(),
   beTimeMinutes: z.number().int().min(0).optional(),

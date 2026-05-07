@@ -28,6 +28,7 @@ export const QUOTE_DEFAULTS = {
   hasConditionnement: true as boolean,
   hasAccessoires: false as boolean,
   isMultiProduct: false as boolean,
+  plvQuantity: null as number | null,
   hasDossierFee: false as boolean,
   // ── Bureau d'études ──
   hasBE: false as boolean,

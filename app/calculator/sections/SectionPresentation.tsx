@@ -22,6 +22,7 @@ export function SectionPresentation() {
     flatWidth, setFlatWidth,
     flatHeight, setFlatHeight,
     isMultiProduct, setIsMultiProduct,
+    plvQuantity, setPlvQuantity,
     addProduct,
     products,
     hasDossierFee, setHasDossierFee,
@@ -105,6 +106,24 @@ export function SectionPresentation() {
             placeholder="Prénom Nom du contact"
           />
         </div>
+
+        {/* ── Nombre de PLV — visible uniquement en mode multi ── */}
+        {isMultiProduct && (
+          <div className="space-y-2">
+            <Label>Nombre de PLV</Label>
+            <Input
+              type="number"
+              min={1}
+              value={plvQuantity ?? ''}
+              onChange={(e) => {
+                const v = parseInt(e.target.value)
+                setPlvQuantity(isNaN(v) || e.target.value === '' ? null : v)
+              }}
+              placeholder="Ex : 140"
+            />
+            <p className="text-xs text-slate-400">Base pour façonnage, conditionnement et transport</p>
+          </div>
+        )}
 
         {/* ── Type de PLV — masqué en mode multi ── */}
         {!isMultiProduct && (

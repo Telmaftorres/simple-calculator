@@ -97,6 +97,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     hasConditionnement: initialQuote.hasConditionnement ?? true,
     hasAccessoires: initialQuote.hasAccessoires ?? false,
     isMultiProduct: initialQuote.isMultiProduct ?? false,
+    plvQuantity: initialQuote.plvQuantity ?? null,
     hasBE: initialQuote.hasBE ?? false,
     beTimeMinutes: initialQuote.beTimeMinutes ?? 0,
     batTimeMinutes: initialQuote.batTimeMinutes ?? 0,

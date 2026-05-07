@@ -313,6 +313,7 @@ model Quote {
   hasConditionnement                 Boolean           @default(true)
   hasAccessoires                     Boolean           @default(false)
   isMultiProduct                     Boolean           @default(false)
+  plvQuantity                        Int?              // Nombre de PLV (mode multi-produit) — base pour façonnage, conditionnement, transport
   products                           QuoteProduct[]
   hasBE                              Boolean           @default(false)
   beTimeMinutes                      Int               @default(0)

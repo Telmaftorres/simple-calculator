@@ -62,6 +62,7 @@ export interface SaveContext {
   batTimeMinutes: number
   hasDossierFee: boolean
   isMultiProduct: boolean
+  plvQuantity: number | null
   products: ProductSlot[]
   showMargeCommerciale: boolean
   showMargeSopano: boolean
@@ -194,6 +195,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasDossierFee: ctx.hasDossierFee,
         plateCostOverride: ctx.plateCostOverride ?? null,
         isMultiProduct,
+        plvQuantity: isMultiProduct ? (ctx.plvQuantity ?? null) : null,
         showMargeCommerciale: ctx.showMargeCommerciale,
         showMargeSopano: ctx.showMargeSopano,
         elements: isMultiProduct ? [] : (selectedProductType?.elements.map((el) => ({

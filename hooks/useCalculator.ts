@@ -82,7 +82,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
-    machineTimeMinOverride,
+    machineTimeMinOverride, plvQuantity,
   } = formState
 
   const {
@@ -192,6 +192,8 @@ export function useCalculator(
   })
 
   const totalQuantityMulti = isMultiProduct ? products.reduce((sum, p) => sum + p.quantity, 0) : 0
+  // Pour façonnage/conditionnement/transport en multi : utilise plvQuantity si défini, sinon somme des éléments
+  const quantiteForFaconnage = isMultiProduct ? (plvQuantity ?? totalQuantityMulti) : quantity
 
   const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
   const transportTotal = formState.transportDeliveries.reduce((sum, d) => {
@@ -224,7 +226,7 @@ export function useCalculator(
   })()
 
   const costResult = calculateCosts({
-    quantity: isMultiProduct ? totalQuantityMulti : quantity,
+    quantity: isMultiProduct ? quantiteForFaconnage : quantity,
     impositionResult: isMultiProduct ? null : impositionResult,
     selectedPlate: isMultiProduct ? undefined : selectedPlate,
     inkMlPerPlate: isMultiProduct ? 0 : effectiveInkMlPerPlate,
@@ -271,12 +273,12 @@ export function useCalculator(
 
   const getAssemblyDetails = useCallback(() => formatAssemblyDetails({
     assemblyTimePerPieceSeconds,
-    quantity: isMultiProduct ? totalQuantityMulti : quantity,
+    quantity: isMultiProduct ? quantiteForFaconnage : quantity,
   }), [assemblyTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti])
 
   const getPackDetails = useCallback(() => formatPackDetails({
     packTimePerPieceSeconds,
-    quantity: isMultiProduct ? totalQuantityMulti : quantity,
+    quantity: isMultiProduct ? quantiteForFaconnage : quantity,
     hasAssemblyNotice,
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
   }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece])
@@ -288,7 +290,7 @@ export function useCalculator(
     flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
-    cuttingTimePerPoseSeconds, machineTimeMinOverride, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
+    cuttingTimePerPoseSeconds, machineTimeMinOverride, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
     hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
@@ -534,6 +536,7 @@ export function useCalculator(
     getCuttingDetails, getAssemblyDetails, getPackDetails,
     formState, costResult,
     isMultiProduct, setIsMultiProduct: (v: boolean) => setField('isMultiProduct', v),
+    plvQuantity, setPlvQuantity: (v: number | null) => setField('plvQuantity', v),
     products, activeProductIndex, productSlotResults,
     totalQuantityMulti, totalCostMulti,
     addProduct, removeProduct, setActiveProduct, updateProduct,
