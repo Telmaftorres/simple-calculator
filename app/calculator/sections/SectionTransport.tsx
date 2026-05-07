@@ -1,6 +1,6 @@
 'use client'
 
-import { useMemo } from 'react'
+import { useMemo, useState } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
@@ -8,8 +8,9 @@ import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { calculateTransport, suggestTransportMode, type TransportMode } from '@/lib/transport/geodis-rates'
 import { GEODIS_FUEL_SURCHARGE_PERCENT, TRANSPORT_MARGIN } from '@/lib/config/pricing'
-import { Plus, Trash2 } from 'lucide-react'
+import { Plus, Trash2, FileSpreadsheet } from 'lucide-react'
 import type { TransportDeliveryForm } from '@/types/calculator'
+import { ImportTransportDialog } from './ImportTransportDialog'
 
 function DeliveryRow({
   delivery,
@@ -188,9 +189,10 @@ function DeliveryRow({
 }
 
 export function SectionTransport() {
-  const { formState, addTransportDelivery, removeTransportDelivery, updateTransportDelivery, settings } =
+  const { formState, addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries, settings } =
     useCalculatorContext()
 
+  const [showImport, setShowImport] = useState(false)
   const { transportDeliveries } = formState
   const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
@@ -213,7 +215,31 @@ export function SectionTransport() {
 
   return (
     <SectionDisplay number="10" title="Transport" color="sky">
+      {showImport && (
+        <ImportTransportDialog
+          existingCount={transportDeliveries.length}
+          onClose={() => setShowImport(false)}
+          onImport={(deliveries, replace) => bulkAddTransportDeliveries(deliveries, replace)}
+        />
+      )}
       <div className="space-y-4">
+
+        {/* Compteur + bouton import */}
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-semibold text-sky-700">
+              {transportDeliveries.length} point{transportDeliveries.length !== 1 ? 's' : ''} de livraison
+            </span>
+          </div>
+          <button
+            onClick={() => setShowImport(true)}
+            className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-semibold text-sky-600 border border-sky-200 rounded-lg hover:bg-sky-50 transition-colors"
+          >
+            <FileSpreadsheet className="h-3.5 w-3.5" />
+            Importer Excel / CSV
+          </button>
+        </div>
+
         {transportDeliveries.length === 0 && (
           <div className="text-center py-4 bg-slate-50 border border-slate-100 rounded-lg text-slate-400 text-sm italic">
             Aucun point de livraison — cliquez sur « Ajouter » pour commencer

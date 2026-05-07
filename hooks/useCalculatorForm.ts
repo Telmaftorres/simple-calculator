@@ -41,6 +41,7 @@ export type CalculatorFormAction =
   | { type: 'ADD_TRANSPORT_DELIVERY' }
   | { type: 'REMOVE_TRANSPORT_DELIVERY'; id: string }
   | { type: 'UPDATE_TRANSPORT_DELIVERY'; id: string; field: keyof Omit<TransportDeliveryForm, 'id'>; value: TransportDeliveryForm[keyof TransportDeliveryForm] }
+  | { type: 'BULK_ADD_TRANSPORT_DELIVERIES'; deliveries: TransportDeliveryForm[]; replace: boolean }
 
 export function calculatorFormReducer(
   state: CalculatorFormState,
@@ -116,6 +117,11 @@ export function calculatorFormReducer(
       return { ...state, transportDeliveries: updated }
     }
 
+    case 'BULK_ADD_TRANSPORT_DELIVERIES': {
+      const base = action.replace ? [] : state.transportDeliveries
+      return { ...state, transportDeliveries: [...base, ...action.deliveries] }
+    }
+
     default:
       return state
   }
@@ -153,6 +159,9 @@ export function useCalculatorForm() {
 
   const addTransportDelivery = () => dispatch({ type: 'ADD_TRANSPORT_DELIVERY' })
 
+  const bulkAddTransportDeliveries = (deliveries: TransportDeliveryForm[], replace = false) =>
+    dispatch({ type: 'BULK_ADD_TRANSPORT_DELIVERIES', deliveries, replace })
+
   const removeTransportDelivery = (id: string) => dispatch({ type: 'REMOVE_TRANSPORT_DELIVERY', id })
 
   const updateTransportDelivery = <K extends keyof Omit<TransportDeliveryForm, 'id'>>(
@@ -175,5 +184,6 @@ export function useCalculatorForm() {
     addTransportDelivery,
     removeTransportDelivery,
     updateTransportDelivery,
+    bulkAddTransportDeliveries,
   }
 }

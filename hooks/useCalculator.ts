@@ -67,7 +67,7 @@ export function useCalculator(
   const {
     formState, setField, loadQuote, resetForm,
     addProduct, removeProduct, setActiveProduct, updateProduct,
-    addTransportDelivery, removeTransportDelivery, updateTransportDelivery,
+    addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries,
   } = useCalculatorForm()
 
   const {
@@ -543,7 +543,7 @@ export function useCalculator(
     products, activeProductIndex, productSlotResults,
     totalQuantityMulti, totalCostMulti,
     addProduct, removeProduct, setActiveProduct, updateProduct,
-    addTransportDelivery, removeTransportDelivery, updateTransportDelivery,
+    addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries,
     showMargeCommerciale, setShowMargeCommerciale: (v: boolean) => setField('showMargeCommerciale', v),
     showMargeSopano, setShowMargeSopano: (v: boolean) => setField('showMargeSopano', v),
     margeCommercialeMontant, margeSopanoMontant, totalNet,
