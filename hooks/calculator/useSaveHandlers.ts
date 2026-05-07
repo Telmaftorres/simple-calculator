@@ -121,7 +121,14 @@ export function useSaveHandlers(ctx: SaveContext) {
         return !p.productTypeId || (needsPlate && !p.selectedPlateId) || p.flatWidth <= 0 || p.flatHeight <= 0 || p.quantity <= 0
       })
       if (incomplete) {
-        toast.error('Tous les produits doivent être complétés.')
+        const group = incomplete.amalgameGroupId ? amalgameGroups.find((g) => g.id === incomplete.amalgameGroupId) : undefined
+        const needsPlate = group?.amalgameType !== 'impression_decoupe'
+        const name = incomplete.productSearch || `Produit ${products.indexOf(incomplete) + 1}`
+        const reason = !incomplete.productTypeId ? 'type de PLV manquant'
+          : (needsPlate && !incomplete.selectedPlateId) ? 'matière manquante'
+          : incomplete.flatWidth <= 0 || incomplete.flatHeight <= 0 ? 'dimensions manquantes (largeur/hauteur)'
+          : 'quantité manquante'
+        toast.error(`"${name}" incomplet — ${reason}`)
         return
       }
     } else {
