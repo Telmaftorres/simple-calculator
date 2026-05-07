@@ -733,7 +733,7 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
                       <div className="space-y-3 pt-4 border-t border-slate-100">
                         <h4 className="text-sm font-semibold text-slate-700">Découpe</h4>
                         <div className="space-y-2">
-                          <GaugeSlider label="Temps par plaque" value={activeEl.cuttingTimePerPoseSeconds} min={0} max={300} unit="sec" onChange={(v) => upd('cuttingTimePerPoseSeconds', v)} formatValue={formatTimeSeconds} gradientColors="from-yellow-300 to-orange-600" />
+                          <GaugeSlider label="Temps par pose" value={activeEl.cuttingTimePerPoseSeconds} min={0} max={300} unit="sec" onChange={(v) => upd('cuttingTimePerPoseSeconds', v)} formatValue={formatTimeSeconds} gradientColors="from-yellow-300 to-orange-600" />
                           <div className="flex gap-2">{CUTTING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('cuttingTimePerPoseSeconds', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.cuttingTimePerPoseSeconds === v ? 'bg-orange-500 text-white border-orange-500' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v === 0 ? '0s' : formatTimeSeconds(v)}</button>)}</div>
                         </div>
                         <div className="space-y-2">

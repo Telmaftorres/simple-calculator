@@ -213,11 +213,7 @@ export function useImpositionResults({
         cuttingSetupType: (isInImpressionGroup || isInDecoupeGroup) ? 'none' : slot.cuttingSetupType,
         hasImpression: isInImpressionGroup ? false : slot.hasImpression,
         hasFaconnage: false, hasConditionnement: false, hasAccessoires: false,
-        // Per-plate: convert slot's per-plate time to an equivalent per-pose value for calculateCosts
-        cuttingTimePerPoseSeconds: (isInImpressionGroup || isInDecoupeGroup) ? 0
-          : (slotImposition && slotImposition.platesNeeded > 0 && slot.quantity > 0
-            ? (slot.cuttingTimePerPoseSeconds * slotImposition.platesNeeded) / slot.quantity
-            : 0),
+        cuttingTimePerPoseSeconds: (isInImpressionGroup || isInDecoupeGroup) ? 0 : slot.cuttingTimePerPoseSeconds,
         assemblyTimePerPieceSeconds: 0, packTimePerPieceSeconds: 0, hasAssemblyNotice: false,
         selectedAccessories: [], selectedConsumables: [], settings,
         hasPackaging: false, packagingPlate: undefined, packagingQuantity: 0,
