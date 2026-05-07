@@ -285,7 +285,7 @@ export function GroupEditor({
       <div className="space-y-3 p-3 bg-orange-50/60 rounded-lg border border-orange-100">
         <Label className="text-xs font-semibold text-orange-800">Découpe commune à tous les produits</Label>
         <div className="space-y-2">
-          <GaugeSlider label="Temps par plaque" value={cuttingTimePerPoseSeconds} min={0} max={300} unit="sec"
+          <GaugeSlider label="Temps par plaque" value={cuttingTimePerPoseSeconds} min={0} max={1200} unit="sec"
             onChange={setCuttingTimePerPoseSeconds} formatValue={formatTimeSeconds} gradientColors="from-yellow-300 to-orange-600" />
           <div className="flex gap-2">
             {CUTTING_SHORTCUTS.map(val => (
