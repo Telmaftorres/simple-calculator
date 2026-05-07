@@ -602,6 +602,7 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
                   const elId = activeEl.elementId
                   const upd = <K extends keyof TemplateElementEntry>(f: K, v: TemplateElementEntry[K]) => updateElement(elId, f, v)
                   const activeFlatDimensions = getFlatDimensions(activeEl.flatWidth, activeEl.flatDepth, activeEl.flatHeight, activeEl.formatType)
+                  const activeGroup = amalgameGroups.find((g) => g.id === activeEl.amalgameGroupId)
                   return (
                     <div className="bg-white rounded-xl border border-slate-200 p-6 space-y-6">
 
@@ -656,97 +657,115 @@ export default function TemplateForm({ productTypeId, productTypeName, plates, a
                       </div>
 
                       {/* Impression */}
-                      <div className="space-y-4 pt-4 border-t border-slate-100">
-                        <div className="flex items-center justify-between">
-                          <h4 className="text-sm font-semibold text-slate-700">Impression</h4>
-                          <ToggleChip active={activeEl.hasImpression} onClick={() => upd('hasImpression', !activeEl.hasImpression)}>
-                            {activeEl.hasImpression ? 'Activée' : 'Désactivée'}
-                          </ToggleChip>
+                      {activeGroup && activeGroup.amalgameType === 'impression_decoupe' ? (
+                        <div className="pt-4 border-t border-slate-100">
+                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-violet-200 bg-violet-50 text-sm text-violet-700">
+                            <Layers className="h-4 w-4 shrink-0" />
+                            <span>Impression gérée par l&apos;amalgame <strong>{activeGroup.name}</strong></span>
+                          </div>
                         </div>
-                        {activeEl.hasImpression && (
-                          <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
-                            <div className="flex gap-2 bg-white p-1 rounded-lg">
-                              <button type="button" onClick={() => upd('printMode', 'production')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.printMode === 'production' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Production</button>
-                              <button type="button" onClick={() => upd('printMode', 'quality')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.printMode === 'quality' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Qualité</button>
-                            </div>
-                            <div className="flex gap-2 bg-white p-1 rounded-lg">
-                              <button type="button" onClick={() => { upd('isRectoVerso', false); upd('rectoVersoType', null) }} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${!activeEl.isRectoVerso ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Recto seul</button>
-                              <button type="button" onClick={() => upd('isRectoVerso', true)} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.isRectoVerso ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Recto / Verso</button>
-                            </div>
-                            {activeEl.isRectoVerso && (
+                      ) : (
+                        <div className="space-y-4 pt-4 border-t border-slate-100">
+                          <div className="flex items-center justify-between">
+                            <h4 className="text-sm font-semibold text-slate-700">Impression</h4>
+                            <ToggleChip active={activeEl.hasImpression} onClick={() => upd('hasImpression', !activeEl.hasImpression)}>
+                              {activeEl.hasImpression ? 'Activée' : 'Désactivée'}
+                            </ToggleChip>
+                          </div>
+                          {activeEl.hasImpression && (
+                            <div className="space-y-4 p-4 bg-purple-50 rounded-lg border border-purple-100">
                               <div className="flex gap-2 bg-white p-1 rounded-lg">
-                                <button type="button" onClick={() => upd('rectoVersoType', 'identical')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.rectoVersoType === 'identical' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Identique</button>
-                                <button type="button" onClick={() => upd('rectoVersoType', 'different')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.rectoVersoType === 'different' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Différent</button>
+                                <button type="button" onClick={() => upd('printMode', 'production')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.printMode === 'production' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Production</button>
+                                <button type="button" onClick={() => upd('printMode', 'quality')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.printMode === 'quality' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Qualité</button>
                               </div>
-                            )}
-                            {activeEl.rectoVersoType === 'different' ? (
-                              <div className="space-y-4">
+                              <div className="flex gap-2 bg-white p-1 rounded-lg">
+                                <button type="button" onClick={() => { upd('isRectoVerso', false); upd('rectoVersoType', null) }} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${!activeEl.isRectoVerso ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Recto seul</button>
+                                <button type="button" onClick={() => upd('isRectoVerso', true)} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.isRectoVerso ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Recto / Verso</button>
+                              </div>
+                              {activeEl.isRectoVerso && (
+                                <div className="flex gap-2 bg-white p-1 rounded-lg">
+                                  <button type="button" onClick={() => upd('rectoVersoType', 'identical')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.rectoVersoType === 'identical' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Identique</button>
+                                  <button type="button" onClick={() => upd('rectoVersoType', 'different')} className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${activeEl.rectoVersoType === 'different' ? 'bg-purple-600 text-white' : 'text-slate-500 hover:bg-slate-50'}`}>Différent</button>
+                                </div>
+                              )}
+                              {activeEl.rectoVersoType === 'different' ? (
+                                <div className="space-y-4">
+                                  <div className="space-y-2">
+                                    <GaugeSlider label="Encre Recto (ml/plaque)" value={activeEl.inkMlPerPlate} min={0} max={100} unit="ml" onChange={(v) => upd('inkMlPerPlate', v)} gradientColors="from-indigo-300 to-purple-600" />
+                                    <div className="flex gap-2">{INK_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('inkMlPerPlate', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.inkMlPerPlate === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v} ml</button>)}</div>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <GaugeSlider label="Encre Verso (ml/plaque)" value={activeEl.inkMlVerso} min={0} max={100} unit="ml" onChange={(v) => upd('inkMlVerso', v)} gradientColors="from-violet-300 to-fuchsia-600" />
+                                    <div className="flex gap-2">{INK_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('inkMlVerso', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.inkMlVerso === v ? 'bg-fuchsia-600 text-white border-fuchsia-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v} ml</button>)}</div>
+                                  </div>
+                                </div>
+                              ) : (
                                 <div className="space-y-2">
-                                  <GaugeSlider label="Encre Recto (ml/plaque)" value={activeEl.inkMlPerPlate} min={0} max={100} unit="ml" onChange={(v) => upd('inkMlPerPlate', v)} gradientColors="from-indigo-300 to-purple-600" />
+                                  <GaugeSlider label="Encre (ml/plaque)" value={activeEl.inkMlPerPlate} min={0} max={100} unit="ml" onChange={(v) => upd('inkMlPerPlate', v)} gradientColors="from-indigo-300 to-purple-600" />
                                   <div className="flex gap-2">{INK_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('inkMlPerPlate', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.inkMlPerPlate === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v} ml</button>)}</div>
                                 </div>
-                                <div className="space-y-2">
-                                  <GaugeSlider label="Encre Verso (ml/plaque)" value={activeEl.inkMlVerso} min={0} max={100} unit="ml" onChange={(v) => upd('inkMlVerso', v)} gradientColors="from-violet-300 to-fuchsia-600" />
-                                  <div className="flex gap-2">{INK_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('inkMlVerso', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.inkMlVerso === v ? 'bg-fuchsia-600 text-white border-fuchsia-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v} ml</button>)}</div>
-                                </div>
-                              </div>
-                            ) : (
+                              )}
                               <div className="space-y-2">
-                                <GaugeSlider label="Encre (ml/plaque)" value={activeEl.inkMlPerPlate} min={0} max={100} unit="ml" onChange={(v) => upd('inkMlPerPlate', v)} gradientColors="from-indigo-300 to-purple-600" />
-                                <div className="flex gap-2">{INK_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('inkMlPerPlate', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.inkMlPerPlate === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v} ml</button>)}</div>
-                              </div>
-                            )}
-                            <div className="space-y-2">
-                              <Label className="text-xs text-purple-800">Finitions</Label>
-                              <div className="flex gap-2">
-                                <button type="button" onClick={() => upd('hasVarnish', !activeEl.hasVarnish)} className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border transition-all ${activeEl.hasVarnish ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Vernis</button>
-                                <button type="button" onClick={() => upd('hasFlatColor', !activeEl.hasFlatColor)} className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border transition-all ${activeEl.hasFlatColor ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Blanc</button>
-                              </div>
-                              {activeEl.hasVarnish && (
-                                <div className="space-y-2 p-3 bg-white rounded-lg border border-purple-100">
-                                  <GaugeSlider label="Surface Vernis" value={activeEl.varnishSurfacePercent} min={0} max={100} unit="%" onChange={(v) => upd('varnishSurfacePercent', v)} gradientColors="from-purple-200 to-purple-500" />
-                                  <div className="flex gap-2">{FINISHING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('varnishSurfacePercent', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.varnishSurfacePercent === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v}%</button>)}</div>
+                                <Label className="text-xs text-purple-800">Finitions</Label>
+                                <div className="flex gap-2">
+                                  <button type="button" onClick={() => upd('hasVarnish', !activeEl.hasVarnish)} className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border transition-all ${activeEl.hasVarnish ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Vernis</button>
+                                  <button type="button" onClick={() => upd('hasFlatColor', !activeEl.hasFlatColor)} className={`flex-1 px-3 py-2 text-sm font-semibold rounded-lg border transition-all ${activeEl.hasFlatColor ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>Blanc</button>
                                 </div>
-                              )}
-                              {activeEl.hasFlatColor && (
-                                <div className="space-y-2 p-3 bg-white rounded-lg border border-purple-100">
-                                  <GaugeSlider label="Surface Aplat" value={activeEl.flatColorSurfacePercent} min={0} max={100} unit="%" onChange={(v) => upd('flatColorSurfacePercent', v)} gradientColors="from-violet-200 to-violet-500" />
-                                  <div className="flex gap-2">{FINISHING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('flatColorSurfacePercent', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.flatColorSurfacePercent === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v}%</button>)}</div>
+                                {activeEl.hasVarnish && (
+                                  <div className="space-y-2 p-3 bg-white rounded-lg border border-purple-100">
+                                    <GaugeSlider label="Surface Vernis" value={activeEl.varnishSurfacePercent} min={0} max={100} unit="%" onChange={(v) => upd('varnishSurfacePercent', v)} gradientColors="from-purple-200 to-purple-500" />
+                                    <div className="flex gap-2">{FINISHING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('varnishSurfacePercent', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.varnishSurfacePercent === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v}%</button>)}</div>
+                                  </div>
+                                )}
+                                {activeEl.hasFlatColor && (
+                                  <div className="space-y-2 p-3 bg-white rounded-lg border border-purple-100">
+                                    <GaugeSlider label="Surface Aplat" value={activeEl.flatColorSurfacePercent} min={0} max={100} unit="%" onChange={(v) => upd('flatColorSurfacePercent', v)} gradientColors="from-violet-200 to-violet-500" />
+                                    <div className="flex gap-2">{FINISHING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('flatColorSurfacePercent', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.flatColorSurfacePercent === v ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v}%</button>)}</div>
+                                  </div>
+                                )}
+                              </div>
+                              <div className="space-y-2">
+                                <Label className="text-purple-900 font-medium text-xs">Calage impression</Label>
+                                <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                                  {(['none', 'standard', 'complexe'] as const).map((t) => (
+                                    <button key={t} type="button" onClick={() => upd('printSetupType', t)} className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEl.printSetupType === t ? (t === 'none' ? 'bg-white text-slate-700 shadow-sm' : t === 'standard' ? 'bg-white text-amber-700 shadow-sm' : 'bg-white text-red-700 shadow-sm') : 'text-slate-400 hover:bg-slate-50'}`}>
+                                      {t === 'none' ? 'Aucun' : t.charAt(0).toUpperCase() + t.slice(1)}
+                                    </button>
+                                  ))}
                                 </div>
-                              )}
-                            </div>
-                            <div className="space-y-2">
-                              <Label className="text-purple-900 font-medium text-xs">Calage impression</Label>
-                              <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                                {(['none', 'standard', 'complexe'] as const).map((t) => (
-                                  <button key={t} type="button" onClick={() => upd('printSetupType', t)} className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEl.printSetupType === t ? (t === 'none' ? 'bg-white text-slate-700 shadow-sm' : t === 'standard' ? 'bg-white text-amber-700 shadow-sm' : 'bg-white text-red-700 shadow-sm') : 'text-slate-400 hover:bg-slate-50'}`}>
-                                    {t === 'none' ? 'Aucun' : t.charAt(0).toUpperCase() + t.slice(1)}
-                                  </button>
-                                ))}
                               </div>
                             </div>
-                          </div>
-                        )}
-                      </div>
+                          )}
+                        </div>
+                      )}
 
                       {/* Découpe */}
-                      <div className="space-y-3 pt-4 border-t border-slate-100">
-                        <h4 className="text-sm font-semibold text-slate-700">Découpe</h4>
-                        <div className="space-y-2">
-                          <GaugeSlider label="Temps par pose" value={activeEl.cuttingTimePerPoseSeconds} min={0} max={300} unit="sec" onChange={(v) => upd('cuttingTimePerPoseSeconds', v)} formatValue={formatTimeSeconds} gradientColors="from-yellow-300 to-orange-600" />
-                          <div className="flex gap-2">{CUTTING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('cuttingTimePerPoseSeconds', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.cuttingTimePerPoseSeconds === v ? 'bg-orange-500 text-white border-orange-500' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v === 0 ? '0s' : formatTimeSeconds(v)}</button>)}</div>
-                        </div>
-                        <div className="space-y-2">
-                          <Label className="text-orange-900 font-medium text-xs">Calage découpe</Label>
-                          <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
-                            {(['none', 'standard', 'complexe'] as const).map((t) => (
-                              <button key={t} type="button" onClick={() => upd('cuttingSetupType', t)} className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEl.cuttingSetupType === t ? (t === 'none' ? 'bg-white text-slate-700 shadow-sm' : t === 'standard' ? 'bg-white text-amber-700 shadow-sm' : 'bg-white text-red-700 shadow-sm') : 'text-slate-400 hover:bg-slate-50'}`}>
-                                {t === 'none' ? 'Aucun' : t.charAt(0).toUpperCase() + t.slice(1)}
-                              </button>
-                            ))}
+                      {activeGroup ? (
+                        <div className="pt-4 border-t border-slate-100">
+                          <div className="flex items-center gap-2 px-4 py-3 rounded-xl border border-orange-200 bg-orange-50 text-sm text-orange-700">
+                            <Layers className="h-4 w-4 shrink-0" />
+                            <span>Découpe gérée par l&apos;amalgame <strong>{activeGroup.name}</strong></span>
                           </div>
                         </div>
-                      </div>
+                      ) : (
+                        <div className="space-y-3 pt-4 border-t border-slate-100">
+                          <h4 className="text-sm font-semibold text-slate-700">Découpe</h4>
+                          <div className="space-y-2">
+                            <GaugeSlider label="Temps par pose" value={activeEl.cuttingTimePerPoseSeconds} min={0} max={300} unit="sec" onChange={(v) => upd('cuttingTimePerPoseSeconds', v)} formatValue={formatTimeSeconds} gradientColors="from-yellow-300 to-orange-600" />
+                            <div className="flex gap-2">{CUTTING_SHORTCUTS.map((v) => <button key={v} type="button" onClick={() => upd('cuttingTimePerPoseSeconds', v)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeEl.cuttingTimePerPoseSeconds === v ? 'bg-orange-500 text-white border-orange-500' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{v === 0 ? '0s' : formatTimeSeconds(v)}</button>)}</div>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-orange-900 font-medium text-xs">Calage découpe</Label>
+                            <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                              {(['none', 'standard', 'complexe'] as const).map((t) => (
+                                <button key={t} type="button" onClick={() => upd('cuttingSetupType', t)} className={`flex-1 py-1.5 text-xs font-semibold rounded-md transition-all ${activeEl.cuttingSetupType === t ? (t === 'none' ? 'bg-white text-slate-700 shadow-sm' : t === 'standard' ? 'bg-white text-amber-700 shadow-sm' : 'bg-white text-red-700 shadow-sm') : 'text-slate-400 hover:bg-slate-50'}`}>
+                                  {t === 'none' ? 'Aucun' : t.charAt(0).toUpperCase() + t.slice(1)}
+                                </button>
+                              ))}
+                            </div>
+                          </div>
+                        </div>
+                      )}
 
                     </div>
                   )

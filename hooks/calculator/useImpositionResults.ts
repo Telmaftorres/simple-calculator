@@ -68,7 +68,7 @@ function computeGroupResult(
   // Cutting is per plate for all amalgame group types
   const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
   const cuttingMachineTimeMin = platesCount > 0 ? (platesCount * group.cuttingTimePerPoseSeconds) / 60 : 0
-  const cuttingMachineCost = cuttingMachineTimeMin * hourlyRateCutting
+  const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRateCutting
   const cuttingSetupCost = group.cuttingSetupType === 'standard'
     ? (settings?.CUTTING_SETUP_STANDARD_COST ?? CUTTING_SETUP_STANDARD_COST)
     : group.cuttingSetupType === 'complexe'
