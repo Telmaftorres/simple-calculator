@@ -205,7 +205,7 @@ export default function ProductsClient({
                   <TableCell>
                     {product.imageUrl ? (
                       <div className="relative w-10 h-10 rounded overflow-hidden border border-slate-100">
-                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                        <Image src={product.imageUrl} alt={product.name} fill className="object-cover" unoptimized />
                       </div>
                     ) : (
                       <div className="w-10 h-10 rounded border border-dashed border-slate-200 bg-slate-50 flex items-center justify-center">
@@ -253,7 +253,7 @@ export default function ProductsClient({
               {/* Photo */}
               <div className="relative aspect-square bg-slate-50">
                 {product.imageUrl ? (
-                  <Image src={product.imageUrl} alt={product.name} fill className="object-cover" />
+                  <Image src={product.imageUrl} alt={product.name} fill className="object-cover" unoptimized />
                 ) : (
                   <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-300">
                     <ImagePlus className="h-8 w-8 mb-1" />
@@ -319,7 +319,7 @@ export default function ProductsClient({
               <Label>Illustration</Label>
               {imageUrl ? (
                 <div className="relative w-full aspect-video rounded-lg overflow-hidden border border-slate-200 bg-slate-50">
-                  <Image src={imageUrl} alt="Illustration" fill className="object-contain" />
+                  <Image src={imageUrl} alt="Illustration" fill className="object-contain" unoptimized />
                   <button
                     type="button"
                     onClick={() => setImageUrl(null)}
