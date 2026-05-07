@@ -36,6 +36,7 @@ export interface SaveContext {
   hasVarnish: boolean
   hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number
+  machineTimeMinOverride: number | null
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
@@ -164,6 +165,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasVarnish: isMultiProduct ? false : ctx.hasVarnish,
         hasFlatColor: isMultiProduct ? false : ctx.hasFlatColor,
         cuttingTimePerPoseSeconds: isMultiProduct ? 0 : ctx.cuttingTimePerPoseSeconds,
+        machineTimeMinOverride: isMultiProduct ? null : (ctx.machineTimeMinOverride ?? null),
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
         hasAssemblyNotice: ctx.hasAssemblyNotice,
@@ -294,6 +296,7 @@ export function useSaveHandlers(ctx: SaveContext) {
     try {
       const snapshot = {
         cuttingTimePerPoseSeconds: ctx.cuttingTimePerPoseSeconds,
+        machineTimeMinOverride: ctx.machineTimeMinOverride ?? null,
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
         inkMlPerPlate: ctx.inkMlPerPlate,
@@ -339,6 +342,7 @@ export function useSaveHandlers(ctx: SaveContext) {
     try {
       await saveActualsFromCalc(ctx.targetQuoteId, {
         cuttingTimePerPoseSeconds: ctx.cuttingTimePerPoseSeconds,
+        machineTimeMinOverride: ctx.machineTimeMinOverride ?? null,
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
         platesCount: ctx.impositionResult?.platesNeeded ?? null,

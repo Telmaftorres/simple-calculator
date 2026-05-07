@@ -36,6 +36,8 @@ export const QUOTE_DEFAULTS = {
   // ── Marges internes ──
   showMargeCommerciale: false as boolean,
   showMargeSopano: false as boolean,
+  // ── Temps machine impression (override manuel) ──
+  machineTimeMinOverride: null as number | null,
   // ── Prix négocié matière ──
   plateCostOverride: null as number | null,
   // ── Matière personnalisée (non enregistrée en DB) ──

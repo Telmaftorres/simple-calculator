@@ -31,6 +31,7 @@ export const quoteFieldsSchema = z.object({
 
   cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
+  machineTimeMinOverride: z.number().min(0).nullable().optional(),
 
   assemblyTimePerPieceSeconds: z.number().int().optional(),
   hasFaconnage: z.boolean().optional(),

@@ -73,6 +73,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     hasVarnish: initialQuote.hasVarnish || false,
     hasFlatColor: initialQuote.hasFlatColor || false,
     cuttingTimePerPoseSeconds: initialQuote.cuttingTimePerPoseSeconds || 0,
+    machineTimeMinOverride: initialQuote.machineTimeMinOverride ?? null,
     assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
     packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
     hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,

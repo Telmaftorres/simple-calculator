@@ -82,6 +82,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
+    machineTimeMinOverride,
   } = formState
 
   const {
@@ -238,6 +239,7 @@ export function useCalculator(
     hasImpression: isMultiProduct ? false : hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires,
     cuttingTimePerPoseSeconds: isMultiProduct ? 0 : cuttingTimePerPoseSeconds,
+    machineTimeMinOverride: isMultiProduct ? null : (machineTimeMinOverride ?? null),
     assemblyTimePerPieceSeconds, packTimePerPieceSeconds, hasAssemblyNotice,
     selectedAccessories, selectedConsumables,
     settings: settingsWithPackagingPrice,
@@ -286,7 +288,7 @@ export function useCalculator(
     flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
-    cuttingTimePerPoseSeconds, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
+    cuttingTimePerPoseSeconds, machineTimeMinOverride, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
     hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
@@ -496,6 +498,7 @@ export function useCalculator(
     printSetupType, setPrintSetupType: (v: 'none' | 'standard' | 'complexe') => setField('printSetupType', v),
     cuttingSetupType, setCuttingSetupType: (v: 'none' | 'standard' | 'complexe') => setField('cuttingSetupType', v),
     cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds: (v: number) => setField('cuttingTimePerPoseSeconds', v),
+    machineTimeMinOverride, setMachineTimeMinOverride: (v: number | null) => setField('machineTimeMinOverride', v),
     assemblyTimePerPieceSeconds, setAssemblyTimePerPieceSeconds: (v: number) => setField('assemblyTimePerPieceSeconds', v),
     hasFaconnage, setHasFaconnage: (v: boolean) => setField('hasFaconnage', v),
     packTimePerPieceSeconds, setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),

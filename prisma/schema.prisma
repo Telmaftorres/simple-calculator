@@ -269,6 +269,7 @@ model Quote {
   hasVarnish                         Boolean           @default(false)
   hasFlatColor                       Boolean           @default(false)
   cuttingTimePerPoseSeconds          Int               @default(0)
+  machineTimeMinOverride             Float?            // Temps machine impression (override manuel, en minutes)
   assemblyTimePerPieceSeconds        Int               @default(0)
   packTimePerPieceSeconds            Int               @default(0)
   hasAssemblyNotice                  Boolean           @default(false)
@@ -381,6 +382,7 @@ model ProductionSheet {
 
   // ── Paramètres de production (overrides du devis) ──
   prodCuttingTimePerPoseSeconds   Float?   // Temps découpe planifié (sec/pose)
+  prodMachineTimeMinOverride      Float?   // Temps machine impression planifié (override, en minutes)
   prodAssemblyTimePerPieceSeconds Float?   // Temps façonnage planifié (sec/pce)
   prodPackTimePerPieceSeconds     Float?   // Temps conditionnement planifié (sec/pce)
   prodInkMlPerPlate               Float?   // Encre planifiée (ml/plaque)
@@ -423,6 +425,7 @@ model QuoteActuals {
 
   // ── Temps réels par pièce (méthode principale — affichée dans l'UI) ──
   actualCuttingTimePerPoseSeconds   Float?   // Découpe réelle (sec/pose)
+  actualMachineTimeMinOverride      Float?   // Temps machine impression réel (override, en minutes)
   actualAssemblyTimePerPieceSeconds Float?   // Façonnage réel (sec/pce)
   actualPackTimePerPieceSeconds     Float?   // Conditionnement réel (sec/pce)
 

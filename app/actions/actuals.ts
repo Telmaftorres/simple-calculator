@@ -8,6 +8,7 @@ import { logAction } from '@/lib/server/audit'
 
 const actualsSchema = z.object({
   actualCuttingTimePerPoseSeconds:   z.number().min(0).nullable().optional(),
+  actualMachineTimeMinOverride:      z.number().min(0).nullable().optional(),
   actualAssemblyTimePerPieceSeconds: z.number().min(0).nullable().optional(),
   actualPackTimePerPieceSeconds:     z.number().min(0).nullable().optional(),
   actualPlatesUsed:                  z.number().int().min(0).nullable().optional(),
@@ -56,6 +57,7 @@ export async function saveActualsFromCalc(
   quoteId: number,
   data: {
     cuttingTimePerPoseSeconds: number
+    machineTimeMinOverride: number | null
     assemblyTimePerPieceSeconds: number
     packTimePerPieceSeconds: number
     platesCount: number | null
@@ -74,6 +76,7 @@ export async function saveActualsFromCalc(
 
   const actuals: ActualsInput = {
     actualCuttingTimePerPoseSeconds:   data.cuttingTimePerPoseSeconds || null,
+    actualMachineTimeMinOverride:      data.machineTimeMinOverride,
     actualAssemblyTimePerPieceSeconds: data.assemblyTimePerPieceSeconds || null,
     actualPackTimePerPieceSeconds:     data.packTimePerPieceSeconds || null,
     actualPlatesUsed:                  data.platesCount,

@@ -96,6 +96,7 @@ export function calculateCosts(params: {
     machineTimeMin: number
     platesCount: number
   } | null
+  machineTimeMinOverride?: number | null
 }) {
   const {
     quantity,
@@ -135,6 +136,7 @@ export function calculateCosts(params: {
     packagingHeight,
     transportTotal,
     amalgameOverride,
+    machineTimeMinOverride,
   } = params
 
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
@@ -231,7 +233,10 @@ export function calculateCosts(params: {
     const varnishTimeMin = hasVarnish ? (plateAreaM2 * printSpeedVarnish * multiplier * platesNeeded) : 0
     const flatColorTimeMin = hasFlatColor ? (plateAreaM2 * printSpeedFlatColor * multiplier * platesNeeded) : 0
 
-    const machineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
+    const autoMachineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
+    const machineTimeMin = (machineTimeMinOverride != null && machineTimeMinOverride > 0)
+      ? machineTimeMinOverride
+      : autoMachineTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
 
     const setupCost = (() => {
