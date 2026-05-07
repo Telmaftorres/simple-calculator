@@ -118,13 +118,15 @@ export function useSaveHandlers(ctx: SaveContext) {
       const incomplete = products.find((p) => {
         const group = p.amalgameGroupId ? amalgameGroups.find((g) => g.id === p.amalgameGroupId) : undefined
         const needsPlate = group?.amalgameType !== 'impression_decoupe'
-        return !p.productTypeId || (needsPlate && !p.selectedPlateId) || p.flatWidth <= 0 || p.flatHeight <= 0 || p.quantity <= 0
+        const hasIdentity = !!p.productTypeId || !!p.productSearch
+        return !hasIdentity || (needsPlate && !p.selectedPlateId) || p.flatWidth <= 0 || p.flatHeight <= 0 || p.quantity <= 0
       })
       if (incomplete) {
         const group = incomplete.amalgameGroupId ? amalgameGroups.find((g) => g.id === incomplete.amalgameGroupId) : undefined
         const needsPlate = group?.amalgameType !== 'impression_decoupe'
+        const hasIdentity = !!incomplete.productTypeId || !!incomplete.productSearch
         const name = incomplete.productSearch || `Produit ${products.indexOf(incomplete) + 1}`
-        const reason = !incomplete.productTypeId ? 'type de PLV manquant'
+        const reason = !hasIdentity ? 'nom ou type de PLV manquant'
           : (needsPlate && !incomplete.selectedPlateId) ? 'matière manquante'
           : incomplete.flatWidth <= 0 || incomplete.flatHeight <= 0 ? 'dimensions manquantes (largeur/hauteur)'
           : 'quantité manquante'
@@ -142,7 +144,9 @@ export function useSaveHandlers(ctx: SaveContext) {
 
     setIsServing(true)
     try {
-      const parsedProductId = isMultiProduct ? 0 : parseInt(ctx.selectedProductTypeId)
+      const parsedProductId = isMultiProduct
+        ? (parseInt(products.find(p => !!p.productTypeId)?.productTypeId || '') || null)
+        : parseInt(ctx.selectedProductTypeId)
 
       await createQuote({
         studyNumber: ctx.studyNumber,

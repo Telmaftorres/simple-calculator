@@ -255,7 +255,7 @@ model Quote {
   client                             String?
   contactName                        String?
   studyId                            Int
-  productTypeId                      Int
+  productTypeId                      Int?
   quantity                           Int
   flatWidth                          Int
   flatHeight                         Int
@@ -301,7 +301,7 @@ model Quote {
   userId                             String?
   plate                              Plate?            @relation(fields: [plateId], references: [id])
   packagingPlate                     Plate?            @relation("PackagingPlate", fields: [packagingPlateId], references: [id])
-  productType                        ProductType       @relation(fields: [productTypeId], references: [id])
+  productType                        ProductType?      @relation(fields: [productTypeId], references: [id])
   study                              Study             @relation(fields: [studyId], references: [id])
   user                               User?             @relation(fields: [userId], references: [id])
   accessories                        QuoteAccessory[]

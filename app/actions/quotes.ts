@@ -74,12 +74,14 @@ export async function createQuote(data: CreateQuoteInput) {
     },
   })
 
-  const productTypeExists = await prisma.productType.findUnique({
-    where: { id: validated.productTypeId },
-    select: { id: true },
-  })
-  if (!productTypeExists) {
-    throw new Error('Le type de PLV sélectionné n\'existe plus.')
+  if (validated.productTypeId) {
+    const productTypeExists = await prisma.productType.findUnique({
+      where: { id: validated.productTypeId },
+      select: { id: true },
+    })
+    if (!productTypeExists) {
+      throw new Error('Le type de PLV sélectionné n\'existe plus.')
+    }
   }
 
   const reference = await generateReference(validated.parentReference)

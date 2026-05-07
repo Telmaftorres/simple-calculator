@@ -193,6 +193,8 @@ export function SectionTransport() {
     useCalculatorContext()
 
   const [showImport, setShowImport] = useState(false)
+  const [showAll, setShowAll] = useState(false)
+  const PREVIEW_COUNT = 3
   const { transportDeliveries } = formState
   const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
@@ -246,7 +248,7 @@ export function SectionTransport() {
           </div>
         )}
 
-        {transportDeliveries.map((delivery, index) => (
+        {(showAll ? transportDeliveries : transportDeliveries.slice(0, PREVIEW_COUNT)).map((delivery, index) => (
           <DeliveryRow
             key={delivery.id}
             delivery={delivery}
@@ -258,6 +260,17 @@ export function SectionTransport() {
             transportMargin={transportMargin}
           />
         ))}
+
+        {transportDeliveries.length > PREVIEW_COUNT && (
+          <button
+            onClick={() => setShowAll(v => !v)}
+            className="w-full py-2 text-sm text-sky-600 font-medium border border-dashed border-sky-200 rounded-lg hover:bg-sky-50 transition-colors"
+          >
+            {showAll
+              ? `Masquer (afficher ${PREVIEW_COUNT} premiers)`
+              : `Afficher les ${transportDeliveries.length - PREVIEW_COUNT} autres points de livraison…`}
+          </button>
+        )}
 
         <Button
           variant="outline"
