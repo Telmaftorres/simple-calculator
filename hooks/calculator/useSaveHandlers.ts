@@ -300,7 +300,8 @@ export function useSaveHandlers(ctx: SaveContext) {
         'Le type de PLV sélectionné n\'existe plus.': 'Le type de PLV sélectionné n\'existe plus.',
       }
       const rawMessage = (error as Error)?.message || ''
-      toast.error(knownMessages[rawMessage] || 'Erreur lors de la sauvegarde. Veuillez réessayer.')
+      console.error('[handleSave] error:', error)
+      toast.error(knownMessages[rawMessage] || `Erreur : ${rawMessage || 'inconnue'}`)
     } finally {
       setIsServing(false)
     }
