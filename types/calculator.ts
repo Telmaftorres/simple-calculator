@@ -258,6 +258,8 @@ export interface AmalgameGroupResult {
   materialCostMarged: number
   machineTimeMin: number
   printingCost: number
+  printingCostData: PrintingCostData
+  inkVolumeL: number
   cuttingMachineTimeMin: number
   cuttingMachineCost: number
   cuttingSetupCost: number

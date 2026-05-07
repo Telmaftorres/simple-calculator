@@ -181,11 +181,24 @@ export function RecapSidebar() {
                               value={result.materialCostMarged}
                               details={result.platesCount > 0 ? `${result.platesCount} plaque(s)` : undefined}
                             />
+                            {result.printingCostData.inkCost > 0 && (
+                              <CostRow
+                                label="Encre"
+                                value={result.printingCostData.inkCost}
+                                details={result.inkVolumeL > 0 ? `${result.inkVolumeL.toFixed(3)} L` : undefined}
+                              />
+                            )}
                             <CostRow
-                              label="Impression"
-                              value={result.printingCost}
+                              label="Temps machine"
+                              value={result.printingCostData.machineCost}
                               details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
                             />
+                            {result.printingCostData.setupCost > 0 && (
+                              <CostRow
+                                label="Calage impression"
+                                value={result.printingCostData.setupCost}
+                              />
+                            )}
                           </>
                         )}
 

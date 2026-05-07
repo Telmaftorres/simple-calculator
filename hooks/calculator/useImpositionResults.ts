@@ -26,9 +26,14 @@ function computeGroupResult(
   poseSpacingMm: number,
   plateBorderMm: number,
 ): AmalgameGroupResult {
+  const emptyPrintingCostData = {
+    cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0,
+    setupCost: 0, machineCost: 0, setupTimeMin: 0, machineTimeMin: 0,
+  }
   const empty: AmalgameGroupResult = {
     groupId: group.id, platesCount: 0, materialCostRaw: 0, materialCostMarged: 0,
-    machineTimeMin: 0, printingCost: 0, cuttingMachineTimeMin: 0, cuttingMachineCost: 0,
+    machineTimeMin: 0, printingCost: 0, printingCostData: emptyPrintingCostData, inkVolumeL: 0,
+    cuttingMachineTimeMin: 0, cuttingMachineCost: 0,
     cuttingSetupCost: 0, totalCost: 0, multiImposition: null,
   }
   const slotsInGroup = products.filter((s) => s.amalgameGroupId === group.id)
@@ -118,6 +123,8 @@ function computeGroupResult(
     materialCostMarged: groupCosts.materialCostMarged,
     machineTimeMin: groupCosts.printingCostData.machineTimeMin,
     printingCost: groupCosts.printingCost,
+    printingCostData: groupCosts.printingCostData,
+    inkVolumeL: groupCosts.inkVolumeL,
     cuttingMachineTimeMin,
     cuttingMachineCost,
     cuttingSetupCost,
