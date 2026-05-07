@@ -89,6 +89,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     packagingPlateId: initialQuote.packagingPlateId?.toString() || '',
     packagingQuantity: initialQuote.packagingQuantity || 0,
     packagingCuttingTimePerPoseSeconds: initialQuote.packagingCuttingTimePerPoseSeconds || 20,
+    packagingUnitPriceOverride: initialQuote.packagingUnitPriceOverride ?? null,
     packagingWidth: initialQuote.packagingWidth || 0,
     packagingHeight: initialQuote.packagingHeight || 0,
     printSetupType: (initialQuote.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',

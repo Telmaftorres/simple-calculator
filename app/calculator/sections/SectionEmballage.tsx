@@ -44,6 +44,7 @@ export function SectionEmballage() {
     packagingPlateId, setPackagingPlateId,
     packagingQuantity, setPackagingQuantity,
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds,
+    packagingUnitPriceOverride, setPackagingUnitPriceOverride,
     computedPackagingDimensions,
     largestProduct,
     isMultiProduct,
@@ -59,6 +60,7 @@ export function SectionEmballage() {
     packagingItemsPerPlate,
     packagingPlatesNeeded,
     packagingExternalUnitPrice,
+    effectivePackagingUnitPrice,
   } = costResult
 
   const isExternal = packagingMaterialType === 'B' || packagingMaterialType === 'EB'
@@ -184,12 +186,38 @@ export function SectionEmballage() {
             {packagingExternalSize && packagingQuantity > 0 && (
               <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 space-y-2 text-sm">
                 <div className="flex justify-between text-slate-600">
-                  <span>Prix unitaire {packagingMaterialType} {packagingExternalSize}</span>
+                  <span>Prix catalogue {packagingMaterialType} {packagingExternalSize}</span>
                   <span className="font-medium">
                     {packagingExternalUnitPrice === 0
                       ? <span className="text-amber-600 italic">Non configuré</span>
                       : `${packagingExternalUnitPrice.toFixed(4)} €/pce`}
                   </span>
+                </div>
+                <div className="space-y-1">
+                  <div className="flex items-center justify-between text-slate-600">
+                    <span>Prix réel / pce</span>
+                    {packagingUnitPriceOverride != null && (
+                      <button
+                        type="button"
+                        onClick={() => setPackagingUnitPriceOverride(null)}
+                        className="text-xs text-slate-400 hover:text-red-500 transition-colors"
+                      >
+                        Auto
+                      </button>
+                    )}
+                  </div>
+                  <input
+                    type="number"
+                    min={0}
+                    step={0.01}
+                    value={packagingUnitPriceOverride ?? ''}
+                    onChange={(e) => {
+                      const v = parseFloat(e.target.value)
+                      setPackagingUnitPriceOverride(isNaN(v) || e.target.value === '' ? null : v)
+                    }}
+                    placeholder={`Catalogue : ${packagingExternalUnitPrice.toFixed(4)} €/pce`}
+                    className="flex h-8 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
+                  />
                 </div>
                 <div className="flex justify-between text-slate-600">
                   <span>Quantité</span>
@@ -197,9 +225,16 @@ export function SectionEmballage() {
                 </div>
                 <div className="flex justify-between border-t border-amber-200 pt-2 font-bold text-amber-800">
                   <span>Total Emballage</span>
-                  <span>{packagingTotalCost.toFixed(2)} €</span>
+                  <span>
+                    {packagingTotalCost.toFixed(2)} €
+                    {packagingUnitPriceOverride != null && (
+                      <span className="ml-1 text-xs font-normal text-amber-600">
+                        ({effectivePackagingUnitPrice.toFixed(4)} €/pce)
+                      </span>
+                    )}
+                  </span>
                 </div>
-                {packagingExternalUnitPrice === 0 && (
+                {packagingExternalUnitPrice === 0 && packagingUnitPriceOverride == null && (
                   <p className="text-xs text-amber-600 italic">
                     ⚠ Prix non configuré — à renseigner dans les Paramètres calculateur
                   </p>

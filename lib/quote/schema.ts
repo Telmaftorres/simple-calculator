@@ -55,6 +55,7 @@ export const quoteFieldsSchema = z.object({
   packagingCuttingTimePerPoseSeconds: z.number().int().optional(),
   packagingWidth: z.number().int().positive().nullable().optional(),
   packagingHeight: z.number().int().positive().nullable().optional(),
+  packagingUnitPriceOverride: z.number().min(0).nullable().optional(),
 
   isMultiProduct: z.boolean().optional(),
   plvQuantity: z.number().int().positive().nullable().optional(),

@@ -51,6 +51,7 @@ export interface SaveContext {
   packagingPlateId: string
   packagingQuantity: number
   packagingCuttingTimePerPoseSeconds: number
+  packagingUnitPriceOverride: number | null
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   hasImpression: boolean
@@ -181,6 +182,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         packagingPlateId: ctx.packagingPlateId ? parseInt(ctx.packagingPlateId) : null,
         packagingQuantity: ctx.packagingQuantity || null,
         packagingCuttingTimePerPoseSeconds: ctx.packagingCuttingTimePerPoseSeconds,
+        packagingUnitPriceOverride: ctx.packagingUnitPriceOverride ?? null,
         packagingWidth: computedPackagingDimensions.width || null,
         packagingHeight: computedPackagingDimensions.height || null,
         printSetupType: isMultiProduct ? 'none' : ctx.printSetupType,

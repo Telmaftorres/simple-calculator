@@ -295,6 +295,7 @@ model Quote {
   packagingCuttingTimePerPoseSeconds Int               @default(20)
   packagingWidth                     Int?              // longueur carton calculée (mm)
   packagingHeight                    Int?              // largeur carton calculée (mm)
+  packagingUnitPriceOverride         Float?
   createdAt                          DateTime          @default(now())
   updatedAt                          DateTime          @updatedAt
   userId                             String?

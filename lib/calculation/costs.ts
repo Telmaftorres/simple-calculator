@@ -97,6 +97,7 @@ export function calculateCosts(params: {
     platesCount: number
   } | null
   machineTimeMinOverride?: number | null
+  packagingUnitPriceOverride?: number | null
 }) {
   const {
     quantity,
@@ -137,6 +138,7 @@ export function calculateCosts(params: {
     transportTotal,
     amalgameOverride,
     machineTimeMinOverride,
+    packagingUnitPriceOverride,
   } = params
 
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
@@ -346,9 +348,13 @@ export function calculateCosts(params: {
     return settings?.[key] ?? B_EB_PRICE_DEFAULTS[key] ?? 0
   })()
 
+  const effectivePackagingUnitPrice = (packagingUnitPriceOverride != null && packagingUnitPriceOverride > 0)
+    ? packagingUnitPriceOverride
+    : packagingExternalUnitPrice
+
   const packagingMaterialCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
-    if (isExternalPackaging) return packagingExternalUnitPrice * packagingQuantity
+    if (isExternalPackaging) return effectivePackagingUnitPrice * packagingQuantity
     if (!packagingPlate || packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
     return packagingPlatesNeeded * packagingPlate.cost * packagingMaterialMarginCoeff
   })()
@@ -421,6 +427,7 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     packagingItemsPerPlate,
     packagingPlatesNeeded,
     packagingExternalUnitPrice,
+    effectivePackagingUnitPrice,
     poseSpacingMm,
     assemblyNoticeCostPerPiece,
     materialCostRaw,

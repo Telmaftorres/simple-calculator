@@ -82,7 +82,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
-    machineTimeMinOverride, plvQuantity,
+    machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride,
   } = formState
 
   const {
@@ -250,6 +250,7 @@ export function useCalculator(
     packagingPlate, packagingQuantity, packagingCuttingTimePerPoseSeconds,
     packagingWidth: computedPackagingDimensions.width,
     packagingHeight: computedPackagingDimensions.height,
+    packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     transportTotal: transportTotal > 0 ? transportTotal : undefined,
   })
 
@@ -294,7 +295,7 @@ export function useCalculator(
     hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
-    packagingQuantity, packagingCuttingTimePerPoseSeconds,
+    packagingQuantity, packagingCuttingTimePerPoseSeconds, packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
     hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     hasDossierFee, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
@@ -538,6 +539,7 @@ export function useCalculator(
     formState, costResult,
     isMultiProduct, setIsMultiProduct: (v: boolean) => setField('isMultiProduct', v),
     plvQuantity, setPlvQuantity: (v: number | null) => setField('plvQuantity', v),
+    packagingUnitPriceOverride, setPackagingUnitPriceOverride: (v: number | null) => setField('packagingUnitPriceOverride', v),
     products, activeProductIndex, productSlotResults,
     totalQuantityMulti, totalCostMulti,
     addProduct, removeProduct, setActiveProduct, updateProduct,
