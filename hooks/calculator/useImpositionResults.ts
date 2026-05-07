@@ -65,8 +65,10 @@ function computeGroupResult(
           return Math.ceil(s.quantity / cpp)
         }))
 
+  // Cutting is per plate for all amalgame group types
+  const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
   const cuttingMachineTimeMin = platesCount > 0 ? (platesCount * group.cuttingTimePerPoseSeconds) / 60 : 0
-  const cuttingMachineCost = cuttingMachineTimeMin * (settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING)
+  const cuttingMachineCost = cuttingMachineTimeMin * hourlyRateCutting
   const cuttingSetupCost = group.cuttingSetupType === 'standard'
     ? (settings?.CUTTING_SETUP_STANDARD_COST ?? CUTTING_SETUP_STANDARD_COST)
     : group.cuttingSetupType === 'complexe'
@@ -100,8 +102,8 @@ function computeGroupResult(
     printMode: group.printMode,
     printSetupType: group.printSetupType,
     hasImpression: true,
-    cuttingSetupType: group.cuttingSetupType,
-    cuttingTimePerPoseSeconds: group.cuttingTimePerPoseSeconds,
+    cuttingSetupType: 'none',
+    cuttingTimePerPoseSeconds: 0,
     hasFaconnage: false, hasConditionnement: false, hasAccessoires: false,
     assemblyTimePerPieceSeconds: 0, packTimePerPieceSeconds: 0, hasAssemblyNotice: false,
     selectedAccessories: [], selectedConsumables: [], settings,
@@ -116,10 +118,10 @@ function computeGroupResult(
     materialCostMarged: groupCosts.materialCostMarged,
     machineTimeMin: groupCosts.printingCostData.machineTimeMin,
     printingCost: groupCosts.printingCost,
-    cuttingMachineTimeMin: groupCosts.cuttingMachineTimeMin,
-    cuttingMachineCost: groupCosts.cuttingMachineCost,
-    cuttingSetupCost: groupCosts.cuttingSetupCost,
-    totalCost: groupCosts.totalCost,
+    cuttingMachineTimeMin,
+    cuttingMachineCost,
+    cuttingSetupCost,
+    totalCost: groupCosts.totalCost + cuttingMachineCost + cuttingSetupCost,
     multiImposition: multiImp,
   }
 }

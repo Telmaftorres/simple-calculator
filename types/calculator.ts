@@ -236,7 +236,7 @@ export interface AmalgameGroup {
   colorIndex: number
   amalgameType: 'impression_decoupe' | 'decoupe'
   plateId: string                                      // plaque commune (impression ou découpe)
-  cuttingTimePerPoseSeconds: number                    // temps découpe par pose, commun au groupe
+  cuttingTimePerPoseSeconds: number                    // temps découpe par plaque, commun au groupe
   cuttingSetupType: 'none' | 'standard' | 'complexe'  // calage commun au groupe
   // Impression (seulement pour impression_decoupe)
   printMode: 'production' | 'quality'
