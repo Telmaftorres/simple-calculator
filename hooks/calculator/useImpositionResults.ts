@@ -106,6 +106,7 @@ function computeGroupResult(
     hasFlatColor: group.hasFlatColor,
     printMode: group.printMode,
     printSetupType: group.printSetupType,
+    machineTimeMinOverride: group.machineTimeMinOverride ?? null,
     hasImpression: true,
     cuttingSetupType: 'none',
     cuttingTimePerPoseSeconds: 0,

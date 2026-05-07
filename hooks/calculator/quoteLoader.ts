@@ -21,6 +21,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     varnishSurfacePercent: r.varnishSurfacePercent ?? 0,
     flatColorSurfacePercent: r.flatColorSurfacePercent ?? 0,
     printSetupType: (r.printSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
+    machineTimeMinOverride: (r as { machineTimeMinOverride?: number | null }).machineTimeMinOverride ?? null,
   }))
 
   const products = (initialQuote.products ?? []).map((p) => {

@@ -134,6 +134,7 @@ const amalgameRunSchema = z.object({
   varnishSurfacePercent: z.number().min(0).max(100).optional(),
   flatColorSurfacePercent: z.number().min(0).max(100).optional(),
   printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
+  machineTimeMinOverride: z.number().min(0).nullable().optional(),
   mainPerPlate: z.number().int().positive().nullable().optional(),
   platesCount: z.number().int().min(0).nullable().optional(),
   position: z.number().int().min(0),

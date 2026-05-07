@@ -249,6 +249,7 @@ export interface AmalgameGroup {
   varnishSurfacePercent: number
   flatColorSurfacePercent: number
   printSetupType: 'none' | 'standard' | 'complexe'
+  machineTimeMinOverride: number | null
 }
 
 export interface AmalgameGroupResult {

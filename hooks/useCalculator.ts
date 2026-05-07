@@ -372,6 +372,7 @@ export function useCalculator(
         isRectoVerso: false, rectoVersoType: null, inkMlPerPlate: 20, inkMlVerso: 0,
         hasVarnish: false, hasFlatColor: false, varnishSurfacePercent: 0,
         flatColorSurfacePercent: 0, printSetupType: 'none' as const,
+        machineTimeMinOverride: null,
       })))
     } else {
       setAmalgameGroups([])

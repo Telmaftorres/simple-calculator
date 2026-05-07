@@ -272,6 +272,7 @@ export function useSaveHandlers(ctx: SaveContext) {
           varnishSurfacePercent: g.varnishSurfacePercent,
           flatColorSurfacePercent: g.flatColorSurfacePercent,
           printSetupType: g.printSetupType,
+          machineTimeMinOverride: g.machineTimeMinOverride ?? null,
           mainPerPlate: null,
           platesCount: amalgameGroupResults[i]?.platesCount ?? null,
           position: i,

@@ -48,6 +48,7 @@ export function GroupEditor({
   const [varnishSurfacePercent, setVarnishSurfacePercent] = useState(initial?.varnishSurfacePercent ?? 0)
   const [flatColorSurfacePercent, setFlatColorSurfacePercent] = useState(initial?.flatColorSurfacePercent ?? 0)
   const [printSetupType, setPrintSetupType] = useState<'none' | 'standard' | 'complexe'>(initial?.printSetupType ?? 'none')
+  const [machineTimeMinOverride, setMachineTimeMinOverride] = useState<number | null>(initial?.machineTimeMinOverride ?? null)
 
   const toggleProduct = (id: string) =>
     setSelectedProductIds(prev => prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id])
@@ -86,7 +87,7 @@ export function GroupEditor({
       inkMlPerPlate, inkMlVerso,
       hasVarnish, hasFlatColor,
       varnishSurfacePercent, flatColorSurfacePercent,
-      printSetupType,
+      printSetupType, machineTimeMinOverride,
     }
     onSave(group, selectedProductIds)
   }
@@ -276,6 +277,30 @@ export function GroupEditor({
                   {type === 'none' ? 'Aucun' : type.charAt(0).toUpperCase() + type.slice(1)}
                 </button>
               ))}
+            </div>
+          </div>
+
+          <div className="space-y-1 bg-purple-100/60 p-2 rounded-lg border border-purple-200">
+            <Label className="text-purple-900 font-medium text-xs">Temps machine impression</Label>
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={machineTimeMinOverride ?? ''}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  setMachineTimeMinOverride(isNaN(v) || e.target.value === '' ? null : v)
+                }}
+                placeholder="Forcer le temps (min)…"
+                className="flex-1 h-8 px-2 text-xs border border-purple-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-purple-400"
+              />
+              {machineTimeMinOverride != null && (
+                <button type="button" onClick={() => setMachineTimeMinOverride(null)}
+                  className="text-xs text-slate-400 hover:text-red-500 transition-colors whitespace-nowrap">
+                  Auto
+                </button>
+              )}
             </div>
           </div>
         </div>

@@ -356,6 +356,7 @@ model QuoteAmalgameRun {
   varnishSurfacePercent     Float                  @default(0)
   flatColorSurfacePercent   Float                  @default(0)
   printSetupType            String                 @default("none")
+  machineTimeMinOverride    Float?
   mainPerPlate              Int?
   platesCount               Int?
   position                  Int                    @default(0)
