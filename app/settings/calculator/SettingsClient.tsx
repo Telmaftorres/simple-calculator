@@ -8,7 +8,8 @@ import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/com
 import { toast } from 'sonner'
 import { Save, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
 import { PackagingPricingClient } from './PackagingPricingClient'
-import type { PackagingRuleForAdmin, QuantityCoefficientForAdmin } from '@/app/actions/reference-data'
+import { SupplierQuotesClient } from './SupplierQuotesClient'
+import type { PackagingRuleForAdmin, QuantityCoefficientForAdmin, PackagingSupplierQuoteForAdmin } from '@/app/actions/reference-data'
 
 interface Setting {
   id: number
@@ -726,7 +727,7 @@ export function SettingsClient({
   packagingData,
 }: {
   settings: Setting[]
-  packagingData?: { rules: PackagingRuleForAdmin[]; coefficients: QuantityCoefficientForAdmin[] }
+  packagingData?: { rules: PackagingRuleForAdmin[]; coefficients: QuantityCoefficientForAdmin[]; supplierQuotes: PackagingSupplierQuoteForAdmin[] }
 }) {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label)
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null)
@@ -894,11 +895,12 @@ export function SettingsClient({
         </Card>
 
         {activeConfig.label === 'Emballage' && packagingData && (
-          <div className="mt-4">
+          <div className="mt-4 space-y-6">
             <PackagingPricingClient
               initialRules={packagingData.rules}
               initialCoefficients={packagingData.coefficients}
             />
+            <SupplierQuotesClient initialQuotes={packagingData.supplierQuotes} />
           </div>
         )}
       </div>

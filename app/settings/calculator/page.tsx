@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
 import { getSettings } from '@/app/actions/settings'
-import { getPackagingRulesForAdmin } from '@/app/actions/reference-data'
+import { getPackagingRulesForAdmin, getPackagingSupplierQuotes } from '@/app/actions/reference-data'
 import { SettingsClient } from './SettingsClient'
 import Link from 'next/link'
 import { ArrowLeft, LayoutDashboard } from 'lucide-react'
@@ -14,9 +14,10 @@ export default async function CalculatorSettingsPage() {
     redirect('/')
   }
 
-  const [settings, packagingData] = await Promise.all([
+  const [settings, packagingData, supplierQuotes] = await Promise.all([
     getSettings(),
     getPackagingRulesForAdmin(),
+    getPackagingSupplierQuotes(),
   ])
 
   return (
@@ -42,7 +43,7 @@ export default async function CalculatorSettingsPage() {
           </Link>
         </div>
       </div>
-      <SettingsClient settings={settings} packagingData={packagingData} />
+      <SettingsClient settings={settings} packagingData={{ ...packagingData, supplierQuotes }} />
     </div>
   )
 }

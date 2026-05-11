@@ -198,3 +198,96 @@ export async function updateQuantityCoefficient(id: number, coefficient: number)
   })
   revalidateCache('packaging-rules')
 }
+
+// ─── Supplier quotes ───────────────────────────────────────────────────────
+
+export type PackagingSupplierQuoteForAdmin = {
+  id: number
+  supplierName: string
+  category: string
+  material: string
+  size: string
+  unitPrice: number
+  quotedAt: string
+  notes: string | null
+}
+
+export async function getPackagingSupplierQuotes(): Promise<PackagingSupplierQuoteForAdmin[]> {
+  const quotes = await prisma.packagingSupplierQuote.findMany({
+    orderBy: [{ category: 'asc' }, { material: 'asc' }, { size: 'asc' }, { quotedAt: 'desc' }],
+  })
+  return quotes.map((q) => ({ ...q, quotedAt: q.quotedAt.toISOString() }))
+}
+
+async function recalculatePackagingAverage(
+  category: string,
+  material: string,
+  size: string
+): Promise<void> {
+  const quotes = await prisma.packagingSupplierQuote.findMany({
+    where: { category, material, size },
+    select: { unitPrice: true },
+  })
+  if (quotes.length === 0) return
+  const avg = quotes.reduce((sum, q) => sum + q.unitPrice, 0) / quotes.length
+  await prisma.packagingPricingRule.upsert({
+    where: { category_material_size: { category, material, size } },
+    update: { baseUnitPrice: avg },
+    create: { category, material, size, baseUnitPrice: avg },
+  })
+  revalidateCache('packaging-rules')
+}
+
+export async function createPackagingSupplierQuote(data: {
+  supplierName: string
+  category: string
+  material: string
+  size: string
+  unitPrice: number
+  quotedAt?: string
+  notes?: string
+}): Promise<void> {
+  await requireAdmin()
+  await prisma.packagingSupplierQuote.create({
+    data: {
+      supplierName: data.supplierName,
+      category: data.category,
+      material: data.material,
+      size: data.size,
+      unitPrice: data.unitPrice,
+      quotedAt: data.quotedAt ? new Date(data.quotedAt) : new Date(),
+      notes: data.notes ?? null,
+    },
+  })
+  await recalculatePackagingAverage(data.category, data.material, data.size)
+}
+
+export async function updatePackagingSupplierQuote(
+  id: number,
+  data: {
+    supplierName?: string
+    unitPrice?: number
+    quotedAt?: string
+    notes?: string
+  }
+): Promise<void> {
+  await requireAdmin()
+  const existing = await prisma.packagingSupplierQuote.findUniqueOrThrow({ where: { id } })
+  await prisma.packagingSupplierQuote.update({
+    where: { id },
+    data: {
+      ...(data.supplierName !== undefined && { supplierName: data.supplierName }),
+      ...(data.unitPrice !== undefined && { unitPrice: data.unitPrice }),
+      ...(data.quotedAt !== undefined && { quotedAt: new Date(data.quotedAt) }),
+      ...(data.notes !== undefined && { notes: data.notes }),
+    },
+  })
+  await recalculatePackagingAverage(existing.category, existing.material, existing.size)
+}
+
+export async function deletePackagingSupplierQuote(id: number): Promise<void> {
+  await requireAdmin()
+  const existing = await prisma.packagingSupplierQuote.findUniqueOrThrow({ where: { id } })
+  await prisma.packagingSupplierQuote.delete({ where: { id } })
+  await recalculatePackagingAverage(existing.category, existing.material, existing.size)
+}
