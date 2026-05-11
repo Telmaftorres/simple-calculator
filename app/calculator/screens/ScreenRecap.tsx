@@ -175,7 +175,7 @@ export function ScreenRecap() {
 
       <div className="flex justify-between items-center mb-4">
         <div>
-          {isViewOnly && targetQuoteId && (
+          {targetQuoteId && (
             <Link href={`/?editId=${targetQuoteId}`}>
               <Button className="bg-slate-900 hover:bg-slate-700">
                 <CalcIcon className="mr-2 h-4 w-4" /> Modifier le devis
