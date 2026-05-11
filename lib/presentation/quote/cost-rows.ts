@@ -97,13 +97,15 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
         { label: `↳ Calage impression (${p.printSetupType})`, detail: 'forfait', value: p.printingCostData.setupCost, sub: true },
       ] : []),
     ] : []),
-    {
-      label: 'Découpe',
-      detail: isClient ? '—' : `${Math.round(p.cuttingMachineTimeMin)} min`,
-      value: isClient ? p.cuttingMachineCost + p.cuttingSetupCost : p.cuttingMachineCost,
-    },
-    ...(!isClient && p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
-      { label: `↳ Calage découpe (${p.cuttingSetupType})`, detail: 'forfait', value: p.cuttingSetupCost, sub: true },
+    ...(p.cuttingMachineCost > 0 || p.cuttingSetupCost > 0 ? [
+      {
+        label: 'Découpe',
+        detail: isClient ? '—' : `${Math.round(p.cuttingMachineTimeMin)} min`,
+        value: isClient ? p.cuttingMachineCost + p.cuttingSetupCost : p.cuttingMachineCost,
+      },
+      ...(!isClient && p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
+        { label: `↳ Calage découpe (${p.cuttingSetupType})`, detail: 'forfait', value: p.cuttingSetupCost, sub: true },
+      ] : []),
     ] : []),
     ...(p.hasBE && p.beTotalCost && p.beTotalCost > 0 ? [
       { label: 'Bureau d\'études', detail: isClient ? '—' : `${p.beTimeMinutes ?? 0} min`, value: p.beCost ?? 0 },

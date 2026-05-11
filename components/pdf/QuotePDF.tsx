@@ -730,7 +730,7 @@ export function QuotePDF({
         )}
 
         {/* ── Transport ── */}
-        {formValues.transportDeliveries && formValues.transportDeliveries.length > 0 && formValues.transportDeliveries.some(d => d.mode) && (
+        {costResult.transportTotal > 0 && formValues.transportDeliveries && formValues.transportDeliveries.length > 0 && formValues.transportDeliveries.some(d => d.mode) && (
           <View style={styles.section}>
             <Text style={styles.sectionTitle}>Transport</Text>
             <View style={styles.table}>
