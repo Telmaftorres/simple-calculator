@@ -38,6 +38,7 @@ export type QuoteCostRowsParams = {
   packagingMaterialType?: string | null
   packagingExternalSize?: string | null
   packagingExternalUnitPrice?: number
+  effectivePackagingUnitPrice?: number
   packagingQuantity?: number
   hasBE?: boolean
   beTimeMinutes?: number
@@ -145,8 +146,9 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
           const isExternal = p.packagingMaterialType === 'B' || p.packagingMaterialType === 'EB'
           if (isExternal) {
             if (isClient) return 'Fournisseur externe'
-            return p.packagingExternalUnitPrice && p.packagingExternalUnitPrice > 0
-              ? `Fournisseur externe — ${p.packagingExternalUnitPrice.toFixed(4)} €/pce`
+            const displayPrice = p.effectivePackagingUnitPrice ?? p.packagingExternalUnitPrice
+            return displayPrice && displayPrice > 0
+              ? `Fournisseur externe — ${displayPrice.toFixed(4)} €/pce`
               : 'Fournisseur externe'
           }
           return isClient ? '—' : `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`

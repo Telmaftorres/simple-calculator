@@ -303,6 +303,7 @@ export function QuotePDF({
     packagingMaterialCost,
     packagingCuttingCost,
     packagingExternalUnitPrice,
+    effectivePackagingUnitPrice,
   } = costResult
 
   const date = new Date().toLocaleDateString('fr-FR', {
@@ -349,6 +350,7 @@ export function QuotePDF({
     packagingMaterialType,
     packagingExternalSize,
     packagingExternalUnitPrice,
+    effectivePackagingUnitPrice,
     packagingQuantity,
     hasDossierFee: formValues.hasDossierFee,
     dossierFeeCost: costResult.dossierFeeCost,
