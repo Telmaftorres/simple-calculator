@@ -555,7 +555,7 @@ export function useCalculator(
     margeCommercialeMontant, margeSopanoMontant, totalNet,
     settings, setField,
     customPlate, setCustomPlate: (v: { name: string; width: number; height: number; cost: number } | null) => setField('customPlate', v),
-    mode, targetQuoteId,
+    mode, targetQuoteId, isViewOnly,
     ...prodState,
     handleSaveProd, handleSaveActuals,
     amalgameGroups, setAmalgameGroups,

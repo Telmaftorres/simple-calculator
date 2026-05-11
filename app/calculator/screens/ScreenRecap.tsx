@@ -45,6 +45,8 @@ export function ScreenRecap() {
     totalNet,
     amalgameGroups,
     amalgameGroupResults,
+    isViewOnly,
+    targetQuoteId,
   } = useCalculatorContext()
 
   const [pdfUrl, setPdfUrl] = useState<string | null>(null)
@@ -171,7 +173,16 @@ export function ScreenRecap() {
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 animate-in slide-in-from-bottom duration-500">
 
-      <div className="flex justify-end mb-4">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          {isViewOnly && targetQuoteId && (
+            <Link href={`/?editId=${targetQuoteId}`}>
+              <Button className="bg-slate-900 hover:bg-slate-700">
+                <CalcIcon className="mr-2 h-4 w-4" /> Modifier le devis
+              </Button>
+            </Link>
+          )}
+        </div>
         <Link href="/dashboard">
           <Button variant="outline" className="border-slate-200">
             <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
