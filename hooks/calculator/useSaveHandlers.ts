@@ -37,6 +37,7 @@ export interface SaveContext {
   hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number
   machineTimeMinOverride: number | null
+  bordABord: boolean
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
@@ -179,6 +180,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasFlatColor: isMultiProduct ? false : ctx.hasFlatColor,
         cuttingTimePerPoseSeconds: isMultiProduct ? 0 : ctx.cuttingTimePerPoseSeconds,
         machineTimeMinOverride: isMultiProduct ? null : (ctx.machineTimeMinOverride ?? null),
+        bordABord: ctx.bordABord,
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
         hasAssemblyNotice: ctx.hasAssemblyNotice,

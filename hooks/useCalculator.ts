@@ -82,7 +82,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
-    machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride,
+    machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord,
   } = formState
 
   const {
@@ -163,6 +163,7 @@ export function useCalculator(
 
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
+  const effectiveSpacing = bordABord ? 0 : poseSpacingMm
 
   // ── Single-product imposition ──
   useEffect(() => {
@@ -171,7 +172,7 @@ export function useCalculator(
       const imp = calculateImposition(
         { width: flatWidth, height: flatHeight },
         { width: selectedPlate.width, height: selectedPlate.height },
-        poseSpacingMm, orientationOverride ?? undefined, plateBorderMm
+        effectiveSpacing, orientationOverride ?? undefined, plateBorderMm
       )
       const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(quantity / imp.itemsPerPlate) : 0
       setImpositionResult({
@@ -184,11 +185,11 @@ export function useCalculator(
     } else {
       setImpositionResult(null)
     }
-  }, [flatWidth, flatHeight, quantity, selectedPlate, poseSpacingMm, isMultiProduct, orientationOverride])
+  }, [flatWidth, flatHeight, quantity, selectedPlate, effectiveSpacing, isMultiProduct, orientationOverride])
 
   // ── Memoized multi-product calculations ──
   const { amalgameGroupResults, productSlotResults } = useImpositionResults({
-    isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm, plateBorderMm,
+    isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm: effectiveSpacing, plateBorderMm,
   })
 
   const totalQuantityMulti = isMultiProduct ? products.reduce((sum, p) => sum + p.quantity, 0) : 0
@@ -291,7 +292,7 @@ export function useCalculator(
     flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
-    cuttingTimePerPoseSeconds, machineTimeMinOverride, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
+    cuttingTimePerPoseSeconds, machineTimeMinOverride, bordABord, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
     hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
@@ -491,6 +492,7 @@ export function useCalculator(
     selectedPlate, selectedProductType,
     impositionResult,
     orientationOverride, setOrientationOverride,
+    bordABord, setBordABord: (v: boolean) => setField('bordABord', v),
     inkMlPerPlate, setInkMlPerPlate: (v: number) => setField('inkMlPerPlate', v),
     inkMlVerso, setInkMlVerso: (v: number) => setField('inkMlVerso', v),
     varnishSurfacePercent, setVarnishSurfacePercent: (v: number) => setField('varnishSurfacePercent', v),

@@ -286,6 +286,7 @@ model Quote {
   hasFlatColor                       Boolean           @default(false)
   cuttingTimePerPoseSeconds          Int               @default(0)
   machineTimeMinOverride             Float?            // Temps machine impression (override manuel, en minutes)
+  bordABord                          Boolean           @default(false)
   assemblyTimePerPieceSeconds        Int               @default(0)
   packTimePerPieceSeconds            Int               @default(0)
   hasAssemblyNotice                  Boolean           @default(false)
