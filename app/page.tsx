@@ -31,6 +31,8 @@ export default async function Home({
   let targetQuoteId: number | undefined
   if (prodId && !isNaN(parseInt(prodId))) { mode = 'production'; targetQuoteId = parseInt(prodId) }
   else if (actualsId && !isNaN(parseInt(actualsId))) { mode = 'actuals'; targetQuoteId = parseInt(actualsId) }
+  else if (viewId && !isNaN(parseInt(viewId))) { targetQuoteId = parseInt(viewId) }
+  else if (editId && !isNaN(parseInt(editId))) { targetQuoteId = parseInt(editId) }
 
   const idToFetch = editId || viewId || prodId || actualsId
   const isViewOnly = !!viewId
