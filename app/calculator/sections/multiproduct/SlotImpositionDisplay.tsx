@@ -7,10 +7,14 @@ export function SlotImpositionDisplay({
   impositionResult,
   orientationOverride,
   onOrientationChange,
+  bordABord,
+  onBordABordChange,
 }: {
   impositionResult: ImpositionResult
   orientationOverride: 'normal' | 'rotated' | null
   onOrientationChange: (v: 'normal' | 'rotated' | null) => void
+  bordABord: boolean
+  onBordABordChange: (v: boolean) => void
 }) {
   const [open, setOpen] = useState(false)
   const ORIENTATION_LABELS = { normal: 'Horizontal', rotated: 'Vertical', mixed: 'Mix' }
@@ -20,6 +24,7 @@ export function SlotImpositionDisplay({
     : ORIENTATION_LABELS[impositionResult.orientation]
 
   return (
+    <div className="space-y-2">
     <div className="flex justify-between items-center bg-blue-50 p-3 rounded-lg border border-blue-100 text-sm">
       <div className="text-center">
         <div className="text-xl font-bold text-blue-600">{impositionResult.itemsPerPlate}</div>
@@ -66,6 +71,20 @@ export function SlotImpositionDisplay({
         <div className="text-xl font-bold text-slate-700">{impositionResult.platesNeeded}</div>
         <div className="text-xs text-slate-400 uppercase">Plaques nécessaires</div>
       </div>
+    </div>
+    <button
+      onClick={() => onBordABordChange(!bordABord)}
+      className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium border transition-all ${
+        bordABord
+          ? 'bg-blue-600 text-white border-blue-600'
+          : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+      }`}
+    >
+      <span>Bord à bord</span>
+      <span className={`text-xs font-normal ${bordABord ? 'text-blue-200' : 'text-slate-400'}`}>
+        {bordABord ? 'Espacement = 0 mm' : 'Espacement standard'}
+      </span>
+    </button>
     </div>
   )
 }

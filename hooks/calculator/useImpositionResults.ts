@@ -168,7 +168,7 @@ export function useImpositionResults({
           const imp = calculateImposition(
             { width: slot.flatWidth, height: slot.flatHeight },
             { width: groupPlate.width, height: groupPlate.height },
-            poseSpacingMm, undefined, plateBorderMm
+            slot.bordABord ? 0 : poseSpacingMm, undefined, plateBorderMm
           )
           const cpp = imp.itemsPerPlate > 0 ? imp.itemsPerPlate : 1
           // Use the group's optimized plate count, not the individual slot's naive count
@@ -187,7 +187,7 @@ export function useImpositionResults({
           const imp = calculateImposition(
             { width: slot.flatWidth, height: slot.flatHeight },
             { width: slotPlate.width, height: slotPlate.height },
-            poseSpacingMm,
+            slot.bordABord ? 0 : poseSpacingMm,
             slot.orientationOverride ?? undefined,
             plateBorderMm
           )

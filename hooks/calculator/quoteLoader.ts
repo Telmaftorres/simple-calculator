@@ -50,6 +50,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
       cuttingSetupType: (p.cuttingSetupType as 'none' | 'standard' | 'complexe') ?? 'none',
       cuttingTimePerPoseSeconds: p.cuttingTimePerPoseSeconds || 0,
       orientationOverride: null as 'normal' | 'rotated' | null,
+      bordABord: (p as { bordABord?: boolean }).bordABord ?? false,
       amalgameGroupId: groupId,
       countPerPlateInGroup: p.countPerPlateInGroup ?? 0,
       machineTimeMinOverride: (p as { machineTimeMinOverride?: number | null }).machineTimeMinOverride ?? null,

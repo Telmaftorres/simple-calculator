@@ -101,6 +101,7 @@ const quoteProductSchema = z.object({
   amalgameGroupIndex: z.number().int().min(0).nullable().optional(),
   countPerPlateInGroup: z.number().int().positive().nullable().optional(),
   machineTimeMinOverride: z.number().min(0).nullable().optional(),
+  bordABord: z.boolean().optional(),
 })
 
 const transportDeliverySchema = z.object({

@@ -558,6 +558,7 @@ model QuoteProduct {
   amalgameGroupIndex        Int?
   countPerPlateInGroup      Int?
   machineTimeMinOverride    Float?
+  bordABord                 Boolean @default(false)
   quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   plate                     Plate?  @relation(fields: [plateId], references: [id])
 }

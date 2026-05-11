@@ -270,6 +270,7 @@ export function useSaveHandlers(ctx: SaveContext) {
           amalgameGroupIndex: p.amalgameGroupId ? amalgameGroups.findIndex((g) => g.id === p.amalgameGroupId) : null,
           countPerPlateInGroup: (p.countPerPlateInGroup > 0 ? p.countPerPlateInGroup : null),
           machineTimeMinOverride: p.machineTimeMinOverride ?? null,
+          bordABord: p.bordABord,
         })) : [],
         hasAmalgame: isMultiProduct && amalgameGroups.length > 0,
         amalgameRuns: (isMultiProduct && amalgameGroups.length > 0) ? amalgameGroups.map((g, i) => ({
