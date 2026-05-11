@@ -315,7 +315,9 @@ export function useCalculator(
       depth: number | null | undefined,
       height: number | null | undefined
     ) => {
-      if (template.formatType !== '3d') {
+      // An element with a depth value is always 3D regardless of the parent template's formatType
+      const effectiveFormatType = (depth != null && depth > 0) ? '3d' : template.formatType
+      if (effectiveFormatType !== '3d') {
         return { width: width ?? null, height: height ?? null }
       }
       if (!width || !depth || !height) {
