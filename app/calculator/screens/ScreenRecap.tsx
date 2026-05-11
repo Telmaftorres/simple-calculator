@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Plus, FileText, Download, Eye } from 'lucide-react'
@@ -12,6 +13,7 @@ import { buildCostRows } from '@/lib/presentation/quote/cost-rows'
 import React from 'react'
 
 export function ScreenRecap() {
+  const router = useRouter()
   const {
     studyNumber,
     productSearch,
@@ -176,11 +178,9 @@ export function ScreenRecap() {
       <div className="flex justify-between items-center mb-4">
         <div>
           {targetQuoteId && (
-            <Link href={`/?editId=${targetQuoteId}`}>
-              <Button className="bg-slate-900 hover:bg-slate-700">
-                <CalcIcon className="mr-2 h-4 w-4" /> Modifier le devis
-              </Button>
-            </Link>
+            <Button className="bg-slate-900 hover:bg-slate-700" onClick={() => router.push(`/?editId=${targetQuoteId}`)}>
+              <CalcIcon className="mr-2 h-4 w-4" /> Modifier le devis
+            </Button>
           )}
         </div>
         <Link href="/dashboard">
