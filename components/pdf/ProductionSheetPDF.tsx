@@ -21,6 +21,8 @@ type ProductEntry = {
   hasImpression: boolean
   inkMlPerPlate: number
   cuttingTimePerPoseSeconds: number
+  amalgameGroupIndex: number | null
+  countPerPlateInGroup: number | null
 }
 
 type TransportDelivery = {
@@ -37,6 +39,10 @@ type AmalgameRunEntry = {
   name: string
   hasImpression: boolean
   platesCount: number | null
+  cuttingTimePerPoseSeconds: number
+  inkMlPerPlate: number
+  isRectoVerso: boolean
+  rectoVersoType: string | null
   plate: { name: string; width: number; height: number } | null
   items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[]
 }
@@ -47,6 +53,7 @@ type Quote = {
   client: string | null
   createdAt: Date
   quantity: number
+  plvQuantity: number | null
   flatWidth: number | null
   flatHeight: number | null
   totalCost: number | null
@@ -100,6 +107,8 @@ const C = {
   purpleBg:'#ede9fe',
   orange:  '#c2410c',
   orangeBg:'#fff7ed',
+  violet:  '#7c3aed',
+  violetBg:'#f5f3ff',
 }
 
 // ── Styles ──
@@ -124,16 +133,16 @@ const s = StyleSheet.create({
     overflow: 'hidden',
   },
   headerLeft: {
-    flex: 1,
+    width: 160,
     backgroundColor: C.dark,
     padding: '8 12',
     justifyContent: 'center',
   },
   headerTitle: {
-    fontSize: 16,
+    fontSize: 14,
     fontFamily: 'Helvetica-Bold',
     color: C.white,
-    letterSpacing: 3,
+    letterSpacing: 1,
   },
   headerSub: {
     fontSize: 7.5,
@@ -141,11 +150,11 @@ const s = StyleSheet.create({
     marginTop: 2,
   },
   headerCenter: {
-    flex: 2,
+    flex: 1,
     padding: '6 12',
     flexDirection: 'row',
     alignItems: 'center',
-    gap: 24,
+    gap: 16,
     borderLeftWidth: 1.5,
     borderLeftColor: C.dark,
     borderRightWidth: 1.5,
@@ -183,38 +192,105 @@ const s = StyleSheet.create({
     letterSpacing: 0.5,
   },
 
-  // ── Nomenclature ──
-  nomTable: {
+  // ── Tableau générique ──
+  table: {
     borderWidth: 1,
     borderColor: C.border,
     borderRadius: 3,
     overflow: 'hidden',
-    marginBottom: 10,
+    marginBottom: 8,
   },
-  nomHeader: {
+  tableHead: {
     flexDirection: 'row',
-    backgroundColor: C.dark,
     padding: '4 8',
   },
-  nomHeaderCell: {
+  tableHeadCell: {
     color: C.white,
     fontFamily: 'Helvetica-Bold',
     fontSize: 7.5,
   },
-  nomRow: {
+  tableRow: {
     flexDirection: 'row',
     padding: '3.5 8',
     borderTopWidth: 1,
     borderTopColor: C.border,
   },
-  nomRowAlt: {
+  tableRowAlt: {
     flexDirection: 'row',
     padding: '3.5 8',
     borderTopWidth: 1,
     borderTopColor: C.border,
     backgroundColor: C.bg,
   },
-  nomCell: { fontSize: 8.5, color: C.dark },
+  tableCell: { fontSize: 8, color: C.dark },
+  tableCellBold: { fontSize: 8, color: C.dark, fontFamily: 'Helvetica-Bold' },
+
+  // ── Groupe amalgame ──
+  groupBlock: {
+    borderWidth: 1,
+    borderColor: C.border,
+    borderRadius: 3,
+    overflow: 'hidden',
+    marginBottom: 8,
+  },
+  groupHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    padding: '5 8',
+    gap: 8,
+  },
+  groupTitle: {
+    fontSize: 8.5,
+    fontFamily: 'Helvetica-Bold',
+  },
+  groupBadge: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    padding: '1.5 5',
+    borderRadius: 10,
+  },
+  groupSpecs: {
+    flexDirection: 'row',
+    gap: 16,
+    padding: '4 8',
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    backgroundColor: C.bg,
+  },
+  groupSpecItem: {
+    flexDirection: 'row',
+    gap: 4,
+    alignItems: 'center',
+  },
+  groupSpecLabel: { fontSize: 7, color: C.mid },
+  groupSpecValue: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.dark },
+  groupProductsHead: {
+    flexDirection: 'row',
+    padding: '3 8',
+    borderTopWidth: 1,
+    borderTopColor: C.border,
+    backgroundColor: '#f1f5f9',
+  },
+  groupProductsHeadCell: {
+    fontSize: 7,
+    fontFamily: 'Helvetica-Bold',
+    color: C.mid,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  groupProductRow: {
+    flexDirection: 'row',
+    padding: '3.5 8',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+  },
+  groupProductRowAlt: {
+    flexDirection: 'row',
+    padding: '3.5 8',
+    borderTopWidth: 1,
+    borderTopColor: '#f1f5f9',
+    backgroundColor: '#fafafa',
+  },
 
   // ── 2 colonnes ──
   cols: {
@@ -248,7 +324,7 @@ const s = StyleSheet.create({
     padding: '5 8',
   },
 
-  // ── Data rows inside card ──
+  // ── Data rows ──
   dataRow: {
     flexDirection: 'row',
     justifyContent: 'space-between',
@@ -310,6 +386,10 @@ function condLabel(v: string | null) {
   if (v === 'autre')        return 'Autre'
   return v ?? '—'
 }
+function rvLabel(rv: boolean, type: string | null) {
+  if (!rv) return 'Recto'
+  return type === 'different' ? 'R/V Différent' : 'R/V Identique'
+}
 
 // ── Sub-components ──
 function SectionCard({ title, bgColor, textColor, children }: {
@@ -349,32 +429,18 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
   productionSheet: ProductionSheetInput
 }) {
   const status = statusInfo(productionSheet.status ?? 'en_attente')
+  const displayQty = quote.isMultiProduct ? (quote.plvQuantity ?? quote.quantity) : quote.quantity
 
-  const nomenclature = quote.isMultiProduct
-    ? quote.products.map(p => ({
-        designation: p.productTypeName || '—',
-        matiere: p.plate ? `${p.plate.name}  ${p.plate.width}×${p.plate.height}` : '—',
-        format: `${p.flatWidth}×${p.flatHeight} mm`,
-        qte: p.platesCount != null ? String(p.platesCount) : '—',
-        rv: p.isRectoVerso ? (p.rectoVersoType === 'different' ? 'R/V Diff.' : 'R/V Ident.') : 'Recto',
-      }))
-    : quote.plate
-      ? [{
-          designation: quote.productType?.name || '—',
-          matiere: `${quote.plate.name}  ${quote.plate.width}×${quote.plate.height}`,
-          format: `${quote.flatWidth}×${quote.flatHeight} mm`,
-          qte: quote.platesCount != null ? String(quote.platesCount) : '—',
-          rv: quote.isRectoVerso ? (quote.rectoVersoType === 'different' ? 'R/V Diff.' : 'R/V Ident.') : 'Recto',
-        }]
-      : []
+  // ── Nomenclature : produits standalone (hors amalgame) ──
+  const standaloneProducts = quote.isMultiProduct
+    ? quote.products.filter(p => p.amalgameGroupIndex == null)
+    : []
 
-  const impressionStr = [
-    quote.isRectoVerso
-      ? `R/V ${quote.rectoVersoType === 'identical' ? 'identique' : 'différent'}`
-      : 'Recto seul',
-    quote.hasVarnish && 'Vernis',
-    quote.hasFlatColor && 'Blanc',
-  ].filter(Boolean).join(' + ')
+  // ── Amalgame runs avec leurs produits ──
+  const runs = (quote.amalgameRuns ?? []).map((run, idx) => ({
+    run,
+    products: quote.products.filter(p => p.amalgameGroupIndex === idx),
+  }))
 
   return (
     <Document>
@@ -404,7 +470,7 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
             </View>
             <View style={s.headerInfoGroup}>
               <Text style={s.headerInfoLabel}>Quantité</Text>
-              <Text style={s.headerInfoValue}>{quote.quantity} ex</Text>
+              <Text style={s.headerInfoValue}>{displayQty} ex</Text>
             </View>
             <View style={s.headerInfoGroup}>
               <Text style={s.headerInfoLabel}>Montant HT</Text>
@@ -425,51 +491,168 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
           </View>
         </View>
 
-        {/* ── NOMENCLATURE ── */}
-        {nomenclature.length > 0 && (
-          <View style={s.nomTable}>
-            <View style={s.nomHeader}>
-              <Text style={[s.nomHeaderCell, { flex: 2 }]}>DÉSIGNATION</Text>
-              <Text style={[s.nomHeaderCell, { flex: 3 }]}>MATIÈRE</Text>
-              <Text style={[s.nomHeaderCell, { flex: 1.5 }]}>FORMAT À PLAT</Text>
-              <Text style={[s.nomHeaderCell, { flex: 1, textAlign: 'center' }]}>IMPRESSION</Text>
-              <Text style={[s.nomHeaderCell, { flex: 1, textAlign: 'right' }]}>QTÉ PLAQUES</Text>
-            </View>
-            {nomenclature.map((row, i) => (
-              <View key={i} style={i % 2 === 0 ? s.nomRow : s.nomRowAlt}>
-                <Text style={[s.nomCell, { flex: 2 }]}>{row.designation}</Text>
-                <Text style={[s.nomCell, { flex: 3, color: C.mid }]}>{row.matiere}</Text>
-                <Text style={[s.nomCell, { flex: 1.5 }]}>{row.format}</Text>
-                <Text style={[s.nomCell, { flex: 1, textAlign: 'center', color: C.purple }]}>{row.rv}</Text>
-                <Text style={[s.nomCell, { flex: 1, textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>{row.qte}</Text>
+        {/* ── NOMENCLATURE MULTI-PRODUITS ── */}
+        {quote.isMultiProduct ? (
+          <View>
+            {/* Produits standalone */}
+            {standaloneProducts.length > 0 && (
+              <View style={s.table}>
+                <View style={[s.tableHead, { backgroundColor: C.dark }]}>
+                  <Text style={[s.tableHeadCell, { flex: 2 }]}>PRODUIT</Text>
+                  <Text style={[s.tableHeadCell, { flex: 2.5 }]}>MATIÈRE</Text>
+                  <Text style={[s.tableHeadCell, { flex: 1.2 }]}>FORMAT</Text>
+                  <Text style={[s.tableHeadCell, { flex: 0.8, textAlign: 'center' }]}>QTÉ</Text>
+                  <Text style={[s.tableHeadCell, { flex: 1, textAlign: 'center' }]}>IMPRESSION</Text>
+                  <Text style={[s.tableHeadCell, { flex: 1, textAlign: 'center' }]}>DÉCOUPE (s/pose)</Text>
+                  <Text style={[s.tableHeadCell, { flex: 0.8, textAlign: 'right' }]}>PLAQUES</Text>
+                </View>
+                {standaloneProducts.map((p, i) => (
+                  <View key={p.id} style={i % 2 === 0 ? s.tableRow : s.tableRowAlt}>
+                    <Text style={[s.tableCell, { flex: 2 }]}>{p.productTypeName || '—'}</Text>
+                    <Text style={[s.tableCell, { flex: 2.5, color: C.mid }]}>
+                      {p.plate ? `${p.plate.name}  ${p.plate.width}×${p.plate.height}` : '—'}
+                    </Text>
+                    <Text style={[s.tableCell, { flex: 1.2 }]}>{p.flatWidth}×{p.flatHeight} mm</Text>
+                    <Text style={[s.tableCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
+                    <Text style={[s.tableCell, { flex: 1, textAlign: 'center', color: C.purple }]}>
+                      {p.hasImpression ? rvLabel(p.isRectoVerso, p.rectoVersoType) : 'Non'}
+                    </Text>
+                    <Text style={[s.tableCell, { flex: 1, textAlign: 'center' }]}>
+                      {p.cuttingTimePerPoseSeconds > 0 ? `${p.cuttingTimePerPoseSeconds} s` : '—'}
+                    </Text>
+                    <Text style={[s.tableCellBold, { flex: 0.8, textAlign: 'right' }]}>
+                      {p.platesCount ?? '—'}
+                    </Text>
+                  </View>
+                ))}
               </View>
-            ))}
-          </View>
-        )}
+            )}
 
-        {/* ── PASSES D'IMPRESSION (AMALGAME) ── */}
-        {quote.hasAmalgame && quote.amalgameRuns && quote.amalgameRuns.length > 0 && (
-          <View style={s.nomTable}>
-            <View style={s.nomHeader}>
-              <Text style={[s.nomHeaderCell, { flex: 2 }]}>PASSE D'IMPRESSION</Text>
-              <Text style={[s.nomHeaderCell, { flex: 3 }]}>MATIÈRE</Text>
-              <Text style={[s.nomHeaderCell, { flex: 1, textAlign: 'center' }]}>IMPRESSION</Text>
-              <Text style={[s.nomHeaderCell, { flex: 1, textAlign: 'right' }]}>QTÉ PLAQUES</Text>
+            {/* Groupes amalgame */}
+            {runs.map(({ run, products: slots }, i) => {
+              const isImpDec = run.hasImpression
+              const bgColor = isImpDec ? C.violetBg : C.orangeBg
+              const textColor = isImpDec ? C.violet : C.orange
+              const badgeLabel = isImpDec ? 'IMPRESSION + DÉCOUPE' : 'DÉCOUPE SEULE'
+              return (
+                <View key={i} style={s.groupBlock}>
+                  {/* En-tête groupe */}
+                  <View style={[s.groupHeader, { backgroundColor: bgColor }]}>
+                    <Text style={[s.groupTitle, { color: textColor }]}>{run.name}</Text>
+                    <Text style={[s.groupBadge, { backgroundColor: textColor, color: C.white }]}>
+                      {badgeLabel}
+                    </Text>
+                    {run.plate && (
+                      <Text style={[s.groupSpecLabel, { marginLeft: 4 }]}>
+                        {run.plate.name}  {run.plate.width}×{run.plate.height} mm
+                      </Text>
+                    )}
+                    {run.platesCount != null && (
+                      <Text style={[s.groupSpecLabel, { marginLeft: 8 }]}>
+                        <Text style={s.groupSpecValue}>{run.platesCount}</Text> plaques
+                      </Text>
+                    )}
+                  </View>
+
+                  {/* Specs du groupe */}
+                  <View style={s.groupSpecs}>
+                    {isImpDec && (
+                      <>
+                        <View style={s.groupSpecItem}>
+                          <Text style={s.groupSpecLabel}>Impression :</Text>
+                          <Text style={s.groupSpecValue}>{rvLabel(run.isRectoVerso, run.rectoVersoType)}</Text>
+                        </View>
+                        <View style={s.groupSpecItem}>
+                          <Text style={s.groupSpecLabel}>Encre :</Text>
+                          <Text style={s.groupSpecValue}>{run.inkMlPerPlate} ml/plaque</Text>
+                        </View>
+                      </>
+                    )}
+                    <View style={s.groupSpecItem}>
+                      <Text style={s.groupSpecLabel}>Découpe :</Text>
+                      <Text style={s.groupSpecValue}>
+                        {run.cuttingTimePerPoseSeconds > 0 ? `${run.cuttingTimePerPoseSeconds} s/pose` : '—'}
+                      </Text>
+                    </View>
+                    {run.platesCount != null && (
+                      <View style={s.groupSpecItem}>
+                        <Text style={s.groupSpecLabel}>Nb plaques :</Text>
+                        <Text style={s.groupSpecValue}>{run.platesCount}</Text>
+                      </View>
+                    )}
+                  </View>
+
+                  {/* Produits du groupe */}
+                  {slots.length > 0 && (
+                    <>
+                      <View style={s.groupProductsHead}>
+                        <Text style={[s.groupProductsHeadCell, { flex: 2.5 }]}>Produit</Text>
+                        <Text style={[s.groupProductsHeadCell, { flex: 1.5 }]}>Format à plat</Text>
+                        <Text style={[s.groupProductsHeadCell, { flex: 1, textAlign: 'center' }]}>Qté</Text>
+                        <Text style={[s.groupProductsHeadCell, { flex: 1, textAlign: 'center' }]}>Poses/plaque</Text>
+                      </View>
+                      {slots.map((p, j) => (
+                        <View key={p.id} style={j % 2 === 0 ? s.groupProductRow : s.groupProductRowAlt}>
+                          <Text style={[s.tableCell, { flex: 2.5 }]}>{p.productTypeName || '—'}</Text>
+                          <Text style={[s.tableCell, { flex: 1.5, color: C.mid }]}>{p.flatWidth}×{p.flatHeight} mm</Text>
+                          <Text style={[s.tableCell, { flex: 1, textAlign: 'center' }]}>{p.quantity}</Text>
+                          <Text style={[s.tableCellBold, { flex: 1, textAlign: 'center' }]}>
+                            {p.countPerPlateInGroup ?? p.itemsPerPlate ?? '—'}
+                          </Text>
+                        </View>
+                      ))}
+                    </>
+                  )}
+                </View>
+              )
+            })}
+          </View>
+        ) : (
+          /* ── PRODUIT UNIQUE ── */
+          <View style={s.table}>
+            <View style={[s.tableHead, { backgroundColor: C.dark }]}>
+              <Text style={[s.tableHeadCell, { flex: 2 }]}>PRODUIT</Text>
+              <Text style={[s.tableHeadCell, { flex: 2.5 }]}>MATIÈRE</Text>
+              <Text style={[s.tableHeadCell, { flex: 1.5 }]}>FORMAT À PLAT</Text>
+              <Text style={[s.tableHeadCell, { flex: 1, textAlign: 'center' }]}>IMPRESSION</Text>
+              <Text style={[s.tableHeadCell, { flex: 1, textAlign: 'center' }]}>DÉCOUPE (s/pose)</Text>
+              <Text style={[s.tableHeadCell, { flex: 1, textAlign: 'center' }]}>POSES/PLAQUE</Text>
+              <Text style={[s.tableHeadCell, { flex: 0.8, textAlign: 'right' }]}>PLAQUES</Text>
             </View>
-            {quote.amalgameRuns.map((run, i) => (
-              <View key={i} style={i % 2 === 0 ? s.nomRow : s.nomRowAlt}>
-                <Text style={[s.nomCell, { flex: 2 }]}>{run.name}</Text>
-                <Text style={[s.nomCell, { flex: 3, color: C.mid }]}>
-                  {run.plate ? `${run.plate.name}  ${run.plate.width}×${run.plate.height}` : 'Chutes / sans plaque'}
+            {quote.plate && (
+              <View style={s.tableRow}>
+                <Text style={[s.tableCell, { flex: 2 }]}>{quote.productType?.name || '—'}</Text>
+                <Text style={[s.tableCell, { flex: 2.5, color: C.mid }]}>
+                  {quote.plate.name}  {quote.plate.width}×{quote.plate.height}
                 </Text>
-                <Text style={[s.nomCell, { flex: 1, textAlign: 'center', color: C.purple }]}>
-                  {run.hasImpression ? 'Oui' : 'Non'}
+                <Text style={[s.tableCell, { flex: 1.5 }]}>
+                  {quote.flatWidth}×{quote.flatHeight} mm
                 </Text>
-                <Text style={[s.nomCell, { flex: 1, textAlign: 'right', fontFamily: 'Helvetica-Bold' }]}>
-                  {run.platesCount != null ? String(run.platesCount) : '—'}
+                <Text style={[s.tableCell, { flex: 1, textAlign: 'center', color: C.purple }]}>
+                  {quote.hasImpression ? rvLabel(quote.isRectoVerso, quote.rectoVersoType) : 'Non'}
+                </Text>
+                <Text style={[s.tableCell, { flex: 1, textAlign: 'center' }]}>
+                  {quote.cuttingTimePerPoseSeconds != null && quote.cuttingTimePerPoseSeconds > 0
+                    ? `${quote.cuttingTimePerPoseSeconds} s`
+                    : '—'}
+                </Text>
+                <Text style={[s.tableCell, { flex: 1, textAlign: 'center' }]}>
+                  {quote.itemsPerPlate ?? '—'}
+                </Text>
+                <Text style={[s.tableCellBold, { flex: 0.8, textAlign: 'right' }]}>
+                  {quote.platesCount ?? '—'}
                 </Text>
               </View>
-            ))}
+            )}
+            {quote.hasImpression && quote.inkMlPerPlate != null && (
+              <View style={[s.tableRow, { backgroundColor: C.bg }]}>
+                <Text style={[s.tableCell, { flex: 7, color: C.mid, fontSize: 7.5 }]}>
+                  Encre : {quote.inkMlPerPlate} ml/plaque
+                  {quote.hasVarnish ? '  +  Vernis' : ''}
+                  {quote.hasFlatColor ? '  +  Blanc de fond' : ''}
+                </Text>
+              </View>
+            )}
           </View>
         )}
 
@@ -479,57 +662,37 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
           {/* COLONNE GAUCHE */}
           <View style={s.colLeft}>
 
-            {/* IMPRESSION */}
-            {quote.hasImpression && (
-              <SectionCard title="IMPRESSION" bgColor={C.purpleBg} textColor={C.purple}>
-                {quote.platesCount != null && <DataRow label="Nombre de plaques" value={String(quote.platesCount)} />}
-                <DataRow label="Type d'impression" value={impressionStr || '—'} />
-                {quote.inkMlPerPlate != null && (
-                  <DataRow label="Encre / plaque" value={`${quote.inkMlPerPlate} ml`} />
+            {/* FAÇONNAGE */}
+            {quote.hasFaconnage && (
+              <SectionCard title="FAÇONNAGE" bgColor={C.bg} textColor={C.mid}>
+                {quote.assemblyTimePerPieceSeconds != null && (
+                  <DataRow label="Temps façonnage (estimé)" value={`${quote.assemblyTimePerPieceSeconds} s/pce`} />
                 )}
+                {productionSheet.nbCollages != null && (
+                  <DataRow label="Nombre de collages" value={String(productionSheet.nbCollages)} />
+                )}
+                {productionSheet.collagePerPLV != null && (
+                  <DataRow label="Montant collage / PLV" value={`${productionSheet.collagePerPLV.toFixed(2)} €`} />
+                )}
+                <Notes text={productionSheet.faconnageNotes} />
               </SectionCard>
             )}
 
-            {/* DÉCOUPE */}
-            <SectionCard title="DÉCOUPE" bgColor={C.orangeBg} textColor={C.orange}>
-              {quote.platesCount != null && <DataRow label="Nombre de plaques" value={String(quote.platesCount)} />}
-              {quote.cuttingTimePerPoseSeconds != null && (
-                <DataRow label="Temps / pose (estimé)" value={`${quote.cuttingTimePerPoseSeconds} s/pose`} />
-              )}
-            </SectionCard>
-
-            {/* FAÇONNAGE */}
-            <SectionCard title="FAÇONNAGE" bgColor={C.bg} textColor={C.mid}>
-              {quote.assemblyTimePerPieceSeconds != null && (
-                <DataRow label="Temps façonnage (estimé)" value={`${quote.assemblyTimePerPieceSeconds} s/pce`} />
-              )}
-              {productionSheet.nbCollages != null && (
-                <DataRow label="Nombre de collages" value={String(productionSheet.nbCollages)} />
-              )}
-              {productionSheet.collagePerPLV != null && (
-                <DataRow label="Montant collage / PLV" value={`${productionSheet.collagePerPLV.toFixed(2)} €`} />
-              )}
-              <Notes text={productionSheet.faconnageNotes} />
-            </SectionCard>
-
-          </View>
-
-          {/* COLONNE DROITE */}
-          <View style={s.colRight}>
-
             {/* CONDITIONNEMENT */}
-            <SectionCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
-              {quote.packTimePerPieceSeconds != null && (
-                <DataRow
-                  label="Temps cond. (estimé)"
-                  value={`${quote.packTimePerPieceSeconds} s/pce${quote.hasAssemblyNotice ? ' + notice' : ''}`}
-                />
-              )}
-              {productionSheet.conditionnementType && (
-                <DataRow label="Type" value={condLabel(productionSheet.conditionnementType)} />
-              )}
-              <Notes text={productionSheet.conditionnementNotes} />
-            </SectionCard>
+            {quote.hasConditionnement && (
+              <SectionCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
+                {quote.packTimePerPieceSeconds != null && (
+                  <DataRow
+                    label="Temps cond. (estimé)"
+                    value={`${quote.packTimePerPieceSeconds} s/pce${quote.hasAssemblyNotice ? ' + notice' : ''}`}
+                  />
+                )}
+                {productionSheet.conditionnementType && (
+                  <DataRow label="Type" value={condLabel(productionSheet.conditionnementType)} />
+                )}
+                <Notes text={productionSheet.conditionnementNotes} />
+              </SectionCard>
+            )}
 
             {/* EMBALLAGE */}
             {quote.hasPackaging && (
@@ -548,24 +711,20 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
                   return (
                     <>
                       <DataRow label="Type d'emballage" value={boxLabel} />
-                      <DataRow label="Matière" value={isExternal
-                        ? `${mat}${sizeLabel ? ` — ${sizeLabel}` : ''}`
-                        : mat}
-                      />
-                      {isExternal && (
-                        <DataRow label="Approvisionnement" value="Fournisseur externe" />
-                      )}
-                      {!isExternal && quote.packagingPlate && (
-                        <DataRow label="Plaque" value={quote.packagingPlate.name} />
-                      )}
-                      {quote.packagingQuantity != null && (
-                        <DataRow label="Quantité" value={`${quote.packagingQuantity} pce(s)`} />
-                      )}
+                      <DataRow label="Matière" value={isExternal ? `${mat}${sizeLabel ? ` — ${sizeLabel}` : ''}` : mat} />
+                      {isExternal && <DataRow label="Approvisionnement" value="Fournisseur externe" />}
+                      {!isExternal && quote.packagingPlate && <DataRow label="Plaque" value={quote.packagingPlate.name} />}
+                      {quote.packagingQuantity != null && <DataRow label="Quantité" value={`${quote.packagingQuantity} pce(s)`} />}
                     </>
                   )
                 })()}
               </SectionCard>
             )}
+
+          </View>
+
+          {/* COLONNE DROITE */}
+          <View style={s.colRight}>
 
             {/* TRANSPORT */}
             {quote.transportDeliveries.length > 0 && (

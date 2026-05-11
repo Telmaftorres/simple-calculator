@@ -15,6 +15,8 @@ export type ProductEntry = {
   isRectoVerso: boolean; rectoVersoType: string | null
   hasVarnish: boolean; hasFlatColor: boolean; hasImpression: boolean
   inkMlPerPlate: number; cuttingTimePerPoseSeconds: number
+  amalgameGroupIndex: number | null
+  countPerPlateInGroup: number | null
 }
 
 export type Quote = {
@@ -49,11 +51,16 @@ export type Quote = {
   study: { number: string } | null
   productType: { name: string } | null
   plate: { name: string; cost: number; width: number; height: number } | null
+  plvQuantity: number | null
   hasAmalgame: boolean
   amalgameRuns: {
     name: string
     hasImpression: boolean
     platesCount: number | null
+    cuttingTimePerPoseSeconds: number
+    inkMlPerPlate: number
+    isRectoVerso: boolean
+    rectoVersoType: string | null
     plate: { name: string; width: number; height: number } | null
     items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[]
   }[]
