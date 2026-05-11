@@ -206,7 +206,9 @@ model PackagingSupplierQuote {
   supplierName String
   category     String   // 'ETUI' | 'CAISSE' | 'PLAQUE_RAINEE'
   material     String   // 'B' | 'EB'
-  size         String   // 'PETIT' | 'MOYEN' | 'GRAND'
+  dimWidth     Float?   // largeur en mm
+  dimHeight    Float?   // hauteur en mm
+  dimDepth     Float?   // profondeur en mm
   unitPrice    Float
   quotedAt     DateTime @default(now())
   notes        String?

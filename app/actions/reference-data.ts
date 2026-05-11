@@ -206,7 +206,9 @@ export type PackagingSupplierQuoteForAdmin = {
   supplierName: string
   category: string
   material: string
-  size: string
+  dimWidth: number | null
+  dimHeight: number | null
+  dimDepth: number | null
   unitPrice: number
   quotedAt: string
   notes: string | null
@@ -214,27 +216,54 @@ export type PackagingSupplierQuoteForAdmin = {
 
 export async function getPackagingSupplierQuotes(): Promise<PackagingSupplierQuoteForAdmin[]> {
   const quotes = await prisma.packagingSupplierQuote.findMany({
-    orderBy: [{ category: 'asc' }, { material: 'asc' }, { size: 'asc' }, { quotedAt: 'desc' }],
+    orderBy: [{ category: 'asc' }, { material: 'asc' }, { quotedAt: 'desc' }],
   })
   return quotes.map((q) => ({ ...q, quotedAt: q.quotedAt.toISOString() }))
 }
 
-async function recalculatePackagingAverage(
-  category: string,
-  material: string,
-  size: string
-): Promise<void> {
+function sizeMetric(q: { dimWidth: number | null; dimHeight: number | null; dimDepth: number | null }): number {
+  const w = q.dimWidth ?? 0
+  const h = q.dimHeight ?? 0
+  const d = q.dimDepth ?? 0
+  // Use volume; if depth missing use surface area as fallback
+  return d > 0 ? w * h * d : w * h
+}
+
+// Assigns PETIT/MOYEN/GRAND by tertile within a sorted list of quotes.
+// Returns a map of size → average unitPrice (only for non-empty groups).
+function computeTertileAverages(
+  quotes: { unitPrice: number; dimWidth: number | null; dimHeight: number | null; dimDepth: number | null }[]
+): Record<string, number> {
+  if (quotes.length === 0) return {}
+  const sorted = [...quotes].sort((a, b) => sizeMetric(a) - sizeMetric(b))
+  const N = sorted.length
+  const groups: Record<string, number[]> = { PETIT: [], MOYEN: [], GRAND: [] }
+  const sizes = ['PETIT', 'MOYEN', 'GRAND']
+  sorted.forEach((q, i) => {
+    groups[sizes[Math.min(2, Math.floor((i * 3) / N))]]!.push(q.unitPrice)
+  })
+  const result: Record<string, number> = {}
+  for (const [size, prices] of Object.entries(groups)) {
+    if (prices.length > 0) {
+      result[size] = prices.reduce((s, p) => s + p, 0) / prices.length
+    }
+  }
+  return result
+}
+
+async function recalculatePackagingByMaterial(category: string, material: string): Promise<void> {
   const quotes = await prisma.packagingSupplierQuote.findMany({
-    where: { category, material, size },
-    select: { unitPrice: true },
+    where: { category, material },
+    select: { unitPrice: true, dimWidth: true, dimHeight: true, dimDepth: true },
   })
-  if (quotes.length === 0) return
-  const avg = quotes.reduce((sum, q) => sum + q.unitPrice, 0) / quotes.length
-  await prisma.packagingPricingRule.upsert({
-    where: { category_material_size: { category, material, size } },
-    update: { baseUnitPrice: avg },
-    create: { category, material, size, baseUnitPrice: avg },
-  })
+  const averages = computeTertileAverages(quotes)
+  for (const [size, avg] of Object.entries(averages)) {
+    await prisma.packagingPricingRule.upsert({
+      where: { category_material_size: { category, material, size } },
+      update: { baseUnitPrice: avg },
+      create: { category, material, size, baseUnitPrice: avg },
+    })
+  }
   revalidateCache('packaging-rules')
 }
 
@@ -242,7 +271,9 @@ export async function createPackagingSupplierQuote(data: {
   supplierName: string
   category: string
   material: string
-  size: string
+  dimWidth?: number
+  dimHeight?: number
+  dimDepth?: number
   unitPrice: number
   quotedAt?: string
   notes?: string
@@ -253,19 +284,24 @@ export async function createPackagingSupplierQuote(data: {
       supplierName: data.supplierName,
       category: data.category,
       material: data.material,
-      size: data.size,
+      dimWidth: data.dimWidth ?? null,
+      dimHeight: data.dimHeight ?? null,
+      dimDepth: data.dimDepth ?? null,
       unitPrice: data.unitPrice,
       quotedAt: data.quotedAt ? new Date(data.quotedAt) : new Date(),
       notes: data.notes ?? null,
     },
   })
-  await recalculatePackagingAverage(data.category, data.material, data.size)
+  await recalculatePackagingByMaterial(data.category, data.material)
 }
 
 export async function updatePackagingSupplierQuote(
   id: number,
   data: {
     supplierName?: string
+    dimWidth?: number | null
+    dimHeight?: number | null
+    dimDepth?: number | null
     unitPrice?: number
     quotedAt?: string
     notes?: string
@@ -277,17 +313,20 @@ export async function updatePackagingSupplierQuote(
     where: { id },
     data: {
       ...(data.supplierName !== undefined && { supplierName: data.supplierName }),
+      ...(data.dimWidth !== undefined && { dimWidth: data.dimWidth }),
+      ...(data.dimHeight !== undefined && { dimHeight: data.dimHeight }),
+      ...(data.dimDepth !== undefined && { dimDepth: data.dimDepth }),
       ...(data.unitPrice !== undefined && { unitPrice: data.unitPrice }),
       ...(data.quotedAt !== undefined && { quotedAt: new Date(data.quotedAt) }),
       ...(data.notes !== undefined && { notes: data.notes }),
     },
   })
-  await recalculatePackagingAverage(existing.category, existing.material, existing.size)
+  await recalculatePackagingByMaterial(existing.category, existing.material)
 }
 
 export async function deletePackagingSupplierQuote(id: number): Promise<void> {
   await requireAdmin()
   const existing = await prisma.packagingSupplierQuote.findUniqueOrThrow({ where: { id } })
   await prisma.packagingSupplierQuote.delete({ where: { id } })
-  await recalculatePackagingAverage(existing.category, existing.material, existing.size)
+  await recalculatePackagingByMaterial(existing.category, existing.material)
 }
