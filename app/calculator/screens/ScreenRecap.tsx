@@ -151,8 +151,13 @@ export function ScreenRecap() {
 
   useEffect(() => {
     if (pdfGeneratedRef.current) return
-    const allGroupsReady = amalgameGroups.every(g =>
-      amalgameGroupResults.some(r => r.groupId === g.id)
+    // On utilise les slots (déjà chargés) pour savoir quels groupes on attend,
+    // pas amalgameGroups qui est vide de façon vacuose au premier render.
+    const groupIdsNeeded = [
+      ...new Set(productSlotResults.map(r => r.slot.amalgameGroupId).filter(Boolean))
+    ] as string[]
+    const allGroupsReady = groupIdsNeeded.every(id =>
+      amalgameGroupResults.some(r => r.groupId === id)
     )
     const isReady = isMultiProduct
       ? productSlotResults.length > 0 && allGroupsReady
