@@ -469,10 +469,14 @@ const CATEGORIES: {
   },
   {
     label: 'Emballage',
-    description: 'Taux horaire et calage emballage',
+    description: 'Coûts internes, prix moyens fournisseurs et devis',
     color: 'amber',
     emoji: '🗂️',
-    keys: ['HOURLY_RATE_PACKAGING', 'PACKAGING_SETUP_COST'],
+    subcategories: [
+      { label: 'Coûts internes', keys: ['HOURLY_RATE_PACKAGING', 'PACKAGING_SETUP_COST'] },
+      { label: 'Prix moyens', keys: [] },
+      { label: 'Devis fournisseurs', keys: [] },
+    ],
   },
   {
     label: 'Bureau d\'études',
@@ -841,9 +845,11 @@ export function SettingsClient({
                   {activeConfig.description}
                 </CardDescription>
               </div>
-              <span className={`text-xs font-medium px-2 py-1 rounded-full ${activeColors.badge} ${activeColors.badgeText}`}>
-                {categorySettings.length} paramètre{categorySettings.length > 1 ? 's' : ''}
-              </span>
+              {categorySettings.length > 0 && (
+                <span className={`text-xs font-medium px-2 py-1 rounded-full ${activeColors.badge} ${activeColors.badgeText}`}>
+                  {categorySettings.length} paramètre{categorySettings.length > 1 ? 's' : ''}
+                </span>
+              )}
             </div>
           </CardHeader>
 
@@ -868,10 +874,9 @@ export function SettingsClient({
             </div>
           )}
 
-          <CardContent className="px-6 py-4 space-y-4">
-
-            {(
-              categorySettings.map((setting, index) => {
+          {categorySettings.length > 0 && (
+            <CardContent className="px-6 py-4 space-y-4">
+              {categorySettings.map((setting, index) => {
                 const formula = FORMULAS[setting.key]
                 const isExpanded = expandedFormulas[setting.key]
                 return (
@@ -889,17 +894,21 @@ export function SettingsClient({
                     />
                   </div>
                 )
-              })
-            )}
-          </CardContent>
+              })}
+            </CardContent>
+          )}
         </Card>
 
-        {activeConfig.label === 'Emballage' && packagingData && (
-          <div className="mt-4 space-y-6">
+        {activeConfig.label === 'Emballage' && packagingData && activeSub?.label === 'Prix moyens' && (
+          <div className="mt-4">
             <PackagingPricingClient
               initialRules={packagingData.rules}
               initialCoefficients={packagingData.coefficients}
             />
+          </div>
+        )}
+        {activeConfig.label === 'Emballage' && packagingData && activeSub?.label === 'Devis fournisseurs' && (
+          <div className="mt-4">
             <SupplierQuotesClient initialQuotes={packagingData.supplierQuotes} />
           </div>
         )}

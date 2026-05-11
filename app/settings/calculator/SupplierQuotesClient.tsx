@@ -85,7 +85,6 @@ type EditState = {
   dimDepth: string
   unitPrice: string
   quotedAt: string
-  notes: string
 }
 
 type AddState = EditState & { category: string; material: string }
@@ -113,7 +112,6 @@ export function SupplierQuotesClient({
       dimDepth:  q.dimDepth  != null ? String(q.dimDepth)  : '',
       unitPrice: String(q.unitPrice),
       quotedAt:  toDateInput(q.quotedAt),
-      notes:     q.notes ?? '',
     })
   }
 
@@ -135,14 +133,12 @@ export function SupplierQuotesClient({
         dimDepth:  parseNum(editState.dimDepth),
         unitPrice: parseFloat(editState.unitPrice),
         quotedAt:  editState.quotedAt,
-        notes:     editState.notes || undefined,
       }
       await updatePackagingSupplierQuote(id, patch)
       setQuotes((prev) => prev.map((q) => q.id !== id ? q : {
         ...q,
         ...patch,
         quotedAt: new Date(editState.quotedAt).toISOString(),
-        notes: editState.notes || null,
       }))
       setEditId(null); setEditState(null)
       toast.success('Devis mis à jour — moyennes recalculées')
@@ -172,7 +168,7 @@ export function SupplierQuotesClient({
     setAddState({
       category: cat, material: mat,
       supplierName: '', dimWidth: '', dimHeight: '', dimDepth: '',
-      unitPrice: '', quotedAt: new Date().toISOString().slice(0, 10), notes: '',
+      unitPrice: '', quotedAt: new Date().toISOString().slice(0, 10),
     })
   }
 
@@ -191,7 +187,6 @@ export function SupplierQuotesClient({
         dimDepth:     parseNum(addState.dimDepth)  ?? undefined,
         unitPrice:    parseFloat(addState.unitPrice),
         quotedAt:     addState.quotedAt,
-        notes:        addState.notes || undefined,
       })
       const fakeId = Date.now()
       setQuotes((prev) => [...prev, {
@@ -204,7 +199,7 @@ export function SupplierQuotesClient({
         dimDepth:  parseNum(addState.dimDepth),
         unitPrice: parseFloat(addState.unitPrice),
         quotedAt:  new Date(addState.quotedAt).toISOString(),
-        notes:     addState.notes || null,
+        notes:     null,
       }])
       setAddingGroup(null); setAddState(null)
       toast.success('Devis ajouté — moyennes recalculées')
@@ -275,8 +270,8 @@ export function SupplierQuotesClient({
 
                     {/* Add form */}
                     {isAdding && addState && (
-                      <div className="bg-blue-50/40 border-b border-blue-100 px-3 py-3 space-y-2">
-                        <div className="grid grid-cols-[1fr_repeat(3,72px)_96px_120px_1fr_auto] gap-2 items-end text-xs">
+                      <div className="bg-blue-50/40 border-b border-blue-100 px-3 py-3">
+                        <div className="grid grid-cols-[1fr_repeat(3,72px)_96px_120px_auto] gap-2 items-end text-xs">
                           <div className="space-y-1">
                             <label className="text-slate-500">Fournisseur</label>
                             <Input value={addState.supplierName} onChange={(e) => setAddState((s) => s && ({ ...s, supplierName: e.target.value }))} className="h-7 text-xs" placeholder="Nom fournisseur" />
@@ -295,10 +290,6 @@ export function SupplierQuotesClient({
                             <label className="text-slate-500">Date devis</label>
                             <Input type="date" value={addState.quotedAt} onChange={(e) => setAddState((s) => s && ({ ...s, quotedAt: e.target.value }))} className="h-7 text-xs" />
                           </div>
-                          <div className="space-y-1">
-                            <label className="text-slate-500">Notes</label>
-                            <Input value={addState.notes} onChange={(e) => setAddState((s) => s && ({ ...s, notes: e.target.value }))} className="h-7 text-xs" placeholder="Optionnel" />
-                          </div>
                           <div className="flex gap-1 items-end">
                             <Button size="icon" className="h-7 w-7 bg-blue-600 hover:bg-blue-700" onClick={saveAdd} disabled={busy || !addState.supplierName || !addState.unitPrice}>
                               <Check className="h-3.5 w-3.5" />
@@ -308,7 +299,6 @@ export function SupplierQuotesClient({
                             </Button>
                           </div>
                         </div>
-                        <p className="text-xs text-blue-600/70 italic">Les dimensions servent à classer automatiquement le devis en Petit / Moyen / Grand par rapport aux autres devis du même groupe.</p>
                       </div>
                     )}
 
@@ -322,7 +312,6 @@ export function SupplierQuotesClient({
                             <th className="text-center px-2 py-1.5 font-medium text-slate-500">Taille auto</th>
                             <th className="text-right px-3 py-1.5 font-medium text-slate-500">€/pce</th>
                             <th className="text-center px-3 py-1.5 font-medium text-slate-500">Date</th>
-                            <th className="text-left px-3 py-1.5 font-medium text-slate-500">Notes</th>
                             <th className="px-2 py-1.5"></th>
                           </tr>
                         </thead>
@@ -346,7 +335,6 @@ export function SupplierQuotesClient({
                                     <td className="px-2 py-1.5 text-center text-slate-400 text-xs italic">recalc.</td>
                                     <td className="px-3 py-1.5"><Input type="number" step="0.0001" min="0" value={editState.unitPrice} onChange={(e) => setEditState((s) => s && ({ ...s, unitPrice: e.target.value }))} className="h-7 text-xs text-right w-24 ml-auto" /></td>
                                     <td className="px-3 py-1.5"><Input type="date" value={editState.quotedAt} onChange={(e) => setEditState((s) => s && ({ ...s, quotedAt: e.target.value }))} className="h-7 text-xs" /></td>
-                                    <td className="px-3 py-1.5"><Input value={editState.notes} onChange={(e) => setEditState((s) => s && ({ ...s, notes: e.target.value }))} className="h-7 text-xs" /></td>
                                     <td className="px-2 py-1.5">
                                       <div className="flex gap-1 justify-end">
                                         <Button size="icon" className="h-6 w-6 bg-emerald-600 hover:bg-emerald-700" onClick={() => saveEdit(q.id)} disabled={busy}><Check className="h-3 w-3" /></Button>
@@ -367,7 +355,6 @@ export function SupplierQuotesClient({
                                     </td>
                                     <td className="px-3 py-2 text-right font-mono text-slate-800">{q.unitPrice.toFixed(4)}</td>
                                     <td className="px-3 py-2 text-center text-slate-500">{toDateInput(q.quotedAt)}</td>
-                                    <td className="px-3 py-2 text-slate-400 italic">{q.notes ?? '—'}</td>
                                     <td className="px-2 py-2">
                                       <div className="flex gap-1 justify-end">
                                         <Button size="icon" variant="ghost" className="h-6 w-6 text-slate-400 hover:text-blue-600" onClick={() => startEdit(q)} disabled={busy || editId !== null}><Pencil className="h-3 w-3" /></Button>
