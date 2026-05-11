@@ -291,6 +291,7 @@ export interface ProductSlot {
   cuttingTimePerPoseSeconds: number
   orientationOverride: 'normal' | 'rotated' | null
   bordABord: boolean
+  itemsPerPlateOverride: number | null
   amalgameGroupId: string | null
   countPerPlateInGroup: number
   machineTimeMinOverride: number | null
@@ -319,6 +320,7 @@ export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
   cuttingTimePerPoseSeconds: 0,
   orientationOverride: null,
   bordABord: false,
+  itemsPerPlateOverride: null,
   amalgameGroupId: null,
   countPerPlateInGroup: 0,
   machineTimeMinOverride: null,

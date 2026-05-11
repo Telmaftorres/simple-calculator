@@ -285,7 +285,8 @@ model Quote {
   hasVarnish                         Boolean           @default(false)
   hasFlatColor                       Boolean           @default(false)
   cuttingTimePerPoseSeconds          Int               @default(0)
-  machineTimeMinOverride             Float?            // Temps machine impression (override manuel, en minutes)
+  machineTimeMinOverride             Float?
+  itemsPerPlateOverride              Int?
   bordABord                          Boolean           @default(false)
   assemblyTimePerPieceSeconds        Int               @default(0)
   packTimePerPieceSeconds            Int               @default(0)
@@ -558,6 +559,7 @@ model QuoteProduct {
   amalgameGroupIndex        Int?
   countPerPlateInGroup      Int?
   machineTimeMinOverride    Float?
+  itemsPerPlateOverride     Int?
   bordABord                 Boolean @default(false)
   quote                     Quote   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   plate                     Plate?  @relation(fields: [plateId], references: [id])

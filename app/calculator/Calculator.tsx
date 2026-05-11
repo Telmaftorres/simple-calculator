@@ -33,12 +33,16 @@ function ImpositionDisplay({
   onOrientationChange,
   bordABord,
   onBordABordChange,
+  itemsPerPlateOverride,
+  onItemsPerPlateOverrideChange,
 }: {
   impositionResult: ImpositionResult
   orientationOverride: 'normal' | 'rotated' | null
   onOrientationChange: (v: 'normal' | 'rotated' | null) => void
   bordABord: boolean
   onBordABordChange: (v: boolean) => void
+  itemsPerPlateOverride: number | null
+  onItemsPerPlateOverrideChange: (v: number | null) => void
 }) {
   const [open, setOpen] = useState(false)
 
@@ -94,19 +98,35 @@ function ImpositionDisplay({
           <div className="text-xs text-slate-400 uppercase">Plaques Nécessaires</div>
         </div>
       </div>
-      <button
-        onClick={() => onBordABordChange(!bordABord)}
-        className={`w-full flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium border transition-all ${
-          bordABord
-            ? 'bg-blue-600 text-white border-blue-600'
-            : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
-        }`}
-      >
-        <span>Bord à bord</span>
-        <span className={`text-xs font-normal ${bordABord ? 'text-blue-200' : 'text-slate-400'}`}>
-          {bordABord ? 'Espacement = 0 mm' : `Espacement standard`}
-        </span>
-      </button>
+      <div className="flex gap-2">
+        <button
+          onClick={() => onBordABordChange(!bordABord)}
+          className={`flex-1 flex items-center justify-between px-3 py-2 rounded-md text-sm font-medium border transition-all ${
+            bordABord
+              ? 'bg-blue-600 text-white border-blue-600'
+              : 'bg-white text-slate-600 border-slate-200 hover:border-blue-300 hover:text-blue-600'
+          }`}
+        >
+          <span>Bord à bord</span>
+          <span className={`text-xs font-normal ${bordABord ? 'text-blue-200' : 'text-slate-400'}`}>
+            {bordABord ? '0 mm' : 'std'}
+          </span>
+        </button>
+        <div className="flex items-center gap-1.5 border border-slate-200 rounded-md px-2 bg-white">
+          <span className="text-xs text-slate-400 whitespace-nowrap">Poses/plaque</span>
+          <input
+            type="number"
+            min={1}
+            placeholder="auto"
+            value={itemsPerPlateOverride ?? ''}
+            onChange={(e) => {
+              const v = parseInt(e.target.value)
+              onItemsPerPlateOverrideChange(isNaN(v) || v <= 0 ? null : v)
+            }}
+            className="w-14 text-sm font-semibold text-blue-700 text-right bg-transparent outline-none"
+          />
+        </div>
+      </div>
     </div>
   )
 }
@@ -238,6 +258,8 @@ export default function Calculator({
                         onOrientationChange={calc.setOrientationOverride}
                         bordABord={calc.formState.bordABord}
                         onBordABordChange={calc.setBordABord}
+                        itemsPerPlateOverride={calc.formState.itemsPerPlateOverride}
+                        onItemsPerPlateOverrideChange={calc.setItemsPerPlateOverride}
                       />
                     </SectionDisplay>
                   )}

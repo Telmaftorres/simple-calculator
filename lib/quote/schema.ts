@@ -32,6 +32,7 @@ export const quoteFieldsSchema = z.object({
   cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
   machineTimeMinOverride: z.number().min(0).nullable().optional(),
+  itemsPerPlateOverride: z.number().int().positive().nullable().optional(),
   bordABord: z.boolean().optional(),
 
   assemblyTimePerPieceSeconds: z.number().int().optional(),
@@ -101,6 +102,7 @@ const quoteProductSchema = z.object({
   amalgameGroupIndex: z.number().int().min(0).nullable().optional(),
   countPerPlateInGroup: z.number().int().positive().nullable().optional(),
   machineTimeMinOverride: z.number().min(0).nullable().optional(),
+  itemsPerPlateOverride: z.number().int().positive().nullable().optional(),
   bordABord: z.boolean().optional(),
 })
 

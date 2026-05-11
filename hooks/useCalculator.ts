@@ -82,7 +82,7 @@ export function useCalculator(
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
-    machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord,
+    machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord, itemsPerPlateOverride,
   } = formState
 
   const {
@@ -174,9 +174,10 @@ export function useCalculator(
         { width: selectedPlate.width, height: selectedPlate.height },
         effectiveSpacing, orientationOverride ?? undefined, plateBorderMm
       )
-      const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(quantity / imp.itemsPerPlate) : 0
+      const effectiveCpp = (itemsPerPlateOverride && itemsPerPlateOverride > 0) ? itemsPerPlateOverride : imp.itemsPerPlate
+      const platesNeeded = effectiveCpp > 0 ? Math.ceil(quantity / effectiveCpp) : 0
       setImpositionResult({
-        itemsPerPlate: imp.itemsPerPlate,
+        itemsPerPlate: effectiveCpp,
         platesNeeded,
         materialCost: platesNeeded * selectedPlate.cost,
         orientation: imp.orientation,
@@ -185,7 +186,7 @@ export function useCalculator(
     } else {
       setImpositionResult(null)
     }
-  }, [flatWidth, flatHeight, quantity, selectedPlate, effectiveSpacing, isMultiProduct, orientationOverride])
+  }, [flatWidth, flatHeight, quantity, selectedPlate, effectiveSpacing, isMultiProduct, orientationOverride, itemsPerPlateOverride])
 
   // ── Memoized multi-product calculations ──
   const { amalgameGroupResults, productSlotResults } = useImpositionResults({
@@ -292,7 +293,7 @@ export function useCalculator(
     flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
-    cuttingTimePerPoseSeconds, machineTimeMinOverride, bordABord, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
+    cuttingTimePerPoseSeconds, machineTimeMinOverride, bordABord, itemsPerPlateOverride, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
     hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
@@ -493,6 +494,7 @@ export function useCalculator(
     impositionResult,
     orientationOverride, setOrientationOverride,
     bordABord, setBordABord: (v: boolean) => setField('bordABord', v),
+    itemsPerPlateOverride, setItemsPerPlateOverride: (v: number | null) => setField('itemsPerPlateOverride', v),
     inkMlPerPlate, setInkMlPerPlate: (v: number) => setField('inkMlPerPlate', v),
     inkMlVerso, setInkMlVerso: (v: number) => setField('inkMlVerso', v),
     varnishSurfacePercent, setVarnishSurfacePercent: (v: number) => setField('varnishSurfacePercent', v),

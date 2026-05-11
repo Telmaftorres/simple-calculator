@@ -202,6 +202,8 @@ export function MultiProductSlotEditor() {
                   onOrientationChange={(v) => updateProduct(activeProductIndex, 'orientationOverride', v)}
                   bordABord={activeSlot.bordABord}
                   onBordABordChange={(v) => updateProduct(activeProductIndex, 'bordABord', v)}
+                  itemsPerPlateOverride={activeSlot.itemsPerPlateOverride}
+                  onItemsPerPlateOverrideChange={(v) => updateProduct(activeProductIndex, 'itemsPerPlateOverride', v)}
                 />
               )}
 

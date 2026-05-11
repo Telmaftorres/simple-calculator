@@ -191,9 +191,11 @@ export function useImpositionResults({
             slot.orientationOverride ?? undefined,
             plateBorderMm
           )
-          const platesNeeded = imp.itemsPerPlate > 0 ? Math.ceil(slot.quantity / imp.itemsPerPlate) : 0
+          const effectiveCpp = (slot.itemsPerPlateOverride && slot.itemsPerPlateOverride > 0)
+            ? slot.itemsPerPlateOverride : imp.itemsPerPlate
+          const platesNeeded = effectiveCpp > 0 ? Math.ceil(slot.quantity / effectiveCpp) : 0
           slotImposition = {
-            itemsPerPlate: imp.itemsPerPlate,
+            itemsPerPlate: effectiveCpp,
             platesNeeded,
             materialCost: platesNeeded * slotPlate.cost,
             orientation: imp.orientation,

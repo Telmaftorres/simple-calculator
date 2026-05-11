@@ -37,6 +37,7 @@ export interface SaveContext {
   hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number
   machineTimeMinOverride: number | null
+  itemsPerPlateOverride: number | null
   bordABord: boolean
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
@@ -180,6 +181,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasFlatColor: isMultiProduct ? false : ctx.hasFlatColor,
         cuttingTimePerPoseSeconds: isMultiProduct ? 0 : ctx.cuttingTimePerPoseSeconds,
         machineTimeMinOverride: isMultiProduct ? null : (ctx.machineTimeMinOverride ?? null),
+        itemsPerPlateOverride: isMultiProduct ? null : (ctx.itemsPerPlateOverride ?? null),
         bordABord: ctx.bordABord,
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
@@ -270,6 +272,7 @@ export function useSaveHandlers(ctx: SaveContext) {
           amalgameGroupIndex: p.amalgameGroupId ? amalgameGroups.findIndex((g) => g.id === p.amalgameGroupId) : null,
           countPerPlateInGroup: (p.countPerPlateInGroup > 0 ? p.countPerPlateInGroup : null),
           machineTimeMinOverride: p.machineTimeMinOverride ?? null,
+          itemsPerPlateOverride: p.itemsPerPlateOverride ?? null,
           bordABord: p.bordABord,
         })) : [],
         hasAmalgame: isMultiProduct && amalgameGroups.length > 0,

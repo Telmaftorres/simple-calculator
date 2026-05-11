@@ -39,6 +39,7 @@ export const QUOTE_DEFAULTS = {
   showMargeSopano: false as boolean,
   // ── Imposition ──
   bordABord: false as boolean,
+  itemsPerPlateOverride: null as number | null,
   // ── Temps machine impression (override manuel) ──
   machineTimeMinOverride: null as number | null,
   // ── Prix négocié matière ──
