@@ -19,6 +19,7 @@ import { SectionEmballage } from './sections/SectionEmballage'
 import { SectionBureauEtudes } from './sections/SectionBureauEtudes'
 import { SectionTransport } from './sections/SectionTransport'
 import { RecapSidebar } from './sections/RecapSidebar'
+import { VoirDevisButton } from './sections/VoirDevisButton'
 import { SectionDisplay } from './shared'
 import { SectionMultiProduct } from './sections/SectionMultiProduct'
 import { SectionProductionExtra } from './sections/SectionProductionExtra'
@@ -188,6 +189,9 @@ export default function Calculator({
               )}
             </div>
             <div className="flex gap-2">
+              {(mode === 'production' || mode === 'actuals') && (
+                <VoirDevisButton />
+              )}
               {mode !== 'quote' && targetQuoteId && (
                 <Link href={`/dashboard/my-quotes/${targetQuoteId}`}>
                   <Button variant="outline" className="text-slate-900 border-white hover:bg-slate-200">
@@ -212,8 +216,8 @@ export default function Calculator({
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-            <div className="lg:col-span-2 space-y-8">
+          <div className={`grid grid-cols-1 gap-8 ${mode === 'quote' ? 'lg:grid-cols-3' : ''}`}>
+            <div className={`space-y-8 ${mode === 'quote' ? 'lg:col-span-2' : ''}`}>
               <ErrorBoundary>
               {/* ── Marges internes ── */}
               <div className="flex items-center gap-3 bg-slate-800 text-white px-6 py-3 rounded-lg">
@@ -305,7 +309,7 @@ export default function Calculator({
               </ErrorBoundary>
             </div>
 
-            <RecapSidebar />
+            {mode === 'quote' && <RecapSidebar />}
           </div>
         </div>
       )}
