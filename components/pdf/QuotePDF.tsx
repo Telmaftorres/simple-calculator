@@ -442,8 +442,8 @@ export function QuotePDF({
                     <Text style={styles.value}>{r.slot.quantity} pcs — {r.costResult.subtotal.toFixed(2)} €</Text>
                   </View>
                 ))}
-                {amalgameGroups.map((group, gi) => {
-                  const groupResult = amalgameGroupResults[gi]
+                {amalgameGroups.map((group) => {
+                  const groupResult = amalgameGroupResults.find(r => r.groupId === group.id)
                   if (!groupResult) return null
                   const slotsInGroup = productSlotResults.filter(r => r.slot.amalgameGroupId === group.id)
                   if (slotsInGroup.length === 0) return null
@@ -610,8 +610,8 @@ export function QuotePDF({
             }
 
             {/* Mode multi : groupes amalgame */}
-            {isMultiProduct && amalgameGroups.map((group, gi) => {
-              const groupResult = amalgameGroupResults[gi]
+            {isMultiProduct && amalgameGroups.map((group) => {
+              const groupResult = amalgameGroupResults.find(r => r.groupId === group.id)
               if (!groupResult) return null
               const slotsInGroup = productSlotResults.filter(r => r.slot.amalgameGroupId === group.id)
               if (slotsInGroup.length === 0) return null
