@@ -23,6 +23,7 @@ const elementSchema = z.object({
   productTypeId: z.number().int().positive(),
   name: z.string().min(1, 'Le nom est requis'),
   quantity: z.number().int().positive('La quantité doit être positive'),
+  isOption: z.boolean().optional().default(false),
 })
 
 // ── PLATES ──
@@ -279,7 +280,7 @@ export async function createElement(data: z.infer<typeof elementSchema>) {
 export async function updateElement(
   id: number,
   productTypeId: number,
-  data: { name: string; quantity: number }
+  data: { name: string; quantity: number; isOption?: boolean }
 ) {
   await requireAuth()
   const validId = z.number().int().positive().parse(id)

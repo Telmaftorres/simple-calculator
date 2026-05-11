@@ -194,6 +194,7 @@ model Element {
   name             String
   productTypeId    Int
   quantity         Int                      @default(1)
+  isOption         Boolean                  @default(false)
   productType      ProductType              @relation(fields: [productTypeId], references: [id], onDelete: Cascade)
   templateElements ProductTemplateElement[]
 }

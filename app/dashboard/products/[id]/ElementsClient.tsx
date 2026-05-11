@@ -33,6 +33,7 @@ type Element = {
   id: number
   name: string
   quantity: number
+  isOption: boolean
 }
 
 type Template = {
@@ -63,17 +64,17 @@ export default function ElementsClient({ product }: { product: ProductType }) {
   // ── Elements state ──
   const [isElementDialogOpen, setIsElementDialogOpen] = useState(false)
   const [editingElement, setEditingElement] = useState<Element | null>(null)
-  const [formData, setFormData] = useState({ name: '', quantity: '1' })
+  const [formData, setFormData] = useState({ name: '', quantity: '1', isOption: false })
 
   const resetForm = () => {
-    setFormData({ name: '', quantity: '1' })
+    setFormData({ name: '', quantity: '1', isOption: false })
     setEditingElement(null)
   }
 
   const handleOpenElementDialog = (element?: Element) => {
     if (element) {
       setEditingElement(element)
-      setFormData({ name: element.name, quantity: element.quantity.toString() })
+      setFormData({ name: element.name, quantity: element.quantity.toString(), isOption: element.isOption })
     } else {
       resetForm()
     }
@@ -82,7 +83,7 @@ export default function ElementsClient({ product }: { product: ProductType }) {
 
   const handleSubmitElement = async (e: React.FormEvent) => {
     e.preventDefault()
-    const payload = { name: formData.name, quantity: parseInt(formData.quantity) || 1 }
+    const payload = { name: formData.name, quantity: parseInt(formData.quantity) || 1, isOption: formData.isOption }
     try {
       if (editingElement) {
         await updateElement(editingElement.id, product.id, payload)
@@ -111,6 +112,46 @@ export default function ElementsClient({ product }: { product: ProductType }) {
       toast.error('Erreur lors de la suppression')
     }
   }
+
+  const composants = product.elements.filter((e) => !e.isOption)
+  const options = product.elements.filter((e) => e.isOption)
+
+  const ElementTable = ({ elements }: { elements: Element[] }) => (
+    <div className="bg-white rounded-md border">
+      <Table>
+        <TableHeader>
+          <TableRow>
+            <TableHead>Nom de l&apos;élément</TableHead>
+            <TableHead className="text-right">Quantité par défaut</TableHead>
+            <TableHead className="text-right">Actions</TableHead>
+          </TableRow>
+        </TableHeader>
+        <TableBody>
+          {elements.map((el) => (
+            <TableRow key={el.id}>
+              <TableCell className="font-medium">{el.name}</TableCell>
+              <TableCell className="text-right">{el.quantity}</TableCell>
+              <TableCell className="text-right space-x-2">
+                <Button variant="ghost" size="icon" onClick={() => handleOpenElementDialog(el)}>
+                  <Pencil className="h-4 w-4 text-blue-500" />
+                </Button>
+                <Button variant="ghost" size="icon" onClick={() => handleDeleteElement(el.id)}>
+                  <Trash2 className="h-4 w-4 text-red-500" />
+                </Button>
+              </TableCell>
+            </TableRow>
+          ))}
+          {elements.length === 0 && (
+            <TableRow>
+              <TableCell colSpan={3} className="text-center py-6 text-slate-400 italic text-sm">
+                Aucun élément dans cette catégorie.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
+    </div>
+  )
 
   return (
     <div className="space-y-6">
@@ -243,48 +284,32 @@ export default function ElementsClient({ product }: { product: ProductType }) {
 
       {/* ── Tab: Éléments composants ── */}
       {activeTab === 'elements' && (
-        <div className="space-y-4">
+        <div className="space-y-6">
           <div className="flex justify-end">
             <Button onClick={() => handleOpenElementDialog()}>
               <Plus className="mr-2 h-4 w-4" /> Ajouter un élément
             </Button>
           </div>
 
-          <div className="bg-white rounded-md border">
-            <Table>
-              <TableHeader>
-                <TableRow>
-                  <TableHead>Nom de l&apos;élément</TableHead>
-                  <TableHead className="text-right">Quantité par défaut</TableHead>
-                  <TableHead className="text-right">Actions</TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {product.elements.map((el) => (
-                  <TableRow key={el.id}>
-                    <TableCell className="font-medium">{el.name}</TableCell>
-                    <TableCell className="text-right">{el.quantity}</TableCell>
-                    <TableCell className="text-right space-x-2">
-                      <Button variant="ghost" size="icon" onClick={() => handleOpenElementDialog(el)}>
-                        <Pencil className="h-4 w-4 text-blue-500" />
-                      </Button>
-                      <Button variant="ghost" size="icon" onClick={() => handleDeleteElement(el.id)}>
-                        <Trash2 className="h-4 w-4 text-red-500" />
-                      </Button>
-                    </TableCell>
-                  </TableRow>
-                ))}
-                {product.elements.length === 0 && (
-                  <TableRow>
-                    <TableCell colSpan={3} className="text-center py-8 text-slate-500">
-                      Aucun élément défini pour ce type.
-                    </TableCell>
-                  </TableRow>
-                )}
-              </TableBody>
-            </Table>
+          {/* Sous-section : Composants */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-slate-700 uppercase tracking-wide">Composants</h3>
+              <span className="bg-slate-100 text-slate-500 text-xs rounded-full px-2 py-0.5">{composants.length}</span>
+            </div>
+            <ElementTable elements={composants} />
           </div>
 
+          {/* Sous-section : Options */}
+          <div className="space-y-2">
+            <div className="flex items-center gap-2">
+              <h3 className="text-sm font-semibold text-amber-700 uppercase tracking-wide">Options</h3>
+              <span className="bg-amber-50 text-amber-600 text-xs rounded-full px-2 py-0.5">{options.length}</span>
+            </div>
+            <ElementTable elements={options} />
+          </div>
+
+          {/* Dialog ajout / édition */}
           <Dialog open={isElementDialogOpen} onOpenChange={setIsElementDialogOpen}>
             <DialogContent>
               <DialogHeader>
@@ -313,6 +338,29 @@ export default function ElementsClient({ product }: { product: ProductType }) {
                     min="1"
                     required
                   />
+                </div>
+                <div className="space-y-1.5">
+                  <Label>Catégorie</Label>
+                  <div className="flex gap-2 bg-slate-100 p-1 rounded-lg">
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, isOption: false })}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
+                        !formData.isOption ? 'bg-white text-slate-800 shadow-sm' : 'text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      Composant
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => setFormData({ ...formData, isOption: true })}
+                      className={`flex-1 py-2 text-sm font-semibold rounded-md transition-all ${
+                        formData.isOption ? 'bg-white text-amber-700 shadow-sm' : 'text-slate-500 hover:bg-slate-50'
+                      }`}
+                    >
+                      Option
+                    </button>
+                  </div>
                 </div>
                 <DialogFooter>
                   <Button type="submit">Enregistrer</Button>
