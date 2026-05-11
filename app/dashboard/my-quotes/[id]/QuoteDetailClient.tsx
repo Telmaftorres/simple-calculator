@@ -1,19 +1,18 @@
 'use client'
 
 import { useState } from 'react'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { ClipboardCheck, FileText, TrendingUp, ExternalLink } from 'lucide-react'
+import { ClipboardCheck, TrendingUp, ExternalLink } from 'lucide-react'
 import Link from 'next/link'
 import { ProductionSheetTab } from './ProductionSheetTab'
 import { ActualsTab } from './ActualsTab'
-import { InfoCell, STATUS_OPTIONS, type Quote } from './quote-detail-shared'
+import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
 
 export function QuoteDetailClient({ quote }: { quote: Quote }) {
-  const [activeTab, setActiveTab] = useState<'devis' | 'production' | 'actuals'>('devis')
+  const [activeTab, setActiveTab] = useState<'production' | 'actuals'>('production')
 
   const TABS = [
-    { id: 'devis',      label: 'Résumé devis',       icon: FileText },
     { id: 'production', label: 'Fiche de production', icon: ClipboardCheck },
     { id: 'actuals',    label: 'Données réelles',     icon: TrendingUp },
   ] as const
@@ -44,27 +43,6 @@ export function QuoteDetailClient({ quote }: { quote: Quote }) {
           )
         })}
       </div>
-
-      {/* Résumé devis */}
-      {activeTab === 'devis' && (
-        <Card>
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base">Résumé du devis</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-sm">
-              <InfoCell label="Produit" value={quote.productType?.name} />
-              <InfoCell label="Client" value={quote.client} />
-              <InfoCell label="Format" value={quote.flatWidth && quote.flatHeight ? `${quote.flatWidth}×${quote.flatHeight} mm` : null} />
-              <InfoCell label="Quantité" value={`${quote.quantity} pcs`} />
-              <InfoCell label="Total devis HT" value={quote.totalCost != null ? <span className="font-bold text-slate-900">{quote.totalCost.toFixed(2)} €</span> : null} />
-              <InfoCell label="Matière" value={quote.plate?.name} />
-              <InfoCell label="Date" value={new Date(quote.createdAt).toLocaleDateString('fr-FR')} />
-              <InfoCell label="Transport estimé" value={quote.transportTotal != null && quote.transportTotal > 0 ? `${quote.transportTotal.toFixed(2)} €` : null} />
-            </div>
-          </CardContent>
-        </Card>
-      )}
 
       {/* Fiche de production */}
       {activeTab === 'production' && (
