@@ -71,29 +71,14 @@ export function RecapSidebar() {
           {/* ── Mode multi-produits ── */}
           {isMultiProduct ? (
             <>
-              {/* Produits individuels */}
+              {/* Produits hors groupes impression+découpe */}
               {productSlotResults.map((result, i) => {
                 const slot = result.slot
                 const group = slot.amalgameGroupId
                   ? amalgameGroups.find(g => g.id === slot.amalgameGroupId)
                   : undefined
-                const isInImpressionGroup = group?.amalgameType === 'impression_decoupe'
+                if (group?.amalgameType === 'impression_decoupe') return null
                 const isInDecoupeGroup = group?.amalgameType === 'decoupe'
-
-                // Produit entièrement géré par un groupe impression+découpe
-                if (isInImpressionGroup) {
-                  return (
-                    <div key={slot.id} className="space-y-1">
-                      <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide">
-                        {slot.productSearch || `Produit ${i + 1}`}
-                      </div>
-                      <div className="flex items-center gap-1.5 text-xs text-violet-600 bg-violet-50 border border-violet-100 px-2 py-1.5 rounded-md">
-                        <Layers className="h-3 w-3 flex-shrink-0" />
-                        <span>Matière, impression et découpe gérées par <strong>{group!.name}</strong></span>
-                      </div>
-                    </div>
-                  )
-                }
 
                 return (
                   <div key={slot.id} className="space-y-1">
@@ -135,7 +120,6 @@ export function RecapSidebar() {
                           : undefined}
                       />
                     )}
-                    {/* Sous-total uniquement si le produit a des coûts individuels */}
                     {result.costResult.subtotal > 0 && (
                       <div className="flex justify-between text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-1.5 rounded-md">
                         <span>Sous-total</span>
@@ -146,78 +130,80 @@ export function RecapSidebar() {
                 )
               })}
 
-              {/* Amalgames */}
-              {amalgameGroups.length > 0 && (
-                <div className="border-t border-dashed border-slate-200 pt-3 space-y-3">
-                  <div className="text-xs font-semibold text-slate-500 uppercase tracking-wide flex items-center gap-1.5">
-                    <Layers className="h-3 w-3" /> Amalgames
-                  </div>
+              {/* Groupes amalgame — affichés directement avec les produits membres en sous-titre */}
+              {amalgameGroups.map(group => {
+                const result = amalgameGroupResults.find(r => r.groupId === group.id)
+                if (!result || result.totalCost === 0) return null
 
-                  {amalgameGroups.map(group => {
-                    const result = amalgameGroupResults.find(r => r.groupId === group.id)
-                    if (!result || result.totalCost === 0) return null
+                const cuttingTotal = result.cuttingMachineCost + result.cuttingSetupCost
+                const memberNames = productSlotResults
+                  .filter(r => amalgameGroups.find(g => g.id === r.slot.amalgameGroupId)?.id === group.id)
+                  .map((r, i) => r.slot.productSearch || `Produit ${i + 1}`)
 
-                    const cuttingTotal = result.cuttingMachineCost + result.cuttingSetupCost
+                return (
+                  <div key={group.id} className="space-y-1 border-t border-dashed border-slate-200 pt-3">
+                    <div className="flex items-center gap-1.5 text-xs font-semibold text-slate-600">
+                      <span className={`w-2 h-2 rounded-full inline-block shrink-0 ${
+                        group.amalgameType === 'impression_decoupe' ? 'bg-violet-500' : 'bg-orange-500'
+                      }`} />
+                      {group.name}
+                      <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
+                        group.amalgameType === 'impression_decoupe'
+                          ? 'bg-violet-100 text-violet-700'
+                          : 'bg-orange-100 text-orange-700'
+                      }`}>
+                        {group.amalgameType === 'impression_decoupe' ? 'Impression + Découpe' : 'Découpe uniquement'}
+                      </span>
+                    </div>
 
-                    return (
-                      <div key={group.id} className="space-y-1">
-                        <div className="text-xs font-semibold text-slate-600 flex items-center gap-1.5">
-                          <span className={`w-2 h-2 rounded-full inline-block ${
-                            group.amalgameType === 'impression_decoupe' ? 'bg-violet-500' : 'bg-orange-500'
-                          }`} />
-                          {group.name}
-                          <span className={`text-xs px-1.5 py-0.5 rounded font-medium ${
-                            group.amalgameType === 'impression_decoupe'
-                              ? 'bg-violet-100 text-violet-700'
-                              : 'bg-orange-100 text-orange-700'
-                          }`}>
-                            {group.amalgameType === 'impression_decoupe' ? 'Impression + Découpe' : 'Découpe uniquement'}
-                          </span>
-                        </div>
-
-                        {group.amalgameType === 'impression_decoupe' && (
-                          <>
-                            <CostRow
-                              label="Matière"
-                              value={result.materialCostMarged}
-                              details={result.platesCount > 0 ? `${result.platesCount} plaque(s)` : undefined}
-                            />
-                            {result.printingCostData.inkCost > 0 && (
-                              <CostRow
-                                label="Encre"
-                                value={result.printingCostData.inkCost}
-                                details={result.inkVolumeL > 0 ? `${result.inkVolumeL.toFixed(3)} L` : undefined}
-                              />
-                            )}
-                            <CostRow
-                              label="Temps machine"
-                              value={result.printingCostData.machineCost}
-                              details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
-                            />
-                            {result.printingCostData.setupCost > 0 && (
-                              <CostRow
-                                label="Calage impression"
-                                value={result.printingCostData.setupCost}
-                              />
-                            )}
-                          </>
-                        )}
-
-                        <CostRow
-                          label="Découpe"
-                          value={cuttingTotal}
-                          details={result.cuttingMachineTimeMin > 0 ? formatMinutes(result.cuttingMachineTimeMin) : undefined}
-                        />
-
-                        <div className="flex justify-between text-sm font-semibold text-violet-700 bg-violet-50 px-2 py-1.5 rounded-md">
-                          <span>Sous-total {group.name}</span>
-                          <span>{result.totalCost.toFixed(2)} €</span>
-                        </div>
+                    {memberNames.length > 0 && (
+                      <div className="text-xs text-slate-400 pl-3.5 pb-0.5">
+                        {memberNames.join(' · ')}
                       </div>
-                    )
-                  })}
-                </div>
-              )}
+                    )}
+
+                    {group.amalgameType === 'impression_decoupe' && (
+                      <>
+                        <CostRow
+                          label="Matière"
+                          value={result.materialCostMarged}
+                          details={result.platesCount > 0 ? `${result.platesCount} plaque(s)` : undefined}
+                        />
+                        {result.printingCostData.inkCost > 0 && (
+                          <CostRow
+                            label="Encre"
+                            value={result.printingCostData.inkCost}
+                            details={result.inkVolumeL > 0 ? `${result.inkVolumeL.toFixed(3)} L` : undefined}
+                          />
+                        )}
+                        <CostRow
+                          label="Temps machine"
+                          value={result.printingCostData.machineCost}
+                          details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
+                        />
+                        {result.printingCostData.setupCost > 0 && (
+                          <CostRow label="Calage impression" value={result.printingCostData.setupCost} />
+                        )}
+                      </>
+                    )}
+
+                    <CostRow
+                      label="Découpe"
+                      value={cuttingTotal}
+                      details={result.cuttingMachineTimeMin > 0 ? formatMinutes(result.cuttingMachineTimeMin) : undefined}
+                    />
+
+                    <div className={`flex justify-between text-sm font-semibold px-2 py-1.5 rounded-md ${
+                      group.amalgameType === 'impression_decoupe'
+                        ? 'text-violet-700 bg-violet-50'
+                        : 'text-orange-700 bg-orange-50'
+                    }`}>
+                      <span>Sous-total</span>
+                      <span>{result.totalCost.toFixed(2)} €</span>
+                    </div>
+                  </div>
+                )
+              })}
 
               {/* Séparateur sections communes */}
               {productSlotResults.length > 0 && (
