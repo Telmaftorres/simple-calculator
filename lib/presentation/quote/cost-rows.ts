@@ -102,11 +102,8 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
       {
         label: 'Découpe',
         detail: isClient ? '—' : `${Math.round(p.cuttingMachineTimeMin)} min`,
-        value: isClient ? p.cuttingMachineCost + p.cuttingSetupCost : p.cuttingMachineCost,
+        value: p.cuttingMachineCost + p.cuttingSetupCost,
       },
-      ...(!isClient && p.cuttingSetupType !== 'none' && p.cuttingSetupCost > 0 ? [
-        { label: `↳ Calage découpe (${p.cuttingSetupType})`, detail: 'forfait', value: p.cuttingSetupCost, sub: true },
-      ] : []),
     ] : []),
     ...(p.hasBE && p.beTotalCost && p.beTotalCost > 0 ? [
       { label: 'Bureau d\'études', detail: isClient ? '—' : `${p.beTimeMinutes ?? 0} min`, value: p.beCost ?? 0 },
