@@ -170,7 +170,9 @@ export function useImpositionResults({
             { width: groupPlate.width, height: groupPlate.height },
             slot.bordABord ? 0 : poseSpacingMm, undefined, plateBorderMm
           )
-          const cpp = imp.itemsPerPlate > 0 ? imp.itemsPerPlate : 1
+          const autoCpp = imp.itemsPerPlate > 0 ? imp.itemsPerPlate : 1
+          const cpp = (slot.itemsPerPlateOverride && slot.itemsPerPlateOverride > 0)
+            ? slot.itemsPerPlateOverride : autoCpp
           // Use the group's optimized plate count, not the individual slot's naive count
           const groupPlatesCount = groupPlatesMap.get(group!.id) ?? Math.ceil(slot.quantity / cpp)
           slotImposition = {
