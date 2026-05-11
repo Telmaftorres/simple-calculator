@@ -7,6 +7,8 @@ import { Input } from '@/components/ui/input'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import { toast } from 'sonner'
 import { Save, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
+import { PackagingPricingClient } from './PackagingPricingClient'
+import type { PackagingRuleForAdmin, QuantityCoefficientForAdmin } from '@/app/actions/reference-data'
 
 interface Setting {
   id: number
@@ -719,7 +721,13 @@ function SettingRowContent({
   )
 }
 
-export function SettingsClient({ settings }: { settings: Setting[] }) {
+export function SettingsClient({
+  settings,
+  packagingData,
+}: {
+  settings: Setting[]
+  packagingData?: { rules: PackagingRuleForAdmin[]; coefficients: QuantityCoefficientForAdmin[] }
+}) {
   const [activeCategory, setActiveCategory] = useState(CATEGORIES[0].label)
   const [activeSubcategory, setActiveSubcategory] = useState<string | null>(null)
   const [values, setValues] = useState<Record<string, string>>(
@@ -884,6 +892,15 @@ export function SettingsClient({ settings }: { settings: Setting[] }) {
             )}
           </CardContent>
         </Card>
+
+        {activeConfig.label === 'Emballage' && packagingData && (
+          <div className="mt-4">
+            <PackagingPricingClient
+              initialRules={packagingData.rules}
+              initialCoefficients={packagingData.coefficients}
+            />
+          </div>
+        )}
       </div>
     </div>
   )

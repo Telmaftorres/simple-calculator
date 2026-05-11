@@ -86,6 +86,61 @@ export function PackagingPricingClient({
 
   return (
     <div className="space-y-6">
+
+      {/* Bloc méthodologie */}
+      <Card className="border-amber-300 bg-amber-50/40">
+        <CardHeader className="pb-3">
+          <CardTitle className="text-base flex items-center gap-2 text-amber-800">
+            <span className="text-lg">🧮</span>
+            Méthodologie — Comment les prix moyens B/EB sont calculés
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4 text-sm text-slate-700">
+
+          <div className="space-y-1.5">
+            <p className="font-semibold text-slate-800">1. Collecte des tarifs fournisseurs</p>
+            <p className="text-slate-600">
+              Pour chaque combinaison <strong>(type d&apos;emballage × matière × taille)</strong>, plusieurs devis fournisseurs
+              sont collectés. Les prix sont exprimés en <strong>€/pièce</strong> hors taxe.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="font-semibold text-slate-800">2. Calcul de la moyenne</p>
+            <div className="bg-white border border-amber-200 rounded-lg px-4 py-3 font-mono text-xs text-amber-900">
+              prix_unitaire_moyen = (prix_fournisseur_1 + prix_fournisseur_2 + … + prix_fournisseur_N) / N
+            </div>
+            <p className="text-slate-500 text-xs">
+              C&apos;est cette moyenne qui est saisie comme « Prix de base » dans le tableau ci-dessous,
+              pour chaque combinaison type / matière / taille.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="font-semibold text-slate-800">3. Application du coefficient quantité</p>
+            <div className="bg-white border border-amber-200 rounded-lg px-4 py-3 font-mono text-xs text-amber-900">
+              prix_unitaire_final = prix_unitaire_moyen × coefficient_quantité
+            </div>
+            <p className="text-slate-500 text-xs">
+              Le coefficient varie selon la quantité commandée (petite / moyenne / grande série).
+              Un volume plus élevé donne un meilleur coefficient → prix unitaire plus bas.
+            </p>
+          </div>
+
+          <div className="space-y-1.5">
+            <p className="font-semibold text-slate-800">4. Coût total emballage externe</p>
+            <div className="bg-white border border-amber-200 rounded-lg px-4 py-3 font-mono text-xs text-amber-900">
+              coût_total = prix_unitaire_final × quantité_d&apos;emballages
+            </div>
+          </div>
+
+          <div className="rounded-lg bg-amber-100 border border-amber-200 px-4 py-3 text-xs text-amber-800">
+            <strong>Exemple :</strong> Étui B Moyen — prix moyen 2,04 €/pce × coefficient grande série 0,97
+            = <strong>1,98 €/pce</strong>. Pour 500 pièces → <strong>990 € HT</strong>.
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Pricing rules */}
       <Card className="border-amber-200">
         <CardHeader className="bg-amber-50 border-b border-amber-100 rounded-t-lg">
