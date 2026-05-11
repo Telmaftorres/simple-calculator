@@ -316,7 +316,7 @@ export function QuotePDF({
 
   const displayTotal = isMultiProduct ? totalCostMulti : totalCost
   const displayQuantity = isMultiProduct
-    ? productSlotResults.reduce((sum, r) => sum + r.slot.quantity, 0)
+    ? (formValues.plvQuantity ?? productSlotResults.reduce((sum, r) => sum + r.slot.quantity, 0))
     : quantity
 
   const commonCostRows = buildCostRows({
