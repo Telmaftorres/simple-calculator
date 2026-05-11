@@ -151,8 +151,11 @@ export function ScreenRecap() {
 
   useEffect(() => {
     if (pdfGeneratedRef.current) return
+    const allGroupsReady = amalgameGroups.every(g =>
+      amalgameGroupResults.some(r => r.groupId === g.id)
+    )
     const isReady = isMultiProduct
-      ? productSlotResults.length > 0 && (amalgameGroups.length === 0 || amalgameGroupResults.length > 0)
+      ? productSlotResults.length > 0 && allGroupsReady
       : impositionResult !== null
     if (!isReady) return
     pdfGeneratedRef.current = true
