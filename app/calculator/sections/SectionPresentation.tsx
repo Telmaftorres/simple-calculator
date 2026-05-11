@@ -107,6 +107,16 @@ export function SectionPresentation() {
           />
         </div>
 
+        {/* ── Nom du type PLV — affiché en lecture seule en mode multi ── */}
+        {isMultiProduct && productSearch && (
+          <div className="space-y-2">
+            <Label>Type de PLV</Label>
+            <div className="flex h-10 items-center px-3 rounded-md border border-slate-200 bg-slate-50 text-sm font-medium text-slate-700">
+              {productSearch}
+            </div>
+          </div>
+        )}
+
         {/* ── Nombre de PLV — visible uniquement en mode multi ── */}
         {isMultiProduct && (
           <div className="space-y-2">
