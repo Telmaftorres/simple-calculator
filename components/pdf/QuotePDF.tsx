@@ -573,7 +573,7 @@ export function QuotePDF({
                     <Text style={{ ...styles.tableCell, color: '#64748b', textAlign: 'center' }}>
                       {result.impositionResult ? `${result.impositionResult.platesNeeded} plaque(s)` : '—'}
                     </Text>
-                    <Text style={styles.tableCellRight}>{result.costResult.materialCost.toFixed(2)} €</Text>
+                    <Text style={styles.tableCellRight}>{result.costResult.materialCostMarged.toFixed(2)} €</Text>
                   </View>
                   {result.slot.hasImpression && (
                     <>
