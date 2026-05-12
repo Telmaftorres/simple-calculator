@@ -123,7 +123,7 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
                 <View key={ri}>
                   <View style={s.nomGroupBar}>
                     <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.violet }}>{run.name}</Text>
-                    <Text style={s.nomGroupBadge}>{run.hasImpression ? 'IMP. + DECOUPE' : 'DECOUPE SEULE'}</Text>
+                    <Text style={s.nomGroupBadge}>AMALGAME</Text>
                   </View>
                   {quote.products.filter(p => p.amalgameGroupIndex === ri).map((p, pi) => (
                     <View key={p.id} style={pi % 2 === 0 ? s.nomRow : s.nomRowAlt}>
@@ -134,6 +134,16 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
                       <Text style={[s.nomCellBold, { flex: 1, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
                     </View>
                   ))}
+                </View>
+              ))}
+              {/* Produits standalone (hors amalgame) */}
+              {quote.products.filter(p => p.amalgameGroupIndex === null).map((p, pi) => (
+                <View key={p.id} style={[s.nomRow, { backgroundColor: '#fffbeb' }]}>
+                  <Text style={[s.nomCell, { flex: 2.5 }]}>{p.productTypeName}</Text>
+                  <Text style={[s.nomCellMid, { flex: 2.2 }]}>{p.plate?.name}  {p.plate?.width}x{p.plate?.height}</Text>
+                  <Text style={[s.nomCell, { flex: 1.5 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
+                  <Text style={[s.nomCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
+                  <Text style={[s.nomCellMid, { flex: 1, textAlign: 'center' }]}>—</Text>
                 </View>
               ))}
               {/* Ligne récap plaques */}

@@ -76,7 +76,7 @@ export const SAMPLE_QUOTE = {
       amalgameGroupIndex: 0, countPerPlateInGroup: 8,
     },
     {
-      id: 3, productTypeName: 'Étrier de rayon',
+      id: 3, productTypeName: 'Etrier de rayon',
       flatWidth: 280, flatHeight: 200, quantity: 500,
       plate: { name: 'PVC 3mm', width: 600, height: 1200 },
       platesCount: null, itemsPerPlate: null,
@@ -84,6 +84,16 @@ export const SAMPLE_QUOTE = {
       hasVarnish: false, hasFlatColor: false, hasImpression: true,
       inkMlPerPlate: 22, cuttingTimePerPoseSeconds: 12,
       amalgameGroupIndex: 0, countPerPlateInGroup: 20,
+    },
+    {
+      id: 4, productTypeName: 'Chevalet de sol',
+      flatWidth: 500, flatHeight: 700, quantity: 200,
+      plate: { name: 'PVC 5mm', width: 600, height: 800 },
+      platesCount: 200, itemsPerPlate: 1,
+      isRectoVerso: false, rectoVersoType: null,
+      hasVarnish: false, hasFlatColor: false, hasImpression: false,
+      inkMlPerPlate: 0, cuttingTimePerPoseSeconds: 20,
+      amalgameGroupIndex: null, countPerPlateInGroup: 1,
     },
   ],
 }
