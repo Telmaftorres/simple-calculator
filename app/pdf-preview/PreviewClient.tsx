@@ -5,6 +5,9 @@ import { pdf } from '@react-pdf/renderer'
 import { ProductionSheetPDFA } from './variants/LayoutA'
 import { ProductionSheetPDFB } from './variants/LayoutB'
 import { ProductionSheetPDFC } from './variants/LayoutC'
+import { ProductionSheetPDFD } from './variants/LayoutD'
+import { ProductionSheetPDFE } from './variants/LayoutE'
+import { ProductionSheetPDFF } from './variants/LayoutF'
 import { SAMPLE_QUOTE, SAMPLE_PS } from './sample-data'
 
 function PreviewButton({ label, description, onGenerate }: {
@@ -53,6 +56,24 @@ export function PreviewClient() {
         label="Option C — Portrait 2 colonnes"
         description="Format portrait A4, colonne gauche détails, colonne droite chiffres clés. Compact, tout en 1 page."
         onGenerate={() => open(<ProductionSheetPDFC quote={SAMPLE_QUOTE} productionSheet={SAMPLE_PS} />)}
+      />
+      <div className="mt-6 border-t pt-6">
+        <p className="text-xs font-semibold text-slate-400 uppercase tracking-widest mb-4">Nouvelles propositions — multi-produits (amalgamés + indépendants)</p>
+      </div>
+      <PreviewButton
+        label="Proposition D — Une page par groupe de production"
+        description="1 page par amalgame, 1 page par produit indépendant, 1 page finale opérations communes. Ultra lisible, plusieurs pages."
+        onGenerate={() => open(<ProductionSheetPDFD quote={SAMPLE_QUOTE} productionSheet={SAMPLE_PS} />)}
+      />
+      <PreviewButton
+        label="Proposition E — Blocs verticaux + ops communes en bas"
+        description="Chaque groupe = un bloc horizontal avec specs (pilules) + mini tableau produits. Opérations en bas. Tout en 1 page."
+        onGenerate={() => open(<ProductionSheetPDFE quote={SAMPLE_QUOTE} productionSheet={SAMPLE_PS} />)}
+      />
+      <PreviewButton
+        label="Proposition F — 2 tableaux séparés + ops communes à droite"
+        description="Tableau 1 : groupes de production (specs découpe/impression par ligne). Tableau 2 : nomenclature. Ops communes en colonne droite."
+        onGenerate={() => open(<ProductionSheetPDFF quote={SAMPLE_QUOTE} productionSheet={SAMPLE_PS} />)}
       />
     </div>
   )
