@@ -125,6 +125,7 @@ const productTemplateSchema = z.object({
   hasConditionnement: z.boolean().optional(),
   packTimePerPieceSeconds: z.number().int().min(0).optional(),
   hasAssemblyNotice: z.boolean().optional(),
+  hasPoseEtiquette: z.boolean().optional(),
   hasAccessoires: z.boolean().optional(),
   hasTransport: z.boolean().optional(),
   defaultTransportMode: z.enum(['PACK30', 'MESSAGERIE_PLUS', 'AFFRETEMENT']).nullable().optional(),

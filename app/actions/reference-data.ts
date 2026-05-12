@@ -43,6 +43,7 @@ export const getProductTypes = unstable_cache(
           hasConditionnement: true,
           packTimePerPieceSeconds: true,
           hasAssemblyNotice: true,
+          hasPoseEtiquette: true,
           hasAccessoires: true,
           hasTransport: true,
           defaultTransportMode: true,
