@@ -123,4 +123,5 @@ export const SAMPLE_PS = {
   prodPackagingUnitPrice: 3.20,
   prodPackagingQuantity: 250,
   prodPackagingMaterial: 'BC',
+  delaiRealisation: '5 jours ouvrables',
 }
