@@ -55,7 +55,7 @@ const s = StyleSheet.create({
   miniCellMid: { fontSize: 8, color: C.mid },
   miniCellBold: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
   // Zone tracé
-  traceBox: { width: 130, borderWidth: 1, borderColor: C.border, borderRadius: 4, borderStyle: 'dashed' },
+  traceBox: { width: 130, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 4, backgroundColor: '#f8fafc' },
   traceLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: C.light, letterSpacing: 0.8, textAlign: 'center', paddingTop: 5 },
   // Ops communes
   opsSection: { marginTop: 6 },
@@ -266,7 +266,7 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
       {/* ── PAGE 2 : FAÇONNAGE / CONDITIONNEMENT / DÉLAIS ── */}
       <Page size="A4" orientation="landscape" style={s.page}>
 
-        <PageHeader quote={quote} tag="Façonnage / Conditionnement / Planification" />
+        <PageHeader quote={quote} tag="Faconnage / Conditionnement / Planification" />
 
         <View style={[s.body, { padding: '14 22 80 22' }]}>
           <Text style={s.sectionLabel}>Operations de finition</Text>
@@ -335,7 +335,7 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
         </View>
 
         <View style={s.footer}>
-          <Text style={s.footerText}>Fiche de production — Finition / Planification  ·  {quote.study?.number}  ·  {quote.reference}  ·  {quote.client}</Text>
+          <Text style={s.footerText}>Fiche de production — Faconnage / Planification  ·  {quote.study?.number}  ·  {quote.reference}  ·  {quote.client}</Text>
           <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber}/${totalPages}`} />
         </View>
 
