@@ -8,40 +8,40 @@ type PS = typeof SAMPLE_PS
 const C = { black: '#000000', dark: '#1e293b', mid: '#64748b', light: '#cbd5e1', bg: '#f8fafc', white: '#ffffff', line: '#e2e8f0' }
 
 const s = StyleSheet.create({
-  page: { padding: '16 24', fontFamily: 'Helvetica', fontSize: 8, color: C.dark, backgroundColor: C.white },
+  page: { padding: '16 24', fontFamily: 'Helvetica', fontSize: 10, color: C.dark, backgroundColor: C.white },
   // Header
   header: { marginBottom: 10 },
-  headerTop: { backgroundColor: C.black, padding: '8 12', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 2 },
-  headerRef: { fontSize: 8, color: '#94a3b8', marginTop: 2 },
-  headerStatus: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.black, backgroundColor: '#22c55e', padding: '3 8', borderRadius: 2 },
+  headerTop: { backgroundColor: C.black, padding: '10 14', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
+  headerTitle: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 2 },
+  headerRef: { fontSize: 9.5, color: '#94a3b8', marginTop: 3 },
+  headerStatus: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: C.black, backgroundColor: '#22c55e', padding: '4 10', borderRadius: 2 },
   headerMeta: { flexDirection: 'row', borderWidth: 1, borderColor: C.black, borderTopWidth: 0 },
-  headerMetaCell: { flex: 1, padding: '5 10', borderRightWidth: 1, borderRightColor: C.black },
-  headerMetaLabel: { fontSize: 6, color: C.mid, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 1 },
-  headerMetaValue: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
+  headerMetaCell: { flex: 1, padding: '6 10', borderRightWidth: 1, borderRightColor: C.black },
+  headerMetaLabel: { fontSize: 7.5, color: C.mid, textTransform: 'uppercase', letterSpacing: 0.5, marginBottom: 2 },
+  headerMetaValue: { fontSize: 11, fontFamily: 'Helvetica-Bold' },
   // Tableau nomenclature
-  section: { marginBottom: 8 },
-  sectionTitle: { backgroundColor: C.dark, padding: '3 8', fontSize: 7, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 1, marginBottom: 0 },
-  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderColor: C.line, padding: '3 8' },
-  tableRowGray: { flexDirection: 'row', borderBottomWidth: 1, borderColor: C.line, padding: '3 8', backgroundColor: C.bg },
-  tableHeadRow: { flexDirection: 'row', padding: '3 8', backgroundColor: '#e2e8f0' },
-  cell: { fontSize: 8 },
-  cellBold: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
-  cellMid: { fontSize: 8, color: C.mid },
+  section: { marginBottom: 10 },
+  sectionTitle: { backgroundColor: C.dark, padding: '4 10', fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 1, marginBottom: 0 },
+  tableRow: { flexDirection: 'row', borderBottomWidth: 1, borderColor: C.line, padding: '4 10' },
+  tableRowGray: { flexDirection: 'row', borderBottomWidth: 1, borderColor: C.line, padding: '4 10', backgroundColor: C.bg },
+  tableHeadRow: { flexDirection: 'row', padding: '4 10', backgroundColor: '#e2e8f0' },
+  cell: { fontSize: 10 },
+  cellBold: { fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  cellMid: { fontSize: 10, color: C.mid },
   // Grille ops
   opsGrid: { flexDirection: 'row', gap: 8, marginBottom: 8 },
   opBox: { flex: 1, borderWidth: 1, borderColor: C.dark },
-  opBoxTitle: { backgroundColor: C.dark, padding: '3 8', fontSize: 7, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 0.5 },
-  opBoxBody: { padding: '4 8' },
-  opRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, borderBottomWidth: 1, borderBottomColor: C.line },
-  opLabel: { color: C.mid, fontSize: 7.5 },
-  opValue: { fontFamily: 'Helvetica-Bold', fontSize: 7.5 },
+  opBoxTitle: { backgroundColor: C.dark, padding: '4 10', fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 0.5 },
+  opBoxBody: { padding: '5 10' },
+  opRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: C.line },
+  opLabel: { color: C.mid, fontSize: 9.5 },
+  opValue: { fontFamily: 'Helvetica-Bold', fontSize: 9.5 },
   // Amalgame
-  amalgameHeader: { flexDirection: 'row', backgroundColor: '#f1f5f9', padding: '3 8', borderBottomWidth: 1, borderBottomColor: C.line },
-  amalgameBadge: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: '#6d28d9', backgroundColor: '#ede9fe', padding: '1 5', borderRadius: 10, marginLeft: 6 },
+  amalgameHeader: { flexDirection: 'row', backgroundColor: '#f1f5f9', padding: '4 10', borderBottomWidth: 1, borderBottomColor: C.line },
+  amalgameBadge: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: '#6d28d9', backgroundColor: '#ede9fe', padding: '2 6', borderRadius: 10, marginLeft: 8 },
   // Footer
   footer: { position: 'absolute', bottom: 10, left: 24, right: 24, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: C.line, paddingTop: 4 },
-  footerText: { fontSize: 6, color: C.mid },
+  footerText: { fontSize: 7.5, color: C.mid },
 })
 
 function OpRow({ label, value }: { label: string; value: string }) {
@@ -83,19 +83,19 @@ export function ProductionSheetPDFA({ quote, productionSheet: ps }: { quote: Q; 
         <View style={s.section}>
           <Text style={s.sectionTitle}>NOMENCLATURE</Text>
           <View style={[s.tableHeadRow, { borderWidth: 1, borderColor: C.dark, borderTopWidth: 0 }]}>
-            <Text style={[s.cell, { flex: 2, fontFamily: 'Helvetica-Bold', fontSize: 7 }]}>PRODUIT</Text>
-            <Text style={[s.cell, { flex: 2.5, fontFamily: 'Helvetica-Bold', fontSize: 7 }]}>MATIÈRE</Text>
-            <Text style={[s.cell, { flex: 1.2, fontFamily: 'Helvetica-Bold', fontSize: 7 }]}>FORMAT</Text>
-            <Text style={[s.cell, { flex: 0.8, fontFamily: 'Helvetica-Bold', fontSize: 7, textAlign: 'center' }]}>QTÉ</Text>
-            <Text style={[s.cell, { flex: 1, fontFamily: 'Helvetica-Bold', fontSize: 7, textAlign: 'center' }]}>POSES/PL.</Text>
-            <Text style={[s.cell, { flex: 1, fontFamily: 'Helvetica-Bold', fontSize: 7, textAlign: 'right' }]}>PLAQUES</Text>
+            <Text style={[s.cell, { flex: 2, fontFamily: 'Helvetica-Bold', fontSize: 9 }]}>PRODUIT</Text>
+            <Text style={[s.cell, { flex: 2.5, fontFamily: 'Helvetica-Bold', fontSize: 9 }]}>MATIERE</Text>
+            <Text style={[s.cell, { flex: 1.2, fontFamily: 'Helvetica-Bold', fontSize: 9 }]}>FORMAT</Text>
+            <Text style={[s.cell, { flex: 0.8, fontFamily: 'Helvetica-Bold', fontSize: 9, textAlign: 'center' }]}>QTE</Text>
+            <Text style={[s.cell, { flex: 1, fontFamily: 'Helvetica-Bold', fontSize: 9, textAlign: 'center' }]}>POSES/PL.</Text>
+            <Text style={[s.cell, { flex: 1, fontFamily: 'Helvetica-Bold', fontSize: 9, textAlign: 'right' }]}>PLAQUES</Text>
           </View>
           {runs.map((run, ri) => (
             <View key={ri} style={{ borderWidth: 1, borderTopWidth: 0, borderColor: C.dark }}>
               <View style={s.amalgameHeader}>
-                <Text style={[s.cellBold, { fontSize: 7.5 }]}>{run.name}</Text>
-                <Text style={s.amalgameBadge}>AMALGAME · {run.hasImpression ? 'Impr. + Découpe' : 'Découpe seule'}</Text>
-                <Text style={[s.cellMid, { marginLeft: 'auto', fontSize: 7 }]}>
+                <Text style={[s.cellBold, { fontSize: 9.5 }]}>{run.name}</Text>
+                <Text style={s.amalgameBadge}>AMALGAME - {run.hasImpression ? 'Impr. + Decoupe' : 'Decoupe seule'}</Text>
+                <Text style={[s.cellMid, { marginLeft: 'auto', fontSize: 8.5 }]}>
                   {run.plate?.name}  {run.plate?.width}×{run.plate?.height}  ·  {run.platesCount} plaques  ·  {run.cuttingTimePerPoseSeconds}s/pose
                   {run.hasImpression ? `  ·  ${run.inkMlPerPlate}ml/pl.` : ''}
                 </Text>
@@ -123,7 +123,7 @@ export function ProductionSheetPDFA({ quote, productionSheet: ps }: { quote: Q; 
                 <OpRow label="Temps / pièce" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
                 {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
                 {ps.collagePerPLV != null && <OpRow label="Coût collage / PLV" value={`${ps.collagePerPLV.toFixed(2)} €`} />}
-                {ps.faconnageNotes ? <Text style={{ fontSize: 7, color: C.mid, marginTop: 4, lineHeight: 1.4 }}>{ps.faconnageNotes}</Text> : null}
+                {ps.faconnageNotes ? <Text style={{ fontSize: 9, color: C.mid, marginTop: 4, lineHeight: 1.4 }}>{ps.faconnageNotes}</Text> : null}
               </View>
             </View>
           )}
@@ -133,7 +133,7 @@ export function ProductionSheetPDFA({ quote, productionSheet: ps }: { quote: Q; 
               <View style={s.opBoxBody}>
                 <OpRow label="Temps / pièce" value={`${ps.prodPackTimePerPieceSeconds} s`} />
                 {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
-                {ps.conditionnementNotes ? <Text style={{ fontSize: 7, color: C.mid, marginTop: 4, lineHeight: 1.4 }}>{ps.conditionnementNotes}</Text> : null}
+                {ps.conditionnementNotes ? <Text style={{ fontSize: 9, color: C.mid, marginTop: 4, lineHeight: 1.4 }}>{ps.conditionnementNotes}</Text> : null}
               </View>
             </View>
           )}
@@ -173,7 +173,7 @@ export function ProductionSheetPDFA({ quote, productionSheet: ps }: { quote: Q; 
         {ps.remarques && (
           <View style={{ borderWidth: 1, borderColor: C.dark, marginBottom: 8 }}>
             <Text style={s.sectionTitle}>REMARQUES</Text>
-            <Text style={{ fontSize: 8, padding: '5 8', color: C.mid }}>{ps.remarques}</Text>
+            <Text style={{ fontSize: 10, padding: '5 10', color: C.mid }}>{ps.remarques}</Text>
           </View>
         )}
 
