@@ -424,7 +424,8 @@ model ProductionSheet {
   achatsNotes  String?  // Texte libre accessoires à commander
 
   // ── Remarques générales ──
-  remarques    String?
+  remarques          String?
+  delaiRealisation   String?  // Ex : "5 jours ouvrables"
 
   // ── Plan technique ──
   planImageUrl String?  // URL de l'image téléversée

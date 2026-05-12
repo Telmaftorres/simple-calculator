@@ -6,7 +6,8 @@ import { Download, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { upsertProductionSheet, type ProductionSheetInput } from '@/app/actions/production-sheet'
 import { pdf } from '@react-pdf/renderer'
-import { ProductionSheetPDF } from '@/components/pdf/ProductionSheetPDF'
+import { ProductionSheetPDFE } from '@/app/pdf-preview/variants/LayoutE'
+import type { PSForPDF } from '@/app/pdf-preview/variants/LayoutE'
 import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
 
 // ── Bloc accordéon style "card emoji" ──
@@ -241,14 +242,10 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   const handleGeneratePdf = async () => {
     setIsGeneratingPdf(true)
     try {
-      const psInput: ProductionSheetInput = {
-        prodCuttingTimePerPoseSeconds:   ps?.prodCuttingTimePerPoseSeconds   ?? null,
+      const psForPdf: PSForPDF = {
+        prodMachineTimeMinOverride:      ps?.prodMachineTimeMinOverride      ?? null,
         prodAssemblyTimePerPieceSeconds: ps?.prodAssemblyTimePerPieceSeconds ?? null,
         prodPackTimePerPieceSeconds:     ps?.prodPackTimePerPieceSeconds     ?? null,
-        prodInkMlPerPlate:               ps?.prodInkMlPerPlate               ?? null,
-        prodPlatesCount:                 ps?.prodPlatesCount                 ?? null,
-        prodTransportCost:               ps?.prodTransportCost               ?? null,
-        prodTransportNotes:              ps?.prodTransportNotes              ?? null,
         nbCollages:           ps?.nbCollages           ?? null,
         collagePerPLV:        ps?.collagePerPLV        ?? null,
         faconnageNotes:       ps?.faconnageNotes       ?? null,
@@ -256,18 +253,14 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         conditionnementNotes: ps?.conditionnementNotes ?? null,
         achatsNotes:          ps?.achatsNotes          ?? null,
         remarques:            ps?.remarques            ?? null,
-        planImageUrl:         ps?.planImageUrl         ?? null,
-        status: (ps?.status as ProductionSheetInput['status']) ?? 'en_attente',
-        packagingBoxLengthMm:  ps?.packagingBoxLengthMm  ?? null,
-        packagingBoxWidthMm:   ps?.packagingBoxWidthMm   ?? null,
-        packagingBoxHeightMm:  ps?.packagingBoxHeightMm  ?? null,
-        packagingSupplierRef:  ps?.packagingSupplierRef  ?? null,
-        packagingNotes:        ps?.packagingNotes        ?? null,
-        prodPackagingUnitPrice:  ps?.prodPackagingUnitPrice  ?? null,
-        prodPackagingQuantity:   ps?.prodPackagingQuantity   ?? null,
-        prodPackagingMaterial:   ps?.prodPackagingMaterial   ?? null,
+        delaiRealisation:     ps?.delaiRealisation     ?? null,
+        packagingBoxLengthMm:   ps?.packagingBoxLengthMm  ?? null,
+        packagingBoxWidthMm:    ps?.packagingBoxWidthMm   ?? null,
+        packagingBoxHeightMm:   ps?.packagingBoxHeightMm  ?? null,
+        prodPackagingMaterial:  ps?.prodPackagingMaterial ?? null,
+        prodPackagingQuantity:  ps?.prodPackagingQuantity ?? null,
       }
-      const blob = await pdf(<ProductionSheetPDF quote={quote} productionSheet={psInput} />).toBlob()
+      const blob = await pdf(<ProductionSheetPDFE quote={quote} productionSheet={psForPdf} />).toBlob()
       setPdfUrl(URL.createObjectURL(blob))
     } catch (e) {
       console.error(e)

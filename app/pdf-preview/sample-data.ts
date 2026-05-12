@@ -103,6 +103,7 @@ export const SAMPLE_PS = {
   prodCuttingTimePerPoseSeconds: 12,
   prodAssemblyTimePerPieceSeconds: 45,
   prodPackTimePerPieceSeconds: 30,
+  prodMachineTimeMinOverride: 47.25,
   prodInkMlPerPlate: 22,
   prodPlatesCount: 63,
   prodTransportCost: 145,

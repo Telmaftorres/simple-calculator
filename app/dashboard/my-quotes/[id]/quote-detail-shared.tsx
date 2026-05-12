@@ -81,6 +81,7 @@ export type Quote = {
   } | null
   productionSheet: {
     prodCuttingTimePerPoseSeconds: number | null
+    prodMachineTimeMinOverride: number | null
     prodAssemblyTimePerPieceSeconds: number | null
     prodPackTimePerPieceSeconds: number | null
     prodInkMlPerPlate: number | null
@@ -94,6 +95,7 @@ export type Quote = {
     conditionnementNotes: string | null
     achatsNotes: string | null
     remarques: string | null
+    delaiRealisation: string | null
     planImageUrl: string | null
     status: string
     packagingBoxLengthMm: number | null

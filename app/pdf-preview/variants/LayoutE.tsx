@@ -1,9 +1,67 @@
 'use client'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
-import type { SAMPLE_QUOTE, SAMPLE_PS } from '../sample-data'
 
-type Q = typeof SAMPLE_QUOTE
-type PS = typeof SAMPLE_PS
+export type QuoteForPDF = {
+  id: number
+  reference: string | null
+  client: string | null
+  createdAt: Date
+  quantity: number
+  plvQuantity: number | null
+  study: { number: string | null } | null
+  productType: { name: string } | null
+  hasFaconnage: boolean
+  hasConditionnement: boolean
+  hasPackaging: boolean
+  packagingBoxType: string | null
+  packagingMaterialType: string | null
+  packagingQuantity: number | null
+  accessories: { accessory: { name: string }; quantity: number }[]
+  products: {
+    id: number
+    productTypeName: string | null
+    flatWidth: number
+    flatHeight: number
+    quantity: number
+    plate: { name: string; width: number; height: number } | null
+    platesCount: number | null
+    cuttingTimePerPoseSeconds: number
+    amalgameGroupIndex: number | null
+    countPerPlateInGroup: number | null
+  }[]
+  amalgameRuns: {
+    name: string
+    hasImpression: boolean
+    platesCount: number | null
+    cuttingTimePerPoseSeconds: number
+    isRectoVerso: boolean
+    rectoVersoType: string | null
+    plate: { name: string; width: number; height: number } | null
+    items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[]
+  }[]
+}
+
+export type PSForPDF = {
+  prodAssemblyTimePerPieceSeconds: number | null
+  prodPackTimePerPieceSeconds: number | null
+  prodMachineTimeMinOverride: number | null
+  nbCollages: number | null
+  collagePerPLV: number | null
+  faconnageNotes: string | null
+  conditionnementType: string | null
+  conditionnementNotes: string | null
+  packagingBoxLengthMm: number | null
+  packagingBoxWidthMm: number | null
+  packagingBoxHeightMm: number | null
+  prodPackagingMaterial: string | null
+  prodPackagingQuantity: number | null
+  achatsNotes: string | null
+  remarques: string | null
+  delaiRealisation: string | null
+}
+
+type Q = QuoteForPDF
+type PS = PSForPDF
 
 const C = {
   dark: '#0f172a', mid: '#64748b', light: '#94a3b8', border: '#e2e8f0', bg: '#f8fafc', white: '#ffffff',
@@ -144,16 +202,16 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
   const standaloneProducts = quote.products.filter(p => p.amalgameGroupIndex === null)
   const qty = quote.plvQuantity ?? quote.quantity
 
-  const totalPlates = runs.reduce((sum, r) => sum + r.platesCount, 0) +
+  const totalPlates = runs.reduce((sum, r) => sum + (r.platesCount ?? 0), 0) +
     standaloneProducts.reduce((sum, p) => sum + (p.platesCount ?? 0), 0)
 
-  const cuttingSeconds = runs.reduce((sum, r) => sum + r.cuttingTimePerPoseSeconds * r.platesCount, 0) +
+  const cuttingSeconds = runs.reduce((sum, r) => sum + r.cuttingTimePerPoseSeconds * (r.platesCount ?? 0), 0) +
     standaloneProducts.reduce((sum, p) => sum + p.cuttingTimePerPoseSeconds * (p.platesCount ?? 0), 0)
-  const impressionSeconds = runs
-    .filter(r => r.hasImpression)
-    .reduce((sum, r) => sum + ((r as any).impressionTimePerPoseSeconds ?? 0) * r.platesCount, 0)
-  const faconnageSeconds = quote.hasFaconnage ? ps.prodAssemblyTimePerPieceSeconds * qty : 0
-  const conditionnementSeconds = quote.hasConditionnement ? ps.prodPackTimePerPieceSeconds * qty : 0
+  const impressionSeconds = ps.prodMachineTimeMinOverride != null
+    ? ps.prodMachineTimeMinOverride * 60
+    : 0
+  const faconnageSeconds = quote.hasFaconnage ? (ps.prodAssemblyTimePerPieceSeconds ?? 0) * qty : 0
+  const conditionnementSeconds = quote.hasConditionnement ? (ps.prodPackTimePerPieceSeconds ?? 0) * qty : 0
   const totalProductionSeconds = cuttingSeconds + faconnageSeconds + conditionnementSeconds
 
   return (

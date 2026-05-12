@@ -20,6 +20,7 @@ const productionSheetSchema = z.object({
   conditionnementNotes: z.string().nullable().optional(),
   achatsNotes:          z.string().nullable().optional(),
   remarques:            z.string().nullable().optional(),
+  delaiRealisation:     z.string().nullable().optional(),
   planImageUrl:         z.string().nullable().optional(),
   status:               z.enum(['en_attente', 'en_cours', 'termine']).optional(),
   formDataJson:         z.string().nullable().optional(),
