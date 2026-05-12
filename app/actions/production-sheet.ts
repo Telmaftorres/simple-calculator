@@ -23,6 +23,11 @@ const productionSheetSchema = z.object({
   planImageUrl:         z.string().nullable().optional(),
   status:               z.enum(['en_attente', 'en_cours', 'termine']).optional(),
   formDataJson:         z.string().nullable().optional(),
+  packagingBoxLengthMm: z.number().int().min(0).nullable().optional(),
+  packagingBoxWidthMm:  z.number().int().min(0).nullable().optional(),
+  packagingBoxHeightMm: z.number().int().min(0).nullable().optional(),
+  packagingSupplierRef: z.string().nullable().optional(),
+  packagingNotes:       z.string().nullable().optional(),
 })
 
 export type ProductionSheetInput = z.infer<typeof productionSheetSchema>

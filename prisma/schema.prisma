@@ -429,6 +429,13 @@ model ProductionSheet {
   // ── Plan technique ──
   planImageUrl String?  // URL de l'image téléversée
 
+  // ── Emballage (infos production spécifiques) ──
+  packagingBoxLengthMm  Int?     // Longueur réelle de l'étui (mm)
+  packagingBoxWidthMm   Int?     // Largeur réelle de l'étui (mm)
+  packagingBoxHeightMm  Int?     // Hauteur réelle de l'étui (mm)
+  packagingSupplierRef  String?  // Référence fournisseur externe
+  packagingNotes        String?  // Notes emballage production
+
   // ── Statut ──
   status       String   @default("en_attente") // "en_attente" | "en_cours" | "termine"
 

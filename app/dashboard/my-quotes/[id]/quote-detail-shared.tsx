@@ -95,6 +95,11 @@ export type Quote = {
     remarques: string | null
     planImageUrl: string | null
     status: string
+    packagingBoxLengthMm: number | null
+    packagingBoxWidthMm: number | null
+    packagingBoxHeightMm: number | null
+    packagingSupplierRef: string | null
+    packagingNotes: string | null
   } | null
 }
 

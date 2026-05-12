@@ -1,7 +1,9 @@
 {
   "permissions": {
     "allow": [
-      "Bash(npm install *)"
+      "Bash(npm install *)",
+      "Bash(pm2 list *)",
+      "Read(//Users/telmaferreiratorres/.ssh/**)"
     ]
   }
 }
