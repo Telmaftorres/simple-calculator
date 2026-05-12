@@ -100,6 +100,8 @@ export type Quote = {
     packagingBoxHeightMm: number | null
     packagingSupplierRef: string | null
     packagingNotes: string | null
+    prodPackagingUnitPrice: number | null
+    prodPackagingQuantity: number | null
   } | null
 }
 

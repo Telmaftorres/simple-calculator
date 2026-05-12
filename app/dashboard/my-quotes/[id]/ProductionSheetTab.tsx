@@ -2,46 +2,41 @@
 
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { Download, FileText, ChevronDown, ChevronRight, Package } from 'lucide-react'
+import { Download, FileText } from 'lucide-react'
 import { toast } from 'sonner'
 import { upsertProductionSheet, type ProductionSheetInput } from '@/app/actions/production-sheet'
 import { pdf } from '@react-pdf/renderer'
 import { ProductionSheetPDF } from '@/components/pdf/ProductionSheetPDF'
 import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
 
-// ── Composant section accordéon ──
-function Section({
-  icon: Icon,
+// ── Bloc accordéon style "card emoji" ──
+function Block({
+  emoji,
   title,
-  badge,
+  summary,
   children,
 }: {
-  icon: React.ElementType
+  emoji: string
   title: string
-  badge?: string
+  summary?: string
   children: React.ReactNode
 }) {
   const [open, setOpen] = useState(false)
   return (
-    <div className="border border-slate-200 rounded-xl overflow-hidden">
+    <div className={`rounded-2xl border transition-all ${open ? 'border-slate-300 shadow-md' : 'border-slate-200'} bg-white overflow-hidden`}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center justify-between px-4 py-3 bg-white hover:bg-slate-50 transition-colors text-left"
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors text-left"
       >
-        <div className="flex items-center gap-3">
-          <Icon className="h-4 w-4 text-slate-500" />
-          <span className="font-medium text-slate-800 text-sm">{title}</span>
-          {badge && (
-            <span className="text-xs px-2 py-0.5 rounded-full bg-slate-100 text-slate-500 font-medium">{badge}</span>
-          )}
+        <span className="text-2xl leading-none">{emoji}</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-slate-800 text-sm">{title}</p>
+          {summary && <p className="text-xs text-slate-400 mt-0.5 truncate">{summary}</p>}
         </div>
-        {open
-          ? <ChevronDown className="h-4 w-4 text-slate-400" />
-          : <ChevronRight className="h-4 w-4 text-slate-400" />
-        }
+        <span className="text-slate-300 text-lg">{open ? '▲' : '▼'}</span>
       </button>
       {open && (
-        <div className="px-4 pb-4 pt-2 border-t border-slate-100 bg-slate-50/50 space-y-4">
+        <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-4">
           {children}
         </div>
       )}
@@ -49,7 +44,7 @@ function Section({
   )
 }
 
-// ── Champ de saisie simple ──
+// ── Ligne champ éditable ──
 function Field({
   label,
   type = 'text',
@@ -69,24 +64,45 @@ function Field({
 }) {
   return (
     <div className="space-y-1">
-      <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">{label}</label>
+      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</label>
       <div className="flex items-center gap-2">
         <input
           type={type}
           value={value}
           onChange={e => onChange?.(e.target.value)}
-          placeholder={placeholder ?? '—'}
+          placeholder={placeholder ?? ''}
           readOnly={readOnly}
-          className={`flex-1 px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 focus:border-transparent ${readOnly ? 'text-slate-400 bg-slate-50 cursor-default' : ''}`}
+          className={`flex-1 px-3 py-2 text-sm rounded-lg border ${
+            readOnly
+              ? 'border-slate-100 bg-slate-50 text-slate-400 cursor-default'
+              : 'border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800 focus:border-transparent'
+          }`}
         />
-        {suffix && <span className="text-xs text-slate-400 shrink-0">{suffix}</span>}
+        {suffix && <span className="text-xs text-slate-400 shrink-0 w-6">{suffix}</span>}
       </div>
     </div>
   )
 }
 
+function Textarea({ label, value, onChange, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder?: string
+}) {
+  return (
+    <div className="space-y-1">
+      <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">{label}</label>
+      <textarea
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        rows={2}
+        placeholder={placeholder ?? ''}
+        className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none"
+      />
+    </div>
+  )
+}
+
 // ── Section Emballage ──
-function EmballageSection({ quote, ps, onSave }: {
+function EmballageBlock({ quote, ps, onSave }: {
   quote: Quote
   ps: NonNullable<Quote['productionSheet']>
   onSave: (data: Partial<ProductionSheetInput>) => Promise<void>
@@ -94,76 +110,107 @@ function EmballageSection({ quote, ps, onSave }: {
   const mat = quote.packagingMaterialType ?? ''
   const isExternal = mat === 'B' || mat === 'EB'
 
-  const boxTypeLabel =
-    quote.packagingBoxType === 'etui' ? 'Étui'
-    : quote.packagingBoxType === 'caisse' ? 'Caisse'
-    : quote.packagingBoxType === 'plaque_rainee' ? 'Plaque rainée'
-    : quote.packagingBoxType ?? '—'
+  const boxTypeOptions = ['etui', 'caisse', 'plaque_rainee']
+  const boxTypeLabel = (v: string | null) =>
+    v === 'etui' ? 'Étui' : v === 'caisse' ? 'Caisse' : v === 'plaque_rainee' ? 'Plaque rainée' : v ?? '—'
 
-  const matLabel = isExternal
-    ? `${mat}${quote.packagingExternalSize ? ` — ${quote.packagingExternalSize}` : ''} (fournisseur externe)`
-    : mat || '—'
-
+  const [boxType, setBoxType] = useState(quote.packagingBoxType ?? '')
+  const [qty, setQty] = useState(
+    (ps.prodPackagingQuantity ?? quote.packagingQuantity ?? '').toString()
+  )
+  const [unitPrice, setUnitPrice] = useState(
+    ps.prodPackagingUnitPrice?.toString() ?? ''
+  )
   const [length, setLength] = useState(ps.packagingBoxLengthMm?.toString() ?? '')
-  const [width, setWidth] = useState(ps.packagingBoxWidthMm?.toString() ?? '')
+  const [width,  setWidth]  = useState(ps.packagingBoxWidthMm?.toString()  ?? '')
   const [height, setHeight] = useState(ps.packagingBoxHeightMm?.toString() ?? '')
-  const [ref, setRef] = useState(ps.packagingSupplierRef ?? '')
-  const [notes, setNotes] = useState(ps.packagingNotes ?? '')
+  const [ref,    setRef]    = useState(ps.packagingSupplierRef ?? '')
+  const [notes,  setNotes]  = useState(ps.packagingNotes ?? '')
   const [saving, setSaving] = useState(false)
+
+  const summary = [
+    boxTypeLabel(boxType),
+    qty ? `${qty} pcs` : null,
+    unitPrice ? `${parseFloat(unitPrice).toFixed(2)} €/pce` : null,
+  ].filter(Boolean).join(' · ')
 
   const handleSave = async () => {
     setSaving(true)
     await onSave({
-      packagingBoxLengthMm: length ? parseInt(length) : null,
-      packagingBoxWidthMm:  width  ? parseInt(width)  : null,
-      packagingBoxHeightMm: height ? parseInt(height) : null,
-      packagingSupplierRef: ref || null,
-      packagingNotes: notes || null,
+      packagingBoxLengthMm:  length    ? parseInt(length)       : null,
+      packagingBoxWidthMm:   width     ? parseInt(width)        : null,
+      packagingBoxHeightMm:  height    ? parseInt(height)       : null,
+      packagingSupplierRef:  ref       || null,
+      packagingNotes:        notes     || null,
+      prodPackagingUnitPrice: unitPrice ? parseFloat(unitPrice) : null,
+      prodPackagingQuantity:  qty       ? parseInt(qty)         : null,
     })
     setSaving(false)
   }
 
   return (
-    <div className="space-y-4">
-      {/* Infos du devis (lecture seule) */}
+    <Block emoji="📦" title="Emballage" summary={summary}>
       <div className="grid grid-cols-2 gap-3">
-        <Field label="Type d'emballage" value={boxTypeLabel} readOnly />
-        <Field label="Matière" value={matLabel} readOnly />
-        {quote.packagingQuantity != null && (
-          <Field label="Quantité" value={`${quote.packagingQuantity} pce(s)`} readOnly />
-        )}
-      </div>
+        {/* Type boîte */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Type d&apos;emballage</label>
+          <select
+            value={boxType}
+            onChange={e => setBoxType(e.target.value)}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800"
+          >
+            {boxTypeOptions.map(v => (
+              <option key={v} value={v}>{boxTypeLabel(v)}</option>
+            ))}
+          </select>
+        </div>
 
-      {/* Champs production spécifiques */}
-      {isExternal && (
-        <>
-          <div className="border-t border-slate-200 pt-3">
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide mb-3">Dimensions réelles de l&apos;étui</p>
-            <div className="grid grid-cols-3 gap-3">
-              <Field label="Longueur" type="number" value={length} onChange={setLength} placeholder="ex: 350" suffix="mm" />
-              <Field label="Largeur"  type="number" value={width}  onChange={setWidth}  placeholder="ex: 150" suffix="mm" />
-              <Field label="Hauteur"  type="number" value={height} onChange={setHeight} placeholder="ex: 200" suffix="mm" />
-            </div>
-          </div>
-          <Field label="Référence fournisseur" value={ref} onChange={setRef} placeholder="ex: REF-2024-001" />
-        </>
-      )}
+        {/* Matière (lecture seule) */}
+        <Field label="Matière" value={`${mat}${quote.packagingExternalSize ? ` — ${quote.packagingExternalSize}` : ''}`} readOnly />
 
-      <div className="space-y-1">
-        <label className="text-xs font-medium text-slate-500 uppercase tracking-wide">Notes emballage</label>
-        <textarea
-          value={notes}
-          onChange={e => setNotes(e.target.value)}
-          rows={2}
-          placeholder="Informations complémentaires sur l'emballage…"
-          className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-900 resize-none"
+        {/* Quantité */}
+        <Field
+          label="Quantité"
+          type="number"
+          value={qty}
+          onChange={setQty}
+          placeholder={quote.packagingQuantity?.toString() ?? ''}
+          suffix="pcs"
+        />
+
+        {/* Prix fournisseur */}
+        <Field
+          label="Prix unitaire fournisseur"
+          type="number"
+          value={unitPrice}
+          onChange={setUnitPrice}
+          placeholder="0.00"
+          suffix="€"
         />
       </div>
+
+      {/* Dimensions (fournisseur externe) */}
+      {isExternal && (
+        <div>
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dimensions réelles de l&apos;étui</p>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Longueur" type="number" value={length} onChange={setLength} placeholder="ex: 350" suffix="mm" />
+            <Field label="Largeur"  type="number" value={width}  onChange={setWidth}  placeholder="ex: 150" suffix="mm" />
+            <Field label="Hauteur"  type="number" value={height} onChange={setHeight} placeholder="ex: 200" suffix="mm" />
+          </div>
+        </div>
+      )}
+
+      {isExternal && (
+        <Field label="Référence fournisseur" value={ref} onChange={setRef} placeholder="ex: REF-2024-001" />
+      )}
+
+      <Textarea label="Notes" value={notes} onChange={setNotes} placeholder="Informations complémentaires…" />
 
       <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700">
         {saving ? 'Sauvegarde…' : 'Enregistrer'}
       </Button>
-    </div>
+    </Block>
   )
 }
 
@@ -220,11 +267,13 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         remarques:            ps?.remarques            ?? null,
         planImageUrl:         ps?.planImageUrl         ?? null,
         status: (ps?.status as ProductionSheetInput['status']) ?? 'en_attente',
-        packagingBoxLengthMm: ps?.packagingBoxLengthMm ?? null,
-        packagingBoxWidthMm:  ps?.packagingBoxWidthMm  ?? null,
-        packagingBoxHeightMm: ps?.packagingBoxHeightMm ?? null,
-        packagingSupplierRef: ps?.packagingSupplierRef ?? null,
-        packagingNotes:       ps?.packagingNotes       ?? null,
+        packagingBoxLengthMm:  ps?.packagingBoxLengthMm  ?? null,
+        packagingBoxWidthMm:   ps?.packagingBoxWidthMm   ?? null,
+        packagingBoxHeightMm:  ps?.packagingBoxHeightMm  ?? null,
+        packagingSupplierRef:  ps?.packagingSupplierRef  ?? null,
+        packagingNotes:        ps?.packagingNotes        ?? null,
+        prodPackagingUnitPrice: ps?.prodPackagingUnitPrice ?? null,
+        prodPackagingQuantity:  ps?.prodPackagingQuantity  ?? null,
       }
       const blob = await pdf(<ProductionSheetPDF quote={quote} productionSheet={psInput} />).toBlob()
       setPdfUrl(URL.createObjectURL(blob))
@@ -249,7 +298,9 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
               onClick={() => handleStatusChange(opt.value as ProductionSheetInput['status'])}
               disabled={savingStatus}
               className={`px-3 py-1 text-xs font-semibold rounded-full transition-all border ${
-                status === opt.value ? `${opt.color} border-transparent` : 'border-slate-200 text-slate-400 hover:border-slate-300'
+                status === opt.value
+                  ? `${opt.color} border-transparent`
+                  : 'border-slate-200 text-slate-400 hover:border-slate-300'
               }`}
             >
               {opt.label}
@@ -260,10 +311,14 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
           {pdfUrl ? (
             <>
               <a href={pdfUrl} download={`fiche-prod-${quote.study?.number ?? quote.id}.pdf`}>
-                <Button size="sm" variant="outline" className="gap-1"><Download className="h-4 w-4" /> Télécharger</Button>
+                <Button size="sm" variant="outline" className="gap-1">
+                  <Download className="h-4 w-4" /> Télécharger
+                </Button>
               </a>
               <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="sm" variant="outline" className="gap-1"><FileText className="h-4 w-4" /> Voir PDF</Button>
+                <Button size="sm" variant="outline" className="gap-1">
+                  <FileText className="h-4 w-4" /> Voir PDF
+                </Button>
               </a>
             </>
           ) : (
@@ -275,17 +330,15 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         </div>
       </div>
 
-      {/* Sections accordéon */}
+      {/* Blocs accordéon */}
       {quote.hasPackaging && (
-        <Section icon={Package} title="Emballage" badge={quote.packagingBoxType ?? undefined}>
-          {ps ? (
-            <EmballageSection quote={quote} ps={ps} onSave={handleSaveSection} />
-          ) : (
-            <p className="text-sm text-slate-400 italic">
-              Sauvegardez d&apos;abord la fiche de production via le calculateur pour activer cette section.
-            </p>
-          )}
-        </Section>
+        ps ? (
+          <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />
+        ) : (
+          <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">
+            📦 Sauvegardez d&apos;abord la fiche de production via le calculateur pour activer le bloc Emballage.
+          </div>
+        )
       )}
 
     </div>

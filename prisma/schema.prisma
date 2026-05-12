@@ -435,6 +435,8 @@ model ProductionSheet {
   packagingBoxHeightMm  Int?     // Hauteur réelle de l'étui (mm)
   packagingSupplierRef  String?  // Référence fournisseur externe
   packagingNotes        String?  // Notes emballage production
+  prodPackagingUnitPrice Float?  // Prix unitaire confirmé fournisseur (€)
+  prodPackagingQuantity  Int?    // Quantité emballage réelle (override)
 
   // ── Statut ──
   status       String   @default("en_attente") // "en_attente" | "en_cours" | "termine"
