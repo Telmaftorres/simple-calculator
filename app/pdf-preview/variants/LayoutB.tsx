@@ -70,6 +70,10 @@ function OpRow({ label, value }: { label: string; value: string }) {
 
 export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; productionSheet: PS }) {
   const runs = quote.amalgameRuns ?? []
+  const totalPlates = runs.reduce((sum, r) => sum + r.platesCount, 0)
+  const impressionRuns = runs.filter(r => r.hasImpression)
+  const totalInkMl = impressionRuns.reduce((sum, r) => sum + r.inkMlPerPlate * r.platesCount, 0)
+  const totalCuttingMin = runs.reduce((sum, r) => sum + (r.cuttingTimePerPoseSeconds * r.platesCount / 60), 0)
 
   return (
     <Document>
@@ -91,6 +95,7 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
             { label: 'TYPE PLV', value: quote.productType?.name ?? 'Multi-produits' },
             { label: 'QUANTITE', value: `${quote.plvQuantity ?? quote.quantity} ex` },
             { label: 'MONTANT HT', value: `${quote.totalCost?.toFixed(2)} EUR` },
+            { label: 'TOTAL PLAQUES', value: `${totalPlates} pl.` },
           ].map((item, i) => (
             <View key={i}>
               <Text style={s.metaLabel}>{item.label}</Text>
@@ -128,8 +133,8 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
                     <Text style={[s.nomCell, { flex: 1.5 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
                     <Text style={[s.nomCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
                     <Text style={[s.nomCellBold, { flex: 1, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
-                    <Text style={[s.nomCellMid, { flex: 1, textAlign: 'center' }]}>—</Text>
-                    <Text style={[s.nomCellMid, { flex: 0.8, textAlign: 'right' }]}>—</Text>
+                    <Text style={[s.nomCell, { flex: 1, textAlign: 'center' }]}>{run.cuttingTimePerPoseSeconds}s/pose</Text>
+                    <Text style={[s.nomCellBold, { flex: 0.8, textAlign: 'right' }]}>{run.platesCount}</Text>
                   </View>
                 ))}
               </View>
@@ -138,6 +143,31 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
 
           <Text style={s.sectionLabel}>Operations</Text>
           <View style={s.opsGrid}>
+            {impressionRuns.length > 0 && (
+              <OpCard title="IMPRESSION" bgColor="#dbeafe" textColor="#1e40af">
+                {impressionRuns.map((r, i) => (
+                  <View key={i}>
+                    {impressionRuns.length > 1 && <Text style={[s.opNote, { marginTop: i > 0 ? 6 : 0, fontFamily: 'Helvetica-Bold', color: '#1e40af' }]}>{r.name}</Text>}
+                    <OpRow label="Recto/Verso" value={r.isRectoVerso ? (r.rectoVersoType === 'identical' ? 'R/V identique' : 'R/V different') : 'Recto seul'} />
+                    <OpRow label="Encre / plaque" value={`${r.inkMlPerPlate} ml`} />
+                    <OpRow label="Total encre" value={`${r.inkMlPerPlate * r.platesCount} ml`} />
+                  </View>
+                ))}
+                <OpRow label="Vernis" value={quote.hasVarnish ? 'Oui' : 'Non'} />
+                {quote.hasFlatColor && <OpRow label="Couleur plate" value="Oui" />}
+              </OpCard>
+            )}
+            <OpCard title="DECOUPE" bgColor="#fce7f3" textColor="#9d174d">
+              {runs.map((r, i) => (
+                <View key={i}>
+                  {runs.length > 1 && <Text style={[s.opNote, { marginTop: i > 0 ? 6 : 0, fontFamily: 'Helvetica-Bold', color: '#9d174d' }]}>{r.name}</Text>}
+                  <OpRow label="Temps / pose" value={`${r.cuttingTimePerPoseSeconds} s`} />
+                  <OpRow label="Nb plaques" value={`${r.platesCount} pl.`} />
+                  <OpRow label="Temps total" value={`${(r.cuttingTimePerPoseSeconds * r.platesCount / 60).toFixed(0)} min`} />
+                </View>
+              ))}
+              {runs.length > 1 && <OpRow label="Total general" value={`${totalCuttingMin.toFixed(0)} min`} />}
+            </OpCard>
             {quote.hasFaconnage && (
               <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
                 <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
