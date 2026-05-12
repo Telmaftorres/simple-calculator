@@ -107,29 +107,25 @@ function EmballageBlock({ quote, ps, onSave }: {
   ps: NonNullable<Quote['productionSheet']>
   onSave: (data: Partial<ProductionSheetInput>) => Promise<void>
 }) {
-  const mat = quote.packagingMaterialType ?? ''
-  const isExternal = mat === 'B' || mat === 'EB'
+  const isExternal = (quote.packagingMaterialType ?? '') === 'B' || (quote.packagingMaterialType ?? '') === 'EB'
 
-  const boxTypeOptions = ['etui', 'caisse', 'plaque_rainee']
   const boxTypeLabel = (v: string | null) =>
     v === 'etui' ? 'Étui' : v === 'caisse' ? 'Caisse' : v === 'plaque_rainee' ? 'Plaque rainée' : v ?? '—'
 
   const [boxType, setBoxType] = useState(quote.packagingBoxType ?? '')
-  const [qty, setQty] = useState(
-    (ps.prodPackagingQuantity ?? quote.packagingQuantity ?? '').toString()
-  )
-  const [unitPrice, setUnitPrice] = useState(
-    ps.prodPackagingUnitPrice?.toString() ?? ''
-  )
+  const [mat,     setMat]     = useState(ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '')
+  const [qty,     setQty]     = useState((ps.prodPackagingQuantity ?? quote.packagingQuantity ?? '').toString())
+  const defaultPrice = (ps.prodPackagingUnitPrice ?? quote.packagingUnitPriceOverride ?? '').toString()
+  const [unitPrice,  setUnitPrice]  = useState(defaultPrice)
   const [length, setLength] = useState(ps.packagingBoxLengthMm?.toString() ?? '')
   const [width,  setWidth]  = useState(ps.packagingBoxWidthMm?.toString()  ?? '')
   const [height, setHeight] = useState(ps.packagingBoxHeightMm?.toString() ?? '')
-  const [ref,    setRef]    = useState(ps.packagingSupplierRef ?? '')
   const [notes,  setNotes]  = useState(ps.packagingNotes ?? '')
   const [saving, setSaving] = useState(false)
 
   const summary = [
     boxTypeLabel(boxType),
+    mat || null,
     qty ? `${qty} pcs` : null,
     unitPrice ? `${parseFloat(unitPrice).toFixed(2)} €/pce` : null,
   ].filter(Boolean).join(' · ')
@@ -137,13 +133,13 @@ function EmballageBlock({ quote, ps, onSave }: {
   const handleSave = async () => {
     setSaving(true)
     await onSave({
-      packagingBoxLengthMm:  length    ? parseInt(length)       : null,
-      packagingBoxWidthMm:   width     ? parseInt(width)        : null,
-      packagingBoxHeightMm:  height    ? parseInt(height)       : null,
-      packagingSupplierRef:  ref       || null,
-      packagingNotes:        notes     || null,
-      prodPackagingUnitPrice: unitPrice ? parseFloat(unitPrice) : null,
-      prodPackagingQuantity:  qty       ? parseInt(qty)         : null,
+      packagingBoxLengthMm:   length    ? parseInt(length)       : null,
+      packagingBoxWidthMm:    width     ? parseInt(width)        : null,
+      packagingBoxHeightMm:   height    ? parseInt(height)       : null,
+      packagingNotes:         notes     || null,
+      prodPackagingUnitPrice: unitPrice ? parseFloat(unitPrice)  : null,
+      prodPackagingQuantity:  qty       ? parseInt(qty)          : null,
+      prodPackagingMaterial:  mat       || null,
     })
     setSaving(false)
   }
@@ -159,34 +155,22 @@ function EmballageBlock({ quote, ps, onSave }: {
             onChange={e => setBoxType(e.target.value)}
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800"
           >
-            {boxTypeOptions.map(v => (
+            {['etui', 'caisse', 'plaque_rainee'].map(v => (
               <option key={v} value={v}>{boxTypeLabel(v)}</option>
             ))}
           </select>
         </div>
 
-        {/* Matière (lecture seule) */}
-        <Field label="Matière" value={`${mat}${quote.packagingExternalSize ? ` — ${quote.packagingExternalSize}` : ''}`} readOnly />
+        {/* Matière — éditable */}
+        <Field label="Matière" value={mat} onChange={setMat} placeholder="ex: BC, EB…" />
 
         {/* Quantité */}
-        <Field
-          label="Quantité"
-          type="number"
-          value={qty}
-          onChange={setQty}
-          placeholder={quote.packagingQuantity?.toString() ?? ''}
-          suffix="pcs"
-        />
+        <Field label="Quantité" type="number" value={qty} onChange={setQty}
+          placeholder={quote.packagingQuantity?.toString() ?? ''} suffix="pcs" />
 
-        {/* Prix fournisseur */}
-        <Field
-          label="Prix unitaire fournisseur"
-          type="number"
-          value={unitPrice}
-          onChange={setUnitPrice}
-          placeholder="0.00"
-          suffix="€"
-        />
+        {/* Prix unitaire — pré-rempli depuis le devis */}
+        <Field label="Prix unitaire" type="number" value={unitPrice} onChange={setUnitPrice}
+          placeholder="0.00" suffix="€" />
       </div>
 
       {/* Dimensions (fournisseur externe) */}
@@ -194,15 +178,11 @@ function EmballageBlock({ quote, ps, onSave }: {
         <div>
           <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide mb-2">Dimensions réelles de l&apos;étui</p>
           <div className="grid grid-cols-3 gap-3">
-            <Field label="Longueur" type="number" value={length} onChange={setLength} placeholder="ex: 350" suffix="mm" />
-            <Field label="Largeur"  type="number" value={width}  onChange={setWidth}  placeholder="ex: 150" suffix="mm" />
-            <Field label="Hauteur"  type="number" value={height} onChange={setHeight} placeholder="ex: 200" suffix="mm" />
+            <Field label="Longueur" type="number" value={length} onChange={setLength} placeholder="350" suffix="mm" />
+            <Field label="Largeur"  type="number" value={width}  onChange={setWidth}  placeholder="150" suffix="mm" />
+            <Field label="Hauteur"  type="number" value={height} onChange={setHeight} placeholder="200" suffix="mm" />
           </div>
         </div>
-      )}
-
-      {isExternal && (
-        <Field label="Référence fournisseur" value={ref} onChange={setRef} placeholder="ex: REF-2024-001" />
       )}
 
       <Textarea label="Notes" value={notes} onChange={setNotes} placeholder="Informations complémentaires…" />
@@ -272,8 +252,9 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         packagingBoxHeightMm:  ps?.packagingBoxHeightMm  ?? null,
         packagingSupplierRef:  ps?.packagingSupplierRef  ?? null,
         packagingNotes:        ps?.packagingNotes        ?? null,
-        prodPackagingUnitPrice: ps?.prodPackagingUnitPrice ?? null,
-        prodPackagingQuantity:  ps?.prodPackagingQuantity  ?? null,
+        prodPackagingUnitPrice:  ps?.prodPackagingUnitPrice  ?? null,
+        prodPackagingQuantity:   ps?.prodPackagingQuantity   ?? null,
+        prodPackagingMaterial:   ps?.prodPackagingMaterial   ?? null,
       }
       const blob = await pdf(<ProductionSheetPDF quote={quote} productionSheet={psInput} />).toBlob()
       setPdfUrl(URL.createObjectURL(blob))

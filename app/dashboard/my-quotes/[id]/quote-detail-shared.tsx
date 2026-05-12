@@ -47,6 +47,7 @@ export type Quote = {
   packagingPlate: { name: string } | null
   packagingBoxType: string | null
   packagingMaterialType: string | null
+  packagingUnitPriceOverride: number | null
   packagingExternalSize: string | null
   study: { number: string } | null
   productType: { name: string } | null
@@ -102,6 +103,7 @@ export type Quote = {
     packagingNotes: string | null
     prodPackagingUnitPrice: number | null
     prodPackagingQuantity: number | null
+    prodPackagingMaterial: string | null
   } | null
 }
 

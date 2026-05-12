@@ -28,8 +28,9 @@ const productionSheetSchema = z.object({
   packagingBoxHeightMm:  z.number().int().min(0).nullable().optional(),
   packagingSupplierRef:  z.string().nullable().optional(),
   packagingNotes:        z.string().nullable().optional(),
-  prodPackagingUnitPrice: z.number().min(0).nullable().optional(),
-  prodPackagingQuantity:  z.number().int().min(0).nullable().optional(),
+  prodPackagingUnitPrice:  z.number().min(0).nullable().optional(),
+  prodPackagingQuantity:   z.number().int().min(0).nullable().optional(),
+  prodPackagingMaterial:   z.string().nullable().optional(),
 })
 
 export type ProductionSheetInput = z.infer<typeof productionSheetSchema>
