@@ -97,7 +97,6 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
             { label: 'CLIENT', value: quote.client ?? '—' },
             { label: 'TYPE PLV', value: quote.productType?.name ?? 'Multi-produits' },
             { label: 'QUANTITE', value: `${quote.plvQuantity ?? quote.quantity} ex` },
-            { label: 'MONTANT HT', value: `${quote.totalCost?.toFixed(2)} EUR` },
             { label: 'TOTAL PLAQUES', value: `${totalPlates} pl.` },
           ].map((item, i) => (
             <View key={i}>
@@ -205,7 +204,6 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
                   <OpRow label="Type" value={quote.packagingBoxType === 'etui' ? 'Etui' : quote.packagingBoxType ?? '—'} />
                   <OpRow label="Matiere" value={ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '—'} />
                   <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
-                  <OpRow label="Prix unitaire" value={`${ps.prodPackagingUnitPrice?.toFixed(2) ?? '—'} EUR`} />
                   {ps.packagingBoxLengthMm != null && (
                     <OpRow label="Dimensions" value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm} mm`} />
                   )}
@@ -216,7 +214,7 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
                   {quote.transportDeliveries.map((d, i) => (
                     <View key={i}>
                       <OpRow label={d.transportMode === 'PACK30' ? 'Pack 30' : 'Messagerie+'} value={`Dept. ${d.department}`} />
-                      <OpRow label={`${d.units} colis · ${d.weightKg}kg`} value={`${d.totalHT.toFixed(2)} EUR`} />
+                      <OpRow label="Colis" value={`${d.units} · ${d.weightKg}kg`} />
                     </View>
                   ))}
                   {ps.prodTransportNotes && <Text style={s.opNote}>{ps.prodTransportNotes}</Text>}
