@@ -114,36 +114,45 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
             <Text style={s.sectionLabel}>Nomenclature matiere</Text>
             <View style={s.nomTable}>
               <View style={s.nomHead}>
-                <Text style={[s.nomHCell, { flex: 2.2 }]}>PRODUIT</Text>
-                <Text style={[s.nomHCell, { flex: 2 }]}>MATIERE</Text>
-                <Text style={[s.nomHCell, { flex: 1.4 }]}>FORMAT A PLAT</Text>
-                <Text style={[s.nomHCell, { flex: 0.7, textAlign: 'center' }]}>QTE</Text>
-                <Text style={[s.nomHCell, { flex: 0.9, textAlign: 'center' }]}>POSES/PL.</Text>
-                <Text style={[s.nomHCell, { flex: 0.9, textAlign: 'center' }]}>DECOUPE</Text>
-                <Text style={[s.nomHCell, { flex: 0.7, textAlign: 'right' }]}>PLAQUES</Text>
+                <Text style={[s.nomHCell, { flex: 2.5 }]}>PRODUIT</Text>
+                <Text style={[s.nomHCell, { flex: 2.2 }]}>MATIERE</Text>
+                <Text style={[s.nomHCell, { flex: 1.5 }]}>FORMAT A PLAT</Text>
+                <Text style={[s.nomHCell, { flex: 0.8, textAlign: 'center' }]}>QTE</Text>
+                <Text style={[s.nomHCell, { flex: 1, textAlign: 'center' }]}>POSES/PL.</Text>
               </View>
               {runs.map((run, ri) => (
                 <View key={ri}>
                   <View style={s.nomGroupBar}>
                     <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.violet }}>{run.name}</Text>
                     <Text style={s.nomGroupBadge}>{run.hasImpression ? 'IMP. + DECOUPE' : 'DECOUPE SEULE'}</Text>
-                    <Text style={{ fontSize: 7.5, color: C.mid, marginLeft: 'auto' }}>
-                      {run.plate?.name}  {run.plate?.width}x{run.plate?.height}  ·  {run.platesCount} pl.  ·  {run.cuttingTimePerPoseSeconds}s/pose{run.hasImpression ? `  ·  ${run.inkMlPerPlate}ml/pl.` : ''}
-                    </Text>
                   </View>
                   {quote.products.filter(p => p.amalgameGroupIndex === ri).map((p, pi) => (
                     <View key={p.id} style={pi % 2 === 0 ? s.nomRow : s.nomRowAlt}>
-                      <Text style={[s.nomCell, { flex: 2.2, paddingLeft: 12 }]}>{'->'} {p.productTypeName}</Text>
-                      <Text style={[s.nomCellMid, { flex: 2 }]}>{p.plate?.name}  {p.plate?.width}x{p.plate?.height}</Text>
-                      <Text style={[s.nomCell, { flex: 1.4 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
-                      <Text style={[s.nomCell, { flex: 0.7, textAlign: 'center' }]}>{p.quantity}</Text>
-                      <Text style={[s.nomCellBold, { flex: 0.9, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
-                      <Text style={[s.nomCell, { flex: 0.9, textAlign: 'center' }]}>{run.cuttingTimePerPoseSeconds}s</Text>
-                      <Text style={[s.nomCellBold, { flex: 0.7, textAlign: 'right' }]}>{run.platesCount}</Text>
+                      <Text style={[s.nomCell, { flex: 2.5, paddingLeft: 12 }]}>{'->'} {p.productTypeName}</Text>
+                      <Text style={[s.nomCellMid, { flex: 2.2 }]}>{p.plate?.name}  {p.plate?.width}x{p.plate?.height}</Text>
+                      <Text style={[s.nomCell, { flex: 1.5 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
+                      <Text style={[s.nomCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
+                      <Text style={[s.nomCellBold, { flex: 1, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
                     </View>
                   ))}
                 </View>
               ))}
+              {/* Ligne récap plaques */}
+              <View style={{ flexDirection: 'row', alignItems: 'center', padding: '5 8', backgroundColor: C.dark, gap: 16 }}>
+                <Text style={{ fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.white }}>TOTAL PLAQUES</Text>
+                {runs.map((run, ri) => (
+                  <View key={ri} style={{ flexDirection: 'row', gap: 8, alignItems: 'center' }}>
+                    {runs.length > 1 && <Text style={{ fontSize: 7.5, color: '#94a3b8' }}>{run.name} :</Text>}
+                    <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#22c55e' }}>{run.platesCount} pl.</Text>
+                    <Text style={{ fontSize: 7.5, color: '#94a3b8' }}>{run.plate?.name}  {run.plate?.width}x{run.plate?.height} mm</Text>
+                  </View>
+                ))}
+                {runs.length > 1 && (
+                  <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: '#22c55e', marginLeft: 'auto' }}>
+                    Total : {totalPlates} pl.
+                  </Text>
+                )}
+              </View>
             </View>
           </View>
 
