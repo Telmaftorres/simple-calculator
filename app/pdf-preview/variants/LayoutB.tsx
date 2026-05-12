@@ -123,7 +123,7 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
                 </View>
                 {quote.products.filter(p => p.amalgameGroupIndex === ri).map((p, pi) => (
                   <View key={p.id} style={pi % 2 === 0 ? s.nomRow : s.nomRowAlt}>
-                    <Text style={[s.nomCell, { flex: 2.5, paddingLeft: 14 }]}>-> {p.productTypeName}</Text>
+                    <Text style={[s.nomCell, { flex: 2.5, paddingLeft: 14 }]}>{'->'} {p.productTypeName}</Text>
                     <Text style={[s.nomCellMid, { flex: 2.5 }]}>{p.plate?.name}  {p.plate?.width}x{p.plate?.height}</Text>
                     <Text style={[s.nomCell, { flex: 1.5 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
                     <Text style={[s.nomCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
