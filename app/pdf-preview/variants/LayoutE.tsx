@@ -110,6 +110,33 @@ function fmtTime(totalSeconds: number): string {
   return `${m} min`
 }
 
+function PageHeader({ quote, tag }: { quote: Q; tag: string }) {
+  return (
+    <>
+      <View style={s.header}>
+        <View>
+          <Text style={s.headerTitle}>FICHE DE PRODUCTION</Text>
+          <Text style={s.headerSub}>Dossier {quote.study?.number}  ·  {quote.reference}  ·  {new Date(quote.createdAt).toLocaleDateString('fr-FR')}</Text>
+        </View>
+        <Text style={s.headerTag}>EN COURS</Text>
+      </View>
+      <View style={s.metaStrip}>
+        {[
+          { label: 'CLIENT', value: quote.client ?? '—' },
+          { label: 'TYPE PLV', value: quote.productType?.name ?? 'Multi-produits' },
+          { label: 'QUANTITE', value: `${quote.plvQuantity ?? quote.quantity} ex` },
+          { label: 'ETAPE', value: tag },
+        ].map((item, i) => (
+          <View key={i}>
+            <Text style={s.metaLabel}>{item.label}</Text>
+            <Text style={s.metaValue}>{item.value}</Text>
+          </View>
+        ))}
+      </View>
+    </>
+  )
+}
+
 export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; productionSheet: PS }) {
   const runs = quote.amalgameRuns ?? []
   const standaloneProducts = quote.products.filter(p => p.amalgameGroupIndex === null)
@@ -118,7 +145,6 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
   const totalPlates = runs.reduce((sum, r) => sum + r.platesCount, 0) +
     standaloneProducts.reduce((sum, p) => sum + (p.platesCount ?? 0), 0)
 
-  // Temps total estimé (secondes)
   const cuttingSeconds = runs.reduce((sum, r) => sum + r.cuttingTimePerPoseSeconds * r.platesCount, 0) +
     standaloneProducts.reduce((sum, p) => sum + p.cuttingTimePerPoseSeconds * (p.platesCount ?? 0), 0)
   const faconnageSeconds = quote.hasFaconnage ? ps.prodAssemblyTimePerPieceSeconds * qty : 0
@@ -127,29 +153,11 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
 
   return (
     <Document>
+
+      {/* ── PAGE 1 : IMPRESSION / DECOUPE ── */}
       <Page size="A4" orientation="landscape" style={s.page}>
 
-        <View style={s.header}>
-          <View>
-            <Text style={s.headerTitle}>FICHE DE PRODUCTION</Text>
-            <Text style={s.headerSub}>Dossier {quote.study?.number}  ·  {quote.reference}  ·  {new Date(quote.createdAt).toLocaleDateString('fr-FR')}</Text>
-          </View>
-          <Text style={s.headerTag}>EN COURS</Text>
-        </View>
-
-        <View style={s.metaStrip}>
-          {[
-            { label: 'CLIENT', value: quote.client ?? '—' },
-            { label: 'TYPE PLV', value: quote.productType?.name ?? 'Multi-produits' },
-            { label: 'QUANTITE', value: `${qty} ex` },
-            { label: 'TOTAL PLAQUES', value: `${totalPlates} pl.` },
-          ].map((item, i) => (
-            <View key={i}>
-              <Text style={s.metaLabel}>{item.label}</Text>
-              <Text style={s.metaValue}>{item.value}</Text>
-            </View>
-          ))}
-        </View>
+        <PageHeader quote={quote} tag={`Impression / Decoupe  ·  ${totalPlates} pl.`} />
 
         <View style={s.body}>
           <Text style={s.sectionLabel}>Groupes de production</Text>
@@ -229,53 +237,83 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             )
           })}
 
-          {/* OPS COMMUNES */}
-          <View style={s.opsSection}>
-            <Text style={s.sectionLabel}>Operations communes</Text>
-            <View style={s.opsGrid}>
-              {quote.hasFaconnage && (
-                <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
-                  <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
-                  {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
-                  {ps.faconnageNotes && <Text style={s.opNote}>{ps.faconnageNotes}</Text>}
-                </OpCard>
-              )}
-              {quote.hasConditionnement && (
-                <OpCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
-                  <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds} s`} />
-                  {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
-                  {ps.conditionnementNotes && <Text style={s.opNote}>{ps.conditionnementNotes}</Text>}
-                </OpCard>
-              )}
-              {quote.hasPackaging && (
-                <OpCard title="EMBALLAGE" bgColor={C.orangeBg} textColor={C.orange}>
-                  <OpRow label="Type" value={quote.packagingBoxType === 'etui' ? 'Etui' : quote.packagingBoxType ?? '—'} />
-                  <OpRow label="Matiere" value={ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '—'} />
-                  <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
-                  {ps.packagingBoxLengthMm != null && (
-                    <OpRow label="Dim." value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm}`} />
-                  )}
-                </OpCard>
-              )}
-              {(quote.accessories.length > 0 || ps.achatsNotes) && (
-                <OpCard title="ACCESSOIRES" bgColor={C.emeraldBg} textColor={C.emerald}>
-                  {quote.accessories.map((a, i) => (
-                    <OpRow key={i} label={a.accessory.name} value={`x ${a.quantity}`} />
-                  ))}
-                  {ps.achatsNotes && <Text style={s.opNote}>{ps.achatsNotes}</Text>}
-                </OpCard>
-              )}
-              {ps.remarques && (
-                <OpCard title="REMARQUES" bgColor={C.bg} textColor={C.mid}>
-                  <Text style={[s.opNote, { marginTop: 0 }]}>{ps.remarques}</Text>
-                </OpCard>
-              )}
-            </View>
+        </View>
+
+        {/* Bande bas page 1 : recap découpe */}
+        <View style={s.summaryBand}>
+          <View style={s.summaryItem}>
+            <Text style={s.summaryLabel}>Total plaques</Text>
+            <Text style={s.summaryValue}>{totalPlates} pl.</Text>
+          </View>
+          <View style={s.summaryItem}>
+            <Text style={s.summaryLabel}>Temps decoupe estime</Text>
+            <Text style={s.summaryValue}>{fmtTime(cuttingSeconds)}</Text>
+          </View>
+          <View style={s.summaryItemLast}>
+            <Text style={s.summaryLabel}>Dossier</Text>
+            <Text style={s.summaryValue}>{quote.study?.number}</Text>
+            <Text style={s.summarySub}>{quote.reference}  ·  {quote.client}</Text>
           </View>
         </View>
 
-        {/* BANDE RECAP BAS DE PAGE */}
-        <View style={s.summaryBand} fixed>
+        <View style={s.footer}>
+          <Text style={s.footerText}>Fiche de production — Impression / Decoupe  ·  {quote.study?.number}  ·  {quote.reference}  ·  {quote.client}</Text>
+          <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber}/${totalPages}`} />
+        </View>
+
+      </Page>
+
+      {/* ── PAGE 2 : FAÇONNAGE / CONDITIONNEMENT / DÉLAIS ── */}
+      <Page size="A4" orientation="landscape" style={s.page}>
+
+        <PageHeader quote={quote} tag="Façonnage / Conditionnement / Planification" />
+
+        <View style={[s.body, { padding: '14 22 80 22' }]}>
+          <Text style={s.sectionLabel}>Operations de finition</Text>
+          <View style={s.opsGrid}>
+            {quote.hasFaconnage && (
+              <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
+                <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
+                {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
+                {ps.collagePerPLV != null && <OpRow label="Cout collage / PLV" value={`${ps.collagePerPLV.toFixed(2)} EUR`} />}
+                {ps.faconnageNotes && <Text style={s.opNote}>{ps.faconnageNotes}</Text>}
+              </OpCard>
+            )}
+            {quote.hasConditionnement && (
+              <OpCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
+                <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds} s`} />
+                {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
+                {ps.conditionnementNotes && <Text style={s.opNote}>{ps.conditionnementNotes}</Text>}
+              </OpCard>
+            )}
+            {quote.hasPackaging && (
+              <OpCard title="EMBALLAGE" bgColor={C.orangeBg} textColor={C.orange}>
+                <OpRow label="Type" value={quote.packagingBoxType === 'etui' ? 'Etui' : quote.packagingBoxType ?? '—'} />
+                <OpRow label="Matiere" value={ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '—'} />
+                <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
+                {ps.packagingBoxLengthMm != null && (
+                  <OpRow label="Dim." value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm}`} />
+                )}
+              </OpCard>
+            )}
+            {(quote.accessories.length > 0 || ps.achatsNotes) && (
+              <OpCard title="ACCESSOIRES" bgColor={C.emeraldBg} textColor={C.emerald}>
+                {quote.accessories.map((a, i) => (
+                  <OpRow key={i} label={a.accessory.name} value={`x ${a.quantity}`} />
+                ))}
+                {ps.achatsNotes && <Text style={s.opNote}>{ps.achatsNotes}</Text>}
+              </OpCard>
+            )}
+            {ps.remarques && (
+              <OpCard title="REMARQUES" bgColor={C.bg} textColor={C.mid}>
+                <Text style={[s.opNote, { marginTop: 0 }]}>{ps.remarques}</Text>
+              </OpCard>
+            )}
+          </View>
+        </View>
+
+        {/* Bande bas page 2 : délai + temps total */}
+        <View style={s.summaryBand}>
           <View style={s.summaryItem}>
             <Text style={s.summaryLabel}>Delai de realisation</Text>
             <Text style={s.summaryValue}>{ps.delaiRealisation ?? '—'}</Text>
@@ -296,12 +334,13 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
           </View>
         </View>
 
-        <View style={s.footer} fixed>
-          <Text style={s.footerText}>Fiche de production · {quote.study?.number} · {quote.reference} · {quote.client}</Text>
+        <View style={s.footer}>
+          <Text style={s.footerText}>Fiche de production — Finition / Planification  ·  {quote.study?.number}  ·  {quote.reference}  ·  {quote.client}</Text>
           <Text style={s.footerText} render={({ pageNumber, totalPages }) => `Page ${pageNumber}/${totalPages}`} />
         </View>
 
       </Page>
+
     </Document>
   )
 }
