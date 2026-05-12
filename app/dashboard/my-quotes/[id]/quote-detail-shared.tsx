@@ -59,6 +59,7 @@ export type Quote = {
     hasImpression: boolean
     platesCount: number | null
     cuttingTimePerPoseSeconds: number
+    machineTimeMinOverride: number | null
     inkMlPerPlate: number
     isRectoVerso: boolean
     rectoVersoType: string | null

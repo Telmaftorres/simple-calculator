@@ -34,6 +34,7 @@ export type QuoteForPDF = {
     hasImpression: boolean
     platesCount: number | null
     cuttingTimePerPoseSeconds: number
+    machineTimeMinOverride: number | null
     isRectoVerso: boolean
     rectoVersoType: string | null
     plate: { name: string; width: number; height: number } | null
@@ -102,8 +103,8 @@ const s = StyleSheet.create({
   specList: { flexDirection: 'column' },
   specListRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
   specListBar: { width: 3, borderRadius: 2, alignSelf: 'stretch', marginRight: 8 },
-  specListLabel: { fontSize: 7.5, color: C.mid, flex: 1 },
-  specListValue: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
+  specListLabel: { fontSize: 7.5, color: C.mid, width: 72 },
+  specListValue: { fontSize: 8, fontFamily: 'Helvetica-Bold', flex: 1, flexWrap: 'wrap', textAlign: 'right' },
   // Mini tableau produits
   miniTable: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 3, overflow: 'hidden', alignSelf: 'flex-start' },
   miniHead: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '3 7' },
@@ -209,7 +210,9 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
     standaloneProducts.reduce((sum, p) => sum + p.cuttingTimePerPoseSeconds * (p.platesCount ?? 0), 0)
   const impressionSeconds = ps.prodMachineTimeMinOverride != null
     ? ps.prodMachineTimeMinOverride * 60
-    : 0
+    : runs
+        .filter(r => r.hasImpression)
+        .reduce((sum, r) => sum + (r.machineTimeMinOverride ?? 0) * 60, 0)
   const faconnageSeconds = quote.hasFaconnage ? (ps.prodAssemblyTimePerPieceSeconds ?? 0) * qty : 0
   const conditionnementSeconds = quote.hasConditionnement ? (ps.prodPackTimePerPieceSeconds ?? 0) * qty : 0
   const totalProductionSeconds = cuttingSeconds + faconnageSeconds + conditionnementSeconds
@@ -228,7 +231,6 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
           <View style={{ flex: 1, flexDirection: 'column' }}>
           {/* BLOCS AMALGAME */}
           {runs.map((run, ri) => {
-            const products = quote.products.filter(p => p.amalgameGroupIndex === ri)
             const col = GROUP_COLORS[ri % GROUP_COLORS.length]
             return (
               <View key={ri} style={s.groupBlock}>
@@ -254,12 +256,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                       <Text style={[s.miniHCell, { flex: 0.8, textAlign: 'center' }]}>QTE</Text>
                       <Text style={[s.miniHCell, { flex: 0.9, textAlign: 'center' }]}>POSES/PL.</Text>
                     </View>
-                    {products.map((p, pi) => (
-                      <View key={p.id} style={pi % 2 === 0 ? s.miniRow : s.miniRowAlt}>
-                        <Text style={[s.miniCell, { flex: 2.5 }]}>{p.productTypeName}</Text>
-                        <Text style={[s.miniCellMid, { flex: 1.8 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
-                        <Text style={[s.miniCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
-                        <Text style={[s.miniCellBold, { flex: 0.9, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
+                    {run.items.map((item, ii) => (
+                      <View key={ii} style={ii % 2 === 0 ? s.miniRow : s.miniRowAlt}>
+                        <Text style={[s.miniCell, { flex: 2.5 }]}>{item.name}</Text>
+                        <Text style={[s.miniCellMid, { flex: 1.8 }]}>{item.flatWidth}x{item.flatHeight} mm</Text>
+                        <Text style={[s.miniCell, { flex: 0.8, textAlign: 'center' }]}>{item.quantityPerUnit * qty}</Text>
+                        <Text style={[s.miniCellBold, { flex: 0.9, textAlign: 'center' }]}>{item.countPerPlate}</Text>
                       </View>
                     ))}
                   </View>
