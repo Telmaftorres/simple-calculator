@@ -13,6 +13,7 @@ export function SectionConditionnement() {
     hasConditionnement, setHasConditionnement,
     packTimePerPieceSeconds, setPackTimePerPieceSeconds,
     hasAssemblyNotice, setHasAssemblyNotice,
+    hasPoseEtiquette, setHasPoseEtiquette,
   } = useCalculatorContext()
 
   return (
@@ -44,17 +45,31 @@ export function SectionConditionnement() {
           />
         </div>
 
-        <div className="mt-4 flex items-center space-x-2 bg-teal-50 p-3 rounded-lg border border-teal-100">
-          <input
-            type="checkbox"
-            id="assemblyNotice"
-            checked={hasAssemblyNotice}
-            onChange={(e) => setHasAssemblyNotice(e.target.checked)}
-            className="h-5 w-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
-          />
-          <Label htmlFor="assemblyNotice" className="text-teal-900 cursor-pointer font-medium">
-            Ajouter Notice de Montage (+0.10€ / pce)
-          </Label>
+        <div className="mt-4 space-y-2">
+          <div className="flex items-center space-x-2 bg-teal-50 p-3 rounded-lg border border-teal-100">
+            <input
+              type="checkbox"
+              id="assemblyNotice"
+              checked={hasAssemblyNotice}
+              onChange={(e) => setHasAssemblyNotice(e.target.checked)}
+              className="h-5 w-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+            />
+            <Label htmlFor="assemblyNotice" className="text-teal-900 cursor-pointer font-medium">
+              Ajouter Notice de Montage (+0.10€ / pce)
+            </Label>
+          </div>
+          <div className="flex items-center space-x-2 bg-teal-50 p-3 rounded-lg border border-teal-100">
+            <input
+              type="checkbox"
+              id="poseEtiquette"
+              checked={hasPoseEtiquette}
+              onChange={(e) => setHasPoseEtiquette(e.target.checked)}
+              className="h-5 w-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
+            />
+            <Label htmlFor="poseEtiquette" className="text-teal-900 cursor-pointer font-medium">
+              Pose étiquette
+            </Label>
+          </div>
         </div>
       </div>
     </SectionDisplay>

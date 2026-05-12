@@ -12,6 +12,8 @@ export type QuoteForPDF = {
   productType: { name: string } | null
   hasFaconnage: boolean
   hasConditionnement: boolean
+  hasAssemblyNotice: boolean
+  hasPoseEtiquette: boolean
   hasPackaging: boolean
   packagingBoxType: string | null
   packagingMaterialType: string | null
@@ -359,6 +361,8 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
               <OpCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
                 <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds ?? quote.packTimePerPieceSeconds ?? '—'} s`} />
                 {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
+                {quote.hasAssemblyNotice && <OpRow label="Notice de montage" value="Oui" />}
+                {quote.hasPoseEtiquette && <OpRow label="Pose etiquette" value="Oui" />}
                 {ps.conditionnementNotes && <Text style={s.opNote}>{ps.conditionnementNotes}</Text>}
               </OpCard>
             )}

@@ -12,6 +12,7 @@ export const QUOTE_DEFAULTS = {
   assemblyTimePerPieceSeconds: 0 as number,
   packTimePerPieceSeconds: 0 as number,
   hasAssemblyNotice: false as boolean,
+  hasPoseEtiquette: false as boolean,
   hasPackaging: false as boolean,
   packagingBoxType: 'etui' as 'etui' | 'caisse' | 'plaque_rainee',
   packagingMaterialType: 'BC' as 'B' | 'EB' | 'C' | 'BC',

@@ -21,6 +21,7 @@ const base: QuoteCostRowsParams = {
   consumablesCost: 0,
   hasConditionnement: false,
   hasAssemblyNotice: false,
+  hasPoseEtiquette: false,
   packTimePerPieceSeconds: 0,
   packagingCost: 0,
   hasAccessoires: false,

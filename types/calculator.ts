@@ -57,6 +57,7 @@ export type ProductTemplate = {
   hasConditionnement: boolean
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
+  hasPoseEtiquette: boolean
   hasAccessoires: boolean
   hasTransport: boolean
   defaultTransportMode: string | null

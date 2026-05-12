@@ -75,7 +75,7 @@ export function useCalculator(
     quantity, selectedPlateId, flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, flatColorSurfacePercent, printMode, isRectoVerso, hasVarnish,
     hasFlatColor, rectoVersoType, cuttingTimePerPoseSeconds, assemblyTimePerPieceSeconds,
-    packTimePerPieceSeconds, hasAssemblyNotice, currentAccessoryId, currentAccessoryQty,
+    packTimePerPieceSeconds, hasAssemblyNotice, hasPoseEtiquette, currentAccessoryId, currentAccessoryQty,
     currentConsumableId, currentConsumableSize, hasPackaging, packagingBoxType,
     packagingMaterialType, packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId, packagingQuantity,
@@ -294,7 +294,7 @@ export function useCalculator(
     varnishSurfacePercent, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
     cuttingTimePerPoseSeconds, machineTimeMinOverride, bordABord, itemsPerPlateOverride, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
-    hasAssemblyNotice, hasPackaging, packagingBoxType, packagingMaterialType,
+    hasAssemblyNotice, hasPoseEtiquette, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
     packagingQuantity, packagingCuttingTimePerPoseSeconds, packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
@@ -355,6 +355,7 @@ export function useCalculator(
     setField('hasConditionnement', template.hasConditionnement)
     setField('packTimePerPieceSeconds', template.packTimePerPieceSeconds)
     setField('hasAssemblyNotice', template.hasAssemblyNotice)
+    setField('hasPoseEtiquette', template.hasPoseEtiquette ?? false)
     setField('hasAccessoires', template.hasAccessoires)
     if (template.accessories.length > 0) {
       setSelectedAccessories(template.accessories.map((a) => ({
@@ -513,6 +514,7 @@ export function useCalculator(
     hasFaconnage, setHasFaconnage: (v: boolean) => setField('hasFaconnage', v),
     packTimePerPieceSeconds, setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
     hasAssemblyNotice, setHasAssemblyNotice: (v: boolean) => setField('hasAssemblyNotice', v),
+    hasPoseEtiquette, setHasPoseEtiquette: (v: boolean) => setField('hasPoseEtiquette', v),
     hasConditionnement, setHasConditionnement: (v: boolean) => setField('hasConditionnement', v),
     selectedAccessories,
     currentAccessoryId, setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),

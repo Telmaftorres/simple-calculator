@@ -40,6 +40,7 @@ export const quoteFieldsSchema = z.object({
 
   packTimePerPieceSeconds: z.number().int().optional(),
   hasAssemblyNotice: z.boolean().optional(),
+  hasPoseEtiquette: z.boolean().optional(),
   hasConditionnement: z.boolean().optional(),
 
   hasAccessoires: z.boolean().optional(),

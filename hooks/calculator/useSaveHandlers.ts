@@ -42,6 +42,7 @@ export interface SaveContext {
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
+  hasPoseEtiquette: boolean
   hasPackaging: boolean
   packagingBoxType: 'etui' | 'caisse' | 'plaque_rainee'
   packagingMaterialType: 'B' | 'EB' | 'C' | 'BC'
@@ -186,6 +187,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
         hasAssemblyNotice: ctx.hasAssemblyNotice,
+        hasPoseEtiquette: ctx.hasPoseEtiquette,
         hasPackaging: ctx.hasPackaging,
         packagingBoxType: ctx.packagingBoxType,
         packagingMaterialType: ctx.packagingMaterialType,

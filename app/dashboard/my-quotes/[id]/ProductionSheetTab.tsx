@@ -102,6 +102,68 @@ function Textarea({ label, value, onChange, placeholder }: {
   )
 }
 
+// ── Section Conditionnement ──
+function ConditionnementBlock({ quote, ps, onSave }: {
+  quote: Quote
+  ps: NonNullable<Quote['productionSheet']>
+  onSave: (data: Partial<ProductionSheetInput>) => Promise<void>
+}) {
+  const [type, setType] = useState(ps.conditionnementType ?? '')
+  const [notes, setNotes] = useState(ps.conditionnementNotes ?? '')
+  const [saving, setSaving] = useState(false)
+
+  const typeLabel = (v: string) =>
+    v === 'kit_unitaire' ? 'Kit unitaire' : v === 'caisse' ? 'Caisse' : v === 'palette' ? 'Palette' : v === 'autre' ? 'Autre' : '—'
+
+  const summary = [
+    type ? typeLabel(type) : null,
+    quote.hasAssemblyNotice ? 'Notice de montage' : null,
+    quote.hasPoseEtiquette ? 'Pose étiquette' : null,
+  ].filter(Boolean).join(' · ')
+
+  const handleSave = async () => {
+    setSaving(true)
+    await onSave({ conditionnementType: type || null, conditionnementNotes: notes || null })
+    setSaving(false)
+  }
+
+  return (
+    <Block emoji="📦" title="Conditionnement" summary={summary}>
+      <div className="space-y-3">
+        <div className="flex gap-4 text-sm">
+          {quote.hasAssemblyNotice && (
+            <span className="flex items-center gap-1.5 text-teal-700 bg-teal-50 border border-teal-200 rounded-full px-3 py-1 text-xs font-medium">
+              ✓ Notice de montage
+            </span>
+          )}
+          {quote.hasPoseEtiquette && (
+            <span className="flex items-center gap-1.5 text-teal-700 bg-teal-50 border border-teal-200 rounded-full px-3 py-1 text-xs font-medium">
+              ✓ Pose étiquette
+            </span>
+          )}
+        </div>
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Type de conditionnement</label>
+          <select
+            value={type}
+            onChange={e => setType(e.target.value)}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800"
+          >
+            <option value="">—</option>
+            {[['kit_unitaire', 'Kit unitaire'], ['caisse', 'Caisse'], ['palette', 'Palette'], ['autre', 'Autre']].map(([v, l]) => (
+              <option key={v} value={v}>{l}</option>
+            ))}
+          </select>
+        </div>
+        <Textarea label="Notes" value={notes} onChange={setNotes} placeholder="Instructions de conditionnement…" />
+        <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700">
+          {saving ? 'Sauvegarde…' : 'Enregistrer'}
+        </Button>
+      </div>
+    </Block>
+  )
+}
+
 // ── Section Emballage ──
 function EmballageBlock({ quote, ps, onSave }: {
   quote: Quote
@@ -316,6 +378,9 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       </div>
 
       {/* Blocs accordéon */}
+      {quote.hasConditionnement && ps && (
+        <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
+      )}
       {quote.hasPackaging && (
         ps ? (
           <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />

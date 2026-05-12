@@ -83,6 +83,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     assemblyTimePerPieceSeconds: initialQuote.assemblyTimePerPieceSeconds || 0,
     packTimePerPieceSeconds: initialQuote.packTimePerPieceSeconds || 0,
     hasAssemblyNotice: initialQuote.hasAssemblyNotice || false,
+    hasPoseEtiquette: (initialQuote as { hasPoseEtiquette?: boolean }).hasPoseEtiquette || false,
     hasPackaging: initialQuote.hasPackaging || false,
     packagingBoxType: (initialQuote.packagingBoxType as 'etui' | 'caisse' | 'plaque_rainee') || 'etui',
     packagingMaterialType: (initialQuote.packagingMaterialType as 'B' | 'EB' | 'C' | 'BC') || 'BC',

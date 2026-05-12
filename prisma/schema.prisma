@@ -83,6 +83,7 @@ model ProductTemplate {
   hasConditionnement          Boolean                   @default(true)
   packTimePerPieceSeconds     Int                       @default(0)
   hasAssemblyNotice           Boolean                   @default(false)
+  hasPoseEtiquette            Boolean                   @default(false)
   // ── Accessoires ──
   hasAccessoires              Boolean                   @default(false)
   // ── Transport ──
@@ -291,6 +292,7 @@ model Quote {
   assemblyTimePerPieceSeconds        Int               @default(0)
   packTimePerPieceSeconds            Int               @default(0)
   hasAssemblyNotice                  Boolean           @default(false)
+  hasPoseEtiquette                   Boolean           @default(false)
   plateId                            Int?
   plateCostOverride                  Float?            // prix/plaque négocié, écrase le tarif catalogue
   customPlateName                    String?           // matière personnalisée (non enregistrée en DB)

@@ -41,6 +41,7 @@ export function VoirDevisButton() {
         consumablesCost: costResult.consumablesCost,
         hasConditionnement: formState.hasConditionnement,
         hasAssemblyNotice: formState.hasAssemblyNotice,
+        hasPoseEtiquette: formState.hasPoseEtiquette,
         packTimePerPieceSeconds: formState.packTimePerPieceSeconds,
         packagingCost: costResult.packagingCost,
         hasAccessoires: formState.hasAccessoires,

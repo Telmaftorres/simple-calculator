@@ -25,6 +25,7 @@ export type QuoteCostRowsParams = {
   consumablesCost: number
   hasConditionnement: boolean
   hasAssemblyNotice: boolean
+  hasPoseEtiquette: boolean
   packTimePerPieceSeconds: number
   packagingCost: number
   hasAccessoires: boolean

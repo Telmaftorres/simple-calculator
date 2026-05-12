@@ -38,6 +38,7 @@ export type Quote = {
   rectoVersoType: string | null
   hasVarnish: boolean; hasFlatColor: boolean
   hasAssemblyNotice: boolean
+  hasPoseEtiquette: boolean
   isMultiProduct: boolean
   inkMlPerPlate: number | null
   platesCount: number | null
