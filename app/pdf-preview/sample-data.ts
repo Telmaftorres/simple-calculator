@@ -12,9 +12,10 @@ export const SAMPLE_QUOTE = {
   hasAmalgame: true,
   amalgameRuns: [
     {
-      name: 'Amalgame Impression',
+      name: 'Amalgame',
       hasImpression: true,
       platesCount: 63,
+      impressionTimePerPoseSeconds: 45,
       cuttingTimePerPoseSeconds: 12,
       inkMlPerPlate: 22,
       isRectoVerso: true,

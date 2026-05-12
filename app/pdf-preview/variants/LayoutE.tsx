@@ -31,20 +31,21 @@ const s = StyleSheet.create({
   metaStrip: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '5 22', gap: 28 },
   metaLabel: { fontSize: 7, color: '#64748b' },
   metaValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.white, marginTop: 1 },
-  body: { padding: '10 22 80 22' },
+  body: { padding: '10 22 80 22', flex: 1, flexDirection: 'column' },
   sectionLabel: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.mid, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 5 },
   // Bloc groupe
-  groupBlock: { marginBottom: 8, borderWidth: 1, borderColor: C.border, borderRadius: 5, overflow: 'hidden' },
+  groupBlock: { marginBottom: 8, borderWidth: 1, borderColor: C.border, borderRadius: 5, overflow: 'hidden', flex: 1 },
   groupBlockBar: { padding: '5 12', flexDirection: 'row', alignItems: 'center', gap: 8 },
   groupBlockTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold' },
   groupBlockBadge: { fontSize: 7, fontFamily: 'Helvetica-Bold', padding: '2 8', borderRadius: 8 },
-  groupBlockBody: { flexDirection: 'row', padding: '8 12', gap: 12, backgroundColor: C.white },
-  // Specs pills
-  specsCol: { width: 160 },
-  specsRow: { flexDirection: 'row', gap: 6, flexWrap: 'wrap', marginBottom: 0 },
-  specPill: { flexDirection: 'row', gap: 4, alignItems: 'center', backgroundColor: C.bg, borderRadius: 4, padding: '3 7', borderWidth: 1, borderColor: C.border, marginBottom: 5 },
-  specPillLabel: { fontSize: 7, color: C.mid },
-  specPillValue: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
+  groupBlockBody: { flexDirection: 'row', padding: '8 12', gap: 12, backgroundColor: C.white, flex: 1 },
+  // Specs liste (option D)
+  specsCol: { width: 155 },
+  specList: { flexDirection: 'column' },
+  specListRow: { flexDirection: 'row', alignItems: 'center', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  specListBar: { width: 3, borderRadius: 2, alignSelf: 'stretch', marginRight: 8 },
+  specListLabel: { fontSize: 7.5, color: C.mid, flex: 1 },
+  specListValue: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
   // Mini tableau produits
   miniTable: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 3, overflow: 'hidden', alignSelf: 'flex-start' },
   miniHead: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '3 7' },
@@ -59,15 +60,15 @@ const s = StyleSheet.create({
   traceLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: C.light, letterSpacing: 0.8, textAlign: 'center', paddingTop: 5 },
   // Ops communes
   opsSection: { marginTop: 6 },
-  opsGrid: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
-  opCard: { borderRadius: 4, overflow: 'hidden', marginBottom: 6, width: '18%' },
-  opCardHead: { padding: '5 8' },
-  opCardTitle: { fontSize: 7.5, fontFamily: 'Helvetica-Bold' },
-  opCardBody: { backgroundColor: C.white, padding: '5 8', borderWidth: 1, borderTopWidth: 0, borderColor: C.border },
-  opRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  opLabel: { fontSize: 7.5, color: C.mid },
-  opValue: { fontSize: 7.5, fontFamily: 'Helvetica-Bold' },
-  opNote: { fontSize: 7, color: C.mid, marginTop: 3, lineHeight: 1.4 },
+  opsGrid: { flexDirection: 'row', gap: 8, flex: 1, alignItems: 'stretch' },
+  opCard: { borderRadius: 4, overflow: 'hidden', flex: 1 },
+  opCardHead: { padding: '8 10' },
+  opCardTitle: { fontSize: 8.5, fontFamily: 'Helvetica-Bold' },
+  opCardBody: { backgroundColor: C.white, padding: '8 10', borderWidth: 1, borderTopWidth: 0, borderColor: C.border, flex: 1 },
+  opRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 5, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  opLabel: { fontSize: 8, color: C.mid },
+  opValue: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
+  opNote: { fontSize: 7.5, color: C.mid, marginTop: 5, lineHeight: 1.5 },
   // Bande récap bas de page
   summaryBand: { position: 'absolute', bottom: 20, left: 0, right: 0, backgroundColor: C.dark, flexDirection: 'row', padding: '10 22', gap: 0 },
   summaryItem: { flex: 1, borderRightWidth: 1, borderRightColor: '#334155', paddingRight: 22, marginRight: 22 },
@@ -79,11 +80,12 @@ const s = StyleSheet.create({
   footerText: { fontSize: 6, color: '#475569' },
 })
 
-function SpecPill({ label, value }: { label: string; value: string }) {
+function SpecRow({ label, value, barColor, last }: { label: string; value: string; barColor: string; last?: boolean }) {
   return (
-    <View style={s.specPill}>
-      <Text style={s.specPillLabel}>{label}</Text>
-      <Text style={s.specPillValue}>{value}</Text>
+    <View style={[s.specListRow, last ? { borderBottomWidth: 0 } : {}]}>
+      <View style={[s.specListBar, { backgroundColor: barColor }]} />
+      <Text style={s.specListLabel}>{label}</Text>
+      <Text style={s.specListValue}>{value}</Text>
     </View>
   )
 }
@@ -147,6 +149,9 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
 
   const cuttingSeconds = runs.reduce((sum, r) => sum + r.cuttingTimePerPoseSeconds * r.platesCount, 0) +
     standaloneProducts.reduce((sum, p) => sum + p.cuttingTimePerPoseSeconds * (p.platesCount ?? 0), 0)
+  const impressionSeconds = runs
+    .filter(r => r.hasImpression)
+    .reduce((sum, r) => sum + ((r as any).impressionTimePerPoseSeconds ?? 0) * r.platesCount, 0)
   const faconnageSeconds = quote.hasFaconnage ? ps.prodAssemblyTimePerPieceSeconds * qty : 0
   const conditionnementSeconds = quote.hasConditionnement ? ps.prodPackTimePerPieceSeconds * qty : 0
   const totalProductionSeconds = cuttingSeconds + faconnageSeconds + conditionnementSeconds
@@ -162,6 +167,7 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
         <View style={s.body}>
           <Text style={s.sectionLabel}>Groupes de production</Text>
 
+          <View style={{ flex: 1, flexDirection: 'column' }}>
           {/* BLOCS AMALGAME */}
           {runs.map((run, ri) => {
             const products = quote.products.filter(p => p.amalgameGroupIndex === ri)
@@ -169,19 +175,18 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             return (
               <View key={ri} style={s.groupBlock}>
                 <View style={[s.groupBlockBar, { backgroundColor: col.bg, borderLeftWidth: 4, borderLeftColor: col.bar }]}>
-                  <Text style={[s.groupBlockTitle, { color: col.text }]}>{run.name}</Text>
-                  <Text style={[s.groupBlockBadge, { backgroundColor: col.bar, color: C.white }]}>AMALGAME</Text>
-                  {run.hasImpression && <Text style={[s.groupBlockBadge, { backgroundColor: C.blueBg, color: C.blue }]}>IMPRESSION</Text>}
+                  <Text style={[s.groupBlockTitle, { color: col.text }]}>{run.name.replace(/\s*impression\s*/i, '').trim()}</Text>
                   <Text style={[s.groupBlockBadge, { backgroundColor: C.pinkBg, color: C.pink }]}>DECOUPE</Text>
+                  {run.hasImpression && <Text style={[s.groupBlockBadge, { backgroundColor: C.blueBg, color: C.blue }]}>IMPRESSION</Text>}
                 </View>
                 <View style={s.groupBlockBody}>
                   <View style={s.specsCol}>
-                    <View style={s.specsRow}>
-                      <SpecPill label="Matiere" value={run.plate?.name ?? '—'} />
-                      <SpecPill label="Format plaque" value={`${run.plate?.width}x${run.plate?.height} mm`} />
-                      <SpecPill label="Nb plaques" value={`${run.platesCount} pl.`} />
-                      {run.isRectoVerso && <SpecPill label="R/V" value={run.rectoVersoType === 'identical' ? 'Identique' : 'Different'} />}
-                      {run.hasImpression && !run.isRectoVerso && <SpecPill label="Impression" value="Recto seul" />}
+                    <View style={s.specList}>
+                      <SpecRow label="Matiere" value={run.plate?.name ?? '—'} barColor={col.bar} />
+                      <SpecRow label="Format plaque" value={`${run.plate?.width}x${run.plate?.height} mm`} barColor={col.bar} />
+                      <SpecRow label="Nb plaques" value={`${run.platesCount} pl.`} barColor={col.bar} last={!run.isRectoVerso && !run.hasImpression} />
+                      {run.isRectoVerso && <SpecRow label="R/V" value={run.rectoVersoType === 'identical' ? 'Identique' : 'Different'} barColor={col.bar} last />}
+                      {run.hasImpression && !run.isRectoVerso && <SpecRow label="Impression" value="Recto seul" barColor={col.bar} last />}
                     </View>
                   </View>
                   <View style={s.miniTable}>
@@ -220,12 +225,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                 </View>
                 <View style={s.groupBlockBody}>
                   <View style={s.specsCol}>
-                    <View style={s.specsRow}>
-                      <SpecPill label="Matiere" value={p.plate?.name ?? '—'} />
-                      <SpecPill label="Format plaque" value={`${p.plate?.width}x${p.plate?.height} mm`} />
-                      <SpecPill label="Format a plat" value={`${p.flatWidth}x${p.flatHeight} mm`} />
-                      <SpecPill label="Nb plaques" value={`${p.platesCount ?? '—'} pl.`} />
-                      <SpecPill label="Quantite" value={`${p.quantity} ex`} />
+                    <View style={s.specList}>
+                      <SpecRow label="Matiere" value={p.plate?.name ?? '—'} barColor={col.bar} />
+                      <SpecRow label="Format plaque" value={`${p.plate?.width}x${p.plate?.height} mm`} barColor={col.bar} />
+                      <SpecRow label="Format a plat" value={`${p.flatWidth}x${p.flatHeight} mm`} barColor={col.bar} />
+                      <SpecRow label="Nb plaques" value={`${p.platesCount ?? '—'} pl.`} barColor={col.bar} />
+                      <SpecRow label="Quantite" value={`${p.quantity} ex`} barColor={col.bar} last />
                     </View>
                   </View>
                   <View style={{ flex: 1 }} />
@@ -237,6 +242,7 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             )
           })}
 
+          </View>
         </View>
 
         {/* Bande bas page 1 : recap découpe */}
@@ -249,6 +255,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             <Text style={s.summaryLabel}>Temps decoupe estime</Text>
             <Text style={s.summaryValue}>{fmtTime(cuttingSeconds)}</Text>
           </View>
+          {impressionSeconds > 0 && (
+            <View style={s.summaryItem}>
+              <Text style={s.summaryLabel}>Temps impression estime</Text>
+              <Text style={s.summaryValue}>{fmtTime(impressionSeconds)}</Text>
+            </View>
+          )}
           <View style={s.summaryItemLast}>
             <Text style={s.summaryLabel}>Dossier</Text>
             <Text style={s.summaryValue}>{quote.study?.number}</Text>
@@ -275,7 +287,6 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
               <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
                 <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
                 {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
-                {ps.collagePerPLV != null && <OpRow label="Cout collage / PLV" value={`${ps.collagePerPLV.toFixed(2)} EUR`} />}
                 {ps.faconnageNotes && <Text style={s.opNote}>{ps.faconnageNotes}</Text>}
               </OpCard>
             )}
