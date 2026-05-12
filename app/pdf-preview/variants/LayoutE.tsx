@@ -16,6 +16,8 @@ export type QuoteForPDF = {
   packagingBoxType: string | null
   packagingMaterialType: string | null
   packagingQuantity: number | null
+  assemblyTimePerPieceSeconds: number | null
+  packTimePerPieceSeconds: number | null
   accessories: { accessory: { name: string }; quantity: number }[]
   products: {
     id: number
@@ -232,6 +234,9 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
           {/* BLOCS AMALGAME */}
           {runs.map((run, ri) => {
             const col = GROUP_COLORS[ri % GROUP_COLORS.length]
+            const tableRows = run.items.length > 0
+              ? run.items.map(item => ({ key: String(item.flatWidth) + item.name, name: item.name, fw: item.flatWidth, fh: item.flatHeight, qty: item.quantityPerUnit * qty, poses: item.countPerPlate }))
+              : quote.products.filter(p => p.amalgameGroupIndex === ri).map(p => ({ key: String(p.id), name: p.productTypeName ?? '—', fw: p.flatWidth, fh: p.flatHeight, qty: p.quantity, poses: p.countPerPlateInGroup ?? '—' }))
             return (
               <View key={ri} style={s.groupBlock}>
                 <View style={[s.groupBlockBar, { backgroundColor: col.bg, borderLeftWidth: 4, borderLeftColor: col.bar }]}>
@@ -256,12 +261,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                       <Text style={[s.miniHCell, { flex: 0.8, textAlign: 'center' }]}>QTE</Text>
                       <Text style={[s.miniHCell, { flex: 0.9, textAlign: 'center' }]}>POSES/PL.</Text>
                     </View>
-                    {run.items.map((item, ii) => (
-                      <View key={ii} style={ii % 2 === 0 ? s.miniRow : s.miniRowAlt}>
-                        <Text style={[s.miniCell, { flex: 2.5 }]}>{item.name}</Text>
-                        <Text style={[s.miniCellMid, { flex: 1.8 }]}>{item.flatWidth}x{item.flatHeight} mm</Text>
-                        <Text style={[s.miniCell, { flex: 0.8, textAlign: 'center' }]}>{item.quantityPerUnit * qty}</Text>
-                        <Text style={[s.miniCellBold, { flex: 0.9, textAlign: 'center' }]}>{item.countPerPlate}</Text>
+                    {tableRows.map((row, ii) => (
+                      <View key={row.key} style={ii % 2 === 0 ? s.miniRow : s.miniRowAlt}>
+                        <Text style={[s.miniCell, { flex: 2.5 }]}>{row.name}</Text>
+                        <Text style={[s.miniCellMid, { flex: 1.8 }]}>{row.fw}x{row.fh} mm</Text>
+                        <Text style={[s.miniCell, { flex: 0.8, textAlign: 'center' }]}>{row.qty}</Text>
+                        <Text style={[s.miniCellBold, { flex: 0.9, textAlign: 'center' }]}>{row.poses}</Text>
                       </View>
                     ))}
                   </View>
@@ -345,14 +350,14 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
           <View style={s.opsGrid}>
             {quote.hasFaconnage && (
               <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
-                <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
+                <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds ?? quote.assemblyTimePerPieceSeconds ?? '—'} s`} />
                 {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
                 {ps.faconnageNotes && <Text style={s.opNote}>{ps.faconnageNotes}</Text>}
               </OpCard>
             )}
             {quote.hasConditionnement && (
               <OpCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
-                <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds} s`} />
+                <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds ?? quote.packTimePerPieceSeconds ?? '—'} s`} />
                 {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
                 {ps.conditionnementNotes && <Text style={s.opNote}>{ps.conditionnementNotes}</Text>}
               </OpCard>
@@ -361,7 +366,9 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
               <OpCard title="EMBALLAGE" bgColor={C.orangeBg} textColor={C.orange}>
                 <OpRow label="Type" value={quote.packagingBoxType === 'etui' ? 'Etui' : quote.packagingBoxType ?? '—'} />
                 <OpRow label="Matiere" value={ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '—'} />
-                <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
+                {(ps.prodPackagingQuantity ?? quote.packagingQuantity) != null && (
+                  <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
+                )}
                 {ps.packagingBoxLengthMm != null && (
                   <OpRow label="Dim." value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm}`} />
                 )}
