@@ -169,13 +169,8 @@ function EmballageBlock({ quote, ps, onSave }: {
             className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800"
           >
             <option value="">—</option>
-            {[
-              { id: 'C',  label: 'C — Carton ondulé simple (interne)' },
-              { id: 'BC', label: 'BC — Double cannelure (interne)' },
-              { id: 'B',  label: 'B — Fournisseur externe' },
-              { id: 'EB', label: 'EB — Fournisseur externe (renforcé)' },
-            ].map(o => (
-              <option key={o.id} value={o.id}>{o.label}</option>
+            {['C', 'BC', 'B', 'EB'].map(o => (
+              <option key={o} value={o}>{o}</option>
             ))}
           </select>
         </div>
