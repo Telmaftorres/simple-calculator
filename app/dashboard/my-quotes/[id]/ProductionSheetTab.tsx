@@ -107,13 +107,12 @@ function EmballageBlock({ quote, ps, onSave }: {
   ps: NonNullable<Quote['productionSheet']>
   onSave: (data: Partial<ProductionSheetInput>) => Promise<void>
 }) {
-  const isExternal = (quote.packagingMaterialType ?? '') === 'B' || (quote.packagingMaterialType ?? '') === 'EB'
-
   const boxTypeLabel = (v: string | null) =>
     v === 'etui' ? 'Étui' : v === 'caisse' ? 'Caisse' : v === 'plaque_rainee' ? 'Plaque rainée' : v ?? '—'
 
   const [boxType, setBoxType] = useState(quote.packagingBoxType ?? '')
   const [mat,     setMat]     = useState(ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '')
+  const isExternal = mat === 'B' || mat === 'EB'
   const [qty,     setQty]     = useState((ps.prodPackagingQuantity ?? quote.packagingQuantity ?? '').toString())
   const defaultPrice = (ps.prodPackagingUnitPrice ?? quote.packagingUnitPriceOverride ?? '').toString()
   const [unitPrice,  setUnitPrice]  = useState(defaultPrice)
@@ -161,8 +160,25 @@ function EmballageBlock({ quote, ps, onSave }: {
           </select>
         </div>
 
-        {/* Matière — éditable */}
-        <Field label="Matière" value={mat} onChange={setMat} placeholder="ex: BC, EB…" />
+        {/* Matière — select */}
+        <div className="space-y-1">
+          <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Matière</label>
+          <select
+            value={mat}
+            onChange={e => setMat(e.target.value)}
+            className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800"
+          >
+            <option value="">—</option>
+            {[
+              { id: 'C',  label: 'C — Carton ondulé simple (interne)' },
+              { id: 'BC', label: 'BC — Double cannelure (interne)' },
+              { id: 'B',  label: 'B — Fournisseur externe' },
+              { id: 'EB', label: 'EB — Fournisseur externe (renforcé)' },
+            ].map(o => (
+              <option key={o.id} value={o.id}>{o.label}</option>
+            ))}
+          </select>
+        </div>
 
         {/* Quantité */}
         <Field label="Quantité" type="number" value={qty} onChange={setQty}
