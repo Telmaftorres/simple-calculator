@@ -16,38 +16,41 @@ const C = {
 
 const s = StyleSheet.create({
   page: { padding: '0', fontFamily: 'Helvetica', fontSize: 9, color: C.dark, backgroundColor: C.white },
-  header: { backgroundColor: C.dark, padding: '14 24', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
-  headerTitle: { fontSize: 20, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 1.5 },
-  headerSub: { fontSize: 9, color: '#94a3b8', marginTop: 3 },
-  statusPill: { backgroundColor: '#22c55e', padding: '5 14', borderRadius: 20 },
-  statusText: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.dark },
-  metaStrip: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '8 24', gap: 32 },
-  metaLabel: { fontSize: 7.5, color: '#64748b' },
-  metaValue: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: C.white, marginTop: 1 },
-  body: { padding: '14 24', flex: 1 },
-  sectionLabel: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.mid, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 },
+  header: { backgroundColor: C.dark, padding: '10 22', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start' },
+  headerTitle: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 1.5 },
+  headerSub: { fontSize: 8.5, color: '#94a3b8', marginTop: 3 },
+  statusPill: { backgroundColor: '#22c55e', padding: '4 12', borderRadius: 20 },
+  statusText: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.dark },
+  metaStrip: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '6 22', gap: 28 },
+  metaLabel: { fontSize: 7, color: '#64748b' },
+  metaValue: { fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.white, marginTop: 1 },
+  // Layout 2 colonnes
+  body: { padding: '10 22 22 22', flex: 1, flexDirection: 'row', gap: 14 },
+  colLeft: { flex: 1.5 },
+  colRight: { flex: 1 },
+  sectionLabel: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.mid, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 5 },
   // Nomenclature
-  nomTable: { borderWidth: 1, borderColor: C.border, borderRadius: 4, overflow: 'hidden', marginBottom: 14 },
-  nomHead: { flexDirection: 'row', backgroundColor: C.dark, padding: '5 10' },
-  nomHCell: { color: C.white, fontFamily: 'Helvetica-Bold', fontSize: 8 },
-  nomRow: { flexDirection: 'row', padding: '5 10', borderTopWidth: 1, borderTopColor: C.border },
-  nomRowAlt: { flexDirection: 'row', padding: '5 10', borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.bg },
-  nomGroupBar: { flexDirection: 'row', alignItems: 'center', padding: '5 10', borderTopWidth: 1, borderTopColor: C.border, backgroundColor: '#f5f3ff' },
-  nomGroupBadge: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.violet, backgroundColor: C.violetBg, padding: '2 7', borderRadius: 10, marginLeft: 8 },
-  nomCell: { fontSize: 9 },
-  nomCellMid: { fontSize: 9, color: C.mid },
-  nomCellBold: { fontSize: 9, fontFamily: 'Helvetica-Bold' },
-  // Cartes opérations
-  opsGrid: { flexDirection: 'row', gap: 12, flexWrap: 'wrap' },
-  opCard: { borderRadius: 6, overflow: 'hidden', marginBottom: 12, width: '31.5%' },
-  opCardHead: { padding: '8 14' },
-  opCardTitle: { fontSize: 10, fontFamily: 'Helvetica-Bold', letterSpacing: 0.8 },
-  opCardBody: { backgroundColor: C.white, padding: '10 14', borderWidth: 1, borderTopWidth: 0, borderColor: C.border },
-  opRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 4, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
-  opLabel: { fontSize: 9.5, color: C.mid },
-  opValue: { fontSize: 9.5, fontFamily: 'Helvetica-Bold' },
-  opNote: { fontSize: 9, color: C.mid, marginTop: 6, lineHeight: 1.4 },
-  footer: { position: 'absolute', bottom: 8, left: 24, right: 24, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: C.border, paddingTop: 4 },
+  nomTable: { borderWidth: 1, borderColor: C.border, borderRadius: 4, overflow: 'hidden' },
+  nomHead: { flexDirection: 'row', backgroundColor: C.dark, padding: '4 8' },
+  nomHCell: { color: C.white, fontFamily: 'Helvetica-Bold', fontSize: 7.5 },
+  nomRow: { flexDirection: 'row', padding: '4 8', borderTopWidth: 1, borderTopColor: C.border },
+  nomRowAlt: { flexDirection: 'row', padding: '4 8', borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.bg },
+  nomGroupBar: { flexDirection: 'row', alignItems: 'center', padding: '4 8', borderTopWidth: 1, borderTopColor: C.border, backgroundColor: '#f5f3ff' },
+  nomGroupBadge: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: C.violet, backgroundColor: C.violetBg, padding: '1 6', borderRadius: 10, marginLeft: 7 },
+  nomCell: { fontSize: 8.5 },
+  nomCellMid: { fontSize: 8.5, color: C.mid },
+  nomCellBold: { fontSize: 8.5, fontFamily: 'Helvetica-Bold' },
+  // Cartes opérations — 2 par ligne dans la colonne droite
+  opsGrid: { flexDirection: 'row', gap: 8, flexWrap: 'wrap' },
+  opCard: { borderRadius: 5, overflow: 'hidden', marginBottom: 8, width: '48%' },
+  opCardHead: { padding: '6 10' },
+  opCardTitle: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', letterSpacing: 0.6 },
+  opCardBody: { backgroundColor: C.white, padding: '7 10', borderWidth: 1, borderTopWidth: 0, borderColor: C.border },
+  opRow: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 3, borderBottomWidth: 1, borderBottomColor: '#f1f5f9' },
+  opLabel: { fontSize: 8, color: C.mid },
+  opValue: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
+  opNote: { fontSize: 7.5, color: C.mid, marginTop: 5, lineHeight: 1.4 },
+  footer: { position: 'absolute', bottom: 8, left: 22, right: 22, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: C.border, paddingTop: 4 },
   footerText: { fontSize: 7, color: C.light },
 })
 
@@ -106,119 +109,126 @@ export function ProductionSheetPDFB({ quote, productionSheet: ps }: { quote: Q; 
 
         <View style={s.body}>
 
-          <Text style={s.sectionLabel}>Nomenclature matiere</Text>
-          <View style={s.nomTable}>
-            <View style={s.nomHead}>
-              <Text style={[s.nomHCell, { flex: 2.5 }]}>PRODUIT</Text>
-              <Text style={[s.nomHCell, { flex: 2.5 }]}>MATIERE</Text>
-              <Text style={[s.nomHCell, { flex: 1.5 }]}>FORMAT A PLAT</Text>
-              <Text style={[s.nomHCell, { flex: 0.8, textAlign: 'center' }]}>QTE</Text>
-              <Text style={[s.nomHCell, { flex: 1, textAlign: 'center' }]}>POSES/PL.</Text>
-              <Text style={[s.nomHCell, { flex: 1, textAlign: 'center' }]}>DECOUPE</Text>
-              <Text style={[s.nomHCell, { flex: 0.8, textAlign: 'right' }]}>PLAQUES</Text>
-            </View>
-            {runs.map((run, ri) => (
-              <View key={ri}>
-                <View style={s.nomGroupBar}>
-                  <Text style={{ fontSize: 9, fontFamily: 'Helvetica-Bold', color: C.violet }}>{run.name}</Text>
-                  <Text style={s.nomGroupBadge}>{run.hasImpression ? 'IMP. + DECOUPE' : 'DECOUPE SEULE'}</Text>
-                  <Text style={{ fontSize: 8, color: C.mid, marginLeft: 'auto' }}>
-                    {run.plate?.name}  {run.plate?.width}x{run.plate?.height}  ·  {run.platesCount} pl.  ·  {run.cuttingTimePerPoseSeconds}s/pose{run.hasImpression ? `  ·  ${run.inkMlPerPlate}ml/pl.` : ''}
-                  </Text>
-                </View>
-                {quote.products.filter(p => p.amalgameGroupIndex === ri).map((p, pi) => (
-                  <View key={p.id} style={pi % 2 === 0 ? s.nomRow : s.nomRowAlt}>
-                    <Text style={[s.nomCell, { flex: 2.5, paddingLeft: 14 }]}>{'->'} {p.productTypeName}</Text>
-                    <Text style={[s.nomCellMid, { flex: 2.5 }]}>{p.plate?.name}  {p.plate?.width}x{p.plate?.height}</Text>
-                    <Text style={[s.nomCell, { flex: 1.5 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
-                    <Text style={[s.nomCell, { flex: 0.8, textAlign: 'center' }]}>{p.quantity}</Text>
-                    <Text style={[s.nomCellBold, { flex: 1, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
-                    <Text style={[s.nomCell, { flex: 1, textAlign: 'center' }]}>{run.cuttingTimePerPoseSeconds}s/pose</Text>
-                    <Text style={[s.nomCellBold, { flex: 0.8, textAlign: 'right' }]}>{run.platesCount}</Text>
-                  </View>
-                ))}
+          {/* COLONNE GAUCHE — Nomenclature */}
+          <View style={s.colLeft}>
+            <Text style={s.sectionLabel}>Nomenclature matiere</Text>
+            <View style={s.nomTable}>
+              <View style={s.nomHead}>
+                <Text style={[s.nomHCell, { flex: 2.2 }]}>PRODUIT</Text>
+                <Text style={[s.nomHCell, { flex: 2 }]}>MATIERE</Text>
+                <Text style={[s.nomHCell, { flex: 1.4 }]}>FORMAT A PLAT</Text>
+                <Text style={[s.nomHCell, { flex: 0.7, textAlign: 'center' }]}>QTE</Text>
+                <Text style={[s.nomHCell, { flex: 0.9, textAlign: 'center' }]}>POSES/PL.</Text>
+                <Text style={[s.nomHCell, { flex: 0.9, textAlign: 'center' }]}>DECOUPE</Text>
+                <Text style={[s.nomHCell, { flex: 0.7, textAlign: 'right' }]}>PLAQUES</Text>
               </View>
-            ))}
-          </View>
-
-          <Text style={s.sectionLabel}>Operations</Text>
-          <View style={s.opsGrid}>
-            {impressionRuns.length > 0 && (
-              <OpCard title="IMPRESSION" bgColor="#dbeafe" textColor="#1e40af">
-                {impressionRuns.map((r, i) => (
-                  <View key={i}>
-                    {impressionRuns.length > 1 && <Text style={[s.opNote, { marginTop: i > 0 ? 6 : 0, fontFamily: 'Helvetica-Bold', color: '#1e40af' }]}>{r.name}</Text>}
-                    <OpRow label="Recto/Verso" value={r.isRectoVerso ? (r.rectoVersoType === 'identical' ? 'R/V identique' : 'R/V different') : 'Recto seul'} />
-                    <OpRow label="Encre / plaque" value={`${r.inkMlPerPlate} ml`} />
-                    <OpRow label="Total encre" value={`${r.inkMlPerPlate * r.platesCount} ml`} />
+              {runs.map((run, ri) => (
+                <View key={ri}>
+                  <View style={s.nomGroupBar}>
+                    <Text style={{ fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.violet }}>{run.name}</Text>
+                    <Text style={s.nomGroupBadge}>{run.hasImpression ? 'IMP. + DECOUPE' : 'DECOUPE SEULE'}</Text>
+                    <Text style={{ fontSize: 7.5, color: C.mid, marginLeft: 'auto' }}>
+                      {run.plate?.name}  {run.plate?.width}x{run.plate?.height}  ·  {run.platesCount} pl.  ·  {run.cuttingTimePerPoseSeconds}s/pose{run.hasImpression ? `  ·  ${run.inkMlPerPlate}ml/pl.` : ''}
+                    </Text>
                   </View>
-                ))}
-                <OpRow label="Vernis" value={quote.hasVarnish ? 'Oui' : 'Non'} />
-                {quote.hasFlatColor && <OpRow label="Couleur plate" value="Oui" />}
-              </OpCard>
-            )}
-            <OpCard title="DECOUPE" bgColor="#fce7f3" textColor="#9d174d">
-              {runs.map((r, i) => (
-                <View key={i}>
-                  {runs.length > 1 && <Text style={[s.opNote, { marginTop: i > 0 ? 6 : 0, fontFamily: 'Helvetica-Bold', color: '#9d174d' }]}>{r.name}</Text>}
-                  <OpRow label="Temps / pose" value={`${r.cuttingTimePerPoseSeconds} s`} />
-                  <OpRow label="Nb plaques" value={`${r.platesCount} pl.`} />
-                  <OpRow label="Temps total" value={`${(r.cuttingTimePerPoseSeconds * r.platesCount / 60).toFixed(0)} min`} />
+                  {quote.products.filter(p => p.amalgameGroupIndex === ri).map((p, pi) => (
+                    <View key={p.id} style={pi % 2 === 0 ? s.nomRow : s.nomRowAlt}>
+                      <Text style={[s.nomCell, { flex: 2.2, paddingLeft: 12 }]}>{'->'} {p.productTypeName}</Text>
+                      <Text style={[s.nomCellMid, { flex: 2 }]}>{p.plate?.name}  {p.plate?.width}x{p.plate?.height}</Text>
+                      <Text style={[s.nomCell, { flex: 1.4 }]}>{p.flatWidth}x{p.flatHeight} mm</Text>
+                      <Text style={[s.nomCell, { flex: 0.7, textAlign: 'center' }]}>{p.quantity}</Text>
+                      <Text style={[s.nomCellBold, { flex: 0.9, textAlign: 'center' }]}>{p.countPerPlateInGroup}</Text>
+                      <Text style={[s.nomCell, { flex: 0.9, textAlign: 'center' }]}>{run.cuttingTimePerPoseSeconds}s</Text>
+                      <Text style={[s.nomCellBold, { flex: 0.7, textAlign: 'right' }]}>{run.platesCount}</Text>
+                    </View>
+                  ))}
                 </View>
               ))}
-              {runs.length > 1 && <OpRow label="Total general" value={`${totalCuttingMin.toFixed(0)} min`} />}
-            </OpCard>
-            {quote.hasFaconnage && (
-              <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
-                <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
-                {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
-                {ps.collagePerPLV != null && <OpRow label="Cout collage / PLV" value={`${ps.collagePerPLV.toFixed(2)} EUR`} />}
-                {ps.faconnageNotes && <Text style={s.opNote}>{ps.faconnageNotes}</Text>}
-              </OpCard>
-            )}
-            {quote.hasConditionnement && (
-              <OpCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
-                <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds} s`} />
-                {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
-                {ps.conditionnementNotes && <Text style={s.opNote}>{ps.conditionnementNotes}</Text>}
-              </OpCard>
-            )}
-            {quote.hasPackaging && (
-              <OpCard title="EMBALLAGE" bgColor={C.orangeBg} textColor={C.orange}>
-                <OpRow label="Type" value={quote.packagingBoxType === 'etui' ? 'Etui' : quote.packagingBoxType ?? '—'} />
-                <OpRow label="Matiere" value={ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '—'} />
-                <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
-                <OpRow label="Prix unitaire" value={`${ps.prodPackagingUnitPrice?.toFixed(2) ?? '—'} EUR`} />
-                {ps.packagingBoxLengthMm != null && (
-                  <OpRow label="Dimensions" value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm} mm`} />
-                )}
-              </OpCard>
-            )}
-            {quote.transportDeliveries.length > 0 && (
-              <OpCard title="TRANSPORT" bgColor={C.violetBg} textColor={C.violet}>
-                {quote.transportDeliveries.map((d, i) => (
+            </View>
+          </View>
+
+          {/* COLONNE DROITE — Cartes operations */}
+          <View style={s.colRight}>
+            <Text style={s.sectionLabel}>Operations</Text>
+            <View style={s.opsGrid}>
+              {impressionRuns.length > 0 && (
+                <OpCard title="IMPRESSION" bgColor="#dbeafe" textColor="#1e40af">
+                  {impressionRuns.map((r, i) => (
+                    <View key={i}>
+                      {impressionRuns.length > 1 && <Text style={[s.opNote, { marginTop: i > 0 ? 5 : 0, fontFamily: 'Helvetica-Bold', color: '#1e40af' }]}>{r.name}</Text>}
+                      <OpRow label="R/V" value={r.isRectoVerso ? (r.rectoVersoType === 'identical' ? 'Identique' : 'Different') : 'Recto seul'} />
+                      <OpRow label="Encre / plaque" value={`${r.inkMlPerPlate} ml`} />
+                      <OpRow label="Total encre" value={`${r.inkMlPerPlate * r.platesCount} ml`} />
+                    </View>
+                  ))}
+                  <OpRow label="Vernis" value={quote.hasVarnish ? 'Oui' : 'Non'} />
+                  {quote.hasFlatColor && <OpRow label="Couleur plate" value="Oui" />}
+                </OpCard>
+              )}
+              <OpCard title="DECOUPE" bgColor="#fce7f3" textColor="#9d174d">
+                {runs.map((r, i) => (
                   <View key={i}>
-                    <OpRow label={d.transportMode === 'PACK30' ? 'Pack 30' : 'Messagerie+'} value={`Dept. ${d.department}`} />
-                    <OpRow label={`${d.units} colis · ${d.weightKg}kg`} value={`${d.totalHT.toFixed(2)} EUR`} />
+                    {runs.length > 1 && <Text style={[s.opNote, { marginTop: i > 0 ? 5 : 0, fontFamily: 'Helvetica-Bold', color: '#9d174d' }]}>{r.name}</Text>}
+                    <OpRow label="Temps / pose" value={`${r.cuttingTimePerPoseSeconds} s`} />
+                    <OpRow label="Nb plaques" value={`${r.platesCount} pl.`} />
+                    <OpRow label="Temps total" value={`${(r.cuttingTimePerPoseSeconds * r.platesCount / 60).toFixed(0)} min`} />
                   </View>
                 ))}
-                {ps.prodTransportNotes && <Text style={s.opNote}>{ps.prodTransportNotes}</Text>}
+                {runs.length > 1 && <OpRow label="Total general" value={`${totalCuttingMin.toFixed(0)} min`} />}
               </OpCard>
-            )}
-            {(quote.accessories.length > 0 || ps.achatsNotes) && (
-              <OpCard title="ACHATS" bgColor={C.emeraldBg} textColor={C.emerald}>
-                {quote.accessories.map((a, i) => (
-                  <OpRow key={i} label={a.accessory.name} value={`x ${a.quantity}`} />
-                ))}
-                {ps.achatsNotes && <Text style={s.opNote}>{ps.achatsNotes}</Text>}
-              </OpCard>
-            )}
-            {ps.remarques && (
-              <OpCard title="REMARQUES" bgColor={C.bg} textColor={C.mid}>
-                <Text style={[s.opNote, { marginTop: 0 }]}>{ps.remarques}</Text>
-              </OpCard>
-            )}
+              {quote.hasFaconnage && (
+                <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
+                  <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds} s`} />
+                  {ps.nbCollages != null && <OpRow label="Collages / PLV" value={String(ps.nbCollages)} />}
+                  {ps.collagePerPLV != null && <OpRow label="Cout collage / PLV" value={`${ps.collagePerPLV.toFixed(2)} EUR`} />}
+                  {ps.faconnageNotes && <Text style={s.opNote}>{ps.faconnageNotes}</Text>}
+                </OpCard>
+              )}
+              {quote.hasConditionnement && (
+                <OpCard title="CONDITIONNEMENT" bgColor={C.blueBg} textColor={C.blue}>
+                  <OpRow label="Temps / piece" value={`${ps.prodPackTimePerPieceSeconds} s`} />
+                  {ps.conditionnementType && <OpRow label="Type" value={ps.conditionnementType === 'kit_unitaire' ? 'Kit unitaire' : ps.conditionnementType} />}
+                  {ps.conditionnementNotes && <Text style={s.opNote}>{ps.conditionnementNotes}</Text>}
+                </OpCard>
+              )}
+              {quote.hasPackaging && (
+                <OpCard title="EMBALLAGE" bgColor={C.orangeBg} textColor={C.orange}>
+                  <OpRow label="Type" value={quote.packagingBoxType === 'etui' ? 'Etui' : quote.packagingBoxType ?? '—'} />
+                  <OpRow label="Matiere" value={ps.prodPackagingMaterial ?? quote.packagingMaterialType ?? '—'} />
+                  <OpRow label="Quantite" value={`${ps.prodPackagingQuantity ?? quote.packagingQuantity} pcs`} />
+                  <OpRow label="Prix unitaire" value={`${ps.prodPackagingUnitPrice?.toFixed(2) ?? '—'} EUR`} />
+                  {ps.packagingBoxLengthMm != null && (
+                    <OpRow label="Dimensions" value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm} mm`} />
+                  )}
+                </OpCard>
+              )}
+              {quote.transportDeliveries.length > 0 && (
+                <OpCard title="TRANSPORT" bgColor={C.violetBg} textColor={C.violet}>
+                  {quote.transportDeliveries.map((d, i) => (
+                    <View key={i}>
+                      <OpRow label={d.transportMode === 'PACK30' ? 'Pack 30' : 'Messagerie+'} value={`Dept. ${d.department}`} />
+                      <OpRow label={`${d.units} colis · ${d.weightKg}kg`} value={`${d.totalHT.toFixed(2)} EUR`} />
+                    </View>
+                  ))}
+                  {ps.prodTransportNotes && <Text style={s.opNote}>{ps.prodTransportNotes}</Text>}
+                </OpCard>
+              )}
+              {(quote.accessories.length > 0 || ps.achatsNotes) && (
+                <OpCard title="ACHATS" bgColor={C.emeraldBg} textColor={C.emerald}>
+                  {quote.accessories.map((a, i) => (
+                    <OpRow key={i} label={a.accessory.name} value={`x ${a.quantity}`} />
+                  ))}
+                  {ps.achatsNotes && <Text style={s.opNote}>{ps.achatsNotes}</Text>}
+                </OpCard>
+              )}
+              {ps.remarques && (
+                <OpCard title="REMARQUES" bgColor={C.bg} textColor={C.mid}>
+                  <Text style={[s.opNote, { marginTop: 0 }]}>{ps.remarques}</Text>
+                </OpCard>
+              )}
+            </View>
           </View>
+
         </View>
 
         <View style={s.footer} fixed>
