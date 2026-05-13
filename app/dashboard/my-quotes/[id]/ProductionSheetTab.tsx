@@ -134,7 +134,9 @@ function ConditionnementBlock({ quote, ps, onSave }: {
   const typeLabel = (v: string) =>
     v === 'kit_unitaire' ? 'Kit unitaire' : v === 'caisse' ? 'Caisse' : v === 'palette' ? 'Palette' : v === 'autre' ? 'Autre' : '—'
 
+  const displayTime = packTime || (quote.packTimePerPieceSeconds ? quote.packTimePerPieceSeconds.toString() : null)
   const summary = [
+    displayTime ? `${displayTime}s/pce` : null,
     type ? typeLabel(type) : null,
     notice ? 'Notice' : null,
     etiquette ? 'Étiquette' : null,
