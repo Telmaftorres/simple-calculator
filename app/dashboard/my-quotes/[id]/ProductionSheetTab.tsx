@@ -9,6 +9,7 @@ import { pdf } from '@react-pdf/renderer'
 import { ProductionSheetPDFE } from '@/app/pdf-preview/variants/LayoutE'
 import type { PSForPDF } from '@/app/pdf-preview/variants/LayoutE'
 import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
+import { patchQuoteFlags } from '@/app/actions/quotes'
 
 // ── Bloc accordéon style "card emoji" ──
 function Block({
@@ -102,6 +103,21 @@ function Textarea({ label, value, onChange, placeholder }: {
   )
 }
 
+// ── Toggle checkbox ──
+function Toggle({ label, checked, onChange }: { label: string; checked: boolean; onChange: (v: boolean) => void }) {
+  return (
+    <label className="flex items-center gap-2.5 cursor-pointer select-none">
+      <input
+        type="checkbox"
+        checked={checked}
+        onChange={e => onChange(e.target.checked)}
+        className="w-4 h-4 rounded border-slate-300 accent-slate-800 cursor-pointer"
+      />
+      <span className="text-sm text-slate-700">{label}</span>
+    </label>
+  )
+}
+
 // ── Section Conditionnement ──
 function ConditionnementBlock({ quote, ps, onSave }: {
   quote: Quote
@@ -110,6 +126,9 @@ function ConditionnementBlock({ quote, ps, onSave }: {
 }) {
   const [type, setType] = useState(ps.conditionnementType ?? '')
   const [notes, setNotes] = useState(ps.conditionnementNotes ?? '')
+  const [packTime, setPackTime] = useState((ps.prodPackTimePerPieceSeconds ?? quote.packTimePerPieceSeconds ?? '').toString())
+  const [notice, setNotice] = useState(quote.hasAssemblyNotice)
+  const [etiquette, setEtiquette] = useState(quote.hasPoseEtiquette)
   const [saving, setSaving] = useState(false)
 
   const typeLabel = (v: string) =>
@@ -117,31 +136,46 @@ function ConditionnementBlock({ quote, ps, onSave }: {
 
   const summary = [
     type ? typeLabel(type) : null,
-    quote.hasAssemblyNotice ? 'Notice de montage' : null,
-    quote.hasPoseEtiquette ? 'Pose étiquette' : null,
+    notice ? 'Notice' : null,
+    etiquette ? 'Étiquette' : null,
   ].filter(Boolean).join(' · ')
 
   const handleSave = async () => {
     setSaving(true)
-    await onSave({ conditionnementType: type || null, conditionnementNotes: notes || null })
+    await Promise.all([
+      onSave({
+        conditionnementType: type || null,
+        conditionnementNotes: notes || null,
+        prodPackTimePerPieceSeconds: packTime ? parseFloat(packTime) : null,
+      }),
+      patchQuoteFlags(quote.id, { hasAssemblyNotice: notice, hasPoseEtiquette: etiquette }),
+    ])
     setSaving(false)
   }
 
   return (
     <Block emoji="📦" title="Conditionnement" summary={summary}>
       <div className="space-y-3">
-        <div className="flex gap-4 text-sm">
-          {quote.hasAssemblyNotice && (
-            <span className="flex items-center gap-1.5 text-teal-700 bg-teal-50 border border-teal-200 rounded-full px-3 py-1 text-xs font-medium">
-              ✓ Notice de montage
-            </span>
-          )}
-          {quote.hasPoseEtiquette && (
-            <span className="flex items-center gap-1.5 text-teal-700 bg-teal-50 border border-teal-200 rounded-full px-3 py-1 text-xs font-medium">
-              ✓ Pose étiquette
-            </span>
-          )}
+        {/* Temps par pièce */}
+        <Field
+          label="Temps par pièce"
+          type="number"
+          value={packTime}
+          onChange={setPackTime}
+          placeholder={quote.packTimePerPieceSeconds?.toString() ?? '0'}
+          suffix="s"
+        />
+
+        {/* Checkboxes notice / étiquette */}
+        <div className="space-y-1">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Options</p>
+          <div className="flex flex-col gap-2 pt-0.5">
+            <Toggle label="Notice de montage" checked={notice} onChange={setNotice} />
+            <Toggle label="Pose étiquette" checked={etiquette} onChange={setEtiquette} />
+          </div>
         </div>
+
+        {/* Type de conditionnement */}
         <div className="space-y-1">
           <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Type de conditionnement</label>
           <select
@@ -155,6 +189,7 @@ function ConditionnementBlock({ quote, ps, onSave }: {
             ))}
           </select>
         </div>
+
         <Textarea label="Notes" value={notes} onChange={setNotes} placeholder="Instructions de conditionnement…" />
         <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700">
           {saving ? 'Sauvegarde…' : 'Enregistrer'}

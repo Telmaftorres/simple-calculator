@@ -422,3 +422,15 @@ export async function getQuoteDetail(id: number) {
 
   return quote
 }
+
+export async function patchQuoteFlags(
+  id: number,
+  data: { hasAssemblyNotice?: boolean; hasPoseEtiquette?: boolean }
+) {
+  const session = await requireAuth()
+  const existing = await prisma.quote.findUnique({ where: { id }, select: { userId: true } })
+  if (!existing) throw new Error('Devis introuvable')
+  if (session.user.role !== 'ADMIN' && existing.userId !== session.user.id) throw new Error('Non autorisé')
+  await prisma.quote.update({ where: { id }, data })
+  revalidatePath(`/dashboard/my-quotes/${id}`)
+}
