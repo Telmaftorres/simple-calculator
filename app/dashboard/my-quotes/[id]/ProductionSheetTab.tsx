@@ -413,7 +413,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       </div>
 
       {/* Blocs accordéon */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
         {quote.hasConditionnement && ps && (
           <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
         )}
