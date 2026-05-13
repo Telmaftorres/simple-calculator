@@ -4,9 +4,10 @@ import { useState, useRef, useEffect } from 'react'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Button } from '@/components/ui/button'
-import { Trash2, Plus, PlusCircle, ExternalLink } from 'lucide-react'
+import { Trash2, Plus, PlusCircle, ExternalLink, Loader2, Link as LinkIcon } from 'lucide-react'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
+import { extractAccessoryFromUrl, type ExtractedAccessory } from '@/app/actions/extract-url'
 
 export function SectionAccessoires() {
   const {
@@ -64,11 +65,40 @@ export function SectionAccessoires() {
   const [newPrice, setNewPrice] = useState('')
   const [isCreating, setIsCreating] = useState(false)
 
+  // URL auto-fill
+  const [urlInput, setUrlInput] = useState('')
+  const [isExtracting, setIsExtracting] = useState(false)
+  const [extractError, setExtractError] = useState<string | null>(null)
+  const [preview, setPreview] = useState<ExtractedAccessory | null>(null)
+
+  const handleExtractUrl = async () => {
+    if (!urlInput.trim()) return
+    setIsExtracting(true)
+    setExtractError(null)
+    setPreview(null)
+    try {
+      const result = await extractAccessoryFromUrl(urlInput.trim())
+      setPreview(result)
+      if (result.name) setNewName(result.name)
+      if (result.unitPriceHT != null) setNewPrice(result.unitPriceHT.toFixed(4))
+    } catch (e) {
+      setExtractError(e instanceof Error ? e.message : 'Erreur lors de la récupération')
+    } finally {
+      setIsExtracting(false)
+    }
+  }
+
   const handleCreate = async () => {
     const price = parseFloat(newPrice)
     if (!newName.trim() || isNaN(price) || price <= 0) return
     setIsCreating(true)
-    const result = await handleCreateAccessory(newName.trim(), price)
+    const result = await handleCreateAccessory(newName.trim(), price, {
+      supplier: preview?.supplier ?? undefined,
+      supplierRef: preview?.supplierRef ?? undefined,
+      supplierUrl: preview?.supplierUrl ?? undefined,
+      lotSize: preview?.lotSize ?? undefined,
+      imageUrl: preview?.imageUrl ?? undefined,
+    })
     setIsCreating(false)
     if (result) {
       // Ajouter à la liste locale et directement aux sélectionnés
@@ -77,6 +107,9 @@ export function SectionAccessoires() {
       setSearch(result.name)
       setNewName('')
       setNewPrice('')
+      setUrlInput('')
+      setPreview(null)
+      setExtractError(null)
       setShowCreateForm(false)
     }
   }
@@ -190,6 +223,49 @@ export function SectionAccessoires() {
         ) : (
           <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 space-y-3">
             <div className="text-sm font-medium text-teal-800">Nouvel accessoire</div>
+
+            {/* URL auto-fill */}
+            <div className="space-y-1">
+              <Label className="text-xs">URL fournisseur (optionnel)</Label>
+              <div className="flex gap-2">
+                <Input
+                  value={urlInput}
+                  onChange={e => setUrlInput(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleExtractUrl()}
+                  placeholder="https://www.fournisseur.com/produit…"
+                  className="h-8 text-sm flex-1"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  onClick={handleExtractUrl}
+                  disabled={isExtracting || !urlInput.trim()}
+                  className="h-8 px-2 shrink-0"
+                >
+                  {isExtracting ? <Loader2 className="h-3.5 w-3.5 animate-spin" /> : <LinkIcon className="h-3.5 w-3.5" />}
+                </Button>
+              </div>
+              {extractError && <p className="text-xs text-red-500">{extractError}</p>}
+            </div>
+
+            {/* Preview si données extraites */}
+            {preview && (
+              <div className="bg-white border border-teal-100 rounded-lg p-2.5 space-y-1.5 text-xs">
+                {preview.imageUrl && (
+                  <img src={preview.imageUrl} alt="" className="h-16 w-16 object-contain rounded border border-slate-100" />
+                )}
+                {preview.supplierRef && <div className="text-slate-500">Réf : <span className="font-mono font-medium text-slate-700">{preview.supplierRef}</span></div>}
+                {preview.lotSize && preview.lotSize > 1 && (
+                  <div className="text-slate-500">
+                    Lot de <span className="font-medium text-slate-700">{preview.lotSize}</span>
+                    {preview.lotPriceHT != null && <> &middot; Prix lot : <span className="font-medium text-slate-700">{preview.lotPriceHT.toFixed(2)} &euro; HT</span></>}
+                    {preview.unitPriceHT != null && <> &rarr; <span className="font-medium text-teal-700">{preview.unitPriceHT.toFixed(4)} &euro; HT/pce</span></>}
+                  </div>
+                )}
+              </div>
+            )}
+
+            {/* Champs nom + prix */}
             <div className="flex gap-3 items-end">
               <div className="flex-1 space-y-1">
                 <Label className="text-xs">Nom</Label>
@@ -200,23 +276,27 @@ export function SectionAccessoires() {
                   className="h-8 text-sm"
                 />
               </div>
-              <div className="w-28 space-y-1">
-                <Label className="text-xs">Prix unitaire (&euro;)</Label>
+              <div className="w-32 space-y-1">
+                <Label className="text-xs">Prix unitaire HT (&euro;)</Label>
                 <Input
                   type="number"
-                  step="0.01"
+                  step="0.0001"
                   value={newPrice}
                   onChange={e => setNewPrice(e.target.value)}
-                  placeholder="0.00"
+                  placeholder="0.0000"
                   className="h-8 text-sm"
                 />
               </div>
             </div>
+
             <div className="flex gap-2 justify-end">
               <Button
                 variant="ghost"
                 size="sm"
-                onClick={() => { setShowCreateForm(false); setNewName(''); setNewPrice('') }}
+                onClick={() => {
+                  setShowCreateForm(false)
+                  setNewName(''); setNewPrice(''); setUrlInput(''); setPreview(null); setExtractError(null)
+                }}
               >
                 Annuler
               </Button>

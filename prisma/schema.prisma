@@ -257,13 +257,17 @@ model Plate {
 }
 
 model Accessory {
-  id                 Int                        @id @default(autoincrement())
-  name               String
-  description        String?
-  price              Float
-  supplier           String?
-  weight             Float?
-  quoteAccessories   QuoteAccessory[]
+  id                  Int                        @id @default(autoincrement())
+  name                String
+  description         String?
+  price               Float
+  supplier            String?
+  supplierRef         String?
+  supplierUrl         String?
+  lotSize             Int?
+  imageUrl            String?
+  weight              Float?
+  quoteAccessories    QuoteAccessory[]
   templateAccessories ProductTemplateAccessory[]
 }
 

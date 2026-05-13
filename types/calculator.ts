@@ -11,7 +11,13 @@ import type { MultiImpositionResult } from '@/lib/calculation/amalgame-multi-imp
 
 // ── Types Prisma simplifiés ──
 export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost' | 'material'>
-export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'>
+export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'> & {
+  supplierRef?: string | null
+  supplierUrl?: string | null
+  lotSize?: number | null
+  imageUrl?: string | null
+  supplier?: string | null
+}
 export type Consumable = Pick<PrismaConsumable, 'id' | 'name' | 'price' | 'size'>
 export type PLVElement = Pick<PrismaElement, 'id' | 'name' | 'quantity'>
 export type TemplateAmalgameRunItem = {

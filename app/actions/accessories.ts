@@ -12,6 +12,10 @@ const accessorySchema = z.object({
   description: z.string().optional(),
   price: z.number().positive('Le prix doit être positif'),
   supplier: z.string().optional(),
+  supplierRef: z.string().optional(),
+  supplierUrl: z.string().optional(),
+  lotSize: z.number().int().positive().optional(),
+  imageUrl: z.string().optional(),
   weight: z.number().positive().optional(),
 })
 

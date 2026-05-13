@@ -465,9 +465,15 @@ export function useCalculator(
     }
   }
 
-  const handleCreateAccessory = async (name: string, price: number) => {
+  const handleCreateAccessory = async (name: string, price: number, extra?: {
+    supplier?: string
+    supplierRef?: string
+    supplierUrl?: string
+    lotSize?: number
+    imageUrl?: string
+  }) => {
     try {
-      const newAccessory = await createAccessory({ name, price })
+      const newAccessory = await createAccessory({ name, price, ...extra })
       toast.success(`Accessoire "${name}" créé`)
       return newAccessory
     } catch (e) {
