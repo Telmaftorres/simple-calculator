@@ -100,6 +100,8 @@ export function calculateCosts(params: {
   } | null
   machineTimeMinOverride?: number | null
   packagingUnitPriceOverride?: number | null
+  accessoriesMargePercent?: number
+  packagingMargePercent?: number
 }) {
   const {
     quantity,
@@ -142,6 +144,8 @@ export function calculateCosts(params: {
     amalgameOverride,
     machineTimeMinOverride,
     packagingUnitPriceOverride,
+    accessoriesMargePercent,
+    packagingMargePercent,
   } = params
 
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
@@ -301,7 +305,7 @@ export function calculateCosts(params: {
 
   // ── Accessoires ──
   const accessoriesCost = hasAccessoires
-    ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0)
+    ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0) * (1 + (accessoriesMargePercent ?? 0) / 100)
     : 0
 
   const consumablesCost = hasFaconnage
@@ -371,7 +375,7 @@ export function calculateCosts(params: {
     return (machineMinutes / 60) * hourlyRatePackaging + packagingSetupCost
   })()
 
-  const packagingTotalCost = packagingMaterialCost + packagingCuttingCost
+  const packagingTotalCost = (packagingMaterialCost + packagingCuttingCost) * (1 + (packagingMargePercent ?? 0) / 100)
 
   // ── Bureau d'études ──
   const beCost = hasBE ? (beTimeMinutes / 60) * hourlyRateBE : 0
@@ -446,6 +450,8 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     transportTotal: transportTotal ?? 0,
     transportCostMarged,
     transportMargin,
+    accessoriesMargePercent: accessoriesMargePercent ?? 0,
+    packagingMargePercent: packagingMargePercent ?? 0,
   }
 }
 

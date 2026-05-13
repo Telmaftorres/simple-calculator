@@ -104,6 +104,8 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     hasFaconnage: initialQuote.hasFaconnage ?? true,
     hasConditionnement: initialQuote.hasConditionnement ?? true,
     hasAccessoires: initialQuote.hasAccessoires ?? false,
+    accessoriesMargePercent: initialQuote.accessoriesMargePercent ?? 0,
+    packagingMargePercent: initialQuote.packagingMargePercent ?? 0,
     isMultiProduct: initialQuote.isMultiProduct ?? false,
     plvQuantity: initialQuote.plvQuantity ?? null,
     hasBE: initialQuote.hasBE ?? false,

@@ -83,6 +83,7 @@ export function useCalculator(
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
     isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
     machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord, itemsPerPlateOverride,
+    accessoriesMargePercent, packagingMargePercent,
   } = formState
 
   const {
@@ -254,6 +255,8 @@ export function useCalculator(
     packagingHeight: computedPackagingDimensions.height,
     packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     transportTotal: transportTotal > 0 ? transportTotal : undefined,
+    accessoriesMargePercent,
+    packagingMargePercent,
   })
 
   const templateOptionsCost = templateOptionSelections.reduce((sum, s) => sum + s.priceHT * s.quantity, 0)
@@ -301,7 +304,7 @@ export function useCalculator(
     packagingProductHeight, packagingProductThickness, packagingPlateId,
     packagingQuantity, packagingCuttingTimePerPoseSeconds, packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
-    hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
+    hasConditionnement, hasAccessoires, accessoriesMargePercent, packagingMargePercent, hasBE, beTimeMinutes, batTimeMinutes,
     hasDossierFee, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
     transportDeliveries: formState.transportDeliveries,
     impositionResult, productSlotResults, amalgameGroupResults, amalgameGroups,
@@ -522,6 +525,8 @@ export function useCalculator(
     currentAccessoryId, setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),
     currentAccessoryQty, setCurrentAccessoryQty: (v: number) => setField('currentAccessoryQty', v),
     hasAccessoires, setHasAccessoires: (v: boolean) => setField('hasAccessoires', v),
+    accessoriesMargePercent, setAccessoriesMargePercent: (v: number) => setField('accessoriesMargePercent', v),
+    packagingMargePercent, setPackagingMargePercent: (v: number) => setField('packagingMargePercent', v),
     selectedConsumables,
     currentConsumableId, setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
     currentConsumableSize, setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),

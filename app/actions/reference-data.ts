@@ -45,6 +45,8 @@ export const getProductTypes = unstable_cache(
           hasAssemblyNotice: true,
           hasPoseEtiquette: true,
           hasAccessoires: true,
+          accessoriesMargePercent: true,
+          packagingMargePercent: true,
           hasTransport: true,
           defaultTransportMode: true,
           hasAmalgame: true,

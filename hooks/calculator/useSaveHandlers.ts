@@ -61,6 +61,8 @@ export interface SaveContext {
   hasFaconnage: boolean
   hasConditionnement: boolean
   hasAccessoires: boolean
+  accessoriesMargePercent: number
+  packagingMargePercent: number
   hasBE: boolean
   beTimeMinutes: number
   batTimeMinutes: number
@@ -208,6 +210,8 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasFaconnage: ctx.hasFaconnage,
         hasConditionnement: ctx.hasConditionnement,
         hasAccessoires: ctx.hasAccessoires,
+        accessoriesMargePercent: ctx.accessoriesMargePercent,
+        packagingMargePercent: ctx.packagingMargePercent,
         hasBE: ctx.hasBE,
         beTimeMinutes: ctx.beTimeMinutes,
         batTimeMinutes: ctx.batTimeMinutes,

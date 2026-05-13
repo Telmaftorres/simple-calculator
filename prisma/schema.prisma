@@ -86,6 +86,8 @@ model ProductTemplate {
   hasPoseEtiquette            Boolean                   @default(false)
   // ── Accessoires ──
   hasAccessoires              Boolean                   @default(false)
+  accessoriesMargePercent     Float                     @default(0)
+  packagingMargePercent       Float                     @default(0)
   // ── Transport ──
   hasTransport                Boolean                   @default(false)
   defaultTransportMode        String?
@@ -333,6 +335,8 @@ model Quote {
   hasFaconnage                       Boolean           @default(true)
   hasConditionnement                 Boolean           @default(true)
   hasAccessoires                     Boolean           @default(false)
+  accessoriesMargePercent            Float             @default(0)
+  packagingMargePercent              Float             @default(0)
   isMultiProduct                     Boolean           @default(false)
   plvQuantity                        Int?              // Nombre de PLV (mode multi-produit) — base pour façonnage, conditionnement, transport
   products                           QuoteProduct[]

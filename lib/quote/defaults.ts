@@ -28,6 +28,8 @@ export const QUOTE_DEFAULTS = {
   hasFaconnage: true as boolean,
   hasConditionnement: true as boolean,
   hasAccessoires: false as boolean,
+  accessoriesMargePercent: 0 as number,
+  packagingMargePercent: 0 as number,
   isMultiProduct: false as boolean,
   plvQuantity: null as number | null,
   hasDossierFee: false as boolean,

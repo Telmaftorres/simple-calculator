@@ -59,6 +59,8 @@ export type ProductTemplate = {
   hasAssemblyNotice: boolean
   hasPoseEtiquette: boolean
   hasAccessoires: boolean
+  accessoriesMargePercent: number
+  packagingMargePercent: number
   hasTransport: boolean
   defaultTransportMode: string | null
   hasAmalgame: boolean

@@ -1,6 +1,7 @@
 'use client'
 
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
@@ -45,6 +46,7 @@ export function SectionEmballage() {
     packagingQuantity, setPackagingQuantity,
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds,
     packagingUnitPriceOverride, setPackagingUnitPriceOverride,
+    packagingMargePercent, setPackagingMargePercent,
     computedPackagingDimensions,
     largestProduct,
     isMultiProduct,
@@ -418,6 +420,29 @@ export function SectionEmballage() {
             )}
           </div>
         )}
+
+        {/* Marge emballage */}
+        <div className="flex items-center gap-3 pt-1">
+          <Label className="shrink-0 text-sm text-slate-500">Marge emballage</Label>
+          <div className="flex items-center gap-1.5">
+            <Input
+              type="number"
+              min={0}
+              max={100}
+              step={1}
+              value={packagingMargePercent || ''}
+              onChange={e => setPackagingMargePercent(parseFloat(e.target.value) || 0)}
+              placeholder="0"
+              className="w-20 text-sm"
+            />
+            <span className="text-sm text-slate-400">%</span>
+          </div>
+          {packagingMargePercent > 0 && packagingTotalCost > 0 && (
+            <span className="text-xs text-amber-600 font-medium">
+              +{((packagingTotalCost / (1 + packagingMargePercent / 100)) * packagingMargePercent / 100).toFixed(2)} &euro;
+            </span>
+          )}
+        </div>
 
       </div>
     </SectionDisplay>
