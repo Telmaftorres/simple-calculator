@@ -145,14 +145,10 @@ export function SectionAccessoires() {
               value={search}
               onChange={e => { setSearch(e.target.value); setDropdownOpen(true); setCurrentAccessoryId('') }}
               onFocus={() => setDropdownOpen(true)}
-              placeholder={allAccessories.length === 0 ? 'Aucun accessoire disponible' : 'Rechercher un accessoire…'}
-              disabled={allAccessories.length === 0}
+              placeholder="Rechercher ou créer un accessoire…"
             />
             {dropdownOpen && (
-              <div className="absolute z-20 w-full bg-white border border-slate-200 shadow-lg mt-1 rounded-lg max-h-48 overflow-auto">
-                {filtered.length === 0 && (
-                  <div className="px-3 py-2 text-sm text-slate-400">Aucun résultat</div>
-                )}
+              <div className="absolute z-20 w-full bg-white border border-slate-200 shadow-lg mt-1 rounded-lg max-h-56 overflow-auto">
                 {filtered.map(acc => (
                   <div
                     key={acc.id}
@@ -163,6 +159,18 @@ export function SectionAccessoires() {
                     <span className="text-slate-400 text-xs">{acc.price.toFixed(2)} €/pce</span>
                   </div>
                 ))}
+                {filtered.length === 0 && search && (
+                  <div className="px-3 py-2 text-xs text-slate-400">Aucun résultat pour &laquo;{search}&raquo;</div>
+                )}
+                <div className="border-t border-slate-100">
+                  <div
+                    className="flex items-center gap-2 px-3 py-2.5 text-sm text-teal-700 hover:bg-teal-50 cursor-pointer font-medium"
+                    onMouseDown={e => { e.preventDefault(); setDropdownOpen(false); setShowCreateForm(true); setNewName(search) }}
+                  >
+                    <PlusCircle className="h-3.5 w-3.5" />
+                    {search ? `Créer "${search}"` : 'Créer un nouvel accessoire'}
+                  </div>
+                </div>
               </div>
             )}
           </div>
@@ -211,16 +219,8 @@ export function SectionAccessoires() {
           )}
         </div>
 
-        {/* Créer un accessoire */}
-        {!showCreateForm ? (
-          <button
-            onClick={() => setShowCreateForm(true)}
-            className="flex items-center gap-1.5 text-sm text-teal-600 hover:text-teal-800 font-medium"
-          >
-            <PlusCircle className="h-4 w-4" />
-            Créer un nouvel accessoire
-          </button>
-        ) : (
+        {/* Formulaire de création */}
+        {showCreateForm && (
           <div className="bg-teal-50 border border-teal-200 rounded-lg p-3 space-y-3">
             <div className="text-sm font-medium text-teal-800">Nouvel accessoire</div>
 
