@@ -175,6 +175,17 @@ export function SectionAccessoires() {
             )}
           </div>
 
+          {/* Bouton créer toujours visible */}
+          {!showCreateForm && (
+            <button
+              onMouseDown={e => { e.preventDefault(); setDropdownOpen(false); setShowCreateForm(true); setNewName('') }}
+              className="flex items-center gap-1.5 text-xs text-teal-600 hover:text-teal-800 font-medium"
+            >
+              <PlusCircle className="h-3.5 w-3.5" />
+              Créer un nouvel accessoire (ou coller une URL fournisseur)
+            </button>
+          )}
+
           {/* Qté + bouton ajouter sur une ligne séparée, le bouton ne peut pas disparaître */}
           <div className="flex gap-2">
             <div className="w-28 shrink-0">
