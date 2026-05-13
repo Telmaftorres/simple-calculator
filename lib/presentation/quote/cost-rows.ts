@@ -121,7 +121,7 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasConditionnement ? [
       {
         label: 'Conditionnement',
-        detail: isClient ? '—' : p.hasAssemblyNotice ? 'Avec notice' : `${p.packTimePerPieceSeconds}s/pce`,
+        detail: isClient ? '—' : (p.hasAssemblyNotice || p.hasPoseEtiquette) ? [p.hasAssemblyNotice ? 'Notice' : null, p.hasPoseEtiquette ? 'Étiquette' : null].filter(Boolean).join(' + ') : `${p.packTimePerPieceSeconds}s/pce`,
         value: p.packagingCost,
       },
     ] : []),

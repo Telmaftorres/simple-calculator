@@ -58,6 +58,7 @@ const defaultParams = {
   assemblyTimePerPieceSeconds: 0,
   packTimePerPieceSeconds: 0,
   hasAssemblyNotice: false,
+  hasPoseEtiquette: false,
   selectedAccessories: [],
   selectedConsumables: [],
   printSetupType: 'standard' as const,

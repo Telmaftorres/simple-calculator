@@ -244,7 +244,7 @@ export function useCalculator(
     hasFaconnage, hasConditionnement, hasAccessoires,
     cuttingTimePerPoseSeconds: isMultiProduct ? 0 : cuttingTimePerPoseSeconds,
     machineTimeMinOverride: isMultiProduct ? null : (machineTimeMinOverride ?? null),
-    assemblyTimePerPieceSeconds, packTimePerPieceSeconds, hasAssemblyNotice,
+    assemblyTimePerPieceSeconds, packTimePerPieceSeconds, hasAssemblyNotice, hasPoseEtiquette,
     selectedAccessories, selectedConsumables,
     settings: settingsWithPackagingPrice,
     hasPackaging, packagingMaterialType, packagingExternalSize,
@@ -284,7 +284,9 @@ export function useCalculator(
     quantity: isMultiProduct ? quantiteForFaconnage : quantity,
     hasAssemblyNotice,
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
-  }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece])
+    hasPoseEtiquette,
+    poseEtiquetteCostPerPiece: costResult.poseEtiquetteCostPerPiece,
+  }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece, hasPoseEtiquette, costResult.poseEtiquetteCostPerPiece])
 
   // ── Save handlers ──
   const { isServing, handleSave, handleSaveProd, handleSaveActuals } = useSaveHandlers({

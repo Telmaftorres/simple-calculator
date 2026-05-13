@@ -378,18 +378,20 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       </div>
 
       {/* Blocs accordéon */}
-      {quote.hasConditionnement && ps && (
-        <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
-      )}
-      {quote.hasPackaging && (
-        ps ? (
-          <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />
-        ) : (
-          <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">
-            📦 Sauvegardez d&apos;abord la fiche de production via le calculateur pour activer le bloc Emballage.
-          </div>
-        )
-      )}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+        {quote.hasConditionnement && ps && (
+          <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
+        )}
+        {quote.hasPackaging && (
+          ps ? (
+            <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />
+          ) : (
+            <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">
+              📦 Sauvegardez d&apos;abord la fiche de production via le calculateur pour activer le bloc Emballage.
+            </div>
+          )
+        )}
+      </div>
 
     </div>
   )

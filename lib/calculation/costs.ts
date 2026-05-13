@@ -11,6 +11,7 @@ import {
   PRINT_SPEED_PRODUCTION,
   PRINT_SPEED_QUALITY,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
+  POSE_ETIQUETTE_COST_PER_PIECE,
   POSE_SPACING_MM,
   PLATE_BORDER_MM,
   PACKAGING_SETUP_COST,
@@ -76,6 +77,7 @@ export function calculateCosts(params: {
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
+  hasPoseEtiquette: boolean
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
   settings?: Record<string, number>
@@ -120,6 +122,7 @@ export function calculateCosts(params: {
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
     hasAssemblyNotice,
+    hasPoseEtiquette,
     selectedAccessories,
     selectedConsumables,
     settings,
@@ -158,6 +161,7 @@ export function calculateCosts(params: {
   const cuttingSetupStandardCost = settings?.CUTTING_SETUP_STANDARD_COST ?? CUTTING_SETUP_STANDARD_COST
   const cuttingSetupComplexCost = settings?.CUTTING_SETUP_COMPLEX_COST ?? CUTTING_SETUP_COMPLEX_COST
   const assemblyNoticeCostPerPiece = settings?.ASSEMBLY_NOTICE_COST_PER_PIECE ?? ASSEMBLY_NOTICE_COST_PER_PIECE
+  const poseEtiquetteCostPerPiece = settings?.POSE_ETIQUETTE_COST_PER_PIECE ?? POSE_ETIQUETTE_COST_PER_PIECE
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
   const packagingSetupCost = settings?.PACKAGING_SETUP_COST ?? PACKAGING_SETUP_COST
@@ -291,7 +295,8 @@ export function calculateCosts(params: {
     const totalHours = (packTimePerPieceSeconds * quantity) / 3600
     const timeCost = totalHours * hourlyRateConditioning
     const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
-    return timeCost + noticeCost
+    const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * quantity : 0
+    return timeCost + noticeCost + etiquetteCost
   })()
 
   // ── Accessoires ──
@@ -430,6 +435,7 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     effectivePackagingUnitPrice,
     poseSpacingMm,
     assemblyNoticeCostPerPiece,
+    poseEtiquetteCostPerPiece,
     materialCostRaw,
     materialCostMarged,
     materialMarginCoeff,

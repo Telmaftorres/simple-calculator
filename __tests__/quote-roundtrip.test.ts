@@ -117,6 +117,7 @@ const originalParams: Parameters<typeof calculateCosts>[0] = {
   assemblyTimePerPieceSeconds: 45,
   packTimePerPieceSeconds: 20,
   hasAssemblyNotice: true,
+  hasPoseEtiquette: false,
   selectedAccessories: accessories,
   selectedConsumables: consumables,
   hasPackaging: true,
@@ -170,6 +171,7 @@ const savedQuoteRow = {
   hasConditionnement: true,
   packTimePerPieceSeconds: 20,
   hasAssemblyNotice: true,
+  hasPoseEtiquette: false,
   // accessoires
   hasAccessoires: true,
   // emballage
@@ -226,6 +228,7 @@ function simulateLoadQuote(row: typeof savedQuoteRow) {
     hasConditionnement: row.hasConditionnement ?? true,
     packTimePerPieceSeconds: row.packTimePerPieceSeconds || 0,
     hasAssemblyNotice: row.hasAssemblyNotice || false,
+    hasPoseEtiquette: row.hasPoseEtiquette || false,
     hasAccessoires: row.hasAccessoires ?? false,
     hasPackaging: row.hasPackaging || false,
     packagingCuttingTimePerPoseSeconds: row.packagingCuttingTimePerPoseSeconds || 20,
@@ -287,6 +290,7 @@ const loadedParams: Parameters<typeof calculateCosts>[0] = {
   hasConditionnement: loaded.hasConditionnement,
   packTimePerPieceSeconds: loaded.packTimePerPieceSeconds,
   hasAssemblyNotice: loaded.hasAssemblyNotice,
+  hasPoseEtiquette: loaded.hasPoseEtiquette || false,
   hasAccessoires: loaded.hasAccessoires,
   selectedAccessories: loadedAccessories,
   selectedConsumables: loadedConsumables,

@@ -26,12 +26,18 @@ export function formatPackDetails(params: {
   quantity: number
   hasAssemblyNotice: boolean
   assemblyNoticeCostPerPiece: number
+  hasPoseEtiquette?: boolean
+  poseEtiquetteCostPerPiece?: number
 }): string {
   const totalMinutes = (params.packTimePerPieceSeconds * params.quantity) / 60
   let details = `${formatMinutes(totalMinutes)} (${formatTimeSeconds(params.packTimePerPieceSeconds)}/pce)`
   if (params.hasAssemblyNotice) {
     const noticeCost = params.assemblyNoticeCostPerPiece * params.quantity
     details += ` + Notice: ${noticeCost.toFixed(2)}€`
+  }
+  if (params.hasPoseEtiquette && params.poseEtiquetteCostPerPiece != null) {
+    const etiquetteCost = params.poseEtiquetteCostPerPiece * params.quantity
+    details += ` + Étiquette: ${etiquetteCost.toFixed(2)}€`
   }
   return details
 }
