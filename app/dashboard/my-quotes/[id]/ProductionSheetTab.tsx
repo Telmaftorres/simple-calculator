@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { Download, FileText } from 'lucide-react'
 import { toast } from 'sonner'
@@ -305,6 +305,47 @@ function EmballageBlock({ quote, ps, onSave }: {
   )
 }
 
+type SectionKey = 'conditionnement' | 'emballage'
+
+// ── Bouton "Ajouter une section" ──
+function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; label: string; emoji: string }[]; onAdd: (key: SectionKey) => void }) {
+  const [open, setOpen] = useState(false)
+  const ref = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    if (!open) return
+    const handler = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [open])
+
+  if (available.length === 0) return null
+
+  return (
+    <div className="relative" ref={ref}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-dashed border-slate-300 rounded-xl hover:border-slate-400 hover:text-slate-800 transition-colors bg-white"
+      >
+        <span className="text-base leading-none">+</span> Ajouter une section
+      </button>
+      {open && (
+        <div className="absolute left-0 top-full mt-1 z-20 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[180px]">
+          {available.map(s => (
+            <button
+              key={s.key}
+              onClick={() => { onAdd(s.key); setOpen(false) }}
+              className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
+            >
+              <span>{s.emoji}</span> {s.label}
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  )
+}
+
 // ── Composant principal ──
 export function ProductionSheetTab({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
@@ -314,6 +355,28 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
     (ps?.status as ProductionSheetInput['status']) ?? 'en_attente'
   )
   const [savingStatus, setSavingStatus] = useState(false)
+
+  // Sections ajoutées manuellement (non cochées dans le devis)
+  const psHasConditionnement = ps != null && (
+    ps.conditionnementType != null || ps.prodPackTimePerPieceSeconds != null || ps.conditionnementNotes != null
+  )
+  const psHasEmballage = ps != null && (
+    ps.prodPackagingQuantity != null || ps.prodPackagingMaterial != null || ps.packagingBoxLengthMm != null
+  )
+  const [extraSections, setExtraSections] = useState<Set<SectionKey>>(() => {
+    const s = new Set<SectionKey>()
+    if (psHasConditionnement && !quote.hasConditionnement) s.add('conditionnement')
+    if (psHasEmballage && !quote.hasPackaging) s.add('emballage')
+    return s
+  })
+
+  const showConditionnement = quote.hasConditionnement || extraSections.has('conditionnement')
+  const showEmballage = quote.hasPackaging || extraSections.has('emballage')
+
+  const availableSections = [
+    !showConditionnement && { key: 'conditionnement' as SectionKey, label: 'Conditionnement', emoji: '📦' },
+    !showEmballage        && { key: 'emballage'       as SectionKey, label: 'Emballage',       emoji: '🗃️' },
+  ].filter(Boolean) as { key: SectionKey; label: string; emoji: string }[]
 
   const handleStatusChange = async (newStatus: ProductionSheetInput['status']) => {
     setStatus(newStatus)
@@ -415,20 +478,24 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       </div>
 
       {/* Blocs accordéon */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-        {quote.hasConditionnement && ps && (
-          <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
-        )}
-        {quote.hasPackaging && (
-          ps ? (
+      {(showConditionnement || showEmballage) && (
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+          {showConditionnement && ps && (
+            <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
+          )}
+          {showEmballage && ps && (
             <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />
-          ) : (
-            <div className="rounded-2xl border border-dashed border-slate-200 p-6 text-center text-sm text-slate-400">
-              📦 Sauvegardez d&apos;abord la fiche de production via le calculateur pour activer le bloc Emballage.
-            </div>
-          )
-        )}
-      </div>
+          )}
+        </div>
+      )}
+
+      {/* Ajouter une section */}
+      {availableSections.length > 0 && (
+        <AddSectionMenu
+          available={availableSections}
+          onAdd={key => setExtraSections(prev => new Set([...prev, key]))}
+        />
+      )}
 
     </div>
   )
