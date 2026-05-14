@@ -14,9 +14,24 @@ export type ExtractedAccessory = {
 export async function extractAccessoryFromUrl(rawUrl: string): Promise<ExtractedAccessory> {
   let parsedUrl: URL
   try {
-    parsedUrl = new URL(rawUrl)
+    // Handle missing protocol
+    const normalized = rawUrl.startsWith('http') ? rawUrl : `https://${rawUrl}`
+    parsedUrl = new URL(normalized)
   } catch {
     throw new Error('URL invalide')
+  }
+
+  // Unwrap Google redirect URLs (google.com/url?url=... or google.com/url?sa=j&url=...)
+  if (parsedUrl.hostname.includes('google.') && parsedUrl.pathname === '/url') {
+    const target = parsedUrl.searchParams.get('url') ?? parsedUrl.searchParams.get('q')
+    if (target) {
+      try {
+        parsedUrl = new URL(target)
+        rawUrl = target
+      } catch {
+        throw new Error('URL invalide dans le lien Google')
+      }
+    }
   }
 
   const res = await fetch(rawUrl, {
