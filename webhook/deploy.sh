@@ -11,8 +11,8 @@ log() { echo "$(date) - $1" >> "$LOG"; }
 
 log "Déploiement lancé..."
 
-git checkout -- package-lock.json
-git pull origin main >> "$LOG" 2>&1
+git fetch origin main >> "$LOG" 2>&1
+git reset --hard origin/main >> "$LOG" 2>&1
 
 npm install >> "$LOG" 2>&1
 npx prisma migrate deploy >> "$LOG" 2>&1
