@@ -67,7 +67,7 @@ export function SectionConditionnement() {
               className="h-5 w-5 text-teal-600 rounded border-slate-300 focus:ring-teal-500"
             />
             <Label htmlFor="poseEtiquette" className="text-teal-900 cursor-pointer font-medium">
-              Pose étiquette
+              Ajouter Pose Étiquette (+0.10€ / pce)
             </Label>
           </div>
         </div>
