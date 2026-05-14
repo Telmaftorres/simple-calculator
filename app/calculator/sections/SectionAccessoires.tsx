@@ -263,7 +263,7 @@ export function SectionAccessoires() {
             {preview && (
               <div className="bg-white border border-teal-100 rounded-lg p-2.5 space-y-1.5 text-xs">
                 {preview.imageUrl && (
-                  <img src={preview.imageUrl} alt="" className="h-16 w-16 object-contain rounded border border-slate-100" />
+                  <img src={preview.imageUrl} alt="" referrerPolicy="no-referrer" className="h-16 w-16 object-contain rounded border border-slate-100" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 )}
                 {preview.supplierRef && <div className="text-slate-500">Réf : <span className="font-mono font-medium text-slate-700">{preview.supplierRef}</span></div>}
                 {preview.lotSize && preview.lotSize > 1 && (

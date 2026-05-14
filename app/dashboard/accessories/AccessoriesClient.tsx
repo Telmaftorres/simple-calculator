@@ -202,7 +202,7 @@ export default function AccessoriesClient({ initialAccessories }: { initialAcces
                 <TableCell>
                   <div className="flex items-center gap-3">
                     {item.imageUrl ? (
-                      <img src={item.imageUrl} alt="" className="h-10 w-10 object-contain rounded border border-slate-100 shrink-0" />
+                      <img src={item.imageUrl} alt="" referrerPolicy="no-referrer" className="h-10 w-10 object-contain rounded border border-slate-100 shrink-0" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                     ) : (
                       <div className="h-10 w-10 rounded border border-slate-100 bg-slate-50 shrink-0" />
                     )}
@@ -282,7 +282,7 @@ export default function AccessoriesClient({ initialAccessories }: { initialAcces
             {/* Preview image si disponible */}
             {formData.imageUrl && (
               <div className="flex items-center gap-3 p-2 bg-slate-50 rounded-lg border border-slate-100">
-                <img src={formData.imageUrl} alt="" className="h-14 w-14 object-contain rounded" />
+                <img src={formData.imageUrl} alt="" referrerPolicy="no-referrer" className="h-14 w-14 object-contain rounded" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
                 <p className="text-xs text-slate-500 truncate flex-1">{formData.imageUrl}</p>
               </div>
             )}
