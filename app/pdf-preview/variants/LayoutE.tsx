@@ -219,7 +219,8 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
         .reduce((sum, r) => sum + (r.machineTimeMinOverride ?? 0) * 60, 0)
   const faconnageSeconds = quote.hasFaconnage ? (ps.prodAssemblyTimePerPieceSeconds ?? 0) * qty : 0
   const conditionnementSeconds = quote.hasConditionnement ? (ps.prodPackTimePerPieceSeconds ?? 0) * qty : 0
-  const totalProductionSeconds = cuttingSeconds + faconnageSeconds + conditionnementSeconds
+  const totalProductionSeconds = cuttingSeconds + impressionSeconds + faconnageSeconds + conditionnementSeconds
+  const computedDelai = ps.delaiRealisation ?? fmtTime(totalProductionSeconds)
 
   return (
     <Document>
@@ -398,13 +399,14 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
         <View style={s.summaryBand}>
           <View style={s.summaryItem}>
             <Text style={s.summaryLabel}>Delai de realisation</Text>
-            <Text style={s.summaryValue}>{ps.delaiRealisation ?? '—'}</Text>
+            <Text style={s.summaryValue}>{computedDelai}</Text>
           </View>
           <View style={s.summaryItem}>
             <Text style={s.summaryLabel}>Temps total production estime</Text>
             <Text style={s.summaryValue}>{fmtTime(totalProductionSeconds)}</Text>
             <Text style={s.summarySub}>
               Decoupe {fmtTime(cuttingSeconds)}
+              {impressionSeconds > 0 ? `  +  Impression ${fmtTime(impressionSeconds)}` : ''}
               {faconnageSeconds > 0 ? `  +  Faconnage ${fmtTime(faconnageSeconds)}` : ''}
               {conditionnementSeconds > 0 ? `  +  Cond. ${fmtTime(conditionnementSeconds)}` : ''}
             </Text>
