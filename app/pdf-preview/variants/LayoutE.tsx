@@ -356,6 +356,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
         <View style={[s.body, { padding: '14 22 80 22' }]}>
           <Text style={s.sectionLabel}>Operations de finition</Text>
           <View style={s.opsGrid}>
+            {quote.hasBE && (
+              <OpCard title="BUREAU D'ETUDES" bgColor={C.indigoBg} textColor={C.indigo}>
+                {quote.beTimeMinutes > 0 && <OpRow label="BE" value={`${quote.beTimeMinutes} min`} />}
+                {quote.batTimeMinutes > 0 && <OpRow label="BAT" value={`${quote.batTimeMinutes} min`} />}
+              </OpCard>
+            )}
             {quote.hasFaconnage && (
               <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
                 <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds ?? quote.assemblyTimePerPieceSeconds ?? '—'} s`} />
@@ -382,12 +388,6 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                 {ps.packagingBoxLengthMm != null && (
                   <OpRow label="Dim." value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm}`} />
                 )}
-              </OpCard>
-            )}
-            {quote.hasBE && (
-              <OpCard title="BUREAU D'ETUDES" bgColor={C.indigoBg} textColor={C.indigo}>
-                {quote.beTimeMinutes > 0 && <OpRow label="BE" value={`${quote.beTimeMinutes} min`} />}
-                {quote.batTimeMinutes > 0 && <OpRow label="BAT" value={`${quote.batTimeMinutes} min`} />}
               </OpCard>
             )}
             {(quote.accessories.length > 0 || ps.achatsNotes) && (
