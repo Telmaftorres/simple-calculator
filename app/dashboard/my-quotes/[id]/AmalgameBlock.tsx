@@ -461,30 +461,72 @@ function RunEditor({
 // ── Référence devis (lecture seule) ──
 
 function QuoteAmalgameRef({ runs }: { runs: Quote['amalgameRuns'] }) {
-  const [open, setOpen] = useState(false)
+  const [open, setOpen] = useState(true)
+
+  const rvLabel = (r: Quote['amalgameRuns'][number]) => {
+    if (!r.isRectoVerso) return null
+    return r.rectoVersoType === 'recto_verso_different' ? 'R/V différent' : 'R/V'
+  }
+
   return (
-    <div className="rounded-xl border border-blue-100 bg-blue-50 overflow-hidden">
+    <div className="rounded-xl border border-blue-100 bg-blue-50/60 overflow-hidden">
       <button
         onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-100/50 transition-colors"
+        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-100/60 transition-colors"
       >
-        <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">Devis — référence</span>
+        <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">
+          Amalgame du devis — {runs.length} pass{runs.length > 1 ? 'es' : 'e'}
+        </span>
         <span className="ml-auto text-blue-300">{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
       </button>
+
       {open && (
-        <div className="px-4 pb-4 space-y-3">
+        <div className="px-4 pb-4 space-y-4">
           {runs.map((r, ri) => (
-            <div key={ri}>
-              <p className="text-xs font-semibold text-blue-600 mb-1">{r.name}</p>
-              <div className="space-y-1">
-                {r.items.map((it, ii) => (
-                  <div key={ii} className="flex items-center gap-2 text-xs text-blue-700">
-                    <span className="font-medium">{it.name}</span>
-                    <span className="text-blue-400">{it.flatWidth} × {it.flatHeight} mm</span>
-                    <span className="text-blue-400">× {it.countPerPlate}/pl. · {it.quantityPerUnit} pce/u</span>
-                  </div>
-                ))}
+            <div key={ri} className="rounded-lg border border-blue-100 bg-white overflow-hidden">
+              {/* En-tête du run */}
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-blue-50 border-b border-blue-100">
+                <span className="text-sm font-semibold text-blue-700">{r.name}</span>
+                {r.plate && (
+                  <span className="text-xs text-blue-500">
+                    📐 {r.plate.name} — {r.plate.width} × {r.plate.height} mm
+                  </span>
+                )}
+                {r.platesCount != null && (
+                  <span className="text-xs text-blue-500">{r.platesCount} plaque{r.platesCount > 1 ? 's' : ''}</span>
+                )}
+                {r.hasImpression && (
+                  <span className="text-xs text-blue-500">🖨 {r.inkMlPerPlate} ml/pl.</span>
+                )}
+                {rvLabel(r) && (
+                  <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-medium">{rvLabel(r)}</span>
+                )}
+                {r.cuttingTimePerPoseSeconds > 0 && (
+                  <span className="text-xs text-blue-500">✂️ {r.cuttingTimePerPoseSeconds}s/pose</span>
+                )}
               </div>
+
+              {/* Items */}
+              <table className="w-full text-xs">
+                <thead>
+                  <tr className="text-slate-400 border-b border-slate-100">
+                    <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wide">Élément</th>
+                    <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">L × l</th>
+                    <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Nb/plaque</th>
+                    <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Qté/unité</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {r.items.map((it, ii) => (
+                    <tr key={ii} className={ii % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+                      <td className="px-3 py-2 font-medium text-slate-700">{it.name}</td>
+                      <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.flatWidth} × {it.flatHeight} mm</td>
+                      <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.countPerPlate}</td>
+                      <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.quantityPerUnit}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
             </div>
           ))}
         </div>
