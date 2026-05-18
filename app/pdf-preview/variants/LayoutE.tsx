@@ -79,6 +79,7 @@ const C = {
   orange: '#9a3412', orangeBg: '#ffedd5',
   emerald: '#065f46', emeraldBg: '#d1fae5',
   pink: '#9d174d', pinkBg: '#fce7f3',
+  indigo: '#312e81', indigoBg: '#e0e7ff',
 }
 
 const GROUP_COLORS = [
@@ -381,6 +382,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                 {ps.packagingBoxLengthMm != null && (
                   <OpRow label="Dim." value={`${ps.packagingBoxLengthMm}x${ps.packagingBoxWidthMm}x${ps.packagingBoxHeightMm}`} />
                 )}
+              </OpCard>
+            )}
+            {quote.hasBE && (
+              <OpCard title="BUREAU D'ETUDES" bgColor={C.indigoBg} textColor={C.indigo}>
+                {quote.beTimeMinutes > 0 && <OpRow label="BE" value={`${quote.beTimeMinutes} min`} />}
+                {quote.batTimeMinutes > 0 && <OpRow label="BAT" value={`${quote.batTimeMinutes} min`} />}
               </OpCard>
             )}
             {(quote.accessories.length > 0 || ps.achatsNotes) && (
