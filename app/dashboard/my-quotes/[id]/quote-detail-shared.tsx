@@ -33,6 +33,9 @@ export type Quote = {
   packTimePerPieceSeconds: number | null
   hasFaconnage: boolean
   hasConditionnement: boolean
+  hasBE: boolean
+  beTimeMinutes: number
+  batTimeMinutes: number
   hasImpression: boolean
   isRectoVerso: boolean
   rectoVersoType: string | null

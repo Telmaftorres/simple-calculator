@@ -345,6 +345,8 @@ export async function deleteQuote(id: number) {
     : { id: validId, userId: session.user.id }
 
   const quote = await prisma.quote.findUnique({ where: { id: validId }, select: { reference: true } })
+  // Supprimer la fiche de prod explicitement (au cas où la cascade FK n'est pas active en base)
+  await prisma.productionSheet.deleteMany({ where: { quoteId: validId } })
   await prisma.quote.delete({ where: whereClause })
 
   await logAction({
