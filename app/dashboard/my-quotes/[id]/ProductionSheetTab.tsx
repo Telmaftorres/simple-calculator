@@ -415,6 +415,33 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
     }
   }
 
+  // Pour un devis simple (non multi-produit), amalgameRuns et products sont vides.
+  // On construit un run synthétique depuis les champs du quote pour que LayoutE puisse rendre quelque chose.
+  const buildQuoteForPdf = () => {
+    const isSimple = !quote.isMultiProduct && quote.amalgameRuns.length === 0 && quote.products.length === 0
+    if (!isSimple) return quote
+    return {
+      ...quote,
+      amalgameRuns: [{
+        name: quote.productType?.name ?? 'Produit',
+        hasImpression: quote.hasImpression,
+        platesCount: quote.platesCount,
+        cuttingTimePerPoseSeconds: quote.cuttingTimePerPoseSeconds ?? 0,
+        machineTimeMinOverride: ps.prodMachineTimeMinOverride,
+        isRectoVerso: quote.isRectoVerso,
+        rectoVersoType: quote.rectoVersoType,
+        plate: quote.plate ? { name: quote.plate.name, width: quote.plate.width, height: quote.plate.height } : null,
+        items: [{
+          name: quote.productType?.name ?? 'Produit',
+          flatWidth: quote.flatWidth ?? 0,
+          flatHeight: quote.flatHeight ?? 0,
+          countPerPlate: quote.itemsPerPlate ?? 1,
+          quantityPerUnit: 1,
+        }],
+      }],
+    }
+  }
+
   const buildPsForPdf = (): PSForPDF => ({
     prodMachineTimeMinOverride:      ps?.prodMachineTimeMinOverride      ?? null,
     prodAssemblyTimePerPieceSeconds: ps?.prodAssemblyTimePerPieceSeconds ?? null,
@@ -437,7 +464,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   const handleDownloadPdf = async () => {
     setIsDownloading(true)
     try {
-      const blob = await pdf(<ProductionSheetPDFE quote={quote} productionSheet={buildPsForPdf()} />).toBlob()
+      const blob = await pdf(<ProductionSheetPDFE quote={buildQuoteForPdf() as Parameters<typeof ProductionSheetPDFE>[0]['quote']} productionSheet={buildPsForPdf()} />).toBlob()
       const url = URL.createObjectURL(blob)
       const a = document.createElement('a')
       a.href = url
@@ -457,7 +484,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
     const win = window.open('', '_blank')
     setIsViewing(true)
     try {
-      const blob = await pdf(<ProductionSheetPDFE quote={quote} productionSheet={buildPsForPdf()} />).toBlob()
+      const blob = await pdf(<ProductionSheetPDFE quote={buildQuoteForPdf() as Parameters<typeof ProductionSheetPDFE>[0]['quote']} productionSheet={buildPsForPdf()} />).toBlob()
       const url = URL.createObjectURL(blob)
       if (win) win.location.href = url
     } catch (e) {
