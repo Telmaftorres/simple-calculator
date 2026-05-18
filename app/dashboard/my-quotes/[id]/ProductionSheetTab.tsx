@@ -11,6 +11,7 @@ import type { PSForPDF } from '@/app/pdf-preview/variants/LayoutE'
 import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
 import { patchQuoteFlags } from '@/app/actions/quotes'
 import { AmalgameBlock } from './AmalgameBlock'
+import { ProduitsBlock } from './ProduitsBlock'
 
 // ── Bloc accordéon style "card emoji" ──
 function Block({
@@ -306,7 +307,7 @@ function EmballageBlock({ quote, ps, onSave }: {
   )
 }
 
-type SectionKey = 'amalgame' | 'conditionnement' | 'emballage'
+type SectionKey = 'produits' | 'amalgame' | 'conditionnement' | 'emballage'
 
 // ── Bouton "Ajouter une section" ──
 function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; label: string; emoji: string }[]; onAdd: (key: SectionKey) => void }) {
@@ -362,6 +363,7 @@ const EMPTY_PS: NonNullable<Quote['productionSheet']> = {
   packagingSupplierRef: null, packagingNotes: null,
   prodPackagingUnitPrice: null, prodPackagingQuantity: null, prodPackagingMaterial: null,
   productionAmalgameRuns: [],
+  productionProductLines: [],
 }
 
 export function ProductionSheetTab({ quote }: { quote: Quote }) {
@@ -374,6 +376,8 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   const [savingStatus, setSavingStatus] = useState(false)
 
   // Sections ajoutées manuellement (non cochées dans le devis mais avec des données sauvegardées)
+  // Produits : toujours visible (tout devis a au moins un produit)
+  const psHasProduits = true
   const psHasAmalgame = quote.hasAmalgame || quote.isMultiProduct || ps.productionAmalgameRuns.length > 0
   const psHasConditionnement = quote.productionSheet != null && (
     ps.conditionnementType != null || ps.prodPackTimePerPieceSeconds != null || ps.conditionnementNotes != null
@@ -383,20 +387,22 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   )
   const [extraSections, setExtraSections] = useState<Set<SectionKey>>(() => {
     const s = new Set<SectionKey>()
+    if (psHasProduits) s.add('produits')
     if (psHasAmalgame) s.add('amalgame')
     if (psHasConditionnement && !quote.hasConditionnement) s.add('conditionnement')
     if (psHasEmballage && !quote.hasPackaging) s.add('emballage')
     return s
   })
 
+  const showProduits = extraSections.has('produits')
   const showAmalgame = extraSections.has('amalgame')
   const showConditionnement = quote.hasConditionnement || extraSections.has('conditionnement')
   const showEmballage = quote.hasPackaging || extraSections.has('emballage')
 
   const availableSections = [
-    !showAmalgame         && { key: 'amalgame'        as SectionKey, label: 'Amalgame',         emoji: '🔀' },
-    !showConditionnement  && { key: 'conditionnement' as SectionKey, label: 'Conditionnement',  emoji: '📦' },
-    !showEmballage        && { key: 'emballage'       as SectionKey, label: 'Emballage',        emoji: '🗃️' },
+    !showAmalgame         && { key: 'amalgame'        as SectionKey, label: 'Amalgame',          emoji: '🔀' },
+    !showConditionnement  && { key: 'conditionnement' as SectionKey, label: 'Conditionnement',   emoji: '📦' },
+    !showEmballage        && { key: 'emballage'       as SectionKey, label: 'Emballage',         emoji: '🗃️' },
   ].filter(Boolean) as { key: SectionKey; label: string; emoji: string }[]
 
   const handleStatusChange = async (newStatus: ProductionSheetInput['status']) => {
@@ -561,6 +567,11 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
           </Button>
         </div>
       </div>
+
+      {/* Bloc Produit(s) */}
+      {showProduits && (
+        <ProduitsBlock quote={quote} />
+      )}
 
       {/* Bloc Amalgame (pleine largeur) */}
       {showAmalgame && (

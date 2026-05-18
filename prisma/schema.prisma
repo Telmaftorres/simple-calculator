@@ -458,6 +458,7 @@ model ProductionSheet {
 
   quote                  Quote                   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   productionAmalgameRuns ProductionAmalgameRun[]
+  productionProductLines ProductionProductLine[]
 }
 
 model ProductionAmalgameRun {
@@ -481,6 +482,25 @@ model ProductionAmalgameItem {
   quantityPerUnit Int                   @default(1)
   position        Int                   @default(0)
   run             ProductionAmalgameRun @relation(fields: [runId], references: [id], onDelete: Cascade)
+}
+
+model ProductionProductLine {
+  id                Int      @id @default(autoincrement())
+  productionSheetId Int
+  name              String
+  position          Int      @default(0)
+  productionSheet   ProductionSheet              @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
+  elements          ProductionProductLineElement[]
+}
+
+model ProductionProductLineElement {
+  id         Int                    @id @default(autoincrement())
+  lineId     Int
+  name       String
+  flatWidth  Int
+  flatHeight Int
+  position   Int                    @default(0)
+  line       ProductionProductLine  @relation(fields: [lineId], references: [id], onDelete: Cascade)
 }
 
 model QuoteActuals {

@@ -129,6 +129,18 @@ export type Quote = {
         position: number
       }[]
     }[]
+    productionProductLines: {
+      id: number
+      name: string
+      position: number
+      elements: {
+        id: number
+        name: string
+        flatWidth: number
+        flatHeight: number
+        position: number
+      }[]
+    }[]
   } | null
 }
 
