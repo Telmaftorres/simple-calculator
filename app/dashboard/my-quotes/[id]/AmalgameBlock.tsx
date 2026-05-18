@@ -468,9 +468,9 @@ function RunEditor({
   }
 
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50 overflow-hidden">
+    <div className="rounded-xl border border-slate-200 bg-slate-50">
       {/* En-tête du run */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-100">
+      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-100 rounded-t-xl">
         <button
           onClick={() => onUpdate({ ...run, open: !run.open })}
           className="text-slate-300 hover:text-slate-500 transition-colors"
