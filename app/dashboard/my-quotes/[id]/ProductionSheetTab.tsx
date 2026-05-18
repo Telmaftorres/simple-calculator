@@ -349,8 +349,8 @@ function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; la
 // ── Composant principal ──
 export function ProductionSheetTab({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
-  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
-  const [pdfUrl, setPdfUrl] = useState<string | null>(null)
+  const [isDownloading, setIsDownloading] = useState(false)
+  const [isViewing, setIsViewing] = useState(false)
   const [status, setStatus] = useState<ProductionSheetInput['status']>(
     (ps?.status as ProductionSheetInput['status']) ?? 'en_attente'
   )
@@ -401,34 +401,57 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
     }
   }
 
-  const handleGeneratePdf = async () => {
-    setIsGeneratingPdf(true)
+  const buildPsForPdf = (): PSForPDF => ({
+    prodMachineTimeMinOverride:      ps?.prodMachineTimeMinOverride      ?? null,
+    prodAssemblyTimePerPieceSeconds: ps?.prodAssemblyTimePerPieceSeconds ?? null,
+    prodPackTimePerPieceSeconds:     ps?.prodPackTimePerPieceSeconds     ?? null,
+    nbCollages:           ps?.nbCollages           ?? null,
+    collagePerPLV:        ps?.collagePerPLV        ?? null,
+    faconnageNotes:       ps?.faconnageNotes       ?? null,
+    conditionnementType:  ps?.conditionnementType  ?? null,
+    conditionnementNotes: ps?.conditionnementNotes ?? null,
+    achatsNotes:          ps?.achatsNotes          ?? null,
+    remarques:            ps?.remarques            ?? null,
+    delaiRealisation:     ps?.delaiRealisation     ?? null,
+    packagingBoxLengthMm:   ps?.packagingBoxLengthMm  ?? null,
+    packagingBoxWidthMm:    ps?.packagingBoxWidthMm   ?? null,
+    packagingBoxHeightMm:   ps?.packagingBoxHeightMm  ?? null,
+    prodPackagingMaterial:  ps?.prodPackagingMaterial ?? null,
+    prodPackagingQuantity:  ps?.prodPackagingQuantity ?? null,
+  })
+
+  const handleDownloadPdf = async () => {
+    setIsDownloading(true)
     try {
-      const psForPdf: PSForPDF = {
-        prodMachineTimeMinOverride:      ps?.prodMachineTimeMinOverride      ?? null,
-        prodAssemblyTimePerPieceSeconds: ps?.prodAssemblyTimePerPieceSeconds ?? null,
-        prodPackTimePerPieceSeconds:     ps?.prodPackTimePerPieceSeconds     ?? null,
-        nbCollages:           ps?.nbCollages           ?? null,
-        collagePerPLV:        ps?.collagePerPLV        ?? null,
-        faconnageNotes:       ps?.faconnageNotes       ?? null,
-        conditionnementType:  ps?.conditionnementType  ?? null,
-        conditionnementNotes: ps?.conditionnementNotes ?? null,
-        achatsNotes:          ps?.achatsNotes          ?? null,
-        remarques:            ps?.remarques            ?? null,
-        delaiRealisation:     ps?.delaiRealisation     ?? null,
-        packagingBoxLengthMm:   ps?.packagingBoxLengthMm  ?? null,
-        packagingBoxWidthMm:    ps?.packagingBoxWidthMm   ?? null,
-        packagingBoxHeightMm:   ps?.packagingBoxHeightMm  ?? null,
-        prodPackagingMaterial:  ps?.prodPackagingMaterial ?? null,
-        prodPackagingQuantity:  ps?.prodPackagingQuantity ?? null,
-      }
-      const blob = await pdf(<ProductionSheetPDFE quote={quote} productionSheet={psForPdf} />).toBlob()
-      setPdfUrl(URL.createObjectURL(blob))
+      const blob = await pdf(<ProductionSheetPDFE quote={quote} productionSheet={buildPsForPdf()} />).toBlob()
+      const url = URL.createObjectURL(blob)
+      const a = document.createElement('a')
+      a.href = url
+      a.download = `fiche-prod-${quote.study?.number ?? quote.id}.pdf`
+      a.click()
+      URL.revokeObjectURL(url)
     } catch (e) {
       console.error(e)
       toast.error('Erreur génération PDF')
     } finally {
-      setIsGeneratingPdf(false)
+      setIsDownloading(false)
+    }
+  }
+
+  const handleViewPdf = async () => {
+    // Ouvrir la fenêtre avant l'await pour éviter le blocage popup du navigateur
+    const win = window.open('', '_blank')
+    setIsViewing(true)
+    try {
+      const blob = await pdf(<ProductionSheetPDFE quote={quote} productionSheet={buildPsForPdf()} />).toBlob()
+      const url = URL.createObjectURL(blob)
+      if (win) win.location.href = url
+    } catch (e) {
+      console.error(e)
+      win?.close()
+      toast.error('Erreur génération PDF')
+    } finally {
+      setIsViewing(false)
     }
   }
 
@@ -455,25 +478,14 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
           ))}
         </div>
         <div className="flex gap-2">
-          {pdfUrl ? (
-            <>
-              <a href={pdfUrl} download={`fiche-prod-${quote.study?.number ?? quote.id}.pdf`}>
-                <Button size="sm" variant="outline" className="gap-1">
-                  <Download className="h-4 w-4" /> Télécharger
-                </Button>
-              </a>
-              <a href={pdfUrl} target="_blank" rel="noopener noreferrer">
-                <Button size="sm" variant="outline" className="gap-1">
-                  <FileText className="h-4 w-4" /> Voir PDF
-                </Button>
-              </a>
-            </>
-          ) : (
-            <Button size="sm" variant="outline" className="gap-1" onClick={handleGeneratePdf} disabled={isGeneratingPdf}>
-              <FileText className="h-4 w-4" />
-              {isGeneratingPdf ? 'Génération…' : 'Générer PDF'}
-            </Button>
-          )}
+          <Button size="sm" variant="outline" className="gap-1" onClick={handleDownloadPdf} disabled={isDownloading || isViewing}>
+            <Download className="h-4 w-4" />
+            {isDownloading ? 'Génération…' : 'Télécharger'}
+          </Button>
+          <Button size="sm" variant="outline" className="gap-1" onClick={handleViewPdf} disabled={isViewing || isDownloading}>
+            <FileText className="h-4 w-4" />
+            {isViewing ? 'Génération…' : 'Voir PDF'}
+          </Button>
         </div>
       </div>
 
