@@ -91,13 +91,13 @@ const GROUP_COLORS = [
 
 const s = StyleSheet.create({
   page: { padding: 0, fontFamily: 'Helvetica', fontSize: 9, color: C.dark, backgroundColor: C.white },
-  header: { backgroundColor: C.dark, padding: '8 22', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' },
-  headerTitle: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: C.white, letterSpacing: 1.2 },
-  headerSub: { fontSize: 7.5, color: C.light, marginTop: 2 },
-  headerTag: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.dark, backgroundColor: '#22c55e', padding: '3 10', borderRadius: 12 },
-  metaStrip: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '5 22', gap: 28 },
-  metaLabel: { fontSize: 7, color: '#64748b' },
-  metaValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.white, marginTop: 1 },
+  header: { backgroundColor: C.white, padding: '8 22', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', borderBottomWidth: 2, borderBottomColor: C.dark },
+  headerTitle: { fontSize: 15, fontFamily: 'Helvetica-Bold', color: C.dark, letterSpacing: 1.2 },
+  headerSub: { fontSize: 7.5, color: C.mid, marginTop: 2 },
+  headerTag: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.white, backgroundColor: C.dark, padding: '3 10', borderRadius: 2 },
+  metaStrip: { flexDirection: 'row', backgroundColor: C.bg, padding: '5 22', gap: 28, borderBottomWidth: 1, borderBottomColor: C.border },
+  metaLabel: { fontSize: 7, color: C.mid },
+  metaValue: { fontSize: 8.5, fontFamily: 'Helvetica-Bold', color: C.dark, marginTop: 1 },
   body: { padding: '10 22 80 22', flex: 1, flexDirection: 'column' },
   sectionLabel: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.mid, letterSpacing: 1, textTransform: 'uppercase', marginBottom: 5 },
   // Bloc groupe
@@ -115,8 +115,8 @@ const s = StyleSheet.create({
   specListValue: { fontSize: 8, fontFamily: 'Helvetica-Bold', flex: 1, flexWrap: 'wrap', textAlign: 'right' },
   // Mini tableau produits
   miniTable: { flex: 1, borderWidth: 1, borderColor: C.border, borderRadius: 3, overflow: 'hidden', alignSelf: 'flex-start' },
-  miniHead: { flexDirection: 'row', backgroundColor: '#1e293b', padding: '3 7' },
-  miniHCell: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: C.white },
+  miniHead: { flexDirection: 'row', backgroundColor: C.bg, padding: '3 7', borderBottomWidth: 1, borderBottomColor: C.border },
+  miniHCell: { fontSize: 7, fontFamily: 'Helvetica-Bold', color: C.mid },
   miniRow: { flexDirection: 'row', padding: '3 7', borderTopWidth: 1, borderTopColor: C.border },
   miniRowAlt: { flexDirection: 'row', padding: '3 7', borderTopWidth: 1, borderTopColor: C.border, backgroundColor: C.bg },
   miniCell: { fontSize: 8 },
@@ -137,14 +137,14 @@ const s = StyleSheet.create({
   opValue: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
   opNote: { fontSize: 7.5, color: C.mid, marginTop: 5, lineHeight: 1.5 },
   // Bande récap bas de page
-  summaryBand: { position: 'absolute', bottom: 20, left: 0, right: 0, backgroundColor: C.dark, flexDirection: 'row', padding: '10 22', gap: 0 },
-  summaryItem: { flex: 1, borderRightWidth: 1, borderRightColor: '#334155', paddingRight: 22, marginRight: 22 },
+  summaryBand: { position: 'absolute', bottom: 20, left: 0, right: 0, backgroundColor: C.bg, flexDirection: 'row', padding: '10 22', gap: 0, borderTopWidth: 2, borderTopColor: C.dark },
+  summaryItem: { flex: 1, borderRightWidth: 1, borderRightColor: C.border, paddingRight: 22, marginRight: 22 },
   summaryItemLast: { flex: 1 },
-  summaryLabel: { fontSize: 7.5, color: C.light, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
-  summaryValue: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: C.white },
-  summarySub: { fontSize: 7.5, color: '#64748b', marginTop: 2 },
-  footer: { position: 'absolute', bottom: 6, left: 22, right: 22, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: '#334155', paddingTop: 3 },
-  footerText: { fontSize: 6, color: '#475569' },
+  summaryLabel: { fontSize: 7.5, color: C.mid, letterSpacing: 0.8, textTransform: 'uppercase', marginBottom: 3 },
+  summaryValue: { fontSize: 18, fontFamily: 'Helvetica-Bold', color: C.dark },
+  summarySub: { fontSize: 7.5, color: C.mid, marginTop: 2 },
+  footer: { position: 'absolute', bottom: 6, left: 22, right: 22, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: C.border, paddingTop: 3 },
+  footerText: { fontSize: 6, color: C.mid },
 })
 
 function SpecRow({ label, value, barColor, last }: { label: string; value: string; barColor: string; last?: boolean }) {
