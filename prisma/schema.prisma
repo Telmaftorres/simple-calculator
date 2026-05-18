@@ -456,7 +456,31 @@ model ProductionSheet {
   // ── Snapshot calculateur (JSON) ──
   formDataJson String?  // Sérialisation complète de l'état du calculateur en mode fiche de prod
 
-  quote        Quote    @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  quote                  Quote                   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
+  productionAmalgameRuns ProductionAmalgameRun[]
+}
+
+model ProductionAmalgameRun {
+  id                Int      @id @default(autoincrement())
+  productionSheetId Int
+  name              String
+  position          Int      @default(0)
+  notes             String?
+  productionSheet   ProductionSheet          @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
+  items             ProductionAmalgameItem[]
+}
+
+model ProductionAmalgameItem {
+  id              Int                   @id @default(autoincrement())
+  runId           Int
+  name            String
+  flatWidth       Int                   // L (mm)
+  flatHeight      Int                   // l (mm)
+  flatDepth       Int?                  // H (mm) — pour les éléments 3D
+  countPerPlate   Int                   @default(1)
+  quantityPerUnit Int                   @default(1)
+  position        Int                   @default(0)
+  run             ProductionAmalgameRun @relation(fields: [runId], references: [id], onDelete: Cascade)
 }
 
 model QuoteActuals {

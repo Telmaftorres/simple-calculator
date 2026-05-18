@@ -411,7 +411,14 @@ export async function getQuoteDetail(id: number) {
         include: { plate: true, items: true },
       },
       actuals: true,
-      productionSheet: true,
+      productionSheet: {
+        include: {
+          productionAmalgameRuns: {
+            orderBy: { position: 'asc' },
+            include: { items: { orderBy: { position: 'asc' } } },
+          },
+        },
+      },
     },
   })
 

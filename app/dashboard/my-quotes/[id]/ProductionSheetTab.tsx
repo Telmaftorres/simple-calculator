@@ -10,6 +10,7 @@ import { ProductionSheetPDFE } from '@/app/pdf-preview/variants/LayoutE'
 import type { PSForPDF } from '@/app/pdf-preview/variants/LayoutE'
 import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
 import { patchQuoteFlags } from '@/app/actions/quotes'
+import { AmalgameBlock } from './AmalgameBlock'
 
 // ── Bloc accordéon style "card emoji" ──
 function Block({
@@ -305,7 +306,7 @@ function EmballageBlock({ quote, ps, onSave }: {
   )
 }
 
-type SectionKey = 'conditionnement' | 'emballage'
+type SectionKey = 'amalgame' | 'conditionnement' | 'emballage'
 
 // ── Bouton "Ajouter une section" ──
 function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; label: string; emoji: string }[]; onAdd: (key: SectionKey) => void }) {
@@ -348,6 +349,7 @@ function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; la
 
 // ── Composant principal ──
 const EMPTY_PS: NonNullable<Quote['productionSheet']> = {
+  id: 0,
   prodCuttingTimePerPoseSeconds: null, prodMachineTimeMinOverride: null,
   prodAssemblyTimePerPieceSeconds: null, prodPackTimePerPieceSeconds: null,
   prodInkMlPerPlate: null, prodPlatesCount: null,
@@ -359,6 +361,7 @@ const EMPTY_PS: NonNullable<Quote['productionSheet']> = {
   packagingBoxLengthMm: null, packagingBoxWidthMm: null, packagingBoxHeightMm: null,
   packagingSupplierRef: null, packagingNotes: null,
   prodPackagingUnitPrice: null, prodPackagingQuantity: null, prodPackagingMaterial: null,
+  productionAmalgameRuns: [],
 }
 
 export function ProductionSheetTab({ quote }: { quote: Quote }) {
@@ -371,6 +374,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   const [savingStatus, setSavingStatus] = useState(false)
 
   // Sections ajoutées manuellement (non cochées dans le devis mais avec des données sauvegardées)
+  const psHasAmalgame = quote.hasAmalgame || quote.isMultiProduct || ps.productionAmalgameRuns.length > 0
   const psHasConditionnement = quote.productionSheet != null && (
     ps.conditionnementType != null || ps.prodPackTimePerPieceSeconds != null || ps.conditionnementNotes != null
   )
@@ -379,17 +383,20 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   )
   const [extraSections, setExtraSections] = useState<Set<SectionKey>>(() => {
     const s = new Set<SectionKey>()
+    if (psHasAmalgame) s.add('amalgame')
     if (psHasConditionnement && !quote.hasConditionnement) s.add('conditionnement')
     if (psHasEmballage && !quote.hasPackaging) s.add('emballage')
     return s
   })
 
+  const showAmalgame = extraSections.has('amalgame')
   const showConditionnement = quote.hasConditionnement || extraSections.has('conditionnement')
   const showEmballage = quote.hasPackaging || extraSections.has('emballage')
 
   const availableSections = [
-    !showConditionnement && { key: 'conditionnement' as SectionKey, label: 'Conditionnement', emoji: '📦' },
-    !showEmballage        && { key: 'emballage'       as SectionKey, label: 'Emballage',       emoji: '🗃️' },
+    !showAmalgame         && { key: 'amalgame'        as SectionKey, label: 'Amalgame',         emoji: '🔀' },
+    !showConditionnement  && { key: 'conditionnement' as SectionKey, label: 'Conditionnement',  emoji: '📦' },
+    !showEmballage        && { key: 'emballage'       as SectionKey, label: 'Emballage',        emoji: '🗃️' },
   ].filter(Boolean) as { key: SectionKey; label: string; emoji: string }[]
 
   const handleStatusChange = async (newStatus: ProductionSheetInput['status']) => {
@@ -530,7 +537,12 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         </div>
       </div>
 
-      {/* Blocs accordéon */}
+      {/* Bloc Amalgame (pleine largeur) */}
+      {showAmalgame && (
+        <AmalgameBlock quote={quote} />
+      )}
+
+      {/* Blocs accordéon Conditionnement / Emballage */}
       {(showConditionnement || showEmballage) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
           {showConditionnement && (

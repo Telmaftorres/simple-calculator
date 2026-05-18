@@ -85,6 +85,7 @@ export type Quote = {
     notes: string | null
   } | null
   productionSheet: {
+    id: number
     prodCuttingTimePerPoseSeconds: number | null
     prodMachineTimeMinOverride: number | null
     prodAssemblyTimePerPieceSeconds: number | null
@@ -111,6 +112,22 @@ export type Quote = {
     prodPackagingUnitPrice: number | null
     prodPackagingQuantity: number | null
     prodPackagingMaterial: string | null
+    productionAmalgameRuns: {
+      id: number
+      name: string
+      notes: string | null
+      position: number
+      items: {
+        id: number
+        name: string
+        flatWidth: number
+        flatHeight: number
+        flatDepth: number | null
+        countPerPlate: number
+        quantityPerUnit: number
+        position: number
+      }[]
+    }[]
   } | null
 }
 
