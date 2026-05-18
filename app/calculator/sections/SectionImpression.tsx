@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Label } from '@/components/ui/label'
 import { SectionDisplay } from '../shared'
 import { GaugeSlider } from '@/components/calculator/GaugeSlider'
@@ -23,6 +24,8 @@ export function SectionImpression() {
     machineTimeMinOverride, setMachineTimeMinOverride,
     costResult,
   } = useCalculatorContext()
+
+  const [showOverride, setShowOverride] = useState(false)
 
   const { printingCostData } = costResult
   const varnishRatio = hasVarnish ? varnishSurfacePercent : 0
@@ -327,34 +330,46 @@ export function SectionImpression() {
         </div>
 
         {/* ── Temps machine ── */}
-        <div className="space-y-2 bg-purple-50 p-3 rounded-lg border border-purple-100">
+        <div className="bg-purple-50 p-3 rounded-lg border border-purple-100 space-y-2">
           <div className="flex justify-between items-center text-xs text-purple-800">
-            <span>{machineTimeMinOverride != null ? 'Temps machine (override) :' : 'Temps machine :'}</span>
-            <span className="font-bold text-sm">{formatMinutes(printingCostData.machineTimeMin)}</span>
+            <span>{machineTimeMinOverride != null ? 'Temps machine (personnalisé) :' : 'Temps machine :'}</span>
+            <div className="flex items-center gap-2">
+              <span className="font-bold text-sm">{formatMinutes(printingCostData.machineTimeMin)}</span>
+              {machineTimeMinOverride == null && (
+                <button
+                  type="button"
+                  onClick={() => setShowOverride(v => !v)}
+                  className="text-xs text-purple-400 hover:text-purple-700 underline underline-offset-2 transition-colors"
+                >
+                  Personnaliser
+                </button>
+              )}
+            </div>
           </div>
-          <div className="flex items-center gap-2">
-            <input
-              type="number"
-              min={0}
-              step={0.5}
-              value={machineTimeMinOverride ?? ''}
-              onChange={(e) => {
-                const v = parseFloat(e.target.value)
-                setMachineTimeMinOverride(isNaN(v) || e.target.value === '' ? null : v)
-              }}
-              placeholder="Forcer le temps (min)…"
-              className="flex-1 h-8 px-2 text-sm border border-purple-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-purple-400"
-            />
-            {machineTimeMinOverride != null && (
+          {(showOverride || machineTimeMinOverride != null) && (
+            <div className="flex items-center gap-2">
+              <input
+                type="number"
+                min={0}
+                step={0.5}
+                value={machineTimeMinOverride ?? ''}
+                onChange={(e) => {
+                  const v = parseFloat(e.target.value)
+                  setMachineTimeMinOverride(isNaN(v) || e.target.value === '' ? null : v)
+                }}
+                placeholder="Temps forcé (min)…"
+                autoFocus
+                className="flex-1 h-8 px-2 text-sm border border-purple-200 rounded-md bg-white focus:outline-none focus:ring-1 focus:ring-purple-400"
+              />
               <button
                 type="button"
-                onClick={() => setMachineTimeMinOverride(null)}
+                onClick={() => { setMachineTimeMinOverride(null); setShowOverride(false) }}
                 className="text-xs text-slate-400 hover:text-red-500 transition-colors whitespace-nowrap"
               >
                 Auto
               </button>
-            )}
-          </div>
+            </div>
+          )}
         </div>
 
       </div>
