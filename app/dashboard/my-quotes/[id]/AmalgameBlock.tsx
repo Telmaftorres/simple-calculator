@@ -535,7 +535,7 @@ function RunEditor({
 // ── Référence devis (lecture seule) ──
 
 function QuoteAmalgameRef({ quote }: { quote: Quote }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const { amalgameRuns, products } = quote
 
   const rvLabel = (r: Quote['amalgameRuns'][number]) => {
@@ -638,7 +638,11 @@ function QuoteAmalgameRef({ quote }: { quote: Quote }) {
 
 export function AmalgameBlock({ quote }: { quote: Quote }) {
   const dbRuns = quote.productionSheet?.productionAmalgameRuns ?? []
-  const [runs, setRuns] = useState<LocalRun[]>(() => initRuns(dbRuns))
+  // Si aucune donnée sauvegardée, pré-remplit automatiquement depuis le devis
+  const [runs, setRuns] = useState<LocalRun[]>(() =>
+    dbRuns.length > 0 ? initRuns(dbRuns) : initRunsFromDevis(quote)
+  )
+  const [isPreFilled] = useState(() => dbRuns.length === 0)
   const [saving, setSaving] = useState(false)
   const [templates, setTemplates] = useState<TemplateBasic[] | null>(null)
   const templatesLoading = useRef(false)
@@ -685,33 +689,21 @@ export function AmalgameBlock({ quote }: { quote: Quote }) {
   }
 
   const totalItems = runs.reduce((n, r) => n + r.items.length, 0)
-  const summary = runs.length === 0
-    ? undefined
-    : `${runs.length} groupe${runs.length > 1 ? 's' : ''} · ${totalItems} élément${totalItems > 1 ? 's' : ''}`
+  const summary = `${runs.length} groupe${runs.length > 1 ? 's' : ''} · ${totalItems} élément${totalItems > 1 ? 's' : ''}`
 
   return (
     <Block emoji="🔀" title="Amalgame" summary={summary}>
       <div className="space-y-3">
-        {/* Référence devis */}
+        {/* Référence devis — repliée par défaut, consultable */}
         {(quote.hasAmalgame || quote.isMultiProduct) && (
           <QuoteAmalgameRef quote={quote} />
         )}
 
-        {/* Banner de départ si aucun groupe défini */}
-        {runs.length === 0 && (
-          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
-            <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">Aucun groupe configuré</p>
-              <p className="text-xs text-amber-600 mt-0.5">
-                Copiez les groupes du devis comme point de départ, ou créez un groupe manuellement.
-              </p>
-            </div>
-            <button
-              onClick={() => setRuns(initRunsFromDevis(quote))}
-              className="shrink-0 px-4 py-2 text-sm font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
-            >
-              📋 Copier depuis le devis
-            </button>
+        {/* Bandeau informatif si pré-rempli (non encore sauvegardé) */}
+        {isPreFilled && (
+          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-500">
+            <span>ℹ️</span>
+            Pré-rempli depuis le devis — vérifiez les valeurs et cliquez <strong className="text-slate-700">Enregistrer</strong> pour valider.
           </div>
         )}
 
