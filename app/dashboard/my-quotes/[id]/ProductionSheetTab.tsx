@@ -347,8 +347,22 @@ function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; la
 }
 
 // ── Composant principal ──
+const EMPTY_PS: NonNullable<Quote['productionSheet']> = {
+  prodCuttingTimePerPoseSeconds: null, prodMachineTimeMinOverride: null,
+  prodAssemblyTimePerPieceSeconds: null, prodPackTimePerPieceSeconds: null,
+  prodInkMlPerPlate: null, prodPlatesCount: null,
+  prodTransportCost: null, prodTransportNotes: null,
+  nbCollages: null, collagePerPLV: null, faconnageNotes: null,
+  conditionnementType: null, conditionnementNotes: null,
+  achatsNotes: null, remarques: null, delaiRealisation: null,
+  planImageUrl: null, status: 'en_attente',
+  packagingBoxLengthMm: null, packagingBoxWidthMm: null, packagingBoxHeightMm: null,
+  packagingSupplierRef: null, packagingNotes: null,
+  prodPackagingUnitPrice: null, prodPackagingQuantity: null, prodPackagingMaterial: null,
+}
+
 export function ProductionSheetTab({ quote }: { quote: Quote }) {
-  const ps = quote.productionSheet
+  const ps = quote.productionSheet ?? EMPTY_PS
   const [isDownloading, setIsDownloading] = useState(false)
   const [isViewing, setIsViewing] = useState(false)
   const [status, setStatus] = useState<ProductionSheetInput['status']>(
@@ -356,11 +370,11 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   )
   const [savingStatus, setSavingStatus] = useState(false)
 
-  // Sections ajoutées manuellement (non cochées dans le devis)
-  const psHasConditionnement = ps != null && (
+  // Sections ajoutées manuellement (non cochées dans le devis mais avec des données sauvegardées)
+  const psHasConditionnement = quote.productionSheet != null && (
     ps.conditionnementType != null || ps.prodPackTimePerPieceSeconds != null || ps.conditionnementNotes != null
   )
-  const psHasEmballage = ps != null && (
+  const psHasEmballage = quote.productionSheet != null && (
     ps.prodPackagingQuantity != null || ps.prodPackagingMaterial != null || ps.packagingBoxLengthMm != null
   )
   const [extraSections, setExtraSections] = useState<Set<SectionKey>>(() => {
@@ -492,10 +506,10 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       {/* Blocs accordéon */}
       {(showConditionnement || showEmballage) && (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-          {showConditionnement && ps && (
+          {showConditionnement && (
             <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
           )}
-          {showEmballage && ps && (
+          {showEmballage && (
             <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />
           )}
         </div>
