@@ -422,9 +422,34 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
     }
   }
 
-  // Pour un devis simple (non multi-produit), amalgameRuns et products sont vides.
-  // On construit un run synthétique depuis les champs du quote pour que LayoutE puisse rendre quelque chose.
+  // Si des runs de production ont été sauvegardés, ils remplacent les runs du devis dans le PDF.
+  // Pour un devis simple sans amalgame, on crée un run synthétique.
   const buildQuoteForPdf = () => {
+    const prodRuns = ps.productionAmalgameRuns
+    if (prodRuns.length > 0) {
+      return {
+        ...quote,
+        amalgameRuns: prodRuns.map(r => ({
+          name: r.name,
+          hasImpression: false,
+          platesCount: null,
+          cuttingTimePerPoseSeconds: 0,
+          machineTimeMinOverride: null,
+          isRectoVerso: false,
+          rectoVersoType: null,
+          plate: null,
+          items: r.items.map(it => ({
+            name: it.name,
+            flatWidth: it.flatWidth,
+            flatHeight: it.flatHeight,
+            countPerPlate: it.countPerPlate,
+            quantityPerUnit: it.quantityPerUnit,
+          })),
+        })),
+        // Efface les produits standalone pour éviter les doublons
+        products: [],
+      }
+    }
     const isSimple = !quote.isMultiProduct && quote.amalgameRuns.length === 0 && quote.products.length === 0
     if (!isSimple) return quote
     return {
