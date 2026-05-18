@@ -60,6 +60,7 @@ export type Quote = {
   hasAmalgame: boolean
   amalgameRuns: {
     name: string
+    position: number
     hasImpression: boolean
     platesCount: number | null
     cuttingTimePerPoseSeconds: number

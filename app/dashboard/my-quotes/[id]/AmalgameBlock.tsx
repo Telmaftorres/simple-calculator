@@ -85,24 +85,58 @@ function getDevisItems(quote: Quote): { name: string; flatWidth: number; flatHei
   return []
 }
 
-// Pré-remplit les runs de production depuis les runs du devis
+// Récupère les items d'un run depuis r.items OU depuis quote.products (multi-produit avec amalgame)
+function getRunItems(r: Quote['amalgameRuns'][number], quote: Quote) {
+  if (r.items.length > 0) return r.items
+  // Fallback : produits avec amalgameGroupIndex === position du run
+  return quote.products
+    .filter(p => p.amalgameGroupIndex === r.position)
+    .map(p => ({
+      name: p.productTypeName ?? 'Produit',
+      flatWidth: p.flatWidth,
+      flatHeight: p.flatHeight,
+      countPerPlate: p.countPerPlateInGroup ?? p.itemsPerPlate ?? 1,
+      quantityPerUnit: 1 as const,
+    }))
+}
+
+// Pré-remplit les groupes de production depuis le devis
 function initRunsFromDevis(quote: Quote): LocalRun[] {
   if (quote.hasAmalgame && quote.amalgameRuns.length > 0) {
-    return quote.amalgameRuns.map(r => ({
-      tempId: tid(),
-      name: r.name,
-      open: true,
-      items: r.items.length > 0
-        ? r.items.map(it => makeItem({
-            name: it.name,
-            flatWidth: it.flatWidth.toString(),
-            flatHeight: it.flatHeight.toString(),
-          }))
-        : [makeItem()],
-    }))
+    const runs: LocalRun[] = quote.amalgameRuns.map(r => {
+      const items = getRunItems(r, quote)
+      return {
+        tempId: tid(),
+        name: r.name,
+        open: true,
+        items: items.length > 0
+          ? items.map(it => makeItem({
+              name: it.name,
+              flatWidth: it.flatWidth.toString(),
+              flatHeight: it.flatHeight.toString(),
+              countPerPlate: it.countPerPlate.toString(),
+            }))
+          : [makeItem()],
+      }
+    })
+    // Produits hors amalgame (pas dans un run) → groupes séparés
+    const standalone = quote.products.filter(p => p.amalgameGroupIndex === null)
+    for (const p of standalone) {
+      runs.push({
+        tempId: tid(),
+        name: p.productTypeName ?? 'Produit',
+        open: true,
+        items: [makeItem({
+          name: p.productTypeName ?? 'Produit',
+          flatWidth: p.flatWidth.toString(),
+          flatHeight: p.flatHeight.toString(),
+          countPerPlate: (p.itemsPerPlate ?? 1).toString(),
+        })],
+      })
+    }
+    return runs
   }
   if (quote.isMultiProduct && quote.products.length > 0) {
-    // Regroupe les produits par amalgameGroupIndex ou crée un run par produit
     const groups = new Map<number | string, typeof quote.products>()
     for (const p of quote.products) {
       const key = p.amalgameGroupIndex != null ? p.amalgameGroupIndex : `solo_${p.id}`
@@ -112,12 +146,13 @@ function initRunsFromDevis(quote: Quote): LocalRun[] {
     }
     return Array.from(groups.values()).map((prods, i) => ({
       tempId: tid(),
-      name: `Groupe ${i + 1}`,
+      name: prods.length === 1 ? (prods[0].productTypeName ?? `Groupe ${i + 1}`) : `Groupe ${i + 1}`,
       open: true,
       items: prods.map(p => makeItem({
         name: p.productTypeName ?? `Produit ${p.id}`,
         flatWidth: p.flatWidth.toString(),
         flatHeight: p.flatHeight.toString(),
+        countPerPlate: (p.countPerPlateInGroup ?? p.itemsPerPlate ?? 1).toString(),
       })),
     }))
   }
@@ -499,13 +534,42 @@ function RunEditor({
 
 // ── Référence devis (lecture seule) ──
 
-function QuoteAmalgameRef({ runs }: { runs: Quote['amalgameRuns'] }) {
+function QuoteAmalgameRef({ quote }: { quote: Quote }) {
   const [open, setOpen] = useState(true)
+  const { amalgameRuns, products } = quote
 
   const rvLabel = (r: Quote['amalgameRuns'][number]) => {
     if (!r.isRectoVerso) return null
-    return r.rectoVersoType === 'recto_verso_different' ? 'R/V différent' : 'R/V'
+    return r.rectoVersoType === 'different' ? 'R/V différent' : 'R/V'
   }
+
+  const standaloneProducts = products.filter(p => p.amalgameGroupIndex === null)
+  const totalPasses = amalgameRuns.length + (standaloneProducts.length > 0 ? 1 : 0)
+
+  const ItemsTable = ({ items }: { items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[] }) => (
+    <table className="w-full text-xs">
+      <thead>
+        <tr className="text-slate-400 border-b border-slate-100">
+          <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wide">Élément</th>
+          <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">L × l</th>
+          <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Nb/plaque</th>
+          <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Qté/unité</th>
+        </tr>
+      </thead>
+      <tbody>
+        {items.length === 0 ? (
+          <tr><td colSpan={4} className="px-3 py-3 text-slate-400 italic text-center">Aucun élément trouvé</td></tr>
+        ) : items.map((it, ii) => (
+          <tr key={ii} className={ii % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
+            <td className="px-3 py-2 font-medium text-slate-700">{it.name}</td>
+            <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.flatWidth} × {it.flatHeight} mm</td>
+            <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.countPerPlate}</td>
+            <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.quantityPerUnit}</td>
+          </tr>
+        ))}
+      </tbody>
+    </table>
+  )
 
   return (
     <div className="rounded-xl border border-blue-100 bg-blue-50/60 overflow-hidden">
@@ -514,66 +578,56 @@ function QuoteAmalgameRef({ runs }: { runs: Quote['amalgameRuns'] }) {
         className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-100/60 transition-colors"
       >
         <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">
-          Amalgame du devis — {runs.length} pass{runs.length > 1 ? 'es' : 'e'}
+          Devis — {totalPasses} passe{totalPasses > 1 ? 's' : ''}
         </span>
         <span className="ml-auto text-blue-300">{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
       </button>
 
       {open && (
         <div className="px-4 pb-4 space-y-4">
-          {runs.map((r, ri) => (
-            <div key={ri} className="rounded-lg border border-blue-100 bg-white overflow-hidden">
-              {/* En-tête du run */}
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-blue-50 border-b border-blue-100">
-                <span className="text-sm font-semibold text-blue-700">{r.name}</span>
-                {r.plate && (
-                  <span className="text-xs text-blue-500">
-                    📐 {r.plate.name} — {r.plate.width} × {r.plate.height} mm
-                  </span>
-                )}
-                {r.platesCount != null && (
-                  <span className="text-xs text-blue-500">{r.platesCount} plaque{r.platesCount > 1 ? 's' : ''}</span>
-                )}
-                {r.hasImpression && (
-                  <span className="text-xs text-blue-500">🖨 {r.inkMlPerPlate} ml/pl.</span>
-                )}
-                {rvLabel(r) && (
-                  <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-medium">{rvLabel(r)}</span>
-                )}
-                {r.cuttingTimePerPoseSeconds > 0 && (
-                  <span className="text-xs text-blue-500">✂️ {r.cuttingTimePerPoseSeconds}s/pose</span>
-                )}
+          {/* Passes amalgame */}
+          {amalgameRuns.map((r, ri) => {
+            const displayItems = getRunItems(r, quote)
+            return (
+              <div key={ri} className="rounded-lg border border-blue-100 bg-white overflow-hidden">
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-blue-50 border-b border-blue-100">
+                  <span className="text-sm font-semibold text-blue-700">{r.name}</span>
+                  {r.plate && (
+                    <span className="text-xs text-blue-500">📐 {r.plate.name} — {r.plate.width} × {r.plate.height} mm</span>
+                  )}
+                  {r.platesCount != null && (
+                    <span className="text-xs text-blue-500">{r.platesCount} plaque{r.platesCount > 1 ? 's' : ''}</span>
+                  )}
+                  {r.hasImpression && (
+                    <span className="text-xs text-blue-500">🖨 {r.inkMlPerPlate} ml/pl.</span>
+                  )}
+                  {rvLabel(r) && (
+                    <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-medium">{rvLabel(r)}</span>
+                  )}
+                  {r.cuttingTimePerPoseSeconds > 0 && (
+                    <span className="text-xs text-blue-500">✂️ {r.cuttingTimePerPoseSeconds}s/pose</span>
+                  )}
+                </div>
+                <ItemsTable items={displayItems} />
               </div>
+            )
+          })}
 
-              {/* Items */}
-              <table className="w-full text-xs">
-                <thead>
-                  <tr className="text-slate-400 border-b border-slate-100">
-                    <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wide">Élément</th>
-                    <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">L × l</th>
-                    <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Nb/plaque</th>
-                    <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Qté/unité</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {r.items.length === 0 ? (
-                    <tr>
-                      <td colSpan={4} className="px-3 py-3 text-slate-400 italic text-center">
-                        Aucun élément enregistré pour ce run dans le devis
-                      </td>
-                    </tr>
-                  ) : r.items.map((it, ii) => (
-                    <tr key={ii} className={ii % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-                      <td className="px-3 py-2 font-medium text-slate-700">{it.name}</td>
-                      <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.flatWidth} × {it.flatHeight} mm</td>
-                      <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.countPerPlate}</td>
-                      <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.quantityPerUnit}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
+          {/* Produits hors amalgame (ex : Socle seul) */}
+          {standaloneProducts.length > 0 && (
+            <div className="rounded-lg border border-blue-100 bg-white overflow-hidden">
+              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-blue-50 border-b border-blue-100">
+                <span className="text-sm font-semibold text-blue-700">Produits hors amalgame</span>
+              </div>
+              <ItemsTable items={standaloneProducts.map(p => ({
+                name: p.productTypeName ?? 'Produit',
+                flatWidth: p.flatWidth,
+                flatHeight: p.flatHeight,
+                countPerPlate: p.itemsPerPlate ?? 1,
+                quantityPerUnit: 1,
+              }))} />
             </div>
-          ))}
+          )}
         </div>
       )}
     </div>
@@ -630,25 +684,26 @@ export function AmalgameBlock({ quote }: { quote: Quote }) {
     }
   }
 
+  const totalItems = runs.reduce((n, r) => n + r.items.length, 0)
   const summary = runs.length === 0
     ? undefined
-    : `${runs.length} groupe${runs.length > 1 ? 's' : ''} · ${runs.reduce((n, r) => n + r.items.length, 0)} éléments`
+    : `${runs.length} groupe${runs.length > 1 ? 's' : ''} · ${totalItems} élément${totalItems > 1 ? 's' : ''}`
 
   return (
     <Block emoji="🔀" title="Amalgame" summary={summary}>
       <div className="space-y-3">
         {/* Référence devis */}
-        {quote.hasAmalgame && quote.amalgameRuns.length > 0 && (
-          <QuoteAmalgameRef runs={quote.amalgameRuns} />
+        {(quote.hasAmalgame || quote.isMultiProduct) && (
+          <QuoteAmalgameRef quote={quote} />
         )}
 
-        {/* Banner "Copier depuis le devis" si aucun run de production */}
+        {/* Banner de départ si aucun groupe défini */}
         {runs.length === 0 && (
           <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
             <div className="flex-1">
-              <p className="text-sm font-semibold text-amber-800">Aucun run de production défini</p>
+              <p className="text-sm font-semibold text-amber-800">Aucun groupe configuré</p>
               <p className="text-xs text-amber-600 mt-0.5">
-                Copiez les runs du devis comme point de départ, ou créez un groupe manuellement.
+                Copiez les groupes du devis comme point de départ, ou créez un groupe manuellement.
               </p>
             </div>
             <button
