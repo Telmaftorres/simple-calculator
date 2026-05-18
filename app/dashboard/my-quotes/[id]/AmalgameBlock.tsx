@@ -319,6 +319,24 @@ function AddItemMenu({
   )
 }
 
+// ── Champ dimension avec label au-dessus ──
+function DimInput({ label, value, onChange, placeholder }: {
+  label: string; value: string; onChange: (v: string) => void; placeholder: string
+}) {
+  return (
+    <div className="flex flex-col items-center gap-0.5">
+      <span className="text-[10px] font-semibold text-slate-400 leading-none">{label}</span>
+      <input
+        type="number"
+        value={value}
+        onChange={e => onChange(e.target.value)}
+        placeholder={placeholder}
+        className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
+      />
+    </div>
+  )
+}
+
 // ── Ligne d'un item dans un run ──
 
 function ItemRow({
@@ -334,93 +352,64 @@ function ItemRow({
   const set = (field: keyof LocalItem) => (v: string) => onChange({ ...item, [field]: v })
 
   return (
-    <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-2 items-center text-sm">
+    <div className="flex flex-wrap items-end gap-2 px-3 py-2.5 bg-white rounded-lg border border-slate-100">
       {/* Nom */}
-      <input
-        type="text"
-        value={item.name}
-        onChange={e => set('name')(e.target.value)}
-        placeholder="Nom de l'élément"
-        className="px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-slate-700 min-w-0"
-      />
-
-      {/* L */}
-      <div className="flex items-center gap-1">
+      <div className="flex-1 min-w-[140px]">
         <input
-          type="number"
-          value={item.flatWidth}
-          onChange={e => set('flatWidth')(e.target.value)}
-          placeholder="L"
-          className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
+          type="text"
+          value={item.name}
+          onChange={e => set('name')(e.target.value)}
+          placeholder="Nom de l'élément"
+          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-slate-700"
         />
-        <span className="text-xs text-slate-400">mm</span>
       </div>
 
-      {/* × */}
-      <span className="text-slate-300 text-xs">×</span>
-
-      {/* l */}
-      <div className="flex items-center gap-1">
-        <input
-          type="number"
-          value={item.flatHeight}
-          onChange={e => set('flatHeight')(e.target.value)}
-          placeholder="l"
-          className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
-        />
-        <span className="text-xs text-slate-400">mm</span>
+      {/* Dimensions L × l × H */}
+      <div className="flex items-end gap-1">
+        <DimInput label="L" value={item.flatWidth} onChange={set('flatWidth')} placeholder="0" />
+        <span className="text-slate-300 text-xs pb-2">×</span>
+        <DimInput label="l" value={item.flatHeight} onChange={set('flatHeight')} placeholder="0" />
+        {is3D ? (
+          <>
+            <span className="text-slate-300 text-xs pb-2">×</span>
+            <div className="flex flex-col items-center gap-0.5">
+              <span className="text-[10px] font-semibold text-slate-400 leading-none">H</span>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  value={item.flatDepth}
+                  onChange={e => set('flatDepth')(e.target.value)}
+                  placeholder="0"
+                  className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
+                />
+                <button
+                  onClick={() => onChange({ ...item, flatDepth: '' })}
+                  title="Retirer la profondeur"
+                  className="text-slate-300 hover:text-red-400"
+                >
+                  <X className="h-3 w-3" />
+                </button>
+              </div>
+            </div>
+          </>
+        ) : (
+          <button
+            onClick={() => onChange({ ...item, flatDepth: '0' })}
+            className="mb-0.5 px-2 py-1.5 text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg hover:border-slate-400 hover:text-slate-600 transition-colors whitespace-nowrap self-end"
+          >
+            + profondeur
+          </button>
+        )}
+        <span className="text-xs text-slate-400 pb-2">mm</span>
       </div>
 
-      {/* H (optionnel) */}
-      {is3D ? (
-        <>
-          <span className="text-slate-300 text-xs">×</span>
-          <div className="flex items-center gap-1">
-            <input
-              type="number"
-              value={item.flatDepth}
-              onChange={e => set('flatDepth')(e.target.value)}
-              placeholder="H"
-              className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
-            />
-            <span className="text-xs text-slate-400">mm</span>
-            <button
-              onClick={() => onChange({ ...item, flatDepth: '' })}
-              title="Passer en 2D"
-              className="text-slate-300 hover:text-slate-500"
-            >
-              <X className="h-3 w-3" />
-            </button>
-          </div>
-        </>
-      ) : (
-        <button
-          onClick={() => onChange({ ...item, flatDepth: '0' })}
-          title="Ajouter une hauteur (3D)"
-          className="px-2 py-1.5 text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg hover:border-slate-400 hover:text-slate-600 transition-colors whitespace-nowrap"
-        >
-          + H
-        </button>
-      )}
-
-      {/* × par plaque */}
-      <div className="flex items-center gap-1">
-        <span className="text-xs text-slate-400 whitespace-nowrap">×</span>
-        <input
-          type="number"
-          value={item.countPerPlate}
-          onChange={e => set('countPerPlate')(e.target.value)}
-          placeholder="1"
-          min={1}
-          className="w-12 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
-        />
-        <span className="text-xs text-slate-400">/pl.</span>
-      </div>
+      {/* Nb/plaque */}
+      <DimInput label="Nb/pl." value={item.countPerPlate} onChange={set('countPerPlate')} placeholder="1" />
 
       {/* Supprimer */}
       <button
         onClick={onDelete}
-        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50"
+        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 mb-0.5"
       >
         <Trash2 className="h-4 w-4" />
       </button>
@@ -496,19 +485,6 @@ function RunEditor({
       {/* Items */}
       {run.open && (
         <div className="p-4 space-y-2">
-          {/* Légende */}
-          {run.items.length > 0 && (
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-2 mb-1">
-              <span className="text-xs text-slate-400 uppercase tracking-wide font-semibold">Nom</span>
-              <span className="text-xs text-slate-400 uppercase tracking-wide font-semibold w-16 text-center">L</span>
-              <span className="text-xs text-slate-400"></span>
-              <span className="text-xs text-slate-400 uppercase tracking-wide font-semibold w-16 text-center">l</span>
-              <span className="text-xs text-slate-400 w-16"></span>
-              <span className="text-xs text-slate-400 uppercase tracking-wide font-semibold text-center">× /pl.</span>
-              <span className="text-xs text-slate-400"></span>
-            </div>
-          )}
-
           {run.items.map((item, idx) => (
             <ItemRow
               key={item.tempId}
