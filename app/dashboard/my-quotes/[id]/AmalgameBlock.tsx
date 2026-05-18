@@ -85,6 +85,45 @@ function getDevisItems(quote: Quote): { name: string; flatWidth: number; flatHei
   return []
 }
 
+// Pré-remplit les runs de production depuis les runs du devis
+function initRunsFromDevis(quote: Quote): LocalRun[] {
+  if (quote.hasAmalgame && quote.amalgameRuns.length > 0) {
+    return quote.amalgameRuns.map(r => ({
+      tempId: tid(),
+      name: r.name,
+      open: true,
+      items: r.items.length > 0
+        ? r.items.map(it => makeItem({
+            name: it.name,
+            flatWidth: it.flatWidth.toString(),
+            flatHeight: it.flatHeight.toString(),
+          }))
+        : [makeItem()],
+    }))
+  }
+  if (quote.isMultiProduct && quote.products.length > 0) {
+    // Regroupe les produits par amalgameGroupIndex ou crée un run par produit
+    const groups = new Map<number | string, typeof quote.products>()
+    for (const p of quote.products) {
+      const key = p.amalgameGroupIndex != null ? p.amalgameGroupIndex : `solo_${p.id}`
+      const arr = groups.get(key) ?? []
+      arr.push(p)
+      groups.set(key, arr)
+    }
+    return Array.from(groups.values()).map((prods, i) => ({
+      tempId: tid(),
+      name: `Groupe ${i + 1}`,
+      open: true,
+      items: prods.map(p => makeItem({
+        name: p.productTypeName ?? `Produit ${p.id}`,
+        flatWidth: p.flatWidth.toString(),
+        flatHeight: p.flatHeight.toString(),
+      })),
+    }))
+  }
+  return [makeRun()]
+}
+
 // ── Bloc accordéon identique au style existant ──
 
 function Block({
@@ -517,7 +556,13 @@ function QuoteAmalgameRef({ runs }: { runs: Quote['amalgameRuns'] }) {
                   </tr>
                 </thead>
                 <tbody>
-                  {r.items.map((it, ii) => (
+                  {r.items.length === 0 ? (
+                    <tr>
+                      <td colSpan={4} className="px-3 py-3 text-slate-400 italic text-center">
+                        Aucun élément enregistré pour ce run dans le devis
+                      </td>
+                    </tr>
+                  ) : r.items.map((it, ii) => (
                     <tr key={ii} className={ii % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
                       <td className="px-3 py-2 font-medium text-slate-700">{it.name}</td>
                       <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.flatWidth} × {it.flatHeight} mm</td>
@@ -595,6 +640,24 @@ export function AmalgameBlock({ quote }: { quote: Quote }) {
         {/* Référence devis */}
         {quote.hasAmalgame && quote.amalgameRuns.length > 0 && (
           <QuoteAmalgameRef runs={quote.amalgameRuns} />
+        )}
+
+        {/* Banner "Copier depuis le devis" si aucun run de production */}
+        {runs.length === 0 && (
+          <div className="rounded-xl border border-amber-200 bg-amber-50 px-4 py-4 flex flex-col sm:flex-row items-start sm:items-center gap-3">
+            <div className="flex-1">
+              <p className="text-sm font-semibold text-amber-800">Aucun run de production défini</p>
+              <p className="text-xs text-amber-600 mt-0.5">
+                Copiez les runs du devis comme point de départ, ou créez un groupe manuellement.
+              </p>
+            </div>
+            <button
+              onClick={() => setRuns(initRunsFromDevis(quote))}
+              className="shrink-0 px-4 py-2 text-sm font-semibold bg-amber-600 hover:bg-amber-700 text-white rounded-lg transition-colors"
+            >
+              📋 Copier depuis le devis
+            </button>
+          </div>
         )}
 
         {/* Runs de production */}
