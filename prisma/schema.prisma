@@ -254,6 +254,7 @@ model Plate {
   templates                 ProductTemplate[]
   templateAmalgameRuns      ProductTemplateAmalgameRun[]
   quoteAmalgameRuns         QuoteAmalgameRun[]
+  productionProductLines    ProductionProductLine[]
 }
 
 model Accessory {
@@ -489,8 +490,9 @@ model ProductionProductLine {
   productionSheetId Int
   name              String
   position          Int      @default(0)
-  material          String?
+  plateId           Int?
   productionSheet   ProductionSheet              @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
+  plate             Plate?                       @relation(fields: [plateId], references: [id], onDelete: SetNull)
   elements          ProductionProductLineElement[]
 }
 

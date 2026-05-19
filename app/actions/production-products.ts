@@ -23,7 +23,6 @@ export type ProductLineElementInput = {
 
 export type ProductLineInput = {
   name: string
-  material?: string | null
   elements: ProductLineElementInput[]
 }
 
@@ -39,7 +38,6 @@ export async function saveProductionProductLines(productionSheetId: number, line
           productionSheetId,
           name: line.name,
           position: i,
-          material: line.material ?? null,
           elements: {
             create: line.elements.map((el, j) => ({
               name: el.name,
@@ -56,15 +54,14 @@ export async function saveProductionProductLines(productionSheetId: number, line
   revalidatePath(`/dashboard/my-quotes/${quoteId}`)
 }
 
-export async function saveProductLinesMaterial(
-  materials: { lineId: number; material: string | null }[],
+export async function saveProductLinesPlate(
+  plates: { lineId: number; plateId: number | null }[],
   quoteId: number
 ) {
   const session = await requireAuth()
-  // Verify ownership via the first line
-  if (materials.length > 0) {
+  if (plates.length > 0) {
     const line = await prisma.productionProductLine.findUnique({
-      where: { id: materials[0].lineId },
+      where: { id: plates[0].lineId },
       select: { productionSheet: { select: { quote: { select: { userId: true } } } } },
     })
     if (!line) throw new Error('Ligne introuvable')
@@ -73,8 +70,8 @@ export async function saveProductLinesMaterial(
   }
 
   await Promise.all(
-    materials.map(({ lineId, material }) =>
-      prisma.productionProductLine.update({ where: { id: lineId }, data: { material } })
+    plates.map(({ lineId, plateId }) =>
+      prisma.productionProductLine.update({ where: { id: lineId }, data: { plateId } })
     )
   )
 

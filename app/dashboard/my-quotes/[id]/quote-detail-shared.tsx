@@ -133,7 +133,7 @@ export type Quote = {
       id: number
       name: string
       position: number
-      material: string | null
+      plate: { id: number; name: string; width: number; height: number; cost: number; material: string } | null
       elements: {
         id: number
         name: string
