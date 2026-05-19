@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Plus, ChevronDown, X } from 'lucide-react'
+import { Plus, X, Search } from 'lucide-react'
 import { saveProductLinesPlate } from '@/app/actions/production-products'
 import { getPlates } from '@/app/actions/reference-data'
 import { createPlate } from '@/app/actions/catalog'
@@ -11,48 +11,63 @@ import type { Quote } from './quote-detail-shared'
 
 type Plate = { id: number; name: string; width: number; height: number; cost: number; material: string }
 
-// Returns the plate hint from the quote for a given line name
 function getQuotePlate(quote: Quote, lineName: string): Plate | null {
   if (quote.isMultiProduct && quote.products.length > 0) {
     const match = quote.products.find(p =>
       (p.productTypeName ?? '').toLowerCase() === lineName.toLowerCase()
     ) ?? quote.products[0]
-    return match?.plate as Plate | null ?? null
+    return (match?.plate as Plate | null) ?? null
   }
   if (quote.amalgameRuns.length > 0) {
     const run = quote.amalgameRuns.find(r => r.name.toLowerCase() === lineName.toLowerCase())
       ?? quote.amalgameRuns[0]
-    return run?.plate as Plate | null ?? null
+    return (run?.plate as Plate | null) ?? null
   }
-  return quote.plate as Plate | null ?? null
+  return (quote.plate as Plate | null) ?? null
 }
 
-// ── Sélecteur de plaque avec option créer ──
+// ── Sélecteur avec recherche + création inline ──
 function PlateSelector({
   plates,
   value,
   onChange,
+  onPlateCreated,
 }: {
   plates: Plate[]
   value: number | null
   onChange: (plateId: number | null) => void
+  onPlateCreated: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState({ name: '', width: '', height: '', cost: '', material: '' })
   const ref = useRef<HTMLDivElement>(null)
+  const searchRef = useRef<HTMLInputElement>(null)
 
   useEffect(() => {
     if (!open) return
+    setTimeout(() => searchRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) { setOpen(false); setShowCreate(false) }
+      if (!ref.current?.contains(e.target as Node)) {
+        setOpen(false)
+        setShowCreate(false)
+        setSearch('')
+      }
     }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
   const selected = plates.find(p => p.id === value) ?? null
+
+  const filtered = search.trim()
+    ? plates.filter(p =>
+        p.name.toLowerCase().includes(search.toLowerCase()) ||
+        p.material.toLowerCase().includes(search.toLowerCase())
+      )
+    : plates
 
   const handleCreate = async () => {
     if (!form.name || !form.width || !form.height || !form.cost || !form.material) {
@@ -71,8 +86,9 @@ function PlateSelector({
       toast.success('Plaque créée')
       setShowCreate(false)
       setForm({ name: '', width: '', height: '', cost: '', material: '' })
-      // Reload plates after creation
       setOpen(false)
+      setSearch('')
+      onPlateCreated()
     } catch (e: unknown) {
       toast.error(e instanceof Error ? e.message : 'Erreur création')
     } finally {
@@ -82,47 +98,74 @@ function PlateSelector({
 
   return (
     <div className="relative" ref={ref}>
+      {/* Trigger */}
       <button
         type="button"
         onClick={() => { setOpen(v => !v); setShowCreate(false) }}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors min-w-[180px] text-left"
+        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors min-w-[200px] text-left"
       >
         <span className="flex-1 truncate">
-          {selected ? `${selected.name} (${selected.material})` : <span className="text-slate-400">— choisir une plaque</span>}
+          {selected
+            ? <>{selected.name} <span className="text-slate-400 text-xs">({selected.material} · {selected.width}×{selected.height})</span></>
+            : <span className="text-slate-400">— choisir une plaque</span>
+          }
         </span>
         {selected && (
           <span
             onClick={e => { e.stopPropagation(); onChange(null) }}
-            className="text-slate-300 hover:text-slate-600"
+            className="text-slate-300 hover:text-red-400 transition-colors shrink-0"
           >
             <X className="w-3 h-3" />
           </span>
         )}
-        <ChevronDown className="w-3.5 h-3.5 text-slate-400 shrink-0" />
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg w-72 max-h-80 overflow-y-auto">
+        <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg w-80">
           {!showCreate ? (
             <>
-              <div className="p-1">
-                {plates.length === 0 && (
-                  <p className="text-xs text-slate-400 px-3 py-2">Aucune plaque enregistrée.</p>
-                )}
-                {plates.map(p => (
-                  <button
-                    key={p.id}
-                    onClick={() => { onChange(p.id); setOpen(false) }}
-                    className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-slate-50 text-left transition-colors ${value === p.id ? 'bg-slate-50 font-semibold' : ''}`}
-                  >
-                    <span>{p.name}</span>
-                    <span className="text-xs text-slate-400 shrink-0 ml-2">{p.material} · {p.width}×{p.height}</span>
-                  </button>
-                ))}
+              {/* Recherche */}
+              <div className="p-2 border-b border-slate-100">
+                <div className="flex items-center gap-2 px-2.5 py-1.5 bg-slate-50 rounded-lg">
+                  <Search className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                  <input
+                    ref={searchRef}
+                    type="text"
+                    value={search}
+                    onChange={e => setSearch(e.target.value)}
+                    placeholder="Rechercher une plaque…"
+                    className="flex-1 bg-transparent text-sm focus:outline-none placeholder-slate-400"
+                  />
+                  {search && (
+                    <button onClick={() => setSearch('')} className="text-slate-300 hover:text-slate-500">
+                      <X className="w-3 h-3" />
+                    </button>
+                  )}
+                </div>
               </div>
+
+              {/* Liste filtrée */}
+              <div className="max-h-52 overflow-y-auto p-1">
+                {filtered.length === 0 ? (
+                  <p className="text-xs text-slate-400 px-3 py-2">Aucun résultat.</p>
+                ) : (
+                  filtered.map(p => (
+                    <button
+                      key={p.id}
+                      onClick={() => { onChange(p.id); setOpen(false); setSearch('') }}
+                      className={`w-full flex items-center justify-between px-3 py-2 text-sm rounded-lg hover:bg-slate-50 text-left transition-colors ${value === p.id ? 'bg-slate-50 font-semibold' : ''}`}
+                    >
+                      <span className="truncate">{p.name}</span>
+                      <span className="text-xs text-slate-400 shrink-0 ml-2">{p.material} · {p.width}×{p.height}</span>
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Créer */}
               <div className="border-t border-slate-100 p-1">
                 <button
-                  onClick={() => setShowCreate(true)}
+                  onClick={() => { setShowCreate(true); setSearch('') }}
                   className="w-full flex items-center gap-2 px-3 py-2 text-sm text-slate-600 hover:bg-slate-50 rounded-lg transition-colors"
                 >
                   <Plus className="w-3.5 h-3.5" /> Créer une nouvelle plaque
@@ -140,50 +183,28 @@ function PlateSelector({
                 className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
               />
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  placeholder="Largeur mm"
-                  value={form.width}
+                <input type="number" placeholder="Largeur mm" value={form.width}
                   onChange={e => setForm(f => ({ ...f, width: e.target.value }))}
-                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
-                />
-                <input
-                  type="number"
-                  placeholder="Hauteur mm"
-                  value={form.height}
+                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
+                <input type="number" placeholder="Hauteur mm" value={form.height}
                   onChange={e => setForm(f => ({ ...f, height: e.target.value }))}
-                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
-                />
+                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
               </div>
               <div className="grid grid-cols-2 gap-2">
-                <input
-                  type="number"
-                  step="0.01"
-                  placeholder="Coût €"
-                  value={form.cost}
+                <input type="number" step="0.01" placeholder="Coût €" value={form.cost}
                   onChange={e => setForm(f => ({ ...f, cost: e.target.value }))}
-                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
-                />
-                <input
-                  type="text"
-                  placeholder="Matière (ex: BC)"
-                  value={form.material}
+                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
+                <input type="text" placeholder="Matière (ex: BC)" value={form.material}
                   onChange={e => setForm(f => ({ ...f, material: e.target.value }))}
-                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
-                />
+                  className="px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
               </div>
               <div className="flex gap-2 pt-1">
-                <button
-                  onClick={() => setShowCreate(false)}
-                  className="flex-1 py-1.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg transition-colors"
-                >
+                <button onClick={() => setShowCreate(false)}
+                  className="flex-1 py-1.5 text-sm text-slate-500 hover:text-slate-700 border border-slate-200 rounded-lg transition-colors">
                   Annuler
                 </button>
-                <button
-                  onClick={handleCreate}
-                  disabled={creating}
-                  className="flex-1 py-1.5 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-colors"
-                >
+                <button onClick={handleCreate} disabled={creating}
+                  className="flex-1 py-1.5 text-sm font-semibold bg-slate-900 text-white rounded-lg hover:bg-slate-700 disabled:opacity-50 transition-colors">
                   {creating ? 'Création…' : 'Créer'}
                 </button>
               </div>
@@ -204,11 +225,16 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
   const [plates, setPlates] = useState<Plate[]>([])
   const [loadingPlates, setLoadingPlates] = useState(true)
 
-  // lineId → plateId
+  // lineId → plateId — pré-sélectionne la plaque du devis si rien de sauvegardé
   const [selections, setSelections] = useState<Record<number, number | null>>(() => {
     const map: Record<number, number | null> = {}
     for (const l of dbLines) {
-      map[l.id] = l.plate?.id ?? null
+      if (l.plate) {
+        map[l.id] = l.plate.id
+      } else {
+        const quotePlate = getQuotePlate(quote, l.name)
+        map[l.id] = quotePlate?.id ?? null
+      }
     }
     return map
   })
@@ -220,10 +246,7 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
     })
   }, [])
 
-  // Re-load plates after a new plate is created (triggered by PlateSelector closing)
-  const refreshPlates = () => {
-    getPlates().then(setPlates)
-  }
+  const refreshPlates = () => getPlates().then(setPlates)
 
   const hasLines = dbLines.length > 0
 
@@ -278,33 +301,18 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
             <p className="text-xs text-slate-400 py-1">Chargement des plaques…</p>
           ) : (
             <>
-              <div className="space-y-2">
-                {dbLines.map(line => {
-                  const quotePlate = getQuotePlate(quote, line.name)
-                  return (
-                    <div key={line.id} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                      <div className="flex-1 min-w-0">
-                        <p className="text-sm font-medium text-slate-800 truncate">{line.name}</p>
-                        {quotePlate && !selections[line.id] && (
-                          <button
-                            onClick={() => setSelections(prev => ({ ...prev, [line.id]: quotePlate.id }))}
-                            className="text-[10px] text-sky-500 hover:text-sky-700 mt-0.5"
-                          >
-                            ↖ Reprendre du devis : {quotePlate.name}
-                          </button>
-                        )}
-                      </div>
-                      <PlateSelector
-                        plates={plates}
-                        value={selections[line.id] ?? null}
-                        onChange={plateId => {
-                          setSelections(prev => ({ ...prev, [line.id]: plateId }))
-                          refreshPlates()
-                        }}
-                      />
-                    </div>
-                  )
-                })}
+              <div className="space-y-1">
+                {dbLines.map(line => (
+                  <div key={line.id} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
+                    <p className="flex-1 text-sm font-medium text-slate-800 truncate">{line.name}</p>
+                    <PlateSelector
+                      plates={plates}
+                      value={selections[line.id] ?? null}
+                      onChange={plateId => setSelections(prev => ({ ...prev, [line.id]: plateId }))}
+                      onPlateCreated={refreshPlates}
+                    />
+                  </div>
+                ))}
               </div>
 
               <div className="flex justify-end pt-1">
