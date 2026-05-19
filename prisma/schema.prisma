@@ -489,6 +489,7 @@ model ProductionProductLine {
   productionSheetId Int
   name              String
   position          Int      @default(0)
+  material          String?
   productionSheet   ProductionSheet              @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
   elements          ProductionProductLineElement[]
 }

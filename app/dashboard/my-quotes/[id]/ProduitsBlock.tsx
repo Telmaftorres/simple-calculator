@@ -204,6 +204,11 @@ function LineCard({
   )
 }
 
+export type SavedProductLine = {
+  name: string
+  elements: { name: string; flatWidth: number; flatHeight: number }[]
+}
+
 // ── Composant principal ──
 
 export function ProduitsBlock({ quote }: { quote: Quote }) {

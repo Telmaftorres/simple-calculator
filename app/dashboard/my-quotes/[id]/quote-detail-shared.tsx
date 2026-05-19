@@ -133,6 +133,7 @@ export type Quote = {
       id: number
       name: string
       position: number
+      material: string | null
       elements: {
         id: number
         name: string

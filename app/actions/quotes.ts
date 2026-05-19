@@ -244,6 +244,15 @@ export async function updateQuote(id: number, data: CreateQuoteInput) {
   revalidatePath(`/dashboard/my-quotes`)
 }
 
+const QUOTE_LIST_INCLUDE = {
+  study: true,
+  productType: true,
+  plate: true,
+  productionSheet: { select: { status: true, updatedAt: true } },
+  actuals: { select: { id: true, updatedAt: true } },
+  user: { select: { id: true, name: true, firstName: true, lastName: true } },
+} as const
+
 export async function getUserQuotes() {
   const session = await requireAuth()
   return await prisma.quote.findMany({
@@ -253,13 +262,15 @@ export async function getUserQuotes() {
         { productionSheet: { status: 'en_cours' } },
       ],
     },
-    include: {
-      study: true,
-      productType: true,
-      plate: true,
-      productionSheet: { select: { status: true, updatedAt: true } },
-      actuals: { select: { id: true, updatedAt: true } },
-    },
+    include: QUOTE_LIST_INCLUDE,
+    orderBy: { createdAt: 'desc' },
+  })
+}
+
+export async function getAllQuotes() {
+  await requireAuth()
+  return await prisma.quote.findMany({
+    include: QUOTE_LIST_INCLUDE,
     orderBy: { createdAt: 'desc' },
   })
 }

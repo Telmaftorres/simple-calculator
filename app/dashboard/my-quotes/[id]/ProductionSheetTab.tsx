@@ -11,7 +11,8 @@ import type { PSForPDF } from '@/app/pdf-preview/variants/LayoutE'
 import { STATUS_OPTIONS, type Quote } from './quote-detail-shared'
 import { patchQuoteFlags } from '@/app/actions/quotes'
 import { AmalgameBlock } from './AmalgameBlock'
-import { ProduitsBlock } from './ProduitsBlock'
+import { ProduitsBlock, type SavedProductLine } from './ProduitsBlock'
+import { MatiereBlock } from './MatiereBlock'
 
 // ── Bloc accordéon style "card emoji" ──
 function Block({
@@ -307,7 +308,7 @@ function EmballageBlock({ quote, ps, onSave }: {
   )
 }
 
-type SectionKey = 'produits' | 'amalgame' | 'conditionnement' | 'emballage'
+type SectionKey = 'produits' | 'matiere' | 'amalgame' | 'conditionnement' | 'emballage'
 
 // ── Bouton "Ajouter une section" ──
 function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; label: string; emoji: string }[]; onAdd: (key: SectionKey) => void }) {
@@ -375,9 +376,13 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   )
   const [savingStatus, setSavingStatus] = useState(false)
 
+  const savedProductLines: SavedProductLine[] = ps.productionProductLines.map(l => ({
+    name: l.name,
+    elements: l.elements.map(el => ({ name: el.name, flatWidth: el.flatWidth, flatHeight: el.flatHeight })),
+  }))
+
   // Sections ajoutées manuellement (non cochées dans le devis mais avec des données sauvegardées)
-  // Produits : toujours visible (tout devis a au moins un produit)
-  const psHasProduits = true
+  // Produits et Matière : toujours visibles
   const psHasAmalgame = quote.hasAmalgame || quote.isMultiProduct || ps.productionAmalgameRuns.length > 0
   const psHasConditionnement = quote.productionSheet != null && (
     ps.conditionnementType != null || ps.prodPackTimePerPieceSeconds != null || ps.conditionnementNotes != null
@@ -387,7 +392,8 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   )
   const [extraSections, setExtraSections] = useState<Set<SectionKey>>(() => {
     const s = new Set<SectionKey>()
-    if (psHasProduits) s.add('produits')
+    s.add('produits')
+    s.add('matiere')
     if (psHasAmalgame) s.add('amalgame')
     if (psHasConditionnement && !quote.hasConditionnement) s.add('conditionnement')
     if (psHasEmballage && !quote.hasPackaging) s.add('emballage')
@@ -395,6 +401,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   })
 
   const showProduits = extraSections.has('produits')
+  const showMatiere = extraSections.has('matiere')
   const showAmalgame = extraSections.has('amalgame')
   const showConditionnement = quote.hasConditionnement || extraSections.has('conditionnement')
   const showEmballage = quote.hasPackaging || extraSections.has('emballage')
@@ -568,27 +575,14 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         </div>
       </div>
 
-      {/* Bloc Produit(s) */}
-      {showProduits && (
-        <ProduitsBlock quote={quote} />
-      )}
-
-      {/* Bloc Amalgame (pleine largeur) */}
-      {showAmalgame && (
-        <AmalgameBlock quote={quote} />
-      )}
-
-      {/* Blocs accordéon Conditionnement / Emballage */}
-      {(showConditionnement || showEmballage) && (
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-          {showConditionnement && (
-            <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />
-          )}
-          {showEmballage && (
-            <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />
-          )}
-        </div>
-      )}
+      {/* Toutes les sections en grille 2 colonnes */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
+        {showProduits && <ProduitsBlock quote={quote} />}
+        {showMatiere && <MatiereBlock quote={quote} />}
+        {showAmalgame && <AmalgameBlock quote={quote} savedProducts={savedProductLines} />}
+        {showConditionnement && <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
+        {showEmballage && <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
+      </div>
 
       {/* Ajouter une section */}
       {availableSections.length > 0 && (

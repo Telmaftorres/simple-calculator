@@ -7,10 +7,10 @@ import { Trash2, Plus, ChevronDown, ChevronUp, X } from 'lucide-react'
 import {
   saveProductionAmalgameRuns,
   ensureProductionSheet,
-  getProductTemplatesBasic,
   type AmalgameRunInput,
 } from '@/app/actions/production-amalgame'
 import type { Quote } from './quote-detail-shared'
+import type { SavedProductLine } from './ProduitsBlock'
 
 // ── Types locaux ──
 
@@ -31,7 +31,6 @@ type LocalRun = {
   items: LocalItem[]
 }
 
-type TemplateBasic = Awaited<ReturnType<typeof getProductTemplatesBasic>>[number]
 
 let _tempCounter = 0
 function tid() { return `t${++_tempCounter}` }
@@ -187,36 +186,34 @@ function Block({
   )
 }
 
-// ── Popup "ajouter un élément" ──
+// ── Picker "ajouter depuis les produits" ──
 
-function AddItemMenu({
-  quoteItems,
-  templates,
-  onLoadTemplates,
-  onAddManual,
-  onAddFromDevis,
-  onAddFromTemplate,
+function AddFromProductsMenu({
+  savedProducts,
+  onAdd,
 }: {
-  quoteItems: { name: string; flatWidth: number; flatHeight: number }[]
-  templates: TemplateBasic[] | null
-  onLoadTemplates: () => void
-  onAddManual: () => void
-  onAddFromDevis: (item: { name: string; flatWidth: number; flatHeight: number }) => void
-  onAddFromTemplate: (tpl: TemplateBasic) => void
+  savedProducts: SavedProductLine[]
+  onAdd: (el: { name: string; flatWidth: number; flatHeight: number }) => void
 }) {
   const [open, setOpen] = useState(false)
-  const [panel, setPanel] = useState<'devis' | 'template' | null>(null)
-  const [search, setSearch] = useState('')
   const ref = useRef<HTMLDivElement>(null)
+
+  const hasElements = savedProducts.some(p => p.elements.some(el => el.name))
 
   useEffect(() => {
     if (!open) return
-    const handler = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) { setOpen(false); setPanel(null) } }
+    const handler = (e: MouseEvent) => { if (!ref.current?.contains(e.target as Node)) setOpen(false) }
     document.addEventListener('mousedown', handler)
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  const filteredTemplates = templates?.filter(t => t.name.toLowerCase().includes(search.toLowerCase())) ?? []
+  if (!hasElements) {
+    return (
+      <p className="text-xs text-slate-400 italic">
+        Enregistrez d&apos;abord des éléments dans la section <strong>Produit(s)</strong>.
+      </p>
+    )
+  }
 
   return (
     <div className="relative" ref={ref}>
@@ -228,91 +225,26 @@ function AddItemMenu({
       </button>
 
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[220px]">
-          {panel === null && (
-            <>
-              <button
-                onClick={() => { onAddManual(); setOpen(false) }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
-              >
-                ✏️ Saisir manuellement
-              </button>
-              {quoteItems.length > 0 && (
-                <button
-                  onClick={() => setPanel('devis')}
-                  className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
-                >
-                  📋 Depuis le devis <ChevronDown className="h-3 w-3 ml-auto" />
-                </button>
-              )}
-              <button
-                onClick={() => { onLoadTemplates(); setPanel('template') }}
-                className="w-full flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 hover:bg-slate-50 text-left"
-              >
-                📐 Depuis un modèle <ChevronDown className="h-3 w-3 ml-auto" />
-              </button>
-            </>
-          )}
-
-          {panel === 'devis' && (
-            <>
-              <button onClick={() => setPanel(null)} className="flex items-center gap-1 px-4 py-2 text-xs text-slate-400 hover:text-slate-600">
-                <ChevronUp className="h-3 w-3" /> Retour
-              </button>
-              {quoteItems.map((it, i) => (
-                <button
-                  key={i}
-                  onClick={() => { onAddFromDevis(it); setOpen(false); setPanel(null) }}
-                  className="w-full flex flex-col px-4 py-2.5 text-left hover:bg-slate-50"
-                >
-                  <span className="text-sm text-slate-700 font-medium">{it.name}</span>
-                  <span className="text-xs text-slate-400">{it.flatWidth} × {it.flatHeight} mm</span>
-                </button>
-              ))}
-            </>
-          )}
-
-          {panel === 'template' && (
-            <>
-              <button onClick={() => setPanel(null)} className="flex items-center gap-1 px-4 py-2 text-xs text-slate-400 hover:text-slate-600">
-                <ChevronUp className="h-3 w-3" /> Retour
-              </button>
-              <div className="px-3 pb-1">
-                <input
-                  autoFocus
-                  type="text"
-                  placeholder="Rechercher…"
-                  value={search}
-                  onChange={e => setSearch(e.target.value)}
-                  className="w-full px-2 py-1.5 text-xs rounded-lg border border-slate-200 focus:outline-none focus:ring-1 focus:ring-slate-400"
-                />
-              </div>
-              {templates === null && (
-                <p className="px-4 py-2 text-xs text-slate-400">Chargement…</p>
-              )}
-              {templates !== null && filteredTemplates.length === 0 && (
-                <p className="px-4 py-2 text-xs text-slate-400">Aucun modèle trouvé</p>
-              )}
-              <div className="max-h-52 overflow-y-auto">
-                {filteredTemplates.map(tpl => (
+        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[220px] max-h-64 overflow-y-auto">
+          {savedProducts.map((prod, pi) => {
+            const validEls = prod.elements.filter(el => el.name)
+            if (validEls.length === 0) return null
+            return (
+              <div key={pi}>
+                <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{prod.name}</p>
+                {validEls.map((el, ei) => (
                   <button
-                    key={tpl.id}
-                    onClick={() => { onAddFromTemplate(tpl); setOpen(false); setPanel(null); setSearch('') }}
-                    className="w-full flex flex-col px-4 py-2.5 text-left hover:bg-slate-50"
+                    key={ei}
+                    onClick={() => { onAdd(el); setOpen(false) }}
+                    className="w-full flex flex-col px-4 py-2 text-left hover:bg-slate-50"
                   >
-                    <span className="text-sm text-slate-700 font-medium">{tpl.name}</span>
-                    {tpl.flatWidth && tpl.flatHeight ? (
-                      <span className="text-xs text-slate-400">
-                        {tpl.flatWidth} × {tpl.flatHeight}{tpl.flatDepth ? ` × ${tpl.flatDepth}` : ''} mm
-                      </span>
-                    ) : tpl.amalgameRuns.length > 0 ? (
-                      <span className="text-xs text-slate-400">{tpl.amalgameRuns.reduce((n, r) => n + r.items.length, 0)} éléments</span>
-                    ) : null}
+                    <span className="text-sm text-slate-700 font-medium">{el.name}</span>
+                    <span className="text-xs text-slate-400">{el.flatWidth} × {el.flatHeight} mm</span>
                   </button>
                 ))}
               </div>
-            </>
-          )}
+            )
+          })}
         </div>
       )}
     </div>
@@ -421,40 +353,16 @@ function ItemRow({
 
 function RunEditor({
   run,
-  quoteItems,
-  templates,
-  onLoadTemplates,
+  savedProducts,
   onUpdate,
   onDelete,
 }: {
   run: LocalRun
-  quoteItems: { name: string; flatWidth: number; flatHeight: number }[]
-  templates: TemplateBasic[] | null
-  onLoadTemplates: () => void
+  savedProducts: SavedProductLine[]
   onUpdate: (updated: LocalRun) => void
   onDelete: () => void
 }) {
   const addItem = (item: LocalItem) => onUpdate({ ...run, items: [...run.items, item] })
-
-  const handleAddFromTemplate = (tpl: TemplateBasic) => {
-    if (tpl.amalgameRuns.length > 0) {
-      // Importer tous les items du premier run du template
-      const newItems = tpl.amalgameRuns[0].items.map(it => makeItem({
-        name: it.name,
-        flatWidth: it.flatWidth.toString(),
-        flatHeight: it.flatHeight.toString(),
-        flatDepth: '',
-      }))
-      onUpdate({ ...run, items: [...run.items, ...newItems] })
-    } else if (tpl.flatWidth && tpl.flatHeight) {
-      addItem(makeItem({
-        name: tpl.name,
-        flatWidth: tpl.flatWidth.toString(),
-        flatHeight: tpl.flatHeight.toString(),
-        flatDepth: tpl.flatDepth != null ? tpl.flatDepth.toString() : '',
-      }))
-    }
-  }
 
   return (
     <div className="rounded-xl border border-slate-200 bg-slate-50">
@@ -494,13 +402,9 @@ function RunEditor({
             />
           ))}
 
-          <AddItemMenu
-            quoteItems={quoteItems}
-            templates={templates}
-            onLoadTemplates={onLoadTemplates}
-            onAddManual={() => addItem(makeItem())}
-            onAddFromDevis={it => addItem(makeItem({ name: it.name, flatWidth: it.flatWidth.toString(), flatHeight: it.flatHeight.toString() }))}
-            onAddFromTemplate={handleAddFromTemplate}
+          <AddFromProductsMenu
+            savedProducts={savedProducts}
+            onAdd={el => addItem(makeItem({ name: el.name, flatWidth: el.flatWidth.toString(), flatHeight: el.flatHeight.toString() }))}
           />
         </div>
       )}
@@ -612,7 +516,7 @@ function QuoteAmalgameRef({ quote }: { quote: Quote }) {
 
 // ── Composant principal ──
 
-export function AmalgameBlock({ quote }: { quote: Quote }) {
+export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedProducts: SavedProductLine[] }) {
   const dbRuns = quote.productionSheet?.productionAmalgameRuns ?? []
   // Si aucune donnée sauvegardée, pré-remplit automatiquement depuis le devis
   const [runs, setRuns] = useState<LocalRun[]>(() =>
@@ -620,23 +524,6 @@ export function AmalgameBlock({ quote }: { quote: Quote }) {
   )
   const [isPreFilled] = useState(() => dbRuns.length === 0)
   const [saving, setSaving] = useState(false)
-  const [templates, setTemplates] = useState<TemplateBasic[] | null>(null)
-  const templatesLoading = useRef(false)
-
-  const devisItems = getDevisItems(quote)
-
-  const loadTemplates = useCallback(async () => {
-    if (templates !== null || templatesLoading.current) return
-    templatesLoading.current = true
-    try {
-      const data = await getProductTemplatesBasic()
-      setTemplates(data)
-    } catch {
-      toast.error('Impossible de charger les modèles')
-    } finally {
-      templatesLoading.current = false
-    }
-  }, [templates])
 
   const handleSave = async () => {
     setSaving(true)
@@ -688,9 +575,7 @@ export function AmalgameBlock({ quote }: { quote: Quote }) {
           <RunEditor
             key={run.tempId}
             run={run}
-            quoteItems={devisItems}
-            templates={templates}
-            onLoadTemplates={loadTemplates}
+            savedProducts={savedProducts}
             onUpdate={updated => setRuns(prev => prev.map((r, i) => i === ri ? updated : r))}
             onDelete={() => setRuns(prev => prev.filter((_, i) => i !== ri))}
           />

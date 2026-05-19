@@ -42,6 +42,7 @@ interface Quote {
   plate: { name: string } | null
   productionSheet: { status: string; updatedAt: Date } | null
   actuals: { id: number; updatedAt: Date } | null
+  user: { id: string; name: string | null; firstName: string | null; lastName: string | null } | null
 }
 
 interface UserForSharing {
@@ -53,6 +54,7 @@ interface UserForSharing {
 
 interface MyQuotesClientProps {
   quotes: Quote[]
+  allQuotes: Quote[]
   users: UserForSharing[]
   currentUserId: string
 }
@@ -80,8 +82,17 @@ const STATUS_LABELS: Record<string, { label: string; className: string }> = {
   termine:    { label: 'Terminé',    className: 'bg-green-100 text-green-800' },
 }
 
-export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientProps) {
+function creatorName(user: Quote['user']): string {
+  if (!user) return '—'
+  if (user.firstName && user.lastName) return `${user.firstName} ${user.lastName}`
+  return user.name ?? '—'
+}
+
+export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQuotesClientProps) {
+  const [scope, setScope] = useState<'mine' | 'all'>('mine')
   const [activeTab, setActiveTab] = useState<TabId>('devis')
+
+  const activeQuotes = scope === 'mine' ? quotes : allQuotes
   const [search, setSearch] = useState('')
   const [isDeleting, setIsDeleting] = useState<number | null>(null)
   const [confirmingDeleteId, setConfirmingDeleteId] = useState<number | null>(null)
@@ -91,9 +102,9 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
   const [sendingToUserId, setSendingToUserId] = useState<string | null>(null)
   const router = useRouter()
 
-  const quotesWithProd = quotes.filter(q => q.productionSheet !== null)
-  const quotesWithActuals = quotes.filter(q => q.actuals !== null)
-  const quotesToValidate = quotes.filter(q => q.productionSheet?.status === 'termine' && !q.actuals)
+  const quotesWithProd = activeQuotes.filter(q => q.productionSheet !== null)
+  const quotesWithActuals = activeQuotes.filter(q => q.actuals !== null)
+  const quotesToValidate = activeQuotes.filter(q => q.productionSheet?.status === 'termine' && !q.actuals)
 
   const handleDeleteClick = (id: number) => {
     setConfirmingDeleteId(id)
@@ -138,7 +149,7 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
     }
   }
 
-  const filtered = quotes
+  const filtered = activeQuotes
     .filter((quote) => {
       const q = search.toLowerCase()
       return (
@@ -161,9 +172,26 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
 
   return (
     <div className="space-y-8">
-      <div>
-        <h2 className="text-3xl font-bold tracking-tight text-slate-900">Mes Chiffrages</h2>
-        <p className="text-slate-500">Retrouvez ici l&apos;historique de vos dossiers sauvegardés.</p>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h2 className="text-3xl font-bold tracking-tight text-slate-900">Chiffrages</h2>
+          <p className="text-slate-500">Retrouvez ici l&apos;historique des dossiers sauvegardés.</p>
+        </div>
+        <div className="flex items-center gap-1 p-1 bg-slate-100 rounded-lg text-sm">
+          <button
+            onClick={() => setScope('mine')}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${scope === 'mine' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Mes devis
+          </button>
+          <button
+            onClick={() => setScope('all')}
+            className={`px-3 py-1.5 rounded-md font-medium transition-colors ${scope === 'all' ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'}`}
+          >
+            Tous les devis
+            <span className="ml-1.5 text-xs px-1.5 py-0.5 rounded-full bg-slate-200 text-slate-600">{allQuotes.length}</span>
+          </button>
+        </div>
       </div>
 
       {/* ── Onglets ── */}
@@ -426,6 +454,7 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
                     Date <SortIcon field="date" current={sortField} dir={sortDir} />
                   </button>
                 </TableHead>
+                {scope === 'all' && <TableHead>Créateur</TableHead>}
                 <TableHead>Produit</TableHead>
                 <TableHead className="text-right">Quantité</TableHead>
                 <TableHead className="text-right">Montant HT</TableHead>
@@ -435,7 +464,7 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} className="text-center py-8 text-slate-500 italic">
+                  <TableCell colSpan={scope === 'all' ? 9 : 8} className="text-center py-8 text-slate-500 italic">
                     {search
                       ? `Aucun devis trouvé pour "${search}"`
                       : 'Aucun devis trouvé. Créez votre premier devis dans le calculateur !'}
@@ -483,6 +512,11 @@ export function MyQuotesClient({ quotes, users, currentUserId }: MyQuotesClientP
                           {formatDate(quote.createdAt)}
                         </div>
                       </TableCell>
+                      {scope === 'all' && (
+                        <TableCell className="text-slate-500 text-sm whitespace-nowrap">
+                          {creatorName(quote.user)}
+                        </TableCell>
+                      )}
                       <TableCell>
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <Box className="h-3 w-3 text-emerald-600" />
