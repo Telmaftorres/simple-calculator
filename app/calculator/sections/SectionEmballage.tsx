@@ -425,21 +425,20 @@ export function SectionEmballage() {
         <div className="flex items-center gap-3 pt-1">
           <Label className="shrink-0 text-sm text-slate-500">Marge emballage</Label>
           <div className="flex items-center gap-1.5">
+            <span className="text-sm text-slate-400">×</span>
             <Input
               type="number"
-              min={0}
-              max={100}
-              step={1}
+              min={1}
+              step={0.01}
               value={packagingMargePercent || ''}
               onChange={e => setPackagingMargePercent(parseFloat(e.target.value) || 0)}
-              placeholder="0"
+              placeholder="1.35"
               className="w-20 text-sm"
             />
-            <span className="text-sm text-slate-400">%</span>
           </div>
-          {packagingMargePercent > 0 && packagingTotalCost > 0 && (
+          {packagingMargePercent > 1 && packagingTotalCost > 0 && (
             <span className="text-xs text-amber-600 font-medium">
-              +{((packagingTotalCost / (1 + packagingMargePercent / 100)) * packagingMargePercent / 100).toFixed(2)} &euro;
+              +{(packagingTotalCost - packagingTotalCost / packagingMargePercent).toFixed(2)} &euro;
             </span>
           )}
         </div>

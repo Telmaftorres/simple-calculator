@@ -305,7 +305,7 @@ export function calculateCosts(params: {
 
   // ── Accessoires ──
   const accessoriesCost = hasAccessoires
-    ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0) * (1 + (accessoriesMargePercent ?? 0) / 100)
+    ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0) * ((accessoriesMargePercent ?? 0) > 0 ? accessoriesMargePercent! : 1)
     : 0
 
   const consumablesCost = hasFaconnage
@@ -375,7 +375,7 @@ export function calculateCosts(params: {
     return (machineMinutes / 60) * hourlyRatePackaging + packagingSetupCost
   })()
 
-  const packagingTotalCost = (packagingMaterialCost + packagingCuttingCost) * (1 + (packagingMargePercent ?? 0) / 100)
+  const packagingTotalCost = (packagingMaterialCost + packagingCuttingCost) * ((packagingMargePercent ?? 0) > 0 ? packagingMargePercent! : 1)
 
   // ── Bureau d'études ──
   const beCost = hasBE ? (beTimeMinutes / 60) * hourlyRateBE : 0

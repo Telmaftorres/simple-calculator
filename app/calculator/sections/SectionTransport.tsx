@@ -8,9 +8,26 @@ import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { calculateTransport, suggestTransportMode, type TransportMode } from '@/lib/transport/geodis-rates'
 import { GEODIS_FUEL_SURCHARGE_PERCENT, TRANSPORT_MARGIN } from '@/lib/config/pricing'
-import { Plus, Trash2, FileSpreadsheet } from 'lucide-react'
+import { Plus, Trash2, FileSpreadsheet, AlertTriangle } from 'lucide-react'
 import type { TransportDeliveryForm } from '@/types/calculator'
 import { ImportTransportDialog } from './ImportTransportDialog'
+
+function getTransportError(
+  mode: TransportMode | undefined,
+  weightKg: number | undefined,
+  units: number | undefined
+): string | null {
+  if (!mode) return null
+  if (mode === 'PACK30' && weightKg !== undefined && weightKg > 30)
+    return 'Pack 30 : max 30 kg par colis'
+  if (mode === 'MESSAGERIE_PLUS' && weightKg !== undefined && weightKg > 1000)
+    return 'Messagerie Plus : max 1 000 kg'
+  if (mode === 'AFFRETEMENT' && units !== undefined) {
+    if (units < 2) return 'Affrètement : minimum 2 palettes'
+    if (units > 29) return 'Affrètement : maximum 29 palettes'
+  }
+  return null
+}
 
 function DeliveryRow({
   delivery,
@@ -45,6 +62,15 @@ function DeliveryRow({
   const suggestion = (delivery.weightKg !== undefined && delivery.units !== undefined)
     ? suggestTransportMode(delivery.weightKg as number, delivery.units as number)
     : null
+
+  const validationError = getTransportError(
+    delivery.mode as TransportMode | undefined,
+    delivery.weightKg,
+    delivery.units
+  )
+
+  const isComplete = !!delivery.mode && !!delivery.department && delivery.units !== undefined &&
+    (delivery.mode === 'AFFRETEMENT' || delivery.weightKg !== undefined)
 
   return (
     <div className="border border-sky-100 rounded-lg p-4 space-y-4 bg-white">
@@ -152,7 +178,12 @@ function DeliveryRow({
       </div>
 
       {/* Recap */}
-      {calc ? (
+      {validationError ? (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-xs text-amber-800 font-medium">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+          {validationError}
+        </div>
+      ) : calc ? (
         <div className="bg-sky-50 border border-sky-100 rounded-md p-3 space-y-1.5 text-xs">
           <div className="flex justify-between text-slate-600">
             <span>Prix de base HT {calc.zone ? `(Zone ${calc.zone})` : ''}</span>
@@ -178,6 +209,11 @@ function DeliveryRow({
             <span>Total HT</span>
             <span>{(calc.total * transportMargin).toFixed(2)} €</span>
           </div>
+        </div>
+      ) : isComplete ? (
+        <div className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-md px-3 py-2 text-xs text-amber-800 font-medium">
+          <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" />
+          Combinaison non supportée par ce mode de transport
         </div>
       ) : (
         <div className="text-center py-2 bg-slate-50 border border-slate-100 rounded-md text-slate-400 text-xs italic">

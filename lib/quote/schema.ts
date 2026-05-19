@@ -44,8 +44,8 @@ export const quoteFieldsSchema = z.object({
   hasConditionnement: z.boolean().optional(),
 
   hasAccessoires: z.boolean().optional(),
-  accessoriesMargePercent: z.number().min(0).max(100).optional(),
-  packagingMargePercent: z.number().min(0).max(100).optional(),
+  accessoriesMargePercent: z.number().min(0).optional(),
+  packagingMargePercent: z.number().min(0).optional(),
 
   hasPackaging: z.boolean().optional(),
   packagingBoxType: z.enum(['etui', 'caisse', 'plaque_rainee']).optional(),

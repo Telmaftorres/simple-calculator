@@ -211,21 +211,20 @@ export function SectionAccessoires() {
         <div className="flex items-center gap-3">
           <Label className="shrink-0 text-sm text-slate-500">Marge accessoires</Label>
           <div className="flex items-center gap-1.5">
+            <span className="text-sm text-slate-400">×</span>
             <Input
               type="number"
-              min={0}
-              max={100}
-              step={1}
+              min={1}
+              step={0.01}
               value={accessoriesMargePercent || ''}
               onChange={e => setAccessoriesMargePercent(parseFloat(e.target.value) || 0)}
-              placeholder="0"
+              placeholder="1.35"
               className="w-20 text-sm"
             />
-            <span className="text-sm text-slate-400">%</span>
           </div>
-          {accessoriesMargePercent > 0 && (
+          {accessoriesMargePercent > 0 && accessoriesMargePercent !== 1 && (
             <span className="text-xs text-teal-600 font-medium">
-              +{((accessoriesCost / (1 + accessoriesMargePercent / 100)) * accessoriesMargePercent / 100).toFixed(2)} &euro;
+              +{(accessoriesCost - accessoriesCost / accessoriesMargePercent).toFixed(2)} &euro;
             </span>
           )}
         </div>
@@ -262,9 +261,6 @@ export function SectionAccessoires() {
             {/* Preview si données extraites */}
             {preview && (
               <div className="bg-white border border-teal-100 rounded-lg p-2.5 space-y-1.5 text-xs">
-                {preview.imageUrl && (
-                  <img src={preview.imageUrl} alt="" referrerPolicy="no-referrer" className="h-16 w-16 object-contain rounded border border-slate-100" onError={e => { (e.target as HTMLImageElement).style.display = 'none' }} />
-                )}
                 {preview.supplierRef && <div className="text-slate-500">Réf : <span className="font-mono font-medium text-slate-700">{preview.supplierRef}</span></div>}
                 {preview.lotSize && preview.lotSize > 1 && (
                   <div className="text-slate-500">
@@ -339,8 +335,8 @@ export function SectionAccessoires() {
             ))}
             <div className="pt-2 mt-2 border-t border-slate-200 flex justify-end text-sm font-bold text-teal-700">
               Total : {accessoriesCost.toFixed(2)} &euro;
-              {accessoriesMargePercent > 0 && (
-                <span className="ml-1 font-normal text-slate-400">(marge {accessoriesMargePercent}% incluse)</span>
+              {accessoriesMargePercent > 1 && (
+                <span className="ml-1 font-normal text-slate-400">(coeff ×{accessoriesMargePercent} inclus)</span>
               )}
             </div>
           </div>
