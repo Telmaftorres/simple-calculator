@@ -97,14 +97,14 @@ function PlateSelector({
   }
 
   return (
-    <div className="relative" ref={ref}>
+    <div className="relative w-full" ref={ref}>
       {/* Trigger */}
       <button
         type="button"
         onClick={() => { setOpen(v => !v); setShowCreate(false) }}
-        className="flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors min-w-[200px] text-left"
+        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors text-left"
       >
-        <span className="flex-1 truncate">
+        <span className="flex-1 min-w-0 truncate">
           {selected
             ? <>{selected.name} <span className="text-slate-400 text-xs">({selected.material} · {selected.width}×{selected.height})</span></>
             : <span className="text-slate-400">— choisir une plaque</span>
@@ -121,7 +121,7 @@ function PlateSelector({
       </button>
 
       {open && (
-        <div className="absolute right-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg w-80">
+        <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg">
           {!showCreate ? (
             <>
               {/* Recherche */}
@@ -301,10 +301,10 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
             <p className="text-xs text-slate-400 py-1">Chargement des plaques…</p>
           ) : (
             <>
-              <div className="space-y-1">
+              <div className="space-y-2">
                 {dbLines.map(line => (
-                  <div key={line.id} className="flex items-center gap-3 py-2 border-b border-slate-100 last:border-0">
-                    <p className="flex-1 text-sm font-medium text-slate-800 truncate">{line.name}</p>
+                  <div key={line.id} className="flex flex-col gap-1 py-2 border-b border-slate-100 last:border-0">
+                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide truncate">{line.name}</p>
                     <PlateSelector
                       plates={plates}
                       value={selections[line.id] ?? null}
