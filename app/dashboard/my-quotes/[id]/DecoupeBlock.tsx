@@ -6,15 +6,6 @@ import { toast } from 'sonner'
 import { upsertProductionSheet } from '@/app/actions/production-sheet'
 import type { Quote } from './quote-detail-shared'
 
-function InfoPill({ label, value }: { label: string; value: React.ReactNode }) {
-  return (
-    <div className="bg-slate-50 rounded-lg px-2.5 py-1.5">
-      <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{label}</p>
-      <p className="text-sm font-semibold text-slate-700 mt-0.5">{value ?? '—'}</p>
-    </div>
-  )
-}
-
 function fmtSec(sec: number) {
   if (sec < 60) return `${sec}s`
   const m = Math.floor(sec / 60)
@@ -26,7 +17,8 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.decoupeNotes ?? '')
-  const [cuttingTime, setCuttingTime] = useState((ps?.prodCuttingTimePerPoseSeconds ?? '').toString())
+  const [cuttingTime, setCuttingTime] = useState((ps?.prodCuttingTimePerPoseSeconds ?? quote.cuttingTimePerPoseSeconds ?? '').toString())
+  const [itemsPerPlate, setItemsPerPlate] = useState((ps?.prodItemsPerPlate ?? quote.itemsPerPlate ?? '').toString())
   const [saving, setSaving] = useState(false)
 
   const prodRuns = ps?.productionAmalgameRuns ?? []
@@ -47,8 +39,7 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
         items: r.items.map(it => ({ name: it.name, countPerPlate: it.countPerPlate, qty: it.quantityPerUnit })),
       }))
 
-  const simpleCuttingRef = quote.cuttingTimePerPoseSeconds
-  const effectiveCutting = ps?.prodCuttingTimePerPoseSeconds ?? simpleCuttingRef
+  const effectiveCutting = ps?.prodCuttingTimePerPoseSeconds ?? quote.cuttingTimePerPoseSeconds
 
   const summary = isAmalgame
     ? `${runs.length} run${runs.length > 1 ? 's' : ''} · ${runs.reduce((acc, r) => acc + r.items.length, 0)} produit${runs.reduce((acc, r) => acc + r.items.length, 0) > 1 ? 's' : ''}`
@@ -62,6 +53,7 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
       await upsertProductionSheet(quote.id, {
         decoupeNotes: notes || null,
         prodCuttingTimePerPoseSeconds: cuttingTime ? parseFloat(cuttingTime) : null,
+        prodItemsPerPlate: itemsPerPlate ? parseInt(itemsPerPlate) : null,
       })
       toast.success('Enregistré')
     } catch {
@@ -88,7 +80,6 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
       {open && (
         <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-4">
           {isAmalgame ? (
-            /* ── Mode amalgame ── */
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Plaques de découpe</p>
               {runs.map((run, i) => (
@@ -98,9 +89,8 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
                     {run.plateName && <span className="text-xs text-slate-500 bg-slate-50 rounded px-2 py-0.5">{run.plateName}</span>}
                   </div>
                   {run.cuttingTimeSec != null && (
-                    <InfoPill label="Temps/pose" value={fmtSec(run.cuttingTimeSec)} />
+                    <p className="text-xs text-slate-500">{fmtSec(run.cuttingTimeSec)}/pose</p>
                   )}
-                  {/* Produits sur cette plaque */}
                   <div className="space-y-1">
                     {run.items.map((it, j) => (
                       <div key={j} className="flex items-center justify-between text-xs text-slate-600">
@@ -116,19 +106,21 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
               ))}
             </div>
           ) : (
-            /* ── Mode simple ── */
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
                 <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps/pose (s)</label>
-                <input type="number" value={cuttingTime}
+                <input type="number" min={0} value={cuttingTime}
                   onChange={e => setCuttingTime(e.target.value)}
-                  placeholder={simpleCuttingRef?.toString() ?? '0'}
+                  placeholder="0"
                   className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
-                {simpleCuttingRef && (
-                  <p className="text-[10px] text-slate-400">Estimé devis : {fmtSec(simpleCuttingRef)}</p>
-                )}
               </div>
-              <InfoPill label="Pièces/plaque" value={quote.itemsPerPlate ?? '—'} />
+              <div className="space-y-1">
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Pièces/plaque</label>
+                <input type="number" min={0} value={itemsPerPlate}
+                  onChange={e => setItemsPerPlate(e.target.value)}
+                  placeholder="0"
+                  className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
+              </div>
             </div>
           )}
 

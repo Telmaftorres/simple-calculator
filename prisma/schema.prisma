@@ -441,10 +441,13 @@ model ProductionSheet {
   prodBatTimeMinutesOverride Int?
 
   // ── Impression ──
-  impressionNotes String?
+  impressionNotes          String?
+  prodIsRectoVerso         Boolean?
+  prodRectoVersoType       String?
 
   // ── Découpe ──
-  decoupeNotes  String?
+  decoupeNotes             String?
+  prodItemsPerPlate        Int?
 
   // ── Achats / Accessoires ──
   achatsNotes  String?  // Texte libre accessoires à commander

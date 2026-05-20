@@ -100,7 +100,10 @@ export type Quote = {
     prodBeTimeMinutesOverride: number | null
     prodBatTimeMinutesOverride: number | null
     impressionNotes: string | null
+    prodIsRectoVerso: boolean | null
+    prodRectoVersoType: string | null
     decoupeNotes: string | null
+    prodItemsPerPlate: number | null
     nbCollages: number | null
     collagePerPLV: number | null
     faconnageNotes: string | null

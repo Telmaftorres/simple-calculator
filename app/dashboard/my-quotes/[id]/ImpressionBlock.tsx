@@ -15,28 +15,23 @@ function InfoPill({ label, value }: { label: string; value: React.ReactNode }) {
   )
 }
 
-function RectoVerso({ rv, type }: { rv: boolean; type: string | null }) {
-  if (!rv) return <span className="text-slate-400">Recto</span>
-  return <span>{type === 'parfait' ? 'R/V parfait' : type === 'tete_beche' ? 'R/V tête-bêche' : 'R/V'}</span>
-}
-
 export function ImpressionBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.impressionNotes ?? '')
+  const [platesCount, setPlatesCount] = useState((ps?.prodPlatesCount ?? quote.platesCount ?? '').toString())
+  const [inkMl, setInkMl] = useState((ps?.prodInkMlPerPlate ?? quote.inkMlPerPlate ?? '').toString())
   const [machineTime, setMachineTime] = useState((ps?.prodMachineTimeMinOverride ?? '').toString())
-  const [platesCount, setPlatesCount] = useState((ps?.prodPlatesCount ?? '').toString())
-  const [inkMl, setInkMl] = useState((ps?.prodInkMlPerPlate ?? '').toString())
+  const [isRV, setIsRV] = useState(ps?.prodIsRectoVerso ?? quote.isRectoVerso)
+  const [rvType, setRvType] = useState(ps?.prodRectoVersoType ?? quote.rectoVersoType ?? 'parfait')
   const [saving, setSaving] = useState(false)
 
-  // Mode amalgame seulement si le scope inclut l'impression
   const amalgameScope = ps?.amalgameScope ?? 'decoupe_impression'
   const prodRuns = ps?.productionAmalgameRuns ?? []
   const quoteRuns = quote.amalgameRuns ?? []
   const hasAmalgameData = quote.hasAmalgame || prodRuns.length > 0 || quoteRuns.length > 0
   const isAmalgame = hasAmalgameData && amalgameScope === 'decoupe_impression'
 
-  // Runs à afficher : production si sauvegardés, sinon ceux du devis
   const runs = prodRuns.length > 0
     ? prodRuns.map(r => ({
         name: r.name,
@@ -59,13 +54,14 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
         items: r.items.map(it => it.name),
       }))
 
-  // Résumé pour le header
+  const rvLabel = isRV ? (rvType === 'parfait' ? 'R/V parfait' : rvType === 'tete_beche' ? 'R/V tête-bêche' : 'R/V') : 'Recto'
+
   const summary = isAmalgame
     ? `${runs.filter(r => r.hasImpression).length} run${runs.filter(r => r.hasImpression).length > 1 ? 's' : ''} impression`
     : quote.hasImpression
       ? [
           quote.plate?.name ?? null,
-          (ps?.prodPlatesCount ?? quote.platesCount) ? `${ps?.prodPlatesCount ?? quote.platesCount} plaque${(ps?.prodPlatesCount ?? quote.platesCount)! > 1 ? 's' : ''}` : null,
+          platesCount ? `${platesCount} plaque${parseInt(platesCount) > 1 ? 's' : ''}` : null,
         ].filter(Boolean).join(' · ')
       : 'Sans impression'
 
@@ -77,6 +73,8 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
         prodMachineTimeMinOverride: machineTime ? parseFloat(machineTime) : null,
         prodPlatesCount: platesCount ? parseInt(platesCount) : null,
         prodInkMlPerPlate: inkMl ? parseFloat(inkMl) : null,
+        prodIsRectoVerso: isRV,
+        prodRectoVersoType: isRV ? rvType : null,
       })
       toast.success('Enregistré')
     } catch {
@@ -103,7 +101,6 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
       {open && (
         <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-4">
           {isAmalgame ? (
-            /* ── Mode amalgame : une carte par run ── */
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Runs d&apos;impression</p>
               {runs.map((run, i) => (
@@ -117,12 +114,11 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
                   {run.hasImpression && (
                     <div className="grid grid-cols-2 gap-2">
                       <InfoPill label="Plaque" value={run.plateName ?? '—'} />
-                      <InfoPill label="Mode" value={<RectoVerso rv={run.isRectoVerso} type={run.rectoVersoType} />} />
+                      <InfoPill label="Mode" value={run.isRectoVerso ? (run.rectoVersoType === 'parfait' ? 'R/V parfait' : 'R/V tête-bêche') : 'Recto'} />
                       {run.platesCount != null && <InfoPill label="Nbre plaques" value={run.platesCount} />}
                       {run.inkMlPerPlate != null && <InfoPill label="Encre" value={`${run.inkMlPerPlate} ml`} />}
                     </div>
                   )}
-                  {/* Produits sur ce run */}
                   <div className="flex flex-wrap gap-1">
                     {run.items.map((name, j) => (
                       <span key={j} className="text-[11px] px-2 py-0.5 bg-sky-50 text-sky-700 rounded-full border border-sky-100">{name}</span>
@@ -132,34 +128,50 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
               ))}
             </div>
           ) : (
-            /* ── Mode simple ── */
-            <div className="space-y-2">
+            <div className="space-y-3">
               {!quote.hasImpression ? (
                 <p className="text-xs text-slate-400">Ce produit n&apos;a pas d&apos;impression.</p>
               ) : (
                 <>
+                  {/* Plaque (lecture seule) + R/V éditable */}
                   <div className="grid grid-cols-2 gap-2">
                     <InfoPill label="Plaque" value={quote.plate?.name ?? '—'} />
-                    <InfoPill label="Mode" value={<RectoVerso rv={quote.isRectoVerso} type={quote.rectoVersoType} />} />
+                    <div className="space-y-1">
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Mode impression</label>
+                      <select
+                        value={isRV ? rvType : 'recto'}
+                        onChange={e => {
+                          if (e.target.value === 'recto') { setIsRV(false) }
+                          else { setIsRV(true); setRvType(e.target.value) }
+                        }}
+                        className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
+                      >
+                        <option value="recto">Recto</option>
+                        <option value="parfait">R/V parfait</option>
+                        <option value="tete_beche">R/V tête-bêche</option>
+                      </select>
+                    </div>
                   </div>
+
+                  {/* Nb plaques, Encre, Tps machine */}
                   <div className="grid grid-cols-3 gap-2">
                     <div className="space-y-1">
                       <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Nb plaques</label>
-                      <input type="number" value={platesCount}
+                      <input type="number" min={0} value={platesCount}
                         onChange={e => setPlatesCount(e.target.value)}
-                        placeholder={quote.platesCount?.toString() ?? '0'}
+                        placeholder="0"
                         className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Encre ml</label>
-                      <input type="number" value={inkMl}
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Encre (ml)</label>
+                      <input type="number" min={0} value={inkMl}
                         onChange={e => setInkMl(e.target.value)}
-                        placeholder={quote.inkMlPerPlate?.toString() ?? '0'}
+                        placeholder="0"
                         className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />
                     </div>
                     <div className="space-y-1">
-                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tps machine min</label>
-                      <input type="number" value={machineTime}
+                      <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Tps machine (min)</label>
+                      <input type="number" min={0} value={machineTime}
                         onChange={e => setMachineTime(e.target.value)}
                         placeholder="0"
                         className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800" />

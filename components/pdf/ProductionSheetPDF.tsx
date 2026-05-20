@@ -775,15 +775,15 @@ export function ProductionSheetPDF({ quote, productionSheet }: {
               </SectionCard>
             )}
 
-            {/* PLAN TECHNIQUE */}
-            {productionSheet.planImageUrl && (
-              <SectionCard title="PLAN TECHNIQUE" bgColor={C.bg} textColor={C.mid}>
-                <Image src={productionSheet.planImageUrl} style={s.planImg} />
-              </SectionCard>
-            )}
-
           </View>
         </View>
+
+        {/* PLAN TECHNIQUE — sous le contenu principal */}
+        {productionSheet.planImageUrl && (
+          <SectionCard title="PLAN TECHNIQUE" bgColor={C.bg} textColor={C.mid}>
+            <Image src={productionSheet.planImageUrl} style={s.planImg} />
+          </SectionCard>
+        )}
 
         {/* ── FOOTER ── */}
         <View style={s.footer} fixed>
