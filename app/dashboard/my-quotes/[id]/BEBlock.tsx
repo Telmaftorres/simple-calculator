@@ -17,8 +17,8 @@ export function BEBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.beNotes ?? '')
-  const [beTime, setBeTime] = useState((ps?.prodBeTimeMinutesOverride ?? '').toString())
-  const [batTime, setBatTime] = useState((ps?.prodBatTimeMinutesOverride ?? '').toString())
+  const [beTime, setBeTime] = useState((ps?.prodBeTimeMinutesOverride ?? (quote.hasBE ? quote.beTimeMinutes : null) ?? '').toString())
+  const [batTime, setBatTime] = useState((ps?.prodBatTimeMinutesOverride ?? quote.batTimeMinutes ?? '').toString())
   const [saving, setSaving] = useState(false)
 
   const hasBE = quote.hasBE
@@ -74,12 +74,9 @@ export function BEBlock({ quote }: { quote: Quote }) {
                 min={0}
                 value={beTime}
                 onChange={e => setBeTime(e.target.value)}
-                placeholder={hasBE && beMin ? beMin.toString() : '0'}
+                placeholder="0"
                 className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
               />
-              {hasBE && beMin > 0 && (
-                <p className="text-[10px] text-slate-400">Estimé devis : {formatMin(beMin)}</p>
-              )}
             </div>
             <div className="space-y-1">
               <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BAT (min)</label>
@@ -88,12 +85,9 @@ export function BEBlock({ quote }: { quote: Quote }) {
                 min={0}
                 value={batTime}
                 onChange={e => setBatTime(e.target.value)}
-                placeholder={batMin ? batMin.toString() : '0'}
+                placeholder="0"
                 className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
               />
-              {batMin > 0 && (
-                <p className="text-[10px] text-slate-400">Estimé devis : {formatMin(batMin)}</p>
-              )}
             </div>
           </div>
 
