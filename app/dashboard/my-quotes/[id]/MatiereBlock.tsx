@@ -4,7 +4,7 @@ import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Plus, X, Search } from 'lucide-react'
-import { saveProductLinesPlate } from '@/app/actions/production-products'
+import { saveProductLinesPlate, saveProductElementsPlate } from '@/app/actions/production-products'
 import { getPlates } from '@/app/actions/reference-data'
 import { createPlate } from '@/app/actions/catalog'
 import type { Quote } from './quote-detail-shared'
@@ -246,50 +246,73 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
   const [plates, setPlates] = useState<Plate[]>([])
   const [loadingPlates, setLoadingPlates] = useState(true)
 
-  // lineId → plateId — pré-sélectionne la plaque du devis si rien de sauvegardé
-  const [selections, setSelections] = useState<Record<number, number | null>>(() => {
+  // lineId → plateId
+  const [lineSelections, setLineSelections] = useState<Record<number, number | null>>(() => {
     const map: Record<number, number | null> = {}
     for (const l of dbLines) {
-      if (l.plate) {
-        map[l.id] = l.plate.id
-      } else {
-        const quotePlate = getQuotePlate(quote, l.name)
-        map[l.id] = quotePlate?.id ?? null
+      map[l.id] = l.plate?.id ?? getQuotePlate(quote, l.name)?.id ?? null
+    }
+    return map
+  })
+
+  // elementId → plateId — hérite de la sélection de la ligne parent par défaut
+  const [elemSelections, setElemSelections] = useState<Record<number, number | null>>(() => {
+    const map: Record<number, number | null> = {}
+    for (const l of dbLines) {
+      const fallback = l.plate?.id ?? getQuotePlate(quote, l.name)?.id ?? null
+      for (const el of l.elements) {
+        map[el.id] = el.plate?.id ?? fallback
       }
     }
     return map
   })
 
   useEffect(() => {
-    getPlates().then(data => {
-      setPlates(data)
-      setLoadingPlates(false)
-    })
+    getPlates().then(data => { setPlates(data); setLoadingPlates(false) })
   }, [])
 
   const refreshPlates = () => getPlates().then(setPlates)
 
   const hasLines = dbLines.length > 0
 
+  // Quand on change la plaque d'une ligne, propager aux éléments sans plaque explicite
+  const handleLineChange = (lineId: number, plateId: number | null) => {
+    setLineSelections(prev => ({ ...prev, [lineId]: plateId }))
+    const line = dbLines.find(l => l.id === lineId)
+    if (!line) return
+    setElemSelections(prev => {
+      const next = { ...prev }
+      for (const el of line.elements) {
+        if (!el.plate) next[el.id] = plateId
+      }
+      return next
+    })
+  }
+
   const summary = hasLines
-    ? dbLines
-        .filter(l => selections[l.id])
-        .map(l => {
-          const p = plates.find(pl => pl.id === selections[l.id])
-          return p ? `${l.name} : ${p.name}` : null
-        })
-        .filter(Boolean)
-        .join(' · ') || `${dbLines.length} produit${dbLines.length > 1 ? 's' : ''}`
+    ? dbLines.map(l => {
+        const p = plates.find(pl => pl.id === lineSelections[l.id])
+        return p ? `${l.name} : ${p.name}` : null
+      }).filter(Boolean).join(' · ') || `${dbLines.length} produit${dbLines.length > 1 ? 's' : ''}`
     : ''
 
   const handleSave = async () => {
     if (!hasLines || !ps) return
     setSaving(true)
     try {
-      await saveProductLinesPlate(
-        dbLines.map(l => ({ lineId: l.id, plateId: selections[l.id] ?? null })),
-        quote.id
-      )
+      const allElements = dbLines.flatMap(l => l.elements)
+      await Promise.all([
+        saveProductLinesPlate(
+          dbLines.map(l => ({ lineId: l.id, plateId: lineSelections[l.id] ?? null })),
+          quote.id
+        ),
+        allElements.length > 0
+          ? saveProductElementsPlate(
+              allElements.map(el => ({ elementId: el.id, plateId: elemSelections[el.id] ?? null })),
+              quote.id
+            )
+          : Promise.resolve(),
+      ])
       toast.success('Matières enregistrées')
     } catch {
       toast.error('Erreur lors de la sauvegarde')
@@ -322,16 +345,36 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
             <p className="text-xs text-slate-400 py-1">Chargement des plaques…</p>
           ) : (
             <>
-              <div className="space-y-2">
+              <div className="space-y-3">
                 {dbLines.map(line => (
-                  <div key={line.id} className="flex flex-col gap-1 py-2 border-b border-slate-100 last:border-0">
-                    <p className="text-xs font-semibold text-slate-500 uppercase tracking-wide truncate">{line.name}</p>
-                    <PlateSelector
-                      plates={plates}
-                      value={selections[line.id] ?? null}
-                      onChange={plateId => setSelections(prev => ({ ...prev, [line.id]: plateId }))}
-                      onPlateCreated={refreshPlates}
-                    />
+                  <div key={line.id} className="border border-slate-100 rounded-xl overflow-visible">
+                    {/* Ligne produit */}
+                    <div className="flex flex-col gap-1 px-3 py-2.5 bg-slate-50 rounded-t-xl">
+                      <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{line.name}</p>
+                      <PlateSelector
+                        plates={plates}
+                        value={lineSelections[line.id] ?? null}
+                        onChange={plateId => handleLineChange(line.id, plateId)}
+                        onPlateCreated={refreshPlates}
+                      />
+                    </div>
+
+                    {/* Éléments */}
+                    {line.elements.length > 0 && (
+                      <div className="divide-y divide-slate-100">
+                        {line.elements.map(el => (
+                          <div key={el.id} className="flex flex-col gap-1 px-3 py-2">
+                            <p className="text-xs text-slate-500 truncate">↳ {el.name}</p>
+                            <PlateSelector
+                              plates={plates}
+                              value={elemSelections[el.id] ?? null}
+                              onChange={plateId => setElemSelections(prev => ({ ...prev, [el.id]: plateId }))}
+                              onPlateCreated={refreshPlates}
+                            />
+                          </div>
+                        ))}
+                      </div>
+                    )}
                   </div>
                 ))}
               </div>

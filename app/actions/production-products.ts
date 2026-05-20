@@ -54,6 +54,30 @@ export async function saveProductionProductLines(productionSheetId: number, line
   revalidatePath(`/dashboard/my-quotes/${quoteId}`)
 }
 
+export async function saveProductElementsPlate(
+  items: { elementId: number; plateId: number | null }[],
+  quoteId: number
+) {
+  const session = await requireAuth()
+  if (items.length > 0) {
+    const el = await prisma.productionProductLineElement.findUnique({
+      where: { id: items[0].elementId },
+      select: { line: { select: { productionSheet: { select: { quote: { select: { userId: true } } } } } } },
+    })
+    if (!el) throw new Error('Élément introuvable')
+    const userId = el.line.productionSheet.quote.userId
+    if (session.user.role !== 'ADMIN' && userId !== session.user.id) throw new Error('Non autorisé')
+  }
+
+  await Promise.all(
+    items.map(({ elementId, plateId }) =>
+      prisma.productionProductLineElement.update({ where: { id: elementId }, data: { plateId } })
+    )
+  )
+
+  revalidatePath(`/dashboard/my-quotes/${quoteId}`)
+}
+
 export async function saveProductLinesPlate(
   plates: { lineId: number; plateId: number | null }[],
   quoteId: number

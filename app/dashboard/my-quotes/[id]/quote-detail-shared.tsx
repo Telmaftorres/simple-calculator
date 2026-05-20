@@ -140,6 +140,7 @@ export type Quote = {
         flatWidth: number
         flatHeight: number
         position: number
+        plate: { id: number; name: string; width: number; height: number; cost: number; material: string } | null
       }[]
     }[]
   } | null
