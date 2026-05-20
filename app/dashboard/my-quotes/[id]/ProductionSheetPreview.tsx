@@ -54,6 +54,21 @@ function SectionCard({ title, colorClass, children }: { title: string; colorClas
   )
 }
 
+function findQuotePlate(quote: Quote, lineName: string): { name: string } | null {
+  if (quote.isMultiProduct && quote.products.length > 0) {
+    const match = quote.products.find(p =>
+      (p.productTypeName ?? '').toLowerCase() === lineName.toLowerCase()
+    ) ?? quote.products[0]
+    return match?.plate ?? null
+  }
+  if (quote.amalgameRuns.length > 0) {
+    const run = quote.amalgameRuns.find(r => r.name.toLowerCase() === lineName.toLowerCase())
+      ?? quote.amalgameRuns[0]
+    return run?.plate ?? null
+  }
+  return quote.plate ?? null
+}
+
 export function ProductionSheetPreview({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
 
@@ -142,22 +157,32 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
           {/* 1. Produits & Matière */}
           <SectionCard title="Produits & Matière" colorClass="bg-slate-800 text-white">
             {prodLines.length > 0 ? (
-              prodLines.map((line, i) => (
-                <div key={i}>
-                  <Row label={line.name} value={line.plate?.name ?? '—'} />
-                  {line.elements.map((el, j) => (
-                    <div key={j} className="pl-3">
-                      <Row
-                        label={`↳ ${el.name}`}
-                        value={[
-                          el.flatWidth ? `${el.flatWidth}×${el.flatHeight}` : null,
-                          el.plate?.name ?? null,
-                        ].filter(Boolean).join(' · ') || '—'}
-                      />
-                    </div>
-                  ))}
-                </div>
-              ))
+              prodLines.map((line, i) => {
+                const linePlate = line.plate ?? findQuotePlate(quote, line.name)
+                return (
+                  <div key={i}>
+                    {line.elements.length === 0 && (
+                      <Row label={line.name} value={linePlate?.name ?? '—'} />
+                    )}
+                    {line.elements.length > 0 && (
+                      <>
+                        <p className="text-[10px] font-semibold text-slate-500 pt-1 pb-0.5">{line.name}</p>
+                        {line.elements.map((el, j) => {
+                          const elPlate = el.plate ?? linePlate
+                          return (
+                            <div key={j} className="pl-2">
+                              <Row
+                                label={`↳ ${el.name}`}
+                                value={elPlate?.name ?? '—'}
+                              />
+                            </div>
+                          )
+                        })}
+                      </>
+                    )}
+                  </div>
+                )
+              })
             ) : quote.isMultiProduct && products.length > 0 ? (
               products.map((p, i) => (
                 <Row key={i} label={p.productTypeName ?? `Produit ${i + 1}`} value={p.plate?.name ?? '—'} />
