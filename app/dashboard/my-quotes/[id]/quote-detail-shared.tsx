@@ -10,7 +10,7 @@ export type ProductEntry = {
   id: number
   productTypeName: string | null
   flatWidth: number; flatHeight: number; quantity: number
-  plate: { name: string; width: number; height: number } | null
+  plate: { id: number; name: string; width: number; height: number } | null
   platesCount: number | null; itemsPerPlate: number | null
   isRectoVerso: boolean; rectoVersoType: string | null
   hasVarnish: boolean; hasFlatColor: boolean; hasImpression: boolean
@@ -55,7 +55,7 @@ export type Quote = {
   packagingExternalSize: string | null
   study: { number: string } | null
   productType: { name: string } | null
-  plate: { name: string; cost: number; width: number; height: number } | null
+  plate: { id: number; name: string; cost: number; width: number; height: number } | null
   plvQuantity: number | null
   hasAmalgame: boolean
   amalgameRuns: {
@@ -68,7 +68,7 @@ export type Quote = {
     inkMlPerPlate: number
     isRectoVerso: boolean
     rectoVersoType: string | null
-    plate: { name: string; width: number; height: number } | null
+    plate: { id: number; name: string; width: number; height: number } | null
     items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[]
   }[]
   accessories: Accessory[]

@@ -594,7 +594,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       {/* Two-panel layout */}
       <div className="flex gap-4 items-start">
         {/* Left: sections in a single column */}
-        <div className="flex-1 min-w-0 space-y-3">
+        <div className="w-[340px] shrink-0 space-y-3">
           {showProduits && <ProduitsBlock quote={quote} />}
           {showMatiere && <MatiereBlock quote={quote} />}
           {showBE && <BEBlock quote={quote} />}
@@ -615,7 +615,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         </div>
 
         {/* Right: live preview (sticky) */}
-        <div className="w-[360px] shrink-0 sticky top-4">
+        <div className="flex-1 min-w-0 sticky top-4">
           <ProductionSheetPreview quote={quote} />
         </div>
       </div>
