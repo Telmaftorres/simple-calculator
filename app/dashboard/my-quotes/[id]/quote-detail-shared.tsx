@@ -126,7 +126,7 @@ export type Quote = {
       id: number
       name: string
       quantity: number
-      reference: string | null
+      unitPrice: number | null
       position: number
     }[]
     productionAmalgameRuns: {

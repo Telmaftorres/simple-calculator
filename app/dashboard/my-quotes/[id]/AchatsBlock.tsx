@@ -15,7 +15,7 @@ type LocalItem = {
   tempId: string
   name: string
   quantity: string
-  reference: string
+  unitPrice: string
 }
 
 function uid() { return Math.random().toString(36).slice(2) }
@@ -27,7 +27,7 @@ function initItems(quote: Quote): LocalItem[] {
       tempId: uid(),
       name: it.name,
       quantity: it.quantity.toString(),
-      reference: it.reference ?? '',
+      unitPrice: it.unitPrice != null ? it.unitPrice.toString() : '',
     }))
   }
   // Pré-rempli depuis les accessoires du devis
@@ -37,7 +37,7 @@ function initItems(quote: Quote): LocalItem[] {
       tempId: uid(),
       name: a.accessory.name,
       quantity: a.quantity.toString(),
-      reference: '',
+      unitPrice: a.accessory.price != null ? a.accessory.price.toString() : '',
     }))
   }
   return []
@@ -68,7 +68,7 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
     setItems(prev => prev.filter(it => it.tempId !== tempId))
 
   const addItem = () =>
-    setItems(prev => [...prev, { tempId: uid(), name: '', quantity: '1', reference: '' }])
+    setItems(prev => [...prev, { tempId: uid(), name: '', quantity: '1', unitPrice: '' }])
 
   const handleSave = async () => {
     setSaving(true)
@@ -78,7 +78,7 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
         saveProductionAchatItems(psId, items.map(it => ({
           name: it.name.trim() || 'Article',
           quantity: parseFloat(it.quantity) || 1,
-          reference: it.reference.trim() || null,
+          unitPrice: it.unitPrice !== '' ? parseFloat(it.unitPrice) : null,
         }))),
         upsertProductionSheet(quote.id, { achatsNotes: notes || null }),
       ])
@@ -118,6 +118,10 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
                   <AutocompleteInput
                     value={it.name}
                     onChange={v => updateItem(it.tempId, 'name', v)}
+                    onSelect={s => {
+                      const acc = s.sublabel?.replace(' €', '')
+                      if (acc && it.unitPrice === '') updateItem(it.tempId, 'unitPrice', acc)
+                    }}
                     suggestions={suggestions}
                     placeholder="Nom de l'article"
                     className="w-full px-2.5 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
@@ -133,10 +137,12 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
                   className="w-14 px-2 py-1.5 text-sm text-center rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
                 />
                 <input
-                  type="text"
-                  value={it.reference}
-                  onChange={e => updateItem(it.tempId, 'reference', e.target.value)}
-                  placeholder="Réf."
+                  type="number"
+                  min={0}
+                  step="0.01"
+                  value={it.unitPrice}
+                  onChange={e => updateItem(it.tempId, 'unitPrice', e.target.value)}
+                  placeholder="Prix u."
                   className="w-20 px-2 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
                 />
                 <button

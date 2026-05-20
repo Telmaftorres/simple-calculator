@@ -486,7 +486,7 @@ model ProductionAchatItem {
   productionSheetId Int
   name              String
   quantity          Float           @default(1)
-  reference         String?
+  unitPrice         Float?
   position          Int             @default(0)
   productionSheet   ProductionSheet @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
 }

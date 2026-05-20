@@ -7,7 +7,7 @@ import { revalidatePath } from 'next/cache'
 export type AchatItemInput = {
   name: string
   quantity: number
-  reference?: string | null
+  unitPrice?: number | null
 }
 
 export async function saveProductionAchatItems(productionSheetId: number, items: AchatItemInput[]) {
@@ -27,7 +27,7 @@ export async function saveProductionAchatItems(productionSheetId: number, items:
           productionSheetId,
           name: item.name,
           quantity: item.quantity,
-          reference: item.reference ?? null,
+          unitPrice: item.unitPrice ?? null,
           position: i,
         })),
       })
