@@ -348,23 +348,29 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
               <div className="space-y-3">
                 {dbLines.map(line => (
                   <div key={line.id} className="border border-slate-100 rounded-xl overflow-visible">
-                    {/* Ligne produit */}
-                    <div className="flex flex-col gap-1 px-3 py-2.5 bg-slate-50 rounded-t-xl">
+                    {/* En-tête produit */}
+                    <div className={`px-3 py-2 bg-slate-50 ${line.elements.length > 0 ? 'rounded-t-xl' : 'rounded-xl'}`}>
                       <p className="text-xs font-semibold text-slate-600 uppercase tracking-wide">{line.name}</p>
-                      <PlateSelector
-                        plates={plates}
-                        value={lineSelections[line.id] ?? null}
-                        onChange={plateId => handleLineChange(line.id, plateId)}
-                        onPlateCreated={refreshPlates}
-                      />
                     </div>
 
-                    {/* Éléments */}
+                    {/* Pas d'éléments : sélecteur sur le produit lui-même */}
+                    {line.elements.length === 0 && (
+                      <div className="px-3 py-2">
+                        <PlateSelector
+                          plates={plates}
+                          value={lineSelections[line.id] ?? null}
+                          onChange={plateId => handleLineChange(line.id, plateId)}
+                          onPlateCreated={refreshPlates}
+                        />
+                      </div>
+                    )}
+
+                    {/* Éléments : un sélecteur par élément */}
                     {line.elements.length > 0 && (
                       <div className="divide-y divide-slate-100">
                         {line.elements.map(el => (
                           <div key={el.id} className="flex flex-col gap-1 px-3 py-2">
-                            <p className="text-xs text-slate-500 truncate">↳ {el.name}</p>
+                            <p className="text-xs text-slate-500 truncate">{el.name}</p>
                             <PlateSelector
                               plates={plates}
                               value={elemSelections[el.id] ?? null}
