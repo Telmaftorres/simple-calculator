@@ -17,6 +17,7 @@ import { BEBlock } from './BEBlock'
 import { ImpressionBlock } from './ImpressionBlock'
 import { DecoupeBlock } from './DecoupeBlock'
 import { FaconnageBlock } from './FaconnageBlock'
+import { ProductionSheetPreview } from './ProductionSheetPreview'
 
 // ── Bloc accordéon style "card emoji" ──
 function Block({
@@ -590,26 +591,34 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         </div>
       </div>
 
-      {/* Toutes les sections en grille 2 colonnes */}
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
-        {showProduits && <ProduitsBlock quote={quote} />}
-        {showMatiere && <MatiereBlock quote={quote} />}
-        {showBE && <BEBlock quote={quote} />}
-        {showAmalgame && <AmalgameBlock quote={quote} savedProducts={savedProductLines} />}
-        {showImpression && <ImpressionBlock quote={quote} />}
-        {showDecoupe && <DecoupeBlock quote={quote} />}
-        {showFaconnage && <FaconnageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
-        {showConditionnement && <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
-        {showEmballage && <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
-      </div>
+      {/* Two-panel layout */}
+      <div className="flex gap-4 items-start">
+        {/* Left: sections in a single column */}
+        <div className="flex-1 min-w-0 space-y-3">
+          {showProduits && <ProduitsBlock quote={quote} />}
+          {showMatiere && <MatiereBlock quote={quote} />}
+          {showBE && <BEBlock quote={quote} />}
+          {showAmalgame && <AmalgameBlock quote={quote} savedProducts={savedProductLines} />}
+          {showImpression && <ImpressionBlock quote={quote} />}
+          {showDecoupe && <DecoupeBlock quote={quote} />}
+          {showFaconnage && <FaconnageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
+          {showConditionnement && <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
+          {showEmballage && <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
 
-      {/* Ajouter une section */}
-      {availableSections.length > 0 && (
-        <AddSectionMenu
-          available={availableSections}
-          onAdd={key => setExtraSections(prev => new Set([...prev, key]))}
-        />
-      )}
+          {/* Ajouter une section */}
+          {availableSections.length > 0 && (
+            <AddSectionMenu
+              available={availableSections}
+              onAdd={key => setExtraSections(prev => new Set([...prev, key]))}
+            />
+          )}
+        </div>
+
+        {/* Right: live preview (sticky) */}
+        <div className="w-[360px] shrink-0 sticky top-4">
+          <ProductionSheetPreview quote={quote} />
+        </div>
+      </div>
 
     </div>
   )
