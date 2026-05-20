@@ -17,6 +17,7 @@ import { BEBlock } from './BEBlock'
 import { ImpressionBlock } from './ImpressionBlock'
 import { DecoupeBlock } from './DecoupeBlock'
 import { FaconnageBlock } from './FaconnageBlock'
+import { AchatsBlock } from './AchatsBlock'
 import { ProductionSheetPreview } from './ProductionSheetPreview'
 
 // ── Bloc accordéon style "card emoji" ──
@@ -604,6 +605,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
           {showFaconnage && <FaconnageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
           {showConditionnement && <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
           {showEmballage && <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
+          <AchatsBlock quote={quote} />
 
           {/* Ajouter une section */}
           {availableSections.length > 0 && (
