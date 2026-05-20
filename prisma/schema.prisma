@@ -432,6 +432,9 @@ model ProductionSheet {
   conditionnementType  String?  // "kit_unitaire" | "caisse" | "palette" | autre
   conditionnementNotes String?  // Description libre
 
+  // ── Amalgame ──
+  amalgameScope String?  // 'decoupe' | 'decoupe_impression'
+
   // ── Bureau d'études ──
   beNotes       String?
 

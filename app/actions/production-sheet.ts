@@ -14,6 +14,7 @@ const productionSheetSchema = z.object({
   prodMachineTimeMinOverride:      z.number().min(0).nullable().optional(),
   prodTransportCost:               z.number().min(0).nullable().optional(),
   prodTransportNotes:              z.string().nullable().optional(),
+  amalgameScope:        z.enum(['decoupe', 'decoupe_impression']).nullable().optional(),
   beNotes:              z.string().nullable().optional(),
   impressionNotes:      z.string().nullable().optional(),
   decoupeNotes:         z.string().nullable().optional(),

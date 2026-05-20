@@ -9,6 +9,7 @@ import {
   ensureProductionSheet,
   type AmalgameRunInput,
 } from '@/app/actions/production-amalgame'
+import { upsertProductionSheet } from '@/app/actions/production-sheet'
 import type { Quote } from './quote-detail-shared'
 import type { SavedProductLine } from './ProduitsBlock'
 
@@ -518,11 +519,13 @@ function QuoteAmalgameRef({ quote }: { quote: Quote }) {
 
 export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedProducts: SavedProductLine[] }) {
   const dbRuns = quote.productionSheet?.productionAmalgameRuns ?? []
-  // Si aucune donnée sauvegardée, pré-remplit automatiquement depuis le devis
   const [runs, setRuns] = useState<LocalRun[]>(() =>
     dbRuns.length > 0 ? initRuns(dbRuns) : initRunsFromDevis(quote)
   )
   const [isPreFilled] = useState(() => dbRuns.length === 0)
+  const [scope, setScope] = useState<'decoupe' | 'decoupe_impression'>(
+    (quote.productionSheet?.amalgameScope as 'decoupe' | 'decoupe_impression') ?? 'decoupe_impression'
+  )
   const [saving, setSaving] = useState(false)
 
   const handleSave = async () => {
@@ -542,7 +545,10 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
         })),
       }))
 
-      await saveProductionAmalgameRuns(psId, payload)
+      await Promise.all([
+        saveProductionAmalgameRuns(psId, payload),
+        upsertProductionSheet(quote.id, { amalgameScope: scope }),
+      ])
       toast.success('Amalgame enregistré')
     } catch {
       toast.error('Erreur lors de la sauvegarde')
@@ -557,6 +563,29 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
   return (
     <Block emoji="🔀" title="Amalgame" summary={summary}>
       <div className="space-y-3">
+        {/* Scope : découpe seule ou découpe + impression */}
+        <div className="space-y-1.5">
+          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cet amalgame concerne</p>
+          <div className="flex gap-2">
+            {([
+              { value: 'decoupe_impression', label: 'Découpe + Impression' },
+              { value: 'decoupe',            label: 'Découpe uniquement' },
+            ] as const).map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setScope(opt.value)}
+                className={`flex-1 px-3 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                  scope === opt.value
+                    ? 'bg-slate-900 text-white border-slate-900'
+                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'
+                }`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+        </div>
+
         {/* Référence devis — repliée par défaut, consultable */}
         {(quote.hasAmalgame || quote.isMultiProduct) && (
           <QuoteAmalgameRef quote={quote} />

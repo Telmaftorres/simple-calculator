@@ -29,10 +29,12 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
   const [inkMl, setInkMl] = useState((ps?.prodInkMlPerPlate ?? '').toString())
   const [saving, setSaving] = useState(false)
 
-  // Détermine si on est en mode amalgame
+  // Mode amalgame seulement si le scope inclut l'impression
+  const amalgameScope = ps?.amalgameScope ?? 'decoupe_impression'
   const prodRuns = ps?.productionAmalgameRuns ?? []
   const quoteRuns = quote.amalgameRuns ?? []
-  const isAmalgame = quote.hasAmalgame || prodRuns.length > 0 || quoteRuns.length > 0
+  const hasAmalgameData = quote.hasAmalgame || prodRuns.length > 0 || quoteRuns.length > 0
+  const isAmalgame = hasAmalgameData && amalgameScope === 'decoupe_impression'
 
   // Runs à afficher : production si sauvegardés, sinon ceux du devis
   const runs = prodRuns.length > 0
