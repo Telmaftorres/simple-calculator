@@ -13,6 +13,9 @@ import { patchQuoteFlags } from '@/app/actions/quotes'
 import { AmalgameBlock } from './AmalgameBlock'
 import { ProduitsBlock, type SavedProductLine } from './ProduitsBlock'
 import { MatiereBlock } from './MatiereBlock'
+import { BEBlock } from './BEBlock'
+import { ImpressionBlock } from './ImpressionBlock'
+import { DecoupeBlock } from './DecoupeBlock'
 
 // ── Bloc accordéon style "card emoji" ──
 function Block({
@@ -308,7 +311,7 @@ function EmballageBlock({ quote, ps, onSave }: {
   )
 }
 
-type SectionKey = 'produits' | 'matiere' | 'amalgame' | 'conditionnement' | 'emballage'
+type SectionKey = 'produits' | 'matiere' | 'be' | 'impression' | 'decoupe' | 'amalgame' | 'conditionnement' | 'emballage'
 
 // ── Bouton "Ajouter une section" ──
 function AddSectionMenu({ available, onAdd }: { available: { key: SectionKey; label: string; emoji: string }[]; onAdd: (key: SectionKey) => void }) {
@@ -356,6 +359,7 @@ const EMPTY_PS: NonNullable<Quote['productionSheet']> = {
   prodAssemblyTimePerPieceSeconds: null, prodPackTimePerPieceSeconds: null,
   prodInkMlPerPlate: null, prodPlatesCount: null,
   prodTransportCost: null, prodTransportNotes: null,
+  beNotes: null, impressionNotes: null, decoupeNotes: null,
   nbCollages: null, collagePerPLV: null, faconnageNotes: null,
   conditionnementType: null, conditionnementNotes: null,
   achatsNotes: null, remarques: null, delaiRealisation: null,
@@ -394,6 +398,9 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
     const s = new Set<SectionKey>()
     s.add('produits')
     s.add('matiere')
+    s.add('be')
+    s.add('impression')
+    s.add('decoupe')
     if (psHasAmalgame) s.add('amalgame')
     if (psHasConditionnement && !quote.hasConditionnement) s.add('conditionnement')
     if (psHasEmballage && !quote.hasPackaging) s.add('emballage')
@@ -402,6 +409,9 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
 
   const showProduits = extraSections.has('produits')
   const showMatiere = extraSections.has('matiere')
+  const showBE = extraSections.has('be')
+  const showImpression = extraSections.has('impression')
+  const showDecoupe = extraSections.has('decoupe')
   const showAmalgame = extraSections.has('amalgame')
   const showConditionnement = quote.hasConditionnement || extraSections.has('conditionnement')
   const showEmballage = quote.hasPackaging || extraSections.has('emballage')
@@ -579,6 +589,9 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3 items-start">
         {showProduits && <ProduitsBlock quote={quote} />}
         {showMatiere && <MatiereBlock quote={quote} />}
+        {showBE && <BEBlock quote={quote} />}
+        {showImpression && <ImpressionBlock quote={quote} />}
+        {showDecoupe && <DecoupeBlock quote={quote} />}
         {showAmalgame && <AmalgameBlock quote={quote} savedProducts={savedProductLines} />}
         {showConditionnement && <ConditionnementBlock quote={quote} ps={ps} onSave={handleSaveSection} />}
         {showEmballage && <EmballageBlock quote={quote} ps={ps} onSave={handleSaveSection} />}

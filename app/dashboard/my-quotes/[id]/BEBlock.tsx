@@ -1,0 +1,96 @@
+'use client'
+
+import { useState } from 'react'
+import { Button } from '@/components/ui/button'
+import { toast } from 'sonner'
+import { upsertProductionSheet } from '@/app/actions/production-sheet'
+import type { Quote } from './quote-detail-shared'
+
+function formatMin(min: number) {
+  if (min < 60) return `${min} min`
+  const h = Math.floor(min / 60)
+  const m = min % 60
+  return m > 0 ? `${h}h${m.toString().padStart(2, '0')}` : `${h}h`
+}
+
+export function BEBlock({ quote }: { quote: Quote }) {
+  const ps = quote.productionSheet
+  const [open, setOpen] = useState(true)
+  const [notes, setNotes] = useState(ps?.beNotes ?? '')
+  const [saving, setSaving] = useState(false)
+
+  const hasBE = quote.hasBE
+  const beMin = quote.beTimeMinutes
+  const batMin = quote.batTimeMinutes
+
+  const summary = [
+    hasBE && beMin ? `BE ${formatMin(beMin)}` : null,
+    batMin ? `BAT ${formatMin(batMin)}` : null,
+  ].filter(Boolean).join(' · ')
+
+  const handleSave = async () => {
+    setSaving(true)
+    try {
+      await upsertProductionSheet(quote.id, { beNotes: notes || null })
+      toast.success('Enregistré')
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  return (
+    <div className={`rounded-2xl border transition-all ${open ? 'border-slate-300 shadow-md' : 'border-slate-200'} bg-white overflow-hidden`}>
+      <button
+        onClick={() => setOpen(v => !v)}
+        className="w-full flex items-center gap-4 px-5 py-4 hover:bg-slate-50 transition-colors text-left"
+      >
+        <span className="text-2xl leading-none">📐</span>
+        <div className="flex-1 min-w-0">
+          <p className="font-semibold text-slate-800 text-sm">Bureau d&apos;études</p>
+          {summary && <p className="text-xs text-slate-400 mt-0.5 truncate">{summary}</p>}
+        </div>
+        <span className="text-slate-300 text-lg">{open ? '▲' : '▼'}</span>
+      </button>
+
+      {open && (
+        <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3">
+          {/* Temps estimés depuis le devis */}
+          <div className="grid grid-cols-2 gap-3">
+            <div className="bg-slate-50 rounded-xl px-3 py-2.5">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">BE estimé</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {hasBE && beMin ? formatMin(beMin) : <span className="text-slate-400 font-normal">—</span>}
+              </p>
+            </div>
+            <div className="bg-slate-50 rounded-xl px-3 py-2.5">
+              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">BAT estimé</p>
+              <p className="text-sm font-semibold text-slate-800">
+                {batMin ? formatMin(batMin) : <span className="text-slate-400 font-normal">—</span>}
+              </p>
+            </div>
+          </div>
+
+          {/* Notes */}
+          <div className="space-y-1">
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Notes</label>
+            <textarea
+              value={notes}
+              onChange={e => setNotes(e.target.value)}
+              rows={2}
+              placeholder="Instructions BE / BAT…"
+              className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none"
+            />
+          </div>
+
+          <div className="flex justify-end">
+            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700">
+              {saving ? 'Sauvegarde…' : 'Enregistrer'}
+            </Button>
+          </div>
+        </div>
+      )}
+    </div>
+  )
+}

@@ -432,6 +432,15 @@ model ProductionSheet {
   conditionnementType  String?  // "kit_unitaire" | "caisse" | "palette" | autre
   conditionnementNotes String?  // Description libre
 
+  // ── Bureau d'études ──
+  beNotes       String?
+
+  // ── Impression ──
+  impressionNotes String?
+
+  // ── Découpe ──
+  decoupeNotes  String?
+
   // ── Achats / Accessoires ──
   achatsNotes  String?  // Texte libre accessoires à commander
 

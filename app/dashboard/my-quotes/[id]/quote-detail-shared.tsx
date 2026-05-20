@@ -95,6 +95,9 @@ export type Quote = {
     prodPlatesCount: number | null
     prodTransportCost: number | null
     prodTransportNotes: string | null
+    beNotes: string | null
+    impressionNotes: string | null
+    decoupeNotes: string | null
     nbCollages: number | null
     collagePerPLV: number | null
     faconnageNotes: string | null
