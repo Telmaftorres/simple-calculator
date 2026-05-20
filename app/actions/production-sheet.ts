@@ -21,6 +21,8 @@ const productionSheetSchema = z.object({
   impressionNotes:      z.string().nullable().optional(),
   prodIsRectoVerso:     z.boolean().nullable().optional(),
   prodRectoVersoType:   z.string().nullable().optional(),
+  prodHasVarnish:       z.boolean().nullable().optional(),
+  prodHasFlatColor:     z.boolean().nullable().optional(),
   decoupeNotes:         z.string().nullable().optional(),
   prodItemsPerPlate:    z.number().int().min(0).nullable().optional(),
   nbCollages:           z.number().int().min(0).nullable().optional(),

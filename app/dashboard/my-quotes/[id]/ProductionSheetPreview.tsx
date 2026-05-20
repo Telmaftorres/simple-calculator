@@ -105,6 +105,8 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
   const effectiveInk = ps?.prodInkMlPerPlate ?? quote.inkMlPerPlate
   const effectiveIsRV = ps?.prodIsRectoVerso ?? quote.isRectoVerso
   const effectiveRVType = ps?.prodRectoVersoType ?? quote.rectoVersoType
+  const effectiveHasVarnish = ps?.prodHasVarnish ?? quote.hasVarnish
+  const effectiveHasFlatColor = ps?.prodHasFlatColor ?? quote.hasFlatColor
   const effectiveAssembly = ps?.prodAssemblyTimePerPieceSeconds ?? quote.assemblyTimePerPieceSeconds
   const effectivePack = ps?.prodPackTimePerPieceSeconds ?? quote.packTimePerPieceSeconds
   const effectiveItemsPerPlate = ps?.prodItemsPerPlate ?? quote.itemsPerPlate
@@ -234,24 +236,26 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
           {/* 4. Impression */}
           {(quote.hasImpression || isAmalgameImpression) && (
             <SectionCard title="Impression" colorClass="bg-purple-600 text-white">
-              {isAmalgameImpression ? (
-                runs.map((run, i) => (
-                  <Row
-                    key={i}
-                    label={run.name}
-                    value={run.platesCount != null ? `${run.platesCount} pl.` : '—'}
-                  />
-                ))
-              ) : (
-                <>
-                  {quote.plate && <Row label="Plaque" value={quote.plate.name} />}
-                  <Row label="Mode" value={rvLabel(effectiveIsRV, effectiveRVType)} />
-                  {effectivePlatesCount != null && <Row label="Nb plaques" value={effectivePlatesCount} />}
-                  {effectiveInk != null && <Row label="Encre" value={`${effectiveInk} ml`} />}
-                  {ps?.prodMachineTimeMinOverride != null && (
-                    <Row label="Tps machine" value={`${ps.prodMachineTimeMinOverride} min`} />
-                  )}
-                </>
+              <Row label="Mode" value={rvLabel(effectiveIsRV, effectiveRVType)} />
+              {effectiveHasVarnish && <Row label="Vernis" value="Oui" />}
+              {effectiveHasFlatColor && <Row label="Blanc" value="Oui" />}
+              {quote.plate && <Row label="Plaque" value={quote.plate.name} />}
+              {effectivePlatesCount != null && <Row label="Nb plaques" value={effectivePlatesCount} />}
+              {effectiveInk != null && <Row label="Encre" value={`${effectiveInk} ml`} />}
+              {ps?.prodMachineTimeMinOverride != null && (
+                <Row label="Tps machine" value={`${ps.prodMachineTimeMinOverride} min`} />
+              )}
+              {isAmalgameImpression && runs.length > 0 && (
+                <div className="mt-1.5 space-y-1">
+                  {runs.map((run, i) => (
+                    <div key={i} className="flex justify-between items-center">
+                      <span className="text-[10px] text-slate-600">{run.name}</span>
+                      {run.platesCount != null && (
+                        <span className="text-[10px] text-slate-400">{run.platesCount} pl.</span>
+                      )}
+                    </div>
+                  ))}
+                </div>
               )}
             </SectionCard>
           )}

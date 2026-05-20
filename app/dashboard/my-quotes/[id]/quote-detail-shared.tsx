@@ -102,6 +102,8 @@ export type Quote = {
     impressionNotes: string | null
     prodIsRectoVerso: boolean | null
     prodRectoVersoType: string | null
+    prodHasVarnish: boolean | null
+    prodHasFlatColor: boolean | null
     decoupeNotes: string | null
     prodItemsPerPlate: number | null
     nbCollages: number | null
