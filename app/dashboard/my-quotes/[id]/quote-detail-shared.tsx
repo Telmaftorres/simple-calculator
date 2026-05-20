@@ -97,6 +97,8 @@ export type Quote = {
     prodTransportNotes: string | null
     amalgameScope: string | null
     beNotes: string | null
+    prodBeTimeMinutesOverride: number | null
+    prodBatTimeMinutesOverride: number | null
     impressionNotes: string | null
     decoupeNotes: string | null
     nbCollages: number | null

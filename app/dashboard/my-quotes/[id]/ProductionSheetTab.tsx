@@ -360,7 +360,7 @@ const EMPTY_PS: NonNullable<Quote['productionSheet']> = {
   prodAssemblyTimePerPieceSeconds: null, prodPackTimePerPieceSeconds: null,
   prodInkMlPerPlate: null, prodPlatesCount: null,
   prodTransportCost: null, prodTransportNotes: null,
-  amalgameScope: null, beNotes: null, impressionNotes: null, decoupeNotes: null,
+  amalgameScope: null, beNotes: null, prodBeTimeMinutesOverride: null, prodBatTimeMinutesOverride: null, impressionNotes: null, decoupeNotes: null,
   nbCollages: null, collagePerPLV: null, faconnageNotes: null,
   conditionnementType: null, conditionnementNotes: null,
   achatsNotes: null, remarques: null, delaiRealisation: null,

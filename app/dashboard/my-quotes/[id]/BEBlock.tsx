@@ -17,21 +17,30 @@ export function BEBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.beNotes ?? '')
+  const [beTime, setBeTime] = useState((ps?.prodBeTimeMinutesOverride ?? '').toString())
+  const [batTime, setBatTime] = useState((ps?.prodBatTimeMinutesOverride ?? '').toString())
   const [saving, setSaving] = useState(false)
 
   const hasBE = quote.hasBE
   const beMin = quote.beTimeMinutes
   const batMin = quote.batTimeMinutes
 
+  const effectiveBe = ps?.prodBeTimeMinutesOverride ?? (hasBE ? beMin : null)
+  const effectiveBat = ps?.prodBatTimeMinutesOverride ?? (batMin || null)
+
   const summary = [
-    hasBE && beMin ? `BE ${formatMin(beMin)}` : null,
-    batMin ? `BAT ${formatMin(batMin)}` : null,
+    effectiveBe ? `BE ${formatMin(effectiveBe)}` : null,
+    effectiveBat ? `BAT ${formatMin(effectiveBat)}` : null,
   ].filter(Boolean).join(' · ')
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await upsertProductionSheet(quote.id, { beNotes: notes || null })
+      await upsertProductionSheet(quote.id, {
+        beNotes: notes || null,
+        prodBeTimeMinutesOverride: beTime ? parseInt(beTime) : null,
+        prodBatTimeMinutesOverride: batTime ? parseInt(batTime) : null,
+      })
       toast.success('Enregistré')
     } catch {
       toast.error('Erreur lors de la sauvegarde')
@@ -56,19 +65,35 @@ export function BEBlock({ quote }: { quote: Quote }) {
 
       {open && (
         <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3">
-          {/* Temps estimés depuis le devis */}
+          {/* Temps BE */}
           <div className="grid grid-cols-2 gap-3">
-            <div className="bg-slate-50 rounded-xl px-3 py-2.5">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">BE estimé</p>
-              <p className="text-sm font-semibold text-slate-800">
-                {hasBE && beMin ? formatMin(beMin) : <span className="text-slate-400 font-normal">—</span>}
-              </p>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BE (min)</label>
+              <input
+                type="number"
+                min={0}
+                value={beTime}
+                onChange={e => setBeTime(e.target.value)}
+                placeholder={hasBE && beMin ? beMin.toString() : '0'}
+                className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
+              />
+              {hasBE && beMin > 0 && (
+                <p className="text-[10px] text-slate-400">Estimé devis : {formatMin(beMin)}</p>
+              )}
             </div>
-            <div className="bg-slate-50 rounded-xl px-3 py-2.5">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide mb-1">BAT estimé</p>
-              <p className="text-sm font-semibold text-slate-800">
-                {batMin ? formatMin(batMin) : <span className="text-slate-400 font-normal">—</span>}
-              </p>
+            <div className="space-y-1">
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BAT (min)</label>
+              <input
+                type="number"
+                min={0}
+                value={batTime}
+                onChange={e => setBatTime(e.target.value)}
+                placeholder={batMin ? batMin.toString() : '0'}
+                className="w-full px-2.5 py-1.5 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
+              />
+              {batMin > 0 && (
+                <p className="text-[10px] text-slate-400">Estimé devis : {formatMin(batMin)}</p>
+              )}
             </div>
           </div>
 

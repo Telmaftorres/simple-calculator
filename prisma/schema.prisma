@@ -436,7 +436,9 @@ model ProductionSheet {
   amalgameScope String?  // 'decoupe' | 'decoupe_impression'
 
   // ── Bureau d'études ──
-  beNotes       String?
+  beNotes                  String?
+  prodBeTimeMinutesOverride  Int?
+  prodBatTimeMinutesOverride Int?
 
   // ── Impression ──
   impressionNotes String?
