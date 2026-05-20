@@ -36,6 +36,7 @@ type LocalRun = {
   tempId: string
   name: string
   open: boolean
+  platesCount: string
   items: RunItem[]
 }
 
@@ -92,6 +93,7 @@ function initRunsFromDB(dbRuns: NonNullable<Quote['productionSheet']>['productio
     tempId: tid(),
     name: r.name,
     open: false,
+    platesCount: (r.platesCount ?? '').toString(),
     items: r.items.map(it => ({
       tempId: tid(),
       name: it.name,
@@ -112,6 +114,7 @@ function initRunsFromSource(available: AvailableItem[], quote: Quote): LocalRun[
       tempId: tid(),
       name: r.name,
       open: true,
+      platesCount: (r.platesCount ?? '').toString(),
       items: r.items.map(it => ({
         tempId: tid(),
         name: it.name,
@@ -124,11 +127,12 @@ function initRunsFromSource(available: AvailableItem[], quote: Quote): LocalRun[
     }))
   }
   // Sinon : un groupe avec tous les items
-  if (available.length === 0) return [{ tempId: tid(), name: '', open: true, items: [] }]
+  if (available.length === 0) return [{ tempId: tid(), name: '', open: true, platesCount: '', items: [] }]
   return [{
     tempId: tid(),
     name: '',
     open: true,
+    platesCount: '',
     items: available.map(it => ({ tempId: tid(), ...it, countPerPlate: '1', quantityPerUnit: '1' })),
   }]
 }
@@ -266,6 +270,17 @@ function RunEditor({ run, available, onUpdate, onDelete }: {
           placeholder="Nom du groupe (ex : Corps, Fond…)"
           className="flex-1 min-w-0 text-sm font-semibold text-slate-700 bg-transparent border-none focus:outline-none placeholder:text-slate-300"
         />
+        <div className="flex items-center gap-1 shrink-0">
+          <span className="text-[9px] text-slate-400 uppercase tracking-wide">Plaques</span>
+          <input
+            type="number"
+            min={1}
+            value={run.platesCount}
+            onChange={e => onUpdate({ ...run, platesCount: e.target.value })}
+            placeholder="—"
+            className="w-12 px-1.5 py-0.5 text-xs text-center border border-slate-200 rounded focus:outline-none focus:ring-1 focus:ring-slate-800"
+          />
+        </div>
         <span className="text-xs text-slate-400 shrink-0">{run.items.length} él.</span>
         <button onClick={onDelete} className="p-1 text-slate-300 hover:text-red-400 transition-colors">
           <Trash2 className="h-3.5 w-3.5" />
@@ -317,6 +332,7 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
       const psId = quote.productionSheet?.id ?? await ensureProductionSheet(quote.id)
       const payload: AmalgameRunInput[] = runs.map(r => ({
         name: r.name || 'Groupe sans nom',
+        platesCount: r.platesCount ? parseInt(r.platesCount) : null,
         items: r.items.map(it => ({
           name: it.name,
           flatWidth: it.flatWidth,
@@ -378,7 +394,7 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
         ))}
 
         <button
-          onClick={() => setRuns(prev => [...prev, { tempId: tid(), name: '', open: true, items: [] }])}
+          onClick={() => setRuns(prev => [...prev, { tempId: tid(), name: '', open: true, platesCount: '', items: [] }])}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-dashed border-slate-300 rounded-xl hover:border-slate-400 hover:text-slate-800 transition-colors bg-white w-full justify-center"
         >
           <Plus className="h-4 w-4" /> Ajouter un groupe

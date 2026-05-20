@@ -486,6 +486,7 @@ model ProductionAmalgameRun {
   name              String
   position          Int      @default(0)
   notes             String?
+  platesCount       Int?
   productionSheet   ProductionSheet          @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
   items             ProductionAmalgameItem[]
 }

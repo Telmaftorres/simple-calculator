@@ -127,6 +127,7 @@ export type Quote = {
       name: string
       notes: string | null
       position: number
+      platesCount: number | null
       items: {
         id: number
         name: string

@@ -39,7 +39,7 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
         hasImpression: true,
         isRectoVerso: false,
         rectoVersoType: null as string | null,
-        platesCount: null as number | null,
+        platesCount: r.platesCount,
         inkMlPerPlate: null as number | null,
         items: r.items.map(it => it.name),
       }))
