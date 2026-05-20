@@ -1,12 +1,14 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Trash2, Plus } from 'lucide-react'
 import { saveProductionAchatItems } from '@/app/actions/production-achats'
 import { ensureProductionSheet } from '@/app/actions/production-amalgame'
 import { upsertProductionSheet } from '@/app/actions/production-sheet'
+import { getAccessories } from '@/app/actions/accessories'
+import { AutocompleteInput } from '@/components/ui/autocomplete-input'
 import type { Quote } from './quote-detail-shared'
 
 type LocalItem = {
@@ -47,6 +49,13 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
   const [items, setItems] = useState<LocalItem[]>(() => initItems(quote))
   const [notes, setNotes] = useState(ps?.achatsNotes ?? '')
   const [saving, setSaving] = useState(false)
+  const [suggestions, setSuggestions] = useState<{ label: string; sublabel?: string }[]>([])
+
+  useEffect(() => {
+    getAccessories().then(acc =>
+      setSuggestions(acc.map(a => ({ label: a.name, sublabel: `${a.price} €` })))
+    )
+  }, [])
 
   const summary = items.length > 0
     ? `${items.length} article${items.length > 1 ? 's' : ''}`
@@ -105,13 +114,15 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
             )}
             {items.map(it => (
               <div key={it.tempId} className="flex items-center gap-1.5">
-                <input
-                  type="text"
-                  value={it.name}
-                  onChange={e => updateItem(it.tempId, 'name', e.target.value)}
-                  placeholder="Nom de l'article"
-                  className="flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
-                />
+                <div className="flex-1 min-w-0">
+                  <AutocompleteInput
+                    value={it.name}
+                    onChange={v => updateItem(it.tempId, 'name', v)}
+                    suggestions={suggestions}
+                    placeholder="Nom de l'article"
+                    className="w-full px-2.5 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
+                  />
+                </div>
                 <input
                   type="number"
                   min={0}
