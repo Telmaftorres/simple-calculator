@@ -112,8 +112,6 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
   const prodLines = ps?.productionProductLines ?? []
   const products = quote.products ?? []
   const accessories = quote.accessories ?? []
-  const transportDeliveries = quote.transportDeliveries ?? []
-
   const typeLabel = (v: string | null) => {
     if (v === 'kit_unitaire') return 'Kit unitaire'
     if (v === 'caisse') return 'Caisse'
@@ -122,8 +120,6 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
     return v ?? '—'
   }
 
-  const transportModeLabel = (m: string) =>
-    m === 'livraison' ? 'Livraison' : m === 'enlevement' ? 'Enlèvement' : m
 
   return (
     <div className="bg-slate-100 rounded-xl p-3 h-full overflow-y-auto">
@@ -321,19 +317,6 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
               {(ps?.prodPackagingUnitPrice ?? quote.packagingUnitPriceOverride) != null && (
                 <Row label="Prix unitaire" value={`${((ps?.prodPackagingUnitPrice ?? quote.packagingUnitPriceOverride) as number).toFixed(2)} €`} />
               )}
-            </SectionCard>
-          )}
-
-          {/* 9. Transport */}
-          {transportDeliveries.length > 0 && (
-            <SectionCard title="Transport" colorClass="bg-indigo-600 text-white">
-              {transportDeliveries.map((d, i) => (
-                <Row
-                  key={i}
-                  label={`${transportModeLabel(d.transportMode)} – dép. ${d.department}`}
-                  value={`${d.totalHT.toFixed(2)} €`}
-                />
-              ))}
             </SectionCard>
           )}
 
