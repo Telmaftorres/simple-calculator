@@ -172,7 +172,7 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
                           return (
                             <div key={j} className="pl-2">
                               <Row
-                                label={`↳ ${el.name}`}
+                                label={`↳ ${el.name}${el.flatWidth ? ` (${el.flatWidth}×${el.flatHeight})` : ''}`}
                                 value={elPlate?.name ?? '—'}
                               />
                             </div>
@@ -185,15 +185,18 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
               })
             ) : quote.isMultiProduct && products.length > 0 ? (
               products.map((p, i) => (
-                <Row key={i} label={p.productTypeName ?? `Produit ${i + 1}`} value={p.plate?.name ?? '—'} />
+                <Row
+                  key={i}
+                  label={`${p.productTypeName ?? `Produit ${i + 1}`}${p.flatWidth ? ` (${p.flatWidth}×${p.flatHeight})` : ''}`}
+                  value={p.plate?.name ?? '—'}
+                />
               ))
             ) : quote.productType ? (
               <>
-                <Row label="Produit" value={quote.productType.name} />
-                {quote.plate && <Row label="Plaque" value={quote.plate.name} />}
-                {(quote.flatWidth || quote.flatHeight) && (
-                  <Row label="Format" value={`${quote.flatWidth ?? '?'} × ${quote.flatHeight ?? '?'} mm`} />
-                )}
+                <Row
+                  label={`${quote.productType.name}${quote.flatWidth ? ` (${quote.flatWidth}×${quote.flatHeight})` : ''}`}
+                  value={quote.plate?.name ?? '—'}
+                />
               </>
             ) : (
               <Row label="Produit" value="—" />

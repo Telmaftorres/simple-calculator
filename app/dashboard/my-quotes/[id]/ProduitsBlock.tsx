@@ -75,29 +75,6 @@ function initLinesFromDb(
 
 // ── Sous-composants ──
 
-function DimInput({
-  label,
-  value,
-  onChange,
-}: {
-  label: string
-  value: string
-  onChange: (v: string) => void
-}) {
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[10px] font-semibold text-slate-400 leading-none">{label}</span>
-      <input
-        type="number"
-        value={value}
-        onChange={(e) => onChange(e.target.value)}
-        placeholder="0"
-        className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
-      />
-    </div>
-  )
-}
-
 function ElementRow({
   el,
   onUpdate,
@@ -108,22 +85,34 @@ function ElementRow({
   onRemove: () => void
 }) {
   return (
-    <div className="flex flex-wrap items-end gap-2 py-2 border-b border-slate-100 last:border-0">
+    <div className="flex items-center gap-1.5 py-1.5 border-b border-slate-100 last:border-0">
       <input
         type="text"
         value={el.name}
         onChange={(e) => onUpdate('name', e.target.value)}
-        placeholder="Nom de l'élément"
-        className="flex-1 min-w-[140px] px-3 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-slate-800 bg-white"
+        placeholder="Nom élément"
+        className="flex-1 min-w-0 px-2 py-1 rounded border border-slate-200 text-xs focus:outline-none focus:ring-1 focus:ring-slate-800 bg-white"
       />
-      <DimInput label="L (mm)" value={el.flatWidth} onChange={(v) => onUpdate('flatWidth', v)} />
-      <span className="text-slate-300 text-xs pb-1.5">×</span>
-      <DimInput label="l (mm)" value={el.flatHeight} onChange={(v) => onUpdate('flatHeight', v)} />
+      <input
+        type="number"
+        value={el.flatWidth}
+        onChange={(e) => onUpdate('flatWidth', e.target.value)}
+        placeholder="L"
+        className="w-12 px-1.5 py-1 rounded border border-slate-200 text-xs text-center focus:outline-none focus:ring-1 focus:ring-slate-800 bg-white"
+      />
+      <span className="text-slate-300 text-[10px]">×</span>
+      <input
+        type="number"
+        value={el.flatHeight}
+        onChange={(e) => onUpdate('flatHeight', e.target.value)}
+        placeholder="l"
+        className="w-12 px-1.5 py-1 rounded border border-slate-200 text-xs text-center focus:outline-none focus:ring-1 focus:ring-slate-800 bg-white"
+      />
       <button
         onClick={onRemove}
-        className="p-1.5 text-slate-300 hover:text-red-400 transition-colors rounded-lg hover:bg-red-50"
+        className="p-1 text-slate-300 hover:text-red-400 transition-colors shrink-0"
       >
-        <Trash2 className="w-3.5 h-3.5" />
+        <Trash2 className="w-3 h-3" />
       </button>
     </div>
   )
@@ -147,56 +136,53 @@ function LineCard({
   onToggle: () => void
 }) {
   return (
-    <div className="rounded-xl border border-slate-200 bg-white">
+    <div className="rounded-lg border border-slate-200 bg-white">
       {/* Header */}
       <div
-        className="flex items-center gap-3 px-4 py-3 bg-slate-50 rounded-t-xl cursor-pointer select-none"
+        className="flex items-center gap-2 px-3 py-2 bg-slate-50 rounded-t-lg cursor-pointer select-none"
         onClick={onToggle}
       >
-        <span className="text-slate-400 text-sm">{line.open ? '▲' : '▼'}</span>
+        <span className="text-slate-400 text-[10px]">{line.open ? '▲' : '▼'}</span>
         <input
           type="text"
           value={line.name}
           onChange={(e) => { e.stopPropagation(); onUpdate('name', e.target.value) }}
           onClick={(e) => e.stopPropagation()}
           placeholder="Nom du produit"
-          className="flex-1 bg-transparent font-semibold text-sm text-slate-800 focus:outline-none focus:ring-0 placeholder-slate-300"
+          className="flex-1 min-w-0 bg-transparent font-semibold text-xs text-slate-800 focus:outline-none placeholder-slate-300"
         />
         {line.elements.length > 0 && (
-          <span className="text-xs text-slate-400 shrink-0">
-            {line.elements.length} élément{line.elements.length > 1 ? 's' : ''}
+          <span className="text-[10px] text-slate-400 shrink-0">
+            {line.elements.length} él.
           </span>
         )}
         <button
           onClick={(e) => { e.stopPropagation(); onRemove() }}
-          className="p-1 text-slate-300 hover:text-red-400 transition-colors rounded-lg hover:bg-red-50 shrink-0"
+          className="p-0.5 text-slate-300 hover:text-red-400 transition-colors shrink-0"
         >
-          <Trash2 className="w-3.5 h-3.5" />
+          <Trash2 className="w-3 h-3" />
         </button>
       </div>
 
       {/* Body */}
       {line.open && (
-        <div className="px-4 py-3 space-y-1">
-          {line.elements.length > 0 ? (
-            <div>
-              {line.elements.map((el) => (
-                <ElementRow
-                  key={el.tempId}
-                  el={el}
-                  onUpdate={(f, v) => onUpdateElement(el.tempId, f, v)}
-                  onRemove={() => onRemoveElement(el.tempId)}
-                />
-              ))}
-            </div>
-          ) : (
-            <p className="text-xs text-slate-400 py-1">Aucun élément — ajoutez les pièces composant ce produit.</p>
+        <div className="px-3 py-2">
+          {line.elements.length === 0 && (
+            <p className="text-[10px] text-slate-400 py-1">Aucun élément.</p>
           )}
+          {line.elements.map((el) => (
+            <ElementRow
+              key={el.tempId}
+              el={el}
+              onUpdate={(f, v) => onUpdateElement(el.tempId, f, v)}
+              onRemove={() => onRemoveElement(el.tempId)}
+            />
+          ))}
           <button
             onClick={onAddElement}
-            className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 mt-2 transition-colors"
+            className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-700 mt-1.5 transition-colors"
           >
-            <Plus className="w-3.5 h-3.5" /> Ajouter un élément
+            <Plus className="w-3 h-3" /> Ajouter un élément
           </button>
         </div>
       )}
@@ -305,15 +291,15 @@ export function ProduitsBlock({ quote }: { quote: Quote }) {
       </button>
 
       {open && (
-        <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3">
+        <div className="px-4 pb-4 pt-3 border-t border-slate-100 space-y-2">
           {isPreFilled && dbLines.length === 0 && lines.length > 0 && (
-            <p className="text-xs text-sky-600 bg-sky-50 border border-sky-100 rounded-lg px-3 py-2">
-              Pré-rempli depuis le devis — ajoutez les éléments puis enregistrez.
+            <p className="text-[10px] text-sky-600 bg-sky-50 border border-sky-100 rounded px-2 py-1.5">
+              Pré-rempli depuis le devis.
             </p>
           )}
 
           {lines.length === 0 && (
-            <p className="text-xs text-slate-400 py-1">Aucun produit — ajoutez-en un.</p>
+            <p className="text-xs text-slate-400 py-1">Aucun produit.</p>
           )}
 
           {lines.map((line) => (
@@ -329,15 +315,15 @@ export function ProduitsBlock({ quote }: { quote: Quote }) {
             />
           ))}
 
-          <div className="flex items-center gap-3 pt-1">
+          <div className="flex items-center gap-3 pt-0.5">
             <button
               onClick={() => setLines((prev) => [...prev, makeLine('')])}
-              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors"
+              className="flex items-center gap-1 text-[10px] text-slate-400 hover:text-slate-700 transition-colors"
             >
-              <Plus className="w-3.5 h-3.5" /> Ajouter un produit
+              <Plus className="w-3 h-3" /> Ajouter un produit
             </button>
             <div className="flex-1" />
-            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700">
+            <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700 text-xs h-7 px-3">
               {saving ? 'Sauvegarde…' : 'Enregistrer'}
             </Button>
           </div>
