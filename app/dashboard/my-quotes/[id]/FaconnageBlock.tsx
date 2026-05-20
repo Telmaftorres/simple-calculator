@@ -15,7 +15,7 @@ export function FaconnageBlock({
   ps: NonNullable<Quote['productionSheet']>
   onSave: (data: Partial<ProductionSheetInput>) => Promise<void>
 }) {
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [nbCollages, setNbCollages]   = useState((ps.nbCollages ?? '').toString())
   const [collagePLV, setCollagePLV]   = useState((ps.collagePerPLV ?? '').toString())
   const [notes, setNotes]             = useState(ps.faconnageNotes ?? '')

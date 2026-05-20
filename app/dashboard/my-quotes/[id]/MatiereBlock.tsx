@@ -241,7 +241,7 @@ export function MatiereBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const dbLines = ps?.productionProductLines ?? []
 
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [saving, setSaving] = useState(false)
   const [plates, setPlates] = useState<Plate[]>([])
   const [loadingPlates, setLoadingPlates] = useState(true)

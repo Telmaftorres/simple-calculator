@@ -15,7 +15,7 @@ function formatMin(min: number) {
 
 export function BEBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.beNotes ?? '')
   const [saving, setSaving] = useState(false)
 

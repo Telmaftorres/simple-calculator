@@ -220,7 +220,7 @@ export function ProduitsBlock({ quote }: { quote: Quote }) {
   )
   const [isPreFilled] = useState(() => dbLines.length === 0)
   const [saving, setSaving] = useState(false)
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
 
   // ── Mutations ──
 

@@ -24,7 +24,7 @@ function fmtSec(sec: number) {
 
 export function DecoupeBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.decoupeNotes ?? '')
   const [cuttingTime, setCuttingTime] = useState((ps?.prodCuttingTimePerPoseSeconds ?? '').toString())
   const [saving, setSaving] = useState(false)

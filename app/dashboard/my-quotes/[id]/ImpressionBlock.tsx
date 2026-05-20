@@ -22,7 +22,7 @@ function RectoVerso({ rv, type }: { rv: boolean; type: string | null }) {
 
 export function ImpressionBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
-  const [open, setOpen] = useState(true)
+  const [open, setOpen] = useState(false)
   const [notes, setNotes] = useState(ps?.impressionNotes ?? '')
   const [machineTime, setMachineTime] = useState((ps?.prodMachineTimeMinOverride ?? '').toString())
   const [platesCount, setPlatesCount] = useState((ps?.prodPlatesCount ?? '').toString())

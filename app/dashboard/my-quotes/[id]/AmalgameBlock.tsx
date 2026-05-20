@@ -1,9 +1,9 @@
 'use client'
 
-import { useState, useRef, useEffect, useCallback } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { Trash2, Plus, ChevronDown, ChevronUp, X } from 'lucide-react'
+import { Trash2, Plus, ChevronDown, ChevronUp } from 'lucide-react'
 import {
   saveProductionAmalgameRuns,
   ensureProductionSheet,
@@ -13,14 +13,21 @@ import { upsertProductionSheet } from '@/app/actions/production-sheet'
 import type { Quote } from './quote-detail-shared'
 import type { SavedProductLine } from './ProduitsBlock'
 
-// ── Types locaux ──
+// ── Types ──
 
-type LocalItem = {
+type AvailableItem = {
+  name: string
+  flatWidth: number
+  flatHeight: number
+  flatDepth: number | null
+}
+
+type RunItem = {
   tempId: string
   name: string
-  flatWidth: string
-  flatHeight: string
-  flatDepth: string  // vide = 2D
+  flatWidth: number
+  flatHeight: number
+  flatDepth: number | null
   countPerPlate: string
   quantityPerUnit: string
 }
@@ -29,33 +36,58 @@ type LocalRun = {
   tempId: string
   name: string
   open: boolean
-  items: LocalItem[]
+  items: RunItem[]
 }
 
+let _c = 0
+function tid() { return `t${++_c}` }
 
-let _tempCounter = 0
-function tid() { return `t${++_tempCounter}` }
-
-function makeItem(overrides: Partial<Omit<LocalItem, 'tempId'>> = {}): LocalItem {
-  return {
-    tempId: tid(),
-    name: '',
-    flatWidth: '',
-    flatHeight: '',
-    flatDepth: '',
-    countPerPlate: '1',
-    quantityPerUnit: '1',
-    ...overrides,
+// ── Dérive la liste des items disponibles ──
+function getAvailableItems(savedProducts: SavedProductLine[], quote: Quote): AvailableItem[] {
+  // Priorité 1 : éléments sauvegardés dans Produits
+  const fromProducts: AvailableItem[] = []
+  for (const p of savedProducts) {
+    if (p.elements.length > 0) {
+      for (const el of p.elements) {
+        if (el.name) fromProducts.push({ name: el.name, flatWidth: el.flatWidth, flatHeight: el.flatHeight, flatDepth: null })
+      }
+    } else if (p.name) {
+      // Produit sans éléments — cherche les dims dans le devis
+      const quoteProd = quote.products.find(qp => (qp.productTypeName ?? '') === p.name)
+      fromProducts.push({
+        name: p.name,
+        flatWidth: quoteProd?.flatWidth ?? 0,
+        flatHeight: quoteProd?.flatHeight ?? 0,
+        flatDepth: null,
+      })
+    }
   }
+  if (fromProducts.length > 0) return fromProducts
+
+  // Priorité 2 : runs amalgame du devis
+  if (quote.amalgameRuns.length > 0) {
+    return quote.amalgameRuns.flatMap(r =>
+      r.items.map(it => ({ name: it.name, flatWidth: it.flatWidth, flatHeight: it.flatHeight, flatDepth: null }))
+    )
+  }
+  // Priorité 3 : produits multi
+  if (quote.products.length > 0) {
+    return quote.products.map(p => ({
+      name: p.productTypeName ?? 'Produit',
+      flatWidth: p.flatWidth,
+      flatHeight: p.flatHeight,
+      flatDepth: null,
+    }))
+  }
+  // Priorité 4 : devis simple
+  if (quote.productType && quote.flatWidth && quote.flatHeight) {
+    return [{ name: quote.productType.name, flatWidth: quote.flatWidth, flatHeight: quote.flatHeight, flatDepth: null }]
+  }
+  return []
 }
 
-function makeRun(name = ''): LocalRun {
-  return { tempId: tid(), name, open: true, items: [makeItem()] }
-}
-
-// Initialise l'état local depuis les données DB
-function initRuns(dbRuns: NonNullable<Quote['productionSheet']>['productionAmalgameRuns']): LocalRun[] {
-  if (!dbRuns.length) return []
+// ── Init depuis DB ──
+function initRunsFromDB(dbRuns: NonNullable<Quote['productionSheet']>['productionAmalgameRuns']): LocalRun[] {
   return dbRuns.map(r => ({
     tempId: tid(),
     name: r.name,
@@ -63,107 +95,46 @@ function initRuns(dbRuns: NonNullable<Quote['productionSheet']>['productionAmalg
     items: r.items.map(it => ({
       tempId: tid(),
       name: it.name,
-      flatWidth: it.flatWidth.toString(),
-      flatHeight: it.flatHeight.toString(),
-      flatDepth: it.flatDepth != null ? it.flatDepth.toString() : '',
+      flatWidth: it.flatWidth,
+      flatHeight: it.flatHeight,
+      flatDepth: it.flatDepth ?? null,
       countPerPlate: it.countPerPlate.toString(),
       quantityPerUnit: it.quantityPerUnit.toString(),
     })),
   }))
 }
 
-// Sources "depuis le devis" : renvoie la liste des items du devis
-function getDevisItems(quote: Quote): { name: string; flatWidth: number; flatHeight: number }[] {
-  if (quote.hasAmalgame && quote.amalgameRuns.length > 0) {
-    return quote.amalgameRuns.flatMap(r =>
-      r.items.map(it => ({ name: it.name, flatWidth: it.flatWidth, flatHeight: it.flatHeight }))
-    )
-  }
-  if (quote.productType?.name && quote.flatWidth && quote.flatHeight) {
-    return [{ name: quote.productType.name, flatWidth: quote.flatWidth, flatHeight: quote.flatHeight }]
-  }
-  return []
-}
-
-// Récupère les items d'un run depuis r.items OU depuis quote.products (multi-produit avec amalgame)
-function getRunItems(r: Quote['amalgameRuns'][number], quote: Quote) {
-  if (r.items.length > 0) return r.items
-  // Fallback : produits avec amalgameGroupIndex === position du run
-  return quote.products
-    .filter(p => p.amalgameGroupIndex === r.position)
-    .map(p => ({
-      name: p.productTypeName ?? 'Produit',
-      flatWidth: p.flatWidth,
-      flatHeight: p.flatHeight,
-      countPerPlate: p.countPerPlateInGroup ?? p.itemsPerPlate ?? 1,
-      quantityPerUnit: 1 as const,
-    }))
-}
-
-// Pré-remplit les groupes de production depuis le devis
-function initRunsFromDevis(quote: Quote): LocalRun[] {
-  if (quote.hasAmalgame && quote.amalgameRuns.length > 0) {
-    const runs: LocalRun[] = quote.amalgameRuns.map(r => {
-      const items = getRunItems(r, quote)
-      return {
-        tempId: tid(),
-        name: r.name,
-        open: true,
-        items: items.length > 0
-          ? items.map(it => makeItem({
-              name: it.name,
-              flatWidth: it.flatWidth.toString(),
-              flatHeight: it.flatHeight.toString(),
-              countPerPlate: it.countPerPlate.toString(),
-            }))
-          : [makeItem()],
-      }
-    })
-    // Produits hors amalgame (pas dans un run) → groupes séparés
-    const standalone = quote.products.filter(p => p.amalgameGroupIndex === null)
-    for (const p of standalone) {
-      runs.push({
-        tempId: tid(),
-        name: p.productTypeName ?? 'Produit',
-        open: true,
-        items: [makeItem({
-          name: p.productTypeName ?? 'Produit',
-          flatWidth: p.flatWidth.toString(),
-          flatHeight: p.flatHeight.toString(),
-          countPerPlate: (p.itemsPerPlate ?? 1).toString(),
-        })],
-      })
-    }
-    return runs
-  }
-  if (quote.isMultiProduct && quote.products.length > 0) {
-    const groups = new Map<number | string, typeof quote.products>()
-    for (const p of quote.products) {
-      const key = p.amalgameGroupIndex != null ? p.amalgameGroupIndex : `solo_${p.id}`
-      const arr = groups.get(key) ?? []
-      arr.push(p)
-      groups.set(key, arr)
-    }
-    return Array.from(groups.values()).map((prods, i) => ({
+// ── Init depuis les items disponibles ──
+function initRunsFromSource(available: AvailableItem[], quote: Quote): LocalRun[] {
+  // Si le devis a des runs amalgame → garder leur groupement
+  if (quote.amalgameRuns.length > 0) {
+    return quote.amalgameRuns.map(r => ({
       tempId: tid(),
-      name: prods.length === 1 ? (prods[0].productTypeName ?? `Groupe ${i + 1}`) : `Groupe ${i + 1}`,
+      name: r.name,
       open: true,
-      items: prods.map(p => makeItem({
-        name: p.productTypeName ?? `Produit ${p.id}`,
-        flatWidth: p.flatWidth.toString(),
-        flatHeight: p.flatHeight.toString(),
-        countPerPlate: (p.countPerPlateInGroup ?? p.itemsPerPlate ?? 1).toString(),
+      items: r.items.map(it => ({
+        tempId: tid(),
+        name: it.name,
+        flatWidth: it.flatWidth,
+        flatHeight: it.flatHeight,
+        flatDepth: null,
+        countPerPlate: it.countPerPlate.toString(),
+        quantityPerUnit: it.quantityPerUnit.toString(),
       })),
     }))
   }
-  return [makeRun()]
+  // Sinon : un groupe avec tous les items
+  if (available.length === 0) return [{ tempId: tid(), name: '', open: true, items: [] }]
+  return [{
+    tempId: tid(),
+    name: '',
+    open: true,
+    items: available.map(it => ({ tempId: tid(), ...it, countPerPlate: '1', quantityPerUnit: '1' })),
+  }]
 }
 
-// ── Bloc accordéon identique au style existant ──
-
-function Block({
-  emoji, title, summary, children,
-}: { emoji: string; title: string; summary?: string; children: React.ReactNode }) {
+// ── Block accordion ──
+function Block({ emoji, title, summary, children }: { emoji: string; title: string; summary?: string; children: React.ReactNode }) {
   const [open, setOpen] = useState(false)
   return (
     <div className={`rounded-2xl border transition-all ${open ? 'border-slate-300 shadow-md' : 'border-slate-200'} bg-white overflow-hidden`}>
@@ -187,19 +158,51 @@ function Block({
   )
 }
 
-// ── Picker "ajouter depuis les produits" ──
+// ── Ligne d'item dans un run ──
+function RunItemRow({ item, onChange, onRemove }: {
+  item: RunItem
+  onChange: (updated: RunItem) => void
+  onRemove: () => void
+}) {
+  return (
+    <div className="flex items-center gap-2 py-1.5 border-b border-slate-100 last:border-0">
+      <span className="flex-1 text-sm text-slate-700 truncate min-w-0">{item.name}</span>
+      <div className="flex items-center gap-1.5 shrink-0">
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none">Nb/pl.</span>
+          <input
+            type="number"
+            min={1}
+            value={item.countPerPlate}
+            onChange={e => onChange({ ...item, countPerPlate: e.target.value })}
+            className="w-14 px-2 py-1 text-sm text-center border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
+          />
+        </div>
+        <div className="flex flex-col items-center gap-0.5">
+          <span className="text-[9px] text-slate-400 uppercase tracking-wide leading-none">Qté/u.</span>
+          <input
+            type="number"
+            min={1}
+            value={item.quantityPerUnit}
+            onChange={e => onChange({ ...item, quantityPerUnit: e.target.value })}
+            className="w-14 px-2 py-1 text-sm text-center border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
+          />
+        </div>
+        <button onClick={onRemove} className="p-1 text-slate-300 hover:text-red-400 transition-colors mt-3.5">
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    </div>
+  )
+}
 
-function AddFromProductsMenu({
-  savedProducts,
-  onAdd,
-}: {
-  savedProducts: SavedProductLine[]
-  onAdd: (el: { name: string; flatWidth: number; flatHeight: number }) => void
+// ── Picker pour ajouter un item ──
+function AddItemPicker({ available, onAdd }: {
+  available: AvailableItem[]
+  onAdd: (item: AvailableItem) => void
 }) {
   const [open, setOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-
-  const hasElements = savedProducts.some(p => p.elements.some(el => el.name))
 
   useEffect(() => {
     if (!open) return
@@ -208,167 +211,48 @@ function AddFromProductsMenu({
     return () => document.removeEventListener('mousedown', handler)
   }, [open])
 
-  if (!hasElements) {
-    return (
-      <p className="text-xs text-slate-400 italic">
-        Enregistrez d&apos;abord des éléments dans la section <strong>Produit(s)</strong>.
-      </p>
-    )
-  }
+  if (available.length === 0) return (
+    <p className="text-xs text-slate-400 italic">Définissez d&apos;abord les produits dans la section Produit(s).</p>
+  )
 
   return (
     <div className="relative" ref={ref}>
       <button
         onClick={() => setOpen(v => !v)}
-        className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-slate-500 border border-dashed border-slate-300 rounded-lg hover:border-slate-400 hover:text-slate-700 transition-colors"
+        className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors"
       >
-        <Plus className="h-3 w-3" /> Ajouter un élément
+        <Plus className="h-3.5 w-3.5" /> Ajouter un élément
       </button>
-
       {open && (
-        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[220px] max-h-64 overflow-y-auto">
-          {savedProducts.map((prod, pi) => {
-            const validEls = prod.elements.filter(el => el.name)
-            if (validEls.length === 0) return null
-            return (
-              <div key={pi}>
-                <p className="px-4 pt-2 pb-1 text-[10px] font-semibold text-slate-400 uppercase tracking-wide">{prod.name}</p>
-                {validEls.map((el, ei) => (
-                  <button
-                    key={ei}
-                    onClick={() => { onAdd(el); setOpen(false) }}
-                    className="w-full flex flex-col px-4 py-2 text-left hover:bg-slate-50"
-                  >
-                    <span className="text-sm text-slate-700 font-medium">{el.name}</span>
-                    <span className="text-xs text-slate-400">{el.flatWidth} × {el.flatHeight} mm</span>
-                  </button>
-                ))}
-              </div>
-            )
-          })}
+        <div className="absolute left-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg py-1 min-w-[200px] max-h-52 overflow-y-auto">
+          {available.map((it, i) => (
+            <button
+              key={i}
+              onClick={() => { onAdd(it); setOpen(false) }}
+              className="w-full flex items-center justify-between px-3 py-2 text-sm text-slate-700 hover:bg-slate-50 text-left"
+            >
+              <span>{it.name}</span>
+              {(it.flatWidth || it.flatHeight) ? (
+                <span className="text-xs text-slate-400 ml-2 shrink-0">{it.flatWidth}×{it.flatHeight}</span>
+              ) : null}
+            </button>
+          ))}
         </div>
       )}
     </div>
   )
 }
 
-// ── Champ dimension avec label au-dessus ──
-function DimInput({ label, value, onChange, placeholder }: {
-  label: string; value: string; onChange: (v: string) => void; placeholder: string
-}) {
-  return (
-    <div className="flex flex-col items-center gap-0.5">
-      <span className="text-[10px] font-semibold text-slate-400 leading-none">{label}</span>
-      <input
-        type="number"
-        value={value}
-        onChange={e => onChange(e.target.value)}
-        placeholder={placeholder}
-        className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
-      />
-    </div>
-  )
-}
-
-// ── Ligne d'un item dans un run ──
-
-function ItemRow({
-  item,
-  onChange,
-  onDelete,
-}: {
-  item: LocalItem
-  onChange: (updated: LocalItem) => void
-  onDelete: () => void
-}) {
-  const is3D = item.flatDepth !== ''
-  const set = (field: keyof LocalItem) => (v: string) => onChange({ ...item, [field]: v })
-
-  return (
-    <div className="flex flex-wrap items-end gap-2 px-3 py-2.5 bg-white rounded-lg border border-slate-100">
-      {/* Nom */}
-      <div className="flex-1 min-w-[140px]">
-        <input
-          type="text"
-          value={item.name}
-          onChange={e => set('name')(e.target.value)}
-          placeholder="Nom de l'élément"
-          className="w-full px-2.5 py-1.5 rounded-lg border border-slate-200 text-sm focus:outline-none focus:ring-2 focus:ring-slate-700"
-        />
-      </div>
-
-      {/* Dimensions L × l × H */}
-      <div className="flex items-end gap-1">
-        <DimInput label="L" value={item.flatWidth} onChange={set('flatWidth')} placeholder="0" />
-        <span className="text-slate-300 text-xs pb-2">×</span>
-        <DimInput label="l" value={item.flatHeight} onChange={set('flatHeight')} placeholder="0" />
-        {is3D ? (
-          <>
-            <span className="text-slate-300 text-xs pb-2">×</span>
-            <div className="flex flex-col items-center gap-0.5">
-              <span className="text-[10px] font-semibold text-slate-400 leading-none">H</span>
-              <div className="flex items-center gap-1">
-                <input
-                  type="number"
-                  value={item.flatDepth}
-                  onChange={e => set('flatDepth')(e.target.value)}
-                  placeholder="0"
-                  className="w-16 px-2 py-1.5 rounded-lg border border-slate-200 text-sm text-center focus:outline-none focus:ring-2 focus:ring-slate-700"
-                />
-                <button
-                  onClick={() => onChange({ ...item, flatDepth: '' })}
-                  title="Retirer la profondeur"
-                  className="text-slate-300 hover:text-red-400"
-                >
-                  <X className="h-3 w-3" />
-                </button>
-              </div>
-            </div>
-          </>
-        ) : (
-          <button
-            onClick={() => onChange({ ...item, flatDepth: '0' })}
-            className="mb-0.5 px-2 py-1.5 text-xs text-slate-400 border border-dashed border-slate-200 rounded-lg hover:border-slate-400 hover:text-slate-600 transition-colors whitespace-nowrap self-end"
-          >
-            + profondeur
-          </button>
-        )}
-        <span className="text-xs text-slate-400 pb-2">mm</span>
-      </div>
-
-      {/* Nb/plaque */}
-      <DimInput label="Nb/pl." value={item.countPerPlate} onChange={set('countPerPlate')} placeholder="1" />
-
-      {/* Supprimer */}
-      <button
-        onClick={onDelete}
-        className="p-1.5 text-slate-300 hover:text-red-500 transition-colors rounded-lg hover:bg-red-50 mb-0.5"
-      >
-        <Trash2 className="h-4 w-4" />
-      </button>
-    </div>
-  )
-}
-
 // ── Éditeur d'un run ──
-
-function RunEditor({
-  run,
-  savedProducts,
-  onUpdate,
-  onDelete,
-}: {
+function RunEditor({ run, available, onUpdate, onDelete }: {
   run: LocalRun
-  savedProducts: SavedProductLine[]
-  onUpdate: (updated: LocalRun) => void
+  available: AvailableItem[]
+  onUpdate: (r: LocalRun) => void
   onDelete: () => void
 }) {
-  const addItem = (item: LocalItem) => onUpdate({ ...run, items: [...run.items, item] })
-
   return (
-    <div className="rounded-xl border border-slate-200 bg-slate-50">
-      {/* En-tête du run */}
-      <div className="flex items-center gap-3 px-4 py-3 bg-white border-b border-slate-100 rounded-t-xl">
+    <div className="rounded-xl border border-slate-200 bg-white">
+      <div className="flex items-center gap-2 px-3 py-2.5 bg-slate-50 rounded-t-xl border-b border-slate-100">
         <button
           onClick={() => onUpdate({ ...run, open: !run.open })}
           className="text-slate-300 hover:text-slate-500 transition-colors"
@@ -379,136 +263,34 @@ function RunEditor({
           type="text"
           value={run.name}
           onChange={e => onUpdate({ ...run, name: e.target.value })}
-          placeholder="Nom du groupe (ex : Corps totem, Fond, Couvercle…)"
-          className="flex-1 px-0 py-0 text-sm font-semibold text-slate-700 bg-transparent border-none focus:outline-none placeholder:text-slate-300"
+          placeholder="Nom du groupe (ex : Corps, Fond…)"
+          className="flex-1 min-w-0 text-sm font-semibold text-slate-700 bg-transparent border-none focus:outline-none placeholder:text-slate-300"
         />
-        <span className="text-xs text-slate-400 shrink-0">{run.items.length} élément{run.items.length > 1 ? 's' : ''}</span>
-        <button
-          onClick={onDelete}
-          className="p-1 text-slate-300 hover:text-red-500 transition-colors rounded"
-        >
-          <Trash2 className="h-4 w-4" />
+        <span className="text-xs text-slate-400 shrink-0">{run.items.length} él.</span>
+        <button onClick={onDelete} className="p-1 text-slate-300 hover:text-red-400 transition-colors">
+          <Trash2 className="h-3.5 w-3.5" />
         </button>
       </div>
 
-      {/* Items */}
       {run.open && (
-        <div className="p-4 space-y-2">
+        <div className="px-3 pb-3 pt-2 space-y-1">
+          {run.items.length === 0 && (
+            <p className="text-xs text-slate-400 py-1">Aucun élément — ajoutez-en depuis la liste.</p>
+          )}
           {run.items.map((item, idx) => (
-            <ItemRow
+            <RunItemRow
               key={item.tempId}
               item={item}
               onChange={updated => onUpdate({ ...run, items: run.items.map((it, i) => i === idx ? updated : it) })}
-              onDelete={() => onUpdate({ ...run, items: run.items.filter((_, i) => i !== idx) })}
+              onRemove={() => onUpdate({ ...run, items: run.items.filter((_, i) => i !== idx) })}
             />
           ))}
-
-          <AddFromProductsMenu
-            savedProducts={savedProducts}
-            onAdd={el => addItem(makeItem({ name: el.name, flatWidth: el.flatWidth.toString(), flatHeight: el.flatHeight.toString() }))}
-          />
-        </div>
-      )}
-    </div>
-  )
-}
-
-// ── Référence devis (lecture seule) ──
-
-function QuoteAmalgameRef({ quote }: { quote: Quote }) {
-  const [open, setOpen] = useState(false)
-  const { amalgameRuns, products } = quote
-
-  const rvLabel = (r: Quote['amalgameRuns'][number]) => {
-    if (!r.isRectoVerso) return null
-    return r.rectoVersoType === 'different' ? 'R/V différent' : 'R/V'
-  }
-
-  const standaloneProducts = products.filter(p => p.amalgameGroupIndex === null)
-  const totalPasses = amalgameRuns.length + (standaloneProducts.length > 0 ? 1 : 0)
-
-  const ItemsTable = ({ items }: { items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[] }) => (
-    <table className="w-full text-xs">
-      <thead>
-        <tr className="text-slate-400 border-b border-slate-100">
-          <th className="text-left px-3 py-1.5 font-semibold uppercase tracking-wide">Élément</th>
-          <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">L × l</th>
-          <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Nb/plaque</th>
-          <th className="text-right px-3 py-1.5 font-semibold uppercase tracking-wide">Qté/unité</th>
-        </tr>
-      </thead>
-      <tbody>
-        {items.length === 0 ? (
-          <tr><td colSpan={4} className="px-3 py-3 text-slate-400 italic text-center">Aucun élément trouvé</td></tr>
-        ) : items.map((it, ii) => (
-          <tr key={ii} className={ii % 2 === 0 ? 'bg-white' : 'bg-slate-50/50'}>
-            <td className="px-3 py-2 font-medium text-slate-700">{it.name}</td>
-            <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.flatWidth} × {it.flatHeight} mm</td>
-            <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.countPerPlate}</td>
-            <td className="px-3 py-2 text-right text-slate-500 tabular-nums">{it.quantityPerUnit}</td>
-          </tr>
-        ))}
-      </tbody>
-    </table>
-  )
-
-  return (
-    <div className="rounded-xl border border-blue-100 bg-blue-50/60 overflow-hidden">
-      <button
-        onClick={() => setOpen(v => !v)}
-        className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-blue-100/60 transition-colors"
-      >
-        <span className="text-xs font-semibold text-blue-500 uppercase tracking-wide">
-          Devis — {totalPasses} passe{totalPasses > 1 ? 's' : ''}
-        </span>
-        <span className="ml-auto text-blue-300">{open ? <ChevronUp className="h-4 w-4" /> : <ChevronDown className="h-4 w-4" />}</span>
-      </button>
-
-      {open && (
-        <div className="px-4 pb-4 space-y-4">
-          {/* Passes amalgame */}
-          {amalgameRuns.map((r, ri) => {
-            const displayItems = getRunItems(r, quote)
-            return (
-              <div key={ri} className="rounded-lg border border-blue-100 bg-white overflow-hidden">
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-blue-50 border-b border-blue-100">
-                  <span className="text-sm font-semibold text-blue-700">{r.name}</span>
-                  {r.plate && (
-                    <span className="text-xs text-blue-500">📐 {r.plate.name} — {r.plate.width} × {r.plate.height} mm</span>
-                  )}
-                  {r.platesCount != null && (
-                    <span className="text-xs text-blue-500">{r.platesCount} plaque{r.platesCount > 1 ? 's' : ''}</span>
-                  )}
-                  {r.hasImpression && (
-                    <span className="text-xs text-blue-500">🖨 {r.inkMlPerPlate} ml/pl.</span>
-                  )}
-                  {rvLabel(r) && (
-                    <span className="text-xs bg-blue-100 text-blue-600 px-1.5 py-0.5 rounded font-medium">{rvLabel(r)}</span>
-                  )}
-                  {r.cuttingTimePerPoseSeconds > 0 && (
-                    <span className="text-xs text-blue-500">✂️ {r.cuttingTimePerPoseSeconds}s/pose</span>
-                  )}
-                </div>
-                <ItemsTable items={displayItems} />
-              </div>
-            )
-          })}
-
-          {/* Produits hors amalgame (ex : Socle seul) */}
-          {standaloneProducts.length > 0 && (
-            <div className="rounded-lg border border-blue-100 bg-white overflow-hidden">
-              <div className="flex flex-wrap items-center gap-x-4 gap-y-1 px-3 py-2 bg-blue-50 border-b border-blue-100">
-                <span className="text-sm font-semibold text-blue-700">Produits hors amalgame</span>
-              </div>
-              <ItemsTable items={standaloneProducts.map(p => ({
-                name: p.productTypeName ?? 'Produit',
-                flatWidth: p.flatWidth,
-                flatHeight: p.flatHeight,
-                countPerPlate: p.itemsPerPlate ?? 1,
-                quantityPerUnit: 1,
-              }))} />
-            </div>
-          )}
+          <div className="pt-1">
+            <AddItemPicker
+              available={available}
+              onAdd={av => onUpdate({ ...run, items: [...run.items, { tempId: tid(), ...av, countPerPlate: '1', quantityPerUnit: '1' }] })}
+            />
+          </div>
         </div>
       )}
     </div>
@@ -519,10 +301,11 @@ function QuoteAmalgameRef({ quote }: { quote: Quote }) {
 
 export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedProducts: SavedProductLine[] }) {
   const dbRuns = quote.productionSheet?.productionAmalgameRuns ?? []
+  const available = getAvailableItems(savedProducts, quote)
+
   const [runs, setRuns] = useState<LocalRun[]>(() =>
-    dbRuns.length > 0 ? initRuns(dbRuns) : initRunsFromDevis(quote)
+    dbRuns.length > 0 ? initRunsFromDB(dbRuns) : initRunsFromSource(available, quote)
   )
-  const [isPreFilled] = useState(() => dbRuns.length === 0)
   const [scope, setScope] = useState<'decoupe' | 'decoupe_impression'>(
     (quote.productionSheet?.amalgameScope as 'decoupe' | 'decoupe_impression') ?? 'decoupe_impression'
   )
@@ -532,19 +315,17 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
     setSaving(true)
     try {
       const psId = quote.productionSheet?.id ?? await ensureProductionSheet(quote.id)
-
       const payload: AmalgameRunInput[] = runs.map(r => ({
         name: r.name || 'Groupe sans nom',
         items: r.items.map(it => ({
-          name: it.name || 'Élément',
-          flatWidth: parseInt(it.flatWidth) || 0,
-          flatHeight: parseInt(it.flatHeight) || 0,
-          flatDepth: it.flatDepth !== '' ? (parseInt(it.flatDepth) || 0) : null,
+          name: it.name,
+          flatWidth: it.flatWidth,
+          flatHeight: it.flatHeight,
+          flatDepth: it.flatDepth,
           countPerPlate: parseInt(it.countPerPlate) || 1,
           quantityPerUnit: parseInt(it.quantityPerUnit) || 1,
         })),
       }))
-
       await Promise.all([
         saveProductionAmalgameRuns(psId, payload),
         upsertProductionSheet(quote.id, { amalgameScope: scope }),
@@ -558,74 +339,56 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
   }
 
   const totalItems = runs.reduce((n, r) => n + r.items.length, 0)
-  const summary = `${runs.length} groupe${runs.length > 1 ? 's' : ''} · ${totalItems} élément${totalItems > 1 ? 's' : ''}`
+  const summary = runs.length > 0
+    ? `${runs.length} groupe${runs.length > 1 ? 's' : ''} · ${totalItems} élément${totalItems > 1 ? 's' : ''}`
+    : ''
 
   return (
     <Block emoji="🔀" title="Amalgame" summary={summary}>
       <div className="space-y-3">
-        {/* Scope : découpe seule ou découpe + impression */}
-        <div className="space-y-1.5">
-          <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Cet amalgame concerne</p>
-          <div className="flex gap-2">
-            {([
-              { value: 'decoupe_impression', label: 'Découpe + Impression' },
-              { value: 'decoupe',            label: 'Découpe uniquement' },
-            ] as const).map(opt => (
-              <button
-                key={opt.value}
-                onClick={() => setScope(opt.value)}
-                className={`flex-1 px-3 py-2 text-xs font-semibold rounded-xl border transition-all ${
-                  scope === opt.value
-                    ? 'bg-slate-900 text-white border-slate-900'
-                    : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'
-                }`}
-              >
-                {opt.label}
-              </button>
-            ))}
-          </div>
+        {/* Scope */}
+        <div className="flex gap-2">
+          {([
+            { value: 'decoupe_impression', label: 'Découpe + Impression' },
+            { value: 'decoupe',            label: 'Découpe uniquement' },
+          ] as const).map(opt => (
+            <button
+              key={opt.value}
+              onClick={() => setScope(opt.value)}
+              className={`flex-1 px-3 py-2 text-xs font-semibold rounded-xl border transition-all ${
+                scope === opt.value
+                  ? 'bg-slate-900 text-white border-slate-900'
+                  : 'bg-white text-slate-500 border-slate-200 hover:border-slate-400'
+              }`}
+            >
+              {opt.label}
+            </button>
+          ))}
         </div>
 
-        {/* Référence devis — repliée par défaut, consultable */}
-        {(quote.hasAmalgame || quote.isMultiProduct) && (
-          <QuoteAmalgameRef quote={quote} />
-        )}
-
-        {/* Bandeau informatif si pré-rempli (non encore sauvegardé) */}
-        {isPreFilled && (
-          <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-50 border border-slate-200 text-xs text-slate-500">
-            <span>ℹ️</span>
-            Pré-rempli depuis le devis — vérifiez les valeurs et cliquez <strong className="text-slate-700">Enregistrer</strong> pour valider.
-          </div>
-        )}
-
-        {/* Runs de production */}
+        {/* Groupes */}
         {runs.map((run, ri) => (
           <RunEditor
             key={run.tempId}
             run={run}
-            savedProducts={savedProducts}
+            available={available}
             onUpdate={updated => setRuns(prev => prev.map((r, i) => i === ri ? updated : r))}
             onDelete={() => setRuns(prev => prev.filter((_, i) => i !== ri))}
           />
         ))}
 
-        {/* Ajouter un groupe */}
         <button
-          onClick={() => setRuns(prev => [...prev, makeRun()])}
+          onClick={() => setRuns(prev => [...prev, { tempId: tid(), name: '', open: true, items: [] }])}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-dashed border-slate-300 rounded-xl hover:border-slate-400 hover:text-slate-800 transition-colors bg-white w-full justify-center"
         >
           <Plus className="h-4 w-4" /> Ajouter un groupe
         </button>
 
-        <Button
-          size="sm"
-          onClick={handleSave}
-          disabled={saving}
-          className="bg-slate-900 hover:bg-slate-700"
-        >
-          {saving ? 'Sauvegarde…' : 'Enregistrer'}
-        </Button>
+        <div className="flex justify-end">
+          <Button size="sm" onClick={handleSave} disabled={saving} className="bg-slate-900 hover:bg-slate-700">
+            {saving ? 'Sauvegarde…' : 'Enregistrer'}
+          </Button>
+        </div>
       </div>
     </Block>
   )
