@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { Plus, X, Search } from 'lucide-react'
@@ -39,26 +39,42 @@ function PlateSelector({
   onPlateCreated: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [dropdownStyle, setDropdownStyle] = useState<{ top: number; left: number; width: number }>({ top: 0, left: 0, width: 0 })
   const [search, setSearch] = useState('')
   const [showCreate, setShowCreate] = useState(false)
   const [creating, setCreating] = useState(false)
   const [form, setForm] = useState({ name: '', width: '', height: '', cost: '', material: '' })
-  const ref = useRef<HTMLDivElement>(null)
+  const btnRef = useRef<HTMLButtonElement>(null)
+  const dropRef = useRef<HTMLDivElement>(null)
   const searchRef = useRef<HTMLInputElement>(null)
+
+  const computePos = useCallback(() => {
+    if (!btnRef.current) return
+    const r = btnRef.current.getBoundingClientRect()
+    setDropdownStyle({ top: r.bottom + window.scrollY + 4, left: r.left + window.scrollX, width: r.width })
+  }, [])
 
   useEffect(() => {
     if (!open) return
+    computePos()
     setTimeout(() => searchRef.current?.focus(), 0)
     const handler = (e: MouseEvent) => {
-      if (!ref.current?.contains(e.target as Node)) {
+      const t = e.target as Node
+      if (!btnRef.current?.contains(t) && !dropRef.current?.contains(t)) {
         setOpen(false)
         setShowCreate(false)
         setSearch('')
       }
     }
     document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [open])
+    window.addEventListener('scroll', computePos, true)
+    window.addEventListener('resize', computePos)
+    return () => {
+      document.removeEventListener('mousedown', handler)
+      window.removeEventListener('scroll', computePos, true)
+      window.removeEventListener('resize', computePos)
+    }
+  }, [open, computePos])
 
   const selected = plates.find(p => p.id === value) ?? null
 
@@ -97,9 +113,10 @@ function PlateSelector({
   }
 
   return (
-    <div className="relative w-full" ref={ref}>
+    <div className="relative w-full">
       {/* Trigger */}
       <button
+        ref={btnRef}
         type="button"
         onClick={() => { setOpen(v => !v); setShowCreate(false) }}
         className="w-full flex items-center gap-2 px-3 py-1.5 text-sm rounded-lg border border-slate-200 bg-white hover:border-slate-300 transition-colors text-left"
@@ -121,7 +138,11 @@ function PlateSelector({
       </button>
 
       {open && (
-        <div className="absolute left-0 right-0 top-full mt-1 z-30 bg-white border border-slate-200 rounded-xl shadow-lg">
+        <div
+          ref={dropRef}
+          style={{ position: 'fixed', top: dropdownStyle.top, left: dropdownStyle.left, width: dropdownStyle.width, zIndex: 9999 }}
+          className="bg-white border border-slate-200 rounded-xl shadow-xl"
+        >
           {!showCreate ? (
             <>
               {/* Recherche */}
