@@ -3,26 +3,76 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
+import { Trash2, Plus } from 'lucide-react'
+import { saveProductionAchatItems } from '@/app/actions/production-achats'
+import { ensureProductionSheet } from '@/app/actions/production-amalgame'
 import { upsertProductionSheet } from '@/app/actions/production-sheet'
 import type { Quote } from './quote-detail-shared'
+
+type LocalItem = {
+  tempId: string
+  name: string
+  quantity: string
+  reference: string
+}
+
+function uid() { return Math.random().toString(36).slice(2) }
+
+function initItems(quote: Quote): LocalItem[] {
+  const dbItems = quote.productionSheet?.productionAchatItems ?? []
+  if (dbItems.length > 0) {
+    return dbItems.map(it => ({
+      tempId: uid(),
+      name: it.name,
+      quantity: it.quantity.toString(),
+      reference: it.reference ?? '',
+    }))
+  }
+  // Pré-rempli depuis les accessoires du devis
+  const accessories = quote.accessories ?? []
+  if (accessories.length > 0) {
+    return accessories.map(a => ({
+      tempId: uid(),
+      name: a.accessory.name,
+      quantity: a.quantity.toString(),
+      reference: '',
+    }))
+  }
+  return []
+}
 
 export function AchatsBlock({ quote }: { quote: Quote }) {
   const ps = quote.productionSheet
   const [open, setOpen] = useState(false)
+  const [items, setItems] = useState<LocalItem[]>(() => initItems(quote))
   const [notes, setNotes] = useState(ps?.achatsNotes ?? '')
   const [saving, setSaving] = useState(false)
 
-  const accessories = quote.accessories ?? []
+  const summary = items.length > 0
+    ? `${items.length} article${items.length > 1 ? 's' : ''}`
+    : ''
 
-  const summary = [
-    accessories.length > 0 ? `${accessories.length} accessoire${accessories.length > 1 ? 's' : ''}` : null,
-    ps?.achatsNotes ? 'Notes' : null,
-  ].filter(Boolean).join(' · ')
+  const updateItem = (tempId: string, field: keyof LocalItem, value: string) =>
+    setItems(prev => prev.map(it => it.tempId === tempId ? { ...it, [field]: value } : it))
+
+  const removeItem = (tempId: string) =>
+    setItems(prev => prev.filter(it => it.tempId !== tempId))
+
+  const addItem = () =>
+    setItems(prev => [...prev, { tempId: uid(), name: '', quantity: '1', reference: '' }])
 
   const handleSave = async () => {
     setSaving(true)
     try {
-      await upsertProductionSheet(quote.id, { achatsNotes: notes || null })
+      const psId = ps?.id ?? (await ensureProductionSheet(quote.id))
+      await Promise.all([
+        saveProductionAchatItems(psId, items.map(it => ({
+          name: it.name.trim() || 'Article',
+          quantity: parseFloat(it.quantity) || 1,
+          reference: it.reference.trim() || null,
+        }))),
+        upsertProductionSheet(quote.id, { achatsNotes: notes || null }),
+      ])
       toast.success('Enregistré')
     } catch {
       toast.error('Erreur lors de la sauvegarde')
@@ -47,33 +97,61 @@ export function AchatsBlock({ quote }: { quote: Quote }) {
 
       {open && (
         <div className="px-5 pb-5 pt-3 border-t border-slate-100 space-y-3">
-          {/* Accessoires du devis */}
-          {accessories.length > 0 && (
-            <div className="space-y-1">
-              <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Accessoires (devis)</p>
-              <div className="rounded-lg border border-slate-100 divide-y divide-slate-100">
-                {accessories.map((a, i) => (
-                  <div key={i} className="flex items-center justify-between px-3 py-2">
-                    <span className="text-sm text-slate-700">{a.accessory.name}</span>
-                    <span className="text-xs text-slate-400">× {a.quantity}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
 
-          {accessories.length === 0 && (
-            <p className="text-xs text-slate-400">Aucun accessoire dans le devis.</p>
-          )}
+          {/* Liste des articles */}
+          <div className="space-y-1.5">
+            {items.length === 0 && (
+              <p className="text-xs text-slate-400 py-1">Aucun article — ajoutez-en un.</p>
+            )}
+            {items.map(it => (
+              <div key={it.tempId} className="flex items-center gap-1.5">
+                <input
+                  type="text"
+                  value={it.name}
+                  onChange={e => updateItem(it.tempId, 'name', e.target.value)}
+                  placeholder="Nom de l'article"
+                  className="flex-1 min-w-0 px-2.5 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
+                />
+                <input
+                  type="number"
+                  min={0}
+                  step="0.1"
+                  value={it.quantity}
+                  onChange={e => updateItem(it.tempId, 'quantity', e.target.value)}
+                  placeholder="Qté"
+                  className="w-14 px-2 py-1.5 text-sm text-center rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
+                />
+                <input
+                  type="text"
+                  value={it.reference}
+                  onChange={e => updateItem(it.tempId, 'reference', e.target.value)}
+                  placeholder="Réf."
+                  className="w-20 px-2 py-1.5 text-sm rounded-lg border border-slate-200 focus:outline-none focus:ring-2 focus:ring-slate-800"
+                />
+                <button
+                  onClick={() => removeItem(it.tempId)}
+                  className="p-1 text-slate-300 hover:text-red-400 transition-colors shrink-0"
+                >
+                  <Trash2 className="h-3.5 w-3.5" />
+                </button>
+              </div>
+            ))}
+            <button
+              onClick={addItem}
+              className="flex items-center gap-1.5 text-xs text-slate-500 hover:text-slate-800 transition-colors pt-0.5"
+            >
+              <Plus className="h-3.5 w-3.5" /> Ajouter un article
+            </button>
+          </div>
 
           {/* Notes */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Notes / achats complémentaires</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Notes</label>
             <textarea
               value={notes}
               onChange={e => setNotes(e.target.value)}
-              rows={3}
-              placeholder="Références fournisseurs, délais, achats hors devis…"
+              rows={2}
+              placeholder="Délais, fournisseurs, instructions…"
               className="w-full px-3 py-2 text-sm rounded-lg border border-slate-200 bg-white focus:outline-none focus:ring-2 focus:ring-slate-800 resize-none"
             />
           </div>

@@ -122,6 +122,13 @@ export type Quote = {
     prodPackagingUnitPrice: number | null
     prodPackagingQuantity: number | null
     prodPackagingMaterial: string | null
+    productionAchatItems: {
+      id: number
+      name: string
+      quantity: number
+      reference: string | null
+      position: number
+    }[]
     productionAmalgameRuns: {
       id: number
       name: string

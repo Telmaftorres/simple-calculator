@@ -478,6 +478,17 @@ model ProductionSheet {
   quote                  Quote                   @relation(fields: [quoteId], references: [id], onDelete: Cascade)
   productionAmalgameRuns ProductionAmalgameRun[]
   productionProductLines ProductionProductLine[]
+  productionAchatItems   ProductionAchatItem[]
+}
+
+model ProductionAchatItem {
+  id                Int             @id @default(autoincrement())
+  productionSheetId Int
+  name              String
+  quantity          Float           @default(1)
+  reference         String?
+  position          Int             @default(0)
+  productionSheet   ProductionSheet @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
 }
 
 model ProductionAmalgameRun {

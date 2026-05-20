@@ -432,6 +432,7 @@ export async function getQuoteDetail(id: number) {
             orderBy: { position: 'asc' },
             include: { elements: { orderBy: { position: 'asc' }, include: { plate: true } }, plate: true },
           },
+          productionAchatItems: { orderBy: { position: 'asc' } },
         },
       },
     },
