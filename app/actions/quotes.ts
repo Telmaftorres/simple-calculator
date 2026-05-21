@@ -351,21 +351,48 @@ export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
 export async function deleteQuote(id: number) {
   const session = await requireAuth()
   const validId = z.number().int().positive().parse(id)
-  const whereClause = session.user.role === 'ADMIN'
-    ? { id: validId }
-    : { id: validId, userId: session.user.id }
 
-  const quote = await prisma.quote.findUnique({ where: { id: validId }, select: { reference: true } })
-  // Supprimer la fiche de prod explicitement (au cas où la cascade FK n'est pas active en base)
-  await prisma.productionSheet.deleteMany({ where: { quoteId: validId } })
-  await prisma.quote.delete({ where: whereClause })
+  const quote = await prisma.quote.findUnique({ where: { id: validId }, select: { reference: true, userId: true } })
+  if (!quote) throw new Error('Devis introuvable')
+  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
+
+  // Suppression explicite de tous les enfants pour éviter tout problème de cascade FK
+  await prisma.$transaction(async (tx) => {
+    const ps = await tx.productionSheet.findUnique({ where: { quoteId: validId }, select: { id: true } })
+    if (ps) {
+      const runs = await tx.productionAmalgameRun.findMany({ where: { productionSheetId: ps.id }, select: { id: true } })
+      for (const run of runs) {
+        await tx.productionAmalgameItem.deleteMany({ where: { runId: run.id } })
+      }
+      const lines = await tx.productionProductLine.findMany({ where: { productionSheetId: ps.id }, select: { id: true } })
+      for (const line of lines) {
+        await tx.productionProductLineElement.deleteMany({ where: { lineId: line.id } })
+      }
+      await tx.productionAmalgameRun.deleteMany({ where: { productionSheetId: ps.id } })
+      await tx.productionProductLine.deleteMany({ where: { productionSheetId: ps.id } })
+      await tx.productionAchatItem.deleteMany({ where: { productionSheetId: ps.id } })
+      await tx.productionSheet.delete({ where: { id: ps.id } })
+    }
+    await tx.quoteAccessory.deleteMany({ where: { quoteId: validId } })
+    await tx.quoteConsumable.deleteMany({ where: { quoteId: validId } })
+    await tx.quoteElement.deleteMany({ where: { quoteId: validId } })
+    await tx.quoteTransportDelivery.deleteMany({ where: { quoteId: validId } })
+    await tx.quoteProduct.deleteMany({ where: { quoteId: validId } })
+    await tx.quoteActuals.deleteMany({ where: { quoteId: validId } })
+    const amalgameRuns = await tx.quoteAmalgameRun.findMany({ where: { quoteId: validId }, select: { id: true } })
+    for (const run of amalgameRuns) {
+      await tx.quoteAmalgameRunItem.deleteMany({ where: { runId: run.id } })
+    }
+    await tx.quoteAmalgameRun.deleteMany({ where: { quoteId: validId } })
+    await tx.quote.delete({ where: { id: validId } })
+  })
 
   await logAction({
     userId: session.user.id,
     userName: session.user.name ?? session.user.email,
     action: 'DELETE_QUOTE',
     entityType: 'Quote',
-    entityRef: quote?.reference ?? String(validId),
+    entityRef: quote.reference ?? String(validId),
   })
 
   revalidateCache('quotes')
