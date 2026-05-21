@@ -334,14 +334,7 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
             return (
               <SectionCard title="Achats" colorClass="bg-green-600 text-white">
                 {showItems.map((it, i) => (
-                  <Row
-                    key={i}
-                    label={it.name}
-                    value={[
-                      `× ${it.quantity}`,
-                      'unitPrice' in it && it.unitPrice != null ? `${it.unitPrice} €` : null,
-                    ].filter(Boolean).join(' · ')}
-                  />
+                  <Row key={i} label={it.name} value={`× ${it.quantity}`} />
                 ))}
                 {ps?.achatsNotes && <Row label="Notes" value={ps.achatsNotes} />}
               </SectionCard>
