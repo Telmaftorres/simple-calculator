@@ -64,7 +64,7 @@ export function FaconnageBlock({
 
           {/* Temps façonnage */}
           <div className="space-y-1">
-            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Temps façonnage (s/pce)</label>
+            <label className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Temps par pièce</label>
             <input
               type="number"
               min={0}

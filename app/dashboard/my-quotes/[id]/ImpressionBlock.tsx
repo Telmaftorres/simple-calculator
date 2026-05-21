@@ -150,7 +150,7 @@ export function ImpressionBlock({ quote }: { quote: Quote }) {
               <input type="number" min={0} step="0.1" value={inkMl}
                 onChange={e => setInkMl(e.target.value)} placeholder="0" className={inputCls} />
             </Field>
-            <Field label="Tps machine (min)">
+            <Field label="Temps machine">
               <input type="number" min={0} step="0.5" value={machineTime}
                 onChange={e => setMachineTime(e.target.value)} placeholder="0" className={inputCls} />
             </Field>

@@ -108,7 +108,7 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
           ) : (
             <div className="grid grid-cols-2 gap-2">
               <div className="space-y-1">
-                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps/pose (s)</label>
+                <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps par pose</label>
                 <input type="number" min={0} value={cuttingTime}
                   onChange={e => setCuttingTime(e.target.value)}
                   placeholder="0"

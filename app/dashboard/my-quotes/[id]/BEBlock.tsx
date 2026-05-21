@@ -68,7 +68,7 @@ export function BEBlock({ quote }: { quote: Quote }) {
           {/* Temps BE */}
           <div className="grid grid-cols-2 gap-3">
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BE (min)</label>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BE</label>
               <input
                 type="number"
                 min={0}
@@ -79,7 +79,7 @@ export function BEBlock({ quote }: { quote: Quote }) {
               />
             </div>
             <div className="space-y-1">
-              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BAT (min)</label>
+              <label className="text-[10px] font-semibold text-slate-400 uppercase tracking-wide">Temps BAT</label>
               <input
                 type="number"
                 min={0}
