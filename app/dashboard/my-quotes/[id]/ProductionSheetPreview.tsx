@@ -34,9 +34,9 @@ function fmtMin(m: number): string {
 
 function Row({ label, value }: { label: string; value?: string | number | null }) {
   return (
-    <div className="flex justify-between items-baseline border-b border-slate-100 py-0.5 last:border-0">
-      <span className="text-[10px] text-slate-500">{label}</span>
-      <span className="text-[11px] font-medium text-slate-800 ml-2">{value != null && value !== '' ? String(value) : '—'}</span>
+    <div className="flex justify-between items-baseline border-b border-slate-100 py-0.5 last:border-0 gap-2">
+      <span className="text-[10px] text-slate-500 min-w-0 truncate">{label}</span>
+      <span className="text-[11px] font-medium text-slate-800 shrink-0">{value != null && value !== '' ? String(value) : '—'}</span>
     </div>
   )
 }
@@ -325,14 +325,28 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
           )}
 
           {/* 10. Achats */}
-          {(accessories.length > 0 || ps?.achatsNotes) && (
-            <SectionCard title="Achats" colorClass="bg-green-600 text-white">
-              {accessories.map((a, i) => (
-                <Row key={i} label={a.accessory.name} value={`× ${a.quantity}`} />
-              ))}
-              {ps?.achatsNotes && <Row label="Notes" value={ps.achatsNotes} />}
-            </SectionCard>
-          )}
+          {(() => {
+            const achatItems = ps?.productionAchatItems ?? []
+            const showItems = achatItems.length > 0 ? achatItems : accessories.map(a => ({
+              id: -1, name: a.accessory.name, quantity: a.quantity, unitPrice: null, position: 0,
+            }))
+            if (showItems.length === 0 && !ps?.achatsNotes) return null
+            return (
+              <SectionCard title="Achats" colorClass="bg-green-600 text-white">
+                {showItems.map((it, i) => (
+                  <Row
+                    key={i}
+                    label={it.name}
+                    value={[
+                      `× ${it.quantity}`,
+                      'unitPrice' in it && it.unitPrice != null ? `${it.unitPrice} €` : null,
+                    ].filter(Boolean).join(' · ')}
+                  />
+                ))}
+                {ps?.achatsNotes && <Row label="Notes" value={ps.achatsNotes} />}
+              </SectionCard>
+            )
+          })()}
 
           {/* 11. Remarques */}
           {ps?.remarques && (
