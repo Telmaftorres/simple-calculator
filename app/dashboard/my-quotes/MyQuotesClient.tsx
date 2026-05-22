@@ -280,7 +280,7 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                   const s = STATUS_LABELS[quote.productionSheet!.status] ?? STATUS_LABELS.en_attente
                   const isOwned = quote.userId === currentUserId
                   return (
-                    <TableRow key={quote.id} className={`hover:bg-slate-50 ${!isOwned ? 'bg-blue-50/40' : ''}`}>
+                    <TableRow key={quote.id} className="hover:bg-slate-50">
                       <TableCell>
                         <Link href={`/dashboard/my-quotes/${quote.id}`}>
                           {quote.reference
@@ -291,17 +291,11 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                       <TableCell className="font-medium">{quote.study?.number}</TableCell>
                       <TableCell className="text-slate-600 text-sm">{quote.client || <span className="text-slate-300 italic text-xs">—</span>}</TableCell>
                       <TableCell className="text-sm">{quote.productType?.name}</TableCell>
+                      <TableCell className="text-slate-500 text-sm">{creatorName(quote.user)}</TableCell>
                       <TableCell>
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
-                            {s.label}
-                          </span>
-                          {!isOwned && (
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium bg-slate-100 text-slate-500">
-                              En production
-                            </span>
-                          )}
-                        </div>
+                        <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ${s.className}`}>
+                          {s.label}
+                        </span>
                       </TableCell>
                       <TableCell className="text-slate-500 text-xs">{formatDate(quote.productionSheet!.updatedAt)}</TableCell>
                       <TableCell className="text-right">
@@ -454,7 +448,7 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                     Date <SortIcon field="date" current={sortField} dir={sortDir} />
                   </button>
                 </TableHead>
-                {scope === 'all' && <TableHead>Créateur</TableHead>}
+                <TableHead>Créateur</TableHead>
                 <TableHead>Produit</TableHead>
                 <TableHead className="text-right">Quantité</TableHead>
                 <TableHead className="text-right">Montant HT</TableHead>
@@ -464,7 +458,7 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
             <TableBody>
               {filtered.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={scope === 'all' ? 9 : 8} className="text-center py-8 text-slate-500 italic">
+                  <TableCell colSpan={9} className="text-center py-8 text-slate-500 italic">
                     {search
                       ? `Aucun devis trouvé pour "${search}"`
                       : 'Aucun devis trouvé. Créez votre premier devis dans le calculateur !'}
@@ -474,7 +468,7 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                 filtered.map((quote) => {
                   const isOwned = quote.userId === currentUserId
                   return (
-                    <TableRow key={quote.id} className={`hover:bg-slate-50 ${!isOwned ? 'bg-blue-50/30' : ''}`}>
+                    <TableRow key={quote.id} className="hover:bg-slate-50">
                       <TableCell>
                         <div className="flex items-center gap-2 flex-wrap">
                           <Link href={`/dashboard/my-quotes/${quote.id}`}>
@@ -489,11 +483,6 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                           {quote.sentByUserName && (
                             <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-indigo-100 text-indigo-700 whitespace-nowrap">
                               Reçu de {quote.sentByUserName}
-                            </span>
-                          )}
-                          {!isOwned && !quote.sentByUserName && (
-                            <span className="inline-flex items-center rounded-full px-2 py-0.5 text-[10px] font-medium bg-blue-100 text-blue-700 whitespace-nowrap">
-                              En production
                             </span>
                           )}
                         </div>
@@ -512,11 +501,9 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                           {formatDate(quote.createdAt)}
                         </div>
                       </TableCell>
-                      {scope === 'all' && (
-                        <TableCell className="text-slate-500 text-sm whitespace-nowrap">
-                          {creatorName(quote.user)}
-                        </TableCell>
-                      )}
+                      <TableCell className="text-slate-500 text-sm whitespace-nowrap">
+                        {creatorName(quote.user)}
+                      </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2 whitespace-nowrap">
                           <Box className="h-3 w-3 text-emerald-600" />
