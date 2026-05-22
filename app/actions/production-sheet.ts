@@ -49,11 +49,9 @@ const productionSheetSchema = z.object({
 export type ProductionSheetInput = z.infer<typeof productionSheetSchema>
 
 async function assertOwner(quoteId: number) {
-  const session = await requireAuth()
+  await requireAuth()
   const quote = await prisma.quote.findUnique({ where: { id: quoteId }, select: { userId: true } })
   if (!quote) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
-  return session
 }
 
 export async function upsertProductionSheet(quoteId: number, data: ProductionSheetInput) {
@@ -94,7 +92,7 @@ export async function saveProductionSheetFull(
 
 // Charge le devis + fiche de production (formDataJson) pour le calculateur
 export async function getQuoteWithProductionSheet(quoteId: number) {
-  const session = await requireAuth()
+  await requireAuth()
   const quote = await prisma.quote.findUnique({
     where: { id: quoteId },
     include: {
@@ -114,6 +112,5 @@ export async function getQuoteWithProductionSheet(quoteId: number) {
     },
   })
   if (!quote) return null
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
   return quote
 }

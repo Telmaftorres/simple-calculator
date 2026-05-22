@@ -305,17 +305,15 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          {isOwned && (
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="h-8 w-8 text-slate-400 hover:text-indigo-600"
-                              title="Envoyer à un utilisateur"
-                              onClick={() => setSendModalQuoteId(quote.id)}
-                            >
-                              <Send className="h-4 w-4" />
-                            </Button>
-                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                            title="Envoyer à un utilisateur"
+                            onClick={() => setSendModalQuoteId(quote.id)}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -519,62 +517,56 @@ export function MyQuotesClient({ quotes, allQuotes, users, currentUserId }: MyQu
                       </TableCell>
                       <TableCell className="text-right">
                         <div className="flex justify-end gap-1">
-                          {isOwned && (
-                            <Link href={`/dashboard/my-quotes/${quote.id}`}>
-                              <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-sky-600" title="Données réelles">
-                                <ClipboardCheck className="h-4 w-4" />
-                              </Button>
-                            </Link>
-                          )}
+                          <Link href={`/dashboard/my-quotes/${quote.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-sky-600" title="Données réelles">
+                              <ClipboardCheck className="h-4 w-4" />
+                            </Button>
+                          </Link>
                           <Link href={`/?viewId=${quote.id}`}>
                             <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-blue-600" title="Voir le récapitulatif">
                               <Eye className="h-4 w-4" />
                             </Button>
                           </Link>
-                          {isOwned && (
-                            <>
-                              <Link href={`/?editId=${quote.id}`}>
-                                <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600" title="Modifier">
-                                  <Pencil className="h-4 w-4" />
-                                </Button>
-                              </Link>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-400 hover:text-indigo-600"
-                                title="Envoyer à un utilisateur"
-                                onClick={() => setSendModalQuoteId(quote.id)}
+                          <Link href={`/?editId=${quote.id}`}>
+                            <Button variant="ghost" size="icon" className="h-8 w-8 text-slate-400 hover:text-emerald-600" title="Modifier">
+                              <Pencil className="h-4 w-4" />
+                            </Button>
+                          </Link>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            className="h-8 w-8 text-slate-400 hover:text-indigo-600"
+                            title="Envoyer à un utilisateur"
+                            onClick={() => setSendModalQuoteId(quote.id)}
+                          >
+                            <Send className="h-4 w-4" />
+                          </Button>
+                          {confirmingDeleteId === quote.id ? (
+                            <div className="flex items-center gap-1">
+                              <button
+                                className="text-xs px-2 py-1 rounded bg-rose-600 text-white hover:bg-rose-700 font-medium"
+                                onClick={() => handleDeleteConfirm(quote.id)}
                               >
-                                <Send className="h-4 w-4" />
-                              </Button>
-                              {confirmingDeleteId === quote.id ? (
-                                <div className="flex items-center gap-1">
-                                  <button
-                                    className="text-xs px-2 py-1 rounded bg-rose-600 text-white hover:bg-rose-700 font-medium"
-                                    onClick={() => handleDeleteConfirm(quote.id)}
-                                  >
-                                    Confirmer
-                                  </button>
-                                  <button
-                                    className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
-                                    onClick={() => setConfirmingDeleteId(null)}
-                                  >
-                                    Annuler
-                                  </button>
-                                </div>
-                              ) : (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  className="h-8 w-8 text-slate-400 hover:text-rose-600"
-                                  onClick={() => handleDeleteClick(quote.id)}
-                                  disabled={isDeleting === quote.id}
-                                  title="Supprimer"
-                                >
-                                  <Trash2 className={`h-4 w-4 ${isDeleting === quote.id ? 'animate-pulse' : ''}`} />
-                                </Button>
-                              )}
-                            </>
+                                Confirmer
+                              </button>
+                              <button
+                                className="text-xs px-2 py-1 rounded border border-slate-200 text-slate-500 hover:bg-slate-50"
+                                onClick={() => setConfirmingDeleteId(null)}
+                              >
+                                Annuler
+                              </button>
+                            </div>
+                          ) : (
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              className="h-8 w-8 text-slate-400 hover:text-rose-600"
+                              onClick={() => handleDeleteClick(quote.id)}
+                              disabled={isDeleting === quote.id}
+                              title="Supprimer"
+                            >
+                              <Trash2 className={`h-4 w-4 ${isDeleting === quote.id ? 'animate-pulse' : ''}`} />
+                            </Button>
                           )}
                         </div>
                       </TableCell>

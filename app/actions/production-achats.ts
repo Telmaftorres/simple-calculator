@@ -17,7 +17,6 @@ export async function saveProductionAchatItems(productionSheetId: number, items:
     select: { quote: { select: { id: true, userId: true } } },
   })
   if (!ps) throw new Error('Fiche de production introuvable')
-  if (session.user.role !== 'ADMIN' && ps.quote.userId !== session.user.id) throw new Error('Non autorisé')
 
   await prisma.$transaction(async (tx) => {
     await tx.productionAchatItem.deleteMany({ where: { productionSheetId } })

@@ -188,7 +188,6 @@ export async function updateQuote(id: number, data: CreateQuoteInput) {
 
   const existing = await prisma.quote.findUnique({ where: { id }, select: { userId: true, reference: true } })
   if (!existing) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && existing.userId !== session.user.id) throw new Error('Non autorisé')
 
   const study = await prisma.study.upsert({
     where: { number: validated.studyNumber },
@@ -284,9 +283,6 @@ export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
   })
 
   if (!source) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && source.userId !== session.user.id) {
-    throw new Error('Non autorisé')
-  }
 
   const targetUser = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true } })
   if (!targetUser) throw new Error('Utilisateur destinataire introuvable')
@@ -348,7 +344,6 @@ export async function deleteQuote(id: number) {
 
   const quote = await prisma.quote.findUnique({ where: { id: validId }, select: { reference: true, userId: true } })
   if (!quote) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
 
   // Suppression explicite de tous les enfants pour éviter tout problème de cascade FK
   await prisma.$transaction(async (tx) => {
@@ -465,7 +460,6 @@ export async function patchQuoteFlags(
   const session = await requireAuth()
   const existing = await prisma.quote.findUnique({ where: { id }, select: { userId: true } })
   if (!existing) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && existing.userId !== session.user.id) throw new Error('Non autorisé')
   await prisma.quote.update({ where: { id }, data })
   revalidatePath(`/dashboard/my-quotes/${id}`)
 }

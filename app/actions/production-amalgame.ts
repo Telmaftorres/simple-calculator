@@ -5,13 +5,12 @@ import { requireAuth } from '@/lib/server/auth'
 import { revalidatePath } from 'next/cache'
 
 async function assertOwner(productionSheetId: number) {
-  const session = await requireAuth()
+  await requireAuth()
   const ps = await prisma.productionSheet.findUnique({
     where: { id: productionSheetId },
-    select: { quote: { select: { id: true, userId: true } } },
+    select: { quote: { select: { id: true } } },
   })
   if (!ps) throw new Error('Fiche de production introuvable')
-  if (session.user.role !== 'ADMIN' && ps.quote.userId !== session.user.id) throw new Error('Non autorisé')
   return ps.quote.id
 }
 
@@ -67,10 +66,9 @@ export async function saveProductionAmalgameRuns(productionSheetId: number, runs
 
 // Crée (ou retourne) la fiche de prod et renvoie son id
 export async function ensureProductionSheet(quoteId: number): Promise<number> {
-  const session = await requireAuth()
-  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, select: { userId: true } })
+  await requireAuth()
+  const quote = await prisma.quote.findUnique({ where: { id: quoteId }, select: { id: true } })
   if (!quote) throw new Error('Devis introuvable')
-  if (session.user.role !== 'ADMIN' && quote.userId !== session.user.id) throw new Error('Non autorisé')
 
   const ps = await prisma.productionSheet.upsert({
     where: { quoteId },
