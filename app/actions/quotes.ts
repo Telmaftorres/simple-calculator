@@ -254,14 +254,8 @@ const QUOTE_LIST_INCLUDE = {
 } as const
 
 export async function getUserQuotes() {
-  const session = await requireAuth()
+  await requireAuth()
   return await prisma.quote.findMany({
-    where: {
-      OR: [
-        { userId: session.user.id },
-        { productionSheet: { status: 'en_cours' } },
-      ],
-    },
     include: QUOTE_LIST_INCLUDE,
     orderBy: { createdAt: 'desc' },
   })
@@ -400,7 +394,7 @@ export async function deleteQuote(id: number) {
 }
 
 export async function getQuoteById(id: number) {
-  const session = await requireAuth()
+  await requireAuth()
   const quote = await prisma.quote.findUnique({
     where: { id },
     include: {
@@ -423,16 +417,11 @@ export async function getQuoteById(id: number) {
     },
   })
   if (!quote) return null
-  const canAccess =
-    session.user.role === 'ADMIN' ||
-    quote.userId === session.user.id ||
-    quote.productionSheet?.status === 'en_cours'
-  if (!canAccess) throw new Error('Non autorisé')
   return quote
 }
 
 export async function getQuoteDetail(id: number) {
-  const session = await requireAuth()
+  await requireAuth()
 
   const quote = await prisma.quote.findUnique({
     where: { id },
@@ -466,12 +455,6 @@ export async function getQuoteDetail(id: number) {
   })
 
   if (!quote) return null
-  const canAccess =
-    session.user.role === 'ADMIN' ||
-    quote.userId === session.user.id ||
-    quote.productionSheet?.status === 'en_cours'
-  if (!canAccess) throw new Error('Non autorisé')
-
   return quote
 }
 
