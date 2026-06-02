@@ -132,11 +132,30 @@ export const getProductTypes = unstable_cache(
   { tags: ['product-types'] }
 )
 
-export const getPlates = unstable_cache(
+const getPlatesLocal = unstable_cache(
   async () => prisma.plate.findMany({ orderBy: { name: 'asc' } }),
   ['plates'],
   { tags: ['plates'] }
 )
+
+export async function getPlates() {
+  const { getCrmApiUrl } = await import('./crm-config')
+  const crmUrl = await getCrmApiUrl()
+  if (crmUrl) {
+    try {
+      const res = await fetch(`${crmUrl.replace(/\/$/, '')}/matieres`, {
+        signal: AbortSignal.timeout(5000),
+        next: { revalidate: 60 },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return (data as { id: number | string; name: string; width: number; height: number; cost: number; material?: string }[])
+          .map((p, i) => ({ id: typeof p.id === 'number' ? p.id : i + 1, name: p.name, width: p.width, height: p.height, cost: p.cost, material: p.material ?? '' }))
+      }
+    } catch { /* fallback local */ }
+  }
+  return getPlatesLocal()
+}
 
 export type PackagingRulesData = {
   rules: { category: string; material: string; size: string; baseUnitPrice: number }[]

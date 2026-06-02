@@ -4,10 +4,12 @@ import LogoutButton from '@/components/layout/LogoutButton'
 import { ModeToggle } from '@/components/layout/ModeToggle'
 import { MobileSidebar } from '@/components/layout/MobileSidebar'
 import { auth } from '@/auth'
+import { getCrmApiUrl } from '@/app/actions/crm-config'
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
   const session = await auth()
   const isAdmin = session?.user?.role === 'ADMIN'
+  const crmConnected = !!(await getCrmApiUrl())
 
   return (
     <div className="min-h-screen flex bg-slate-50">
@@ -43,21 +45,25 @@ export default async function DashboardLayout({ children }: { children: React.Re
             Gestion Données
           </div>
 
-          <Link
-            href="/dashboard/plates"
-            className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
-          >
-            <Layers className="h-5 w-5" />
-            Matières
-          </Link>
+          {!crmConnected && (
+            <Link
+              href="/dashboard/plates"
+              className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
+            >
+              <Layers className="h-5 w-5" />
+              Matières
+            </Link>
+          )}
 
-          <Link
-            href="/dashboard/accessories"
-            className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
-          >
-            <Package className="h-5 w-5" />
-            Accessoires
-          </Link>
+          {!crmConnected && (
+            <Link
+              href="/dashboard/accessories"
+              className="flex items-center gap-3 px-4 py-3 rounded-md hover:bg-slate-800 transition-colors text-slate-300 hover:text-white"
+            >
+              <Package className="h-5 w-5" />
+              Accessoires
+            </Link>
+          )}
 
           <Link
             href="/dashboard/consumables"

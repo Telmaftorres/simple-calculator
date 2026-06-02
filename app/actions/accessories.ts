@@ -19,11 +19,30 @@ const accessorySchema = z.object({
   weight: z.number().positive().optional(),
 })
 
-export const getAccessories = unstable_cache(
+const getAccessoriesLocal = unstable_cache(
   async () => prisma.accessory.findMany({ orderBy: { name: 'asc' } }),
   ['accessories'],
   { tags: ['accessories'] }
 )
+
+export async function getAccessories() {
+  const { getCrmApiUrl } = await import('./crm-config')
+  const crmUrl = await getCrmApiUrl()
+  if (crmUrl) {
+    try {
+      const res = await fetch(`${crmUrl.replace(/\/$/, '')}/accessoires`, {
+        signal: AbortSignal.timeout(5000),
+        next: { revalidate: 60 },
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return (data as { id: number | string; name: string; price: number; description?: string }[])
+          .map((a, i) => ({ id: typeof a.id === 'number' ? a.id : i + 1, name: a.name, price: a.price, description: a.description ?? null, supplier: null, supplierRef: null, supplierUrl: null, lotSize: null, imageUrl: null, weight: null, createdAt: new Date(), updatedAt: new Date() }))
+      }
+    } catch { /* fallback local */ }
+  }
+  return getAccessoriesLocal()
+}
 
 export async function createAccessory(data: z.infer<typeof accessorySchema>) {
   await requireAuth()

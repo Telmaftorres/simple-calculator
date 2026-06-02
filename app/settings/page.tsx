@@ -1,6 +1,6 @@
 import { Button } from '@/components/ui/button'
 import { Card, CardDescription, CardHeader, CardTitle } from '@/components/ui/card'
-import { ArrowLeft, Users, Calculator } from 'lucide-react'
+import { ArrowLeft, Users, Calculator, Plug } from 'lucide-react'
 import Link from 'next/link'
 import { ModeToggle } from '@/components/layout/ModeToggle'
 
@@ -19,7 +19,7 @@ export default function SettingsPage() {
         <ModeToggle />
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
         <Link href="/settings/users" className="block group">
           <Card className="h-full transition-all duration-200 group-hover:shadow-lg group-hover:border-emerald-200">
             <CardHeader>
@@ -41,6 +41,18 @@ export default function SettingsPage() {
               </CardTitle>
               <CardDescription>
                 Modifier les taux horaires, marges, frais et constantes de calcul.
+              </CardDescription>
+            </CardHeader>
+          </Card>
+        </Link>
+        <Link href="/settings/crm" className="block group">
+          <Card className="h-full transition-all duration-200 group-hover:shadow-lg group-hover:border-emerald-200">
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2 group-hover:text-emerald-700">
+                <Plug className="h-5 w-5" /> Connexion CRM
+              </CardTitle>
+              <CardDescription>
+                Connecter le calculateur au CRM pour synchroniser les stocks de matières et accessoires.
               </CardDescription>
             </CardHeader>
           </Card>
