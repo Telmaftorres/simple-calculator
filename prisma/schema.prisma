@@ -365,6 +365,9 @@ model Quote {
   // ── Amalgame ──
   hasAmalgame                        Boolean           @default(false)
   amalgameRuns                       QuoteAmalgameRun[]
+  // ── CRM sync ──
+  crmQuoteId                         String?           @unique  // ID du devis dans le CRM (pour dédupliquer les syncs)
+  crmSyncedAt                        DateTime?                  // Date de création auto depuis le CRM
 
   @@index([userId, createdAt])
 }

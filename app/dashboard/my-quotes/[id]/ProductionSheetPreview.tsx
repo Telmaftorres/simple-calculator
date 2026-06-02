@@ -1,6 +1,7 @@
 'use client'
 
 import type { Quote } from './quote-detail-shared'
+import { ProductionQRCode } from './ProductionQRCode'
 
 type PreviewRun = {
   name: string
@@ -131,20 +132,21 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
         {/* Header */}
         <div className="bg-slate-800 text-white px-4 py-3">
           <div className="flex items-start justify-between gap-2">
-            <div>
+            <div className="flex-1 min-w-0">
               <p className="text-[11px] font-bold tracking-wide">
                 {quote.reference ?? `Devis #${quote.id}`}
               </p>
               <p className="text-[10px] text-slate-300 mt-0.5">{quote.client ?? '—'}</p>
-            </div>
-            <div className="text-right shrink-0">
               {quote.study?.number && (
-                <p className="text-[10px] text-slate-300">#{quote.study.number}</p>
+                <p className="text-[10px] text-slate-400 mt-0.5">Étude #{quote.study.number}</p>
               )}
-              <p className="text-[10px] text-slate-300">{quote.quantity} pcs</p>
+              <p className="text-[10px] text-slate-300 mt-0.5">{quote.quantity} pcs</p>
               <p className="text-[10px] text-slate-400">
                 {new Date(quote.createdAt).toLocaleDateString('fr-FR')}
               </p>
+            </div>
+            <div className="shrink-0 rounded overflow-hidden" title={`QR code — Étude ${quote.study?.number ?? quote.reference ?? quote.id}`}>
+              <ProductionQRCode value={String(quote.study?.number ?? quote.reference ?? quote.id)} size={56} />
             </div>
           </div>
         </div>
