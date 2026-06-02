@@ -44,7 +44,8 @@ export default async function CrmDocPage() {
               {
                 step: '1',
                 title: 'Stocks CRM → Calculateur',
-                status: 'done',
+                calcStatus: 'Calculateur prêt',
+                crmStatus: 'À développer côté CRM',
                 desc: 'Le calculateur récupère les matières premières et accessoires directement depuis le CRM. Supprime la double saisie des stocks.',
                 endpoints: ['GET /matieres', 'GET /accessoires'],
                 who: 'Dev CRM',
@@ -52,15 +53,17 @@ export default async function CrmDocPage() {
               {
                 step: '2',
                 title: 'Connexion appli scan de stock',
-                status: 'next',
+                calcStatus: null,
+                crmStatus: 'À développer côté CRM',
                 desc: "L'appli de gestion des sorties de stock se connecte au CRM. Les opérateurs scannent les articles, renseignent la quantité et rattachent la sortie à une étude.",
-                endpoints: ['À définir selon l\'appli stock'],
+                endpoints: ["À définir selon l'appli stock"],
                 who: 'Dev CRM + Dev appli stock',
               },
               {
                 step: '3',
                 title: 'Devis signés → Fiche de production auto',
-                status: 'done',
+                calcStatus: 'Calculateur prêt',
+                crmStatus: 'À développer côté CRM',
                 desc: 'Quand un devis est validé par le client dans le CRM, le calculateur crée automatiquement la fiche de production correspondante. Le CRM peut afficher la fiche et lier vers le calculateur pour la modifier.',
                 endpoints: ['GET /devis?status=signe', 'GET /api/v1/quotes ←', 'GET /api/v1/production-sheets/:id ←'],
                 who: 'Dev CRM',
@@ -68,19 +71,25 @@ export default async function CrmDocPage() {
               {
                 step: '4',
                 title: 'QR code fiche de prod → appli stock',
-                status: 'done',
+                calcStatus: 'Calculateur prêt',
+                crmStatus: 'Lecture QR uniquement',
                 desc: "Chaque fiche de production imprimée contient un QR code encodant le numéro d'étude. L'opérateur scanne le QR code au lieu de saisir manuellement le numéro — la sortie de stock est rattachée automatiquement à la bonne étude.",
-                endpoints: ['QR code encodé : numéro d\'étude CRM'],
-                who: 'Appli stock (lecture QR uniquement)',
+                endpoints: ["QR code encodé : numéro d'étude CRM"],
+                who: 'Appli stock',
               },
-            ].map(({ step, title, status, desc, endpoints, who }) => (
-              <div key={step} className={`rounded-xl border p-4 space-y-2 ${status === 'done' ? 'border-emerald-200 bg-emerald-50' : 'border-amber-200 bg-amber-50'}`}>
-                <div className="flex items-center gap-3">
-                  <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${status === 'done' ? 'bg-emerald-200 text-emerald-800' : 'bg-amber-200 text-amber-800'}`}>
+            ].map(({ step, title, calcStatus, crmStatus, desc, endpoints, who }) => (
+              <div key={step} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
+                <div className="flex items-center gap-2 flex-wrap">
+                  <span className="text-xs font-bold px-2 py-0.5 rounded-full bg-slate-200 text-slate-800">
                     Étape {step}
                   </span>
-                  <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${status === 'done' ? 'bg-white text-emerald-700 border border-emerald-200' : 'bg-white text-amber-700 border border-amber-200'}`}>
-                    {status === 'done' ? '✓ Implémenté' : 'À faire'}
+                  {calcStatus && (
+                    <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-emerald-100 text-emerald-700 border border-emerald-200">
+                      ✓ {calcStatus}
+                    </span>
+                  )}
+                  <span className="text-xs px-2 py-0.5 rounded-full font-medium bg-amber-100 text-amber-700 border border-amber-200">
+                    ⚙ {crmStatus}
                   </span>
                 </div>
                 <p className="text-sm font-semibold text-slate-900">{title}</p>
