@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation'
 import { createQuote } from '@/app/actions/quotes'
 import { saveProductionSheetFull } from '@/app/actions/production-sheet'
 import { saveActualsFromCalc } from '@/app/actions/actuals'
+import { pushQuoteToCrm } from '@/app/actions/crm-push'
+import { buildCrmLines } from '@/lib/crm/buildCrmLines'
 import { toast } from 'sonner'
 import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
 import type {
@@ -23,6 +25,7 @@ export interface SaveContext {
   quantity: number
   selectedPlateId: string
   customPlate: { name: string; width: number; height: number; cost: number } | null
+  plateName: string | null   // nom de la matière sélectionnée (pour push CRM)
   plateCostOverride: number | null
   flatWidth: number
   flatHeight: number
@@ -153,7 +156,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         ? (parseInt(products.find(p => !!p.productTypeId)?.productTypeId || '') || null)
         : parseInt(ctx.selectedProductTypeId)
 
-      await createQuote({
+      const quote = await createQuote({
         studyNumber: ctx.studyNumber,
         client: ctx.client || undefined,
         contactName: ctx.contactName || undefined,
@@ -305,6 +308,44 @@ export function useSaveHandlers(ctx: SaveContext) {
           items: [],
         })) : [],
       })
+      // Push CRM en best-effort (fire-and-forget)
+      if (!isMultiProduct) {
+        pushQuoteToCrm(quote.id, {
+          reference: quote.reference,
+          studyNumber: ctx.studyNumber,
+          client: ctx.client,
+          quantity: ctx.quantity,
+          lignes: buildCrmLines({
+            plateName: ctx.plateName,
+            platesCount: impositionResult?.platesNeeded ?? 0,
+            materialCostRaw: costResult.materialCostRaw,
+            materialCostMarged: costResult.materialCostMarged,
+            materialMarginCoeff: costResult.materialMarginCoeff,
+            printingCost: costResult.printingCost,
+            hasImpression: ctx.hasImpression,
+            cuttingCost: costResult.cuttingCost,
+            assemblyCost: costResult.assemblyCost,
+            hasFaconnage: ctx.hasFaconnage,
+            consumablesCost: costResult.consumablesCost,
+            packagingCost: costResult.packagingCost,
+            hasConditionnement: ctx.hasConditionnement,
+            accessoriesCost: costResult.accessoriesCost,
+            hasAccessoires: ctx.hasAccessoires,
+            accessoriesMargePercent: ctx.accessoriesMargePercent,
+            packagingTotalCost: costResult.packagingTotalCost,
+            hasPackaging: ctx.hasPackaging,
+            packagingBoxType: ctx.packagingBoxType,
+            beTotalCost: costResult.beTotalCost,
+            hasBE: ctx.hasBE ?? false,
+            dossierFeeCost: costResult.dossierFeeCost,
+            hasDossierFee: ctx.hasDossierFee ?? false,
+            transportCostMarged: costResult.transportCostMarged,
+            transportTotal: costResult.transportTotal,
+            transportMargin: costResult.transportMargin,
+          }),
+        }).catch(() => { /* silencieux */ })
+      }
+
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
     } catch (error: unknown) {

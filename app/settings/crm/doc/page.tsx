@@ -77,6 +77,15 @@ export default async function CrmDocPage() {
                 endpoints: ["QR code encodé : numéro d'étude CRM"],
                 who: 'Appli stock',
               },
+              {
+                step: '5',
+                title: 'Save calculateur → Lignes de devis CRM',
+                calcStatus: 'Calculateur prêt',
+                crmStatus: 'À développer côté CRM',
+                desc: "À chaque sauvegarde d'un devis dans le calculateur, les lignes chiffrées (Matière, Impression, Découpe, Façonnage…) sont envoyées automatiquement au CRM qui crée ou met à jour les lignes du devis correspondant.",
+                endpoints: ['POST /devis'],
+                who: 'Dev CRM',
+              },
             ].map(({ step, title, calcStatus, crmStatus, desc, endpoints, who }) => (
               <div key={step} className="rounded-xl border border-slate-200 bg-slate-50 p-4 space-y-2">
                 <div className="flex items-center gap-2 flex-wrap">
@@ -330,6 +339,55 @@ export default async function CrmDocPage() {
           <p className="text-xs text-slate-500">
             Pour modifier une fiche, le CRM redirige l&apos;utilisateur vers <code className="bg-slate-100 px-1 rounded">productionSheetUrl</code> — la page du calculateur s&apos;ouvre directement sur l&apos;onglet fiche de production.
           </p>
+        </section>
+
+        {/* Endpoint POST /devis */}
+        <section className="space-y-4">
+          <h2 className="text-xl font-bold text-slate-900">Endpoint 4 — Réception des lignes de devis (Étape 5)</h2>
+          <div className="flex items-center gap-3 text-sm font-mono bg-slate-50 border border-slate-200 rounded-xl p-3">
+            <span className="bg-blue-100 text-blue-700 px-2 py-0.5 rounded text-xs font-bold shrink-0">POST</span>
+            <span>/devis</span>
+          </div>
+          <p className="text-slate-600 text-sm">
+            Appelé par le calculateur à chaque sauvegarde de devis. Le CRM reçoit les lignes chiffrées et crée ou met à jour le devis correspondant dans l&apos;étude.
+            Retourner le <code className="bg-slate-100 px-1 rounded">crmId</code> du devis créé pour permettre au calculateur de le lier.
+          </p>
+
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-700">Body (JSON) :</p>
+            <pre className="bg-slate-900 text-emerald-400 rounded-xl p-4 text-xs overflow-x-auto leading-relaxed">{`{
+  "reference": "DEV-2024-001",   // Référence calculateur (unique)
+  "studyNumber": "9937",         // Numéro d'étude CRM
+  "client": "Acme SA",
+  "quantity": 500,
+  "lignes": [
+    {
+      "description": "Matière — Carton B 1000x700 — 12 plaque(s)",
+      "prixAchat": 30.00,        // Coût brut HT
+      "marge": 2.40,             // Coefficient (ex: 2.4 = ×2.4)
+      "prixVente": 72.00         // prixAchat × marge
+    },
+    { "description": "Impression", "prixAchat": 18.50, "marge": 1, "prixVente": 18.50 },
+    { "description": "Découpe",    "prixAchat": 12.00, "marge": 1, "prixVente": 12.00 },
+    { "description": "Façonnage",  "prixAchat": 8.00,  "marge": 1, "prixVente": 8.00  },
+    { "description": "Transport",  "prixAchat": 5.00,  "marge": 1.15, "prixVente": 5.75 }
+  ]
+}`}</pre>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm font-semibold text-slate-700">Réponse attendue :</p>
+            <pre className="bg-slate-900 text-emerald-400 rounded-xl p-4 text-xs">{`{ "crmId": "CRM-2024-087" }   // ID du devis dans le CRM`}</pre>
+          </div>
+
+          <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 space-y-1">
+            <p className="text-xs font-semibold text-amber-800">Comportement attendu</p>
+            <ul className="text-xs text-amber-700 list-disc list-inside space-y-0.5">
+              <li>Si un devis avec cette <code>reference</code> existe déjà → mettre à jour ses lignes</li>
+              <li>Sinon → créer un nouveau devis dans l&apos;étude <code>studyNumber</code></li>
+              <li>Toujours retourner le <code>crmId</code> dans la réponse</li>
+            </ul>
+          </div>
         </section>
 
         {/* Headers & CORS */}

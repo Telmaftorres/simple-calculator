@@ -294,7 +294,9 @@ export function useCalculator(
   // ── Save handlers ──
   const { isServing, handleSave, handleSaveProd, handleSaveActuals } = useSaveHandlers({
     studyNumber, client: formState.client, contactName: formState.contactName,
-    selectedProductTypeId, quantity, selectedPlateId, customPlate, plateCostOverride,
+    selectedProductTypeId, quantity, selectedPlateId, customPlate,
+    plateName: selectedPlate?.name ?? customPlate?.name ?? null,
+    plateCostOverride,
     flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
