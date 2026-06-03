@@ -12,7 +12,9 @@ export type SyncResult = {
 }
 
 export async function syncCrmSignedQuotes(): Promise<SyncResult> {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
 
   const crmUrl = await getCrmApiUrl()
   if (!crmUrl) throw new Error('Aucun CRM configuré')
@@ -37,16 +39,16 @@ export async function syncCrmSignedQuotes(): Promise<SyncResult> {
 
   for (const sq of signedQuotes) {
     try {
-      // Déjà synchronisé via crmQuoteId
-      const existingByCrmId = await prisma.quote.findUnique({ where: { crmQuoteId: sq.crmId } })
+      // Déjà synchronisé via crmQuoteId (scoped à la company)
+      const existingByCrmId = await prisma.quote.findFirst({ where: { crmQuoteId: sq.crmId, companyId } })
       if (existingByCrmId) {
         result.alreadySynced++
         continue
       }
 
-      // Trouver le devis par référence
+      // Trouver le devis par référence (scoped à la company)
       const quote = await prisma.quote.findFirst({
-        where: { reference: sq.quoteReference },
+        where: { reference: sq.quoteReference, companyId },
         include: { productionSheet: { select: { id: true } } },
       })
 

@@ -20,8 +20,11 @@ const createUserSchema = z.object({
 })
 
 export async function getUsers() {
-  await requireAdmin()
+  const session = await requireAdmin()
+  const companyId = session.user.companyId
+  if (!companyId) return []
   return await prisma.user.findMany({
+    where: { companyId },
     orderBy: { createdAt: 'desc' },
     select: {
       id: true,
@@ -59,6 +62,8 @@ export async function createUser(formData: FormData) {
   const hashedPassword = await bcrypt.hash(password, 10)
 
   const adminSession = await auth()
+  const companyId = adminSession?.user?.companyId
+  if (!companyId) return { error: 'Aucune company associée' }
 
   try {
     await prisma.user.create({
@@ -71,6 +76,7 @@ export async function createUser(formData: FormData) {
         mustChangePassword: true,
         role,
         permissions: role === 'ADMIN' ? ['MANAGE_USERS', 'MANAGE_PRODUCTS', 'MANAGE_SETTINGS'] : [],
+        companyId,
       },
     })
     await logAction({
@@ -189,8 +195,10 @@ export async function deleteUser(userId: string) {
 
 export async function getUsersForSharing() {
   const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) return []
   return await prisma.user.findMany({
-    where: { id: { not: session.user.id } },
+    where: { id: { not: session.user.id }, companyId },
     select: { id: true, name: true, firstName: true, lastName: true },
     orderBy: { firstName: 'asc' },
   })

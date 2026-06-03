@@ -14,10 +14,11 @@ export default async function CalculatorSettingsPage() {
     redirect('/')
   }
 
+  const companyId = session.user.companyId ?? 0
   const [settings, packagingData, supplierQuotes] = await Promise.all([
-    getSettings(),
-    getPackagingRulesForAdmin(),
-    getPackagingSupplierQuotes(),
+    getSettings(companyId),
+    getPackagingRulesForAdmin(companyId),
+    getPackagingSupplierQuotes(companyId),
   ])
 
   return (

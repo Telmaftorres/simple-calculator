@@ -7,21 +7,22 @@ import { z } from 'zod'
 import { logAction } from '@/lib/server/audit'
 import { auth } from '@/auth'
 
-export async function getSettings() {
+export async function getSettings(companyId: number) {
   return await prisma.setting.findMany({
+    where: { companyId },
     orderBy: { key: 'asc' },
   })
 }
 
-export async function getSettingsMap(): Promise<Record<string, number>> {
-  const settings = await getSettings()
+export async function getSettingsMap(companyId: number): Promise<Record<string, number>> {
+  const settings = await getSettings(companyId)
   return Object.fromEntries(
     settings.map((s) => [s.key, parseFloat(s.value)])
   )
 }
 
 export async function updateSetting(key: string, value: string) {
-  await requireAdmin()
+  const session = await requireAdmin()
 
   const validated = z.object({
     key: z.string().min(1),
@@ -31,10 +32,11 @@ export async function updateSetting(key: string, value: string) {
     ),
   }).parse({ key, value })
 
-  const session = await auth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
 
   await prisma.setting.update({
-    where: { key: validated.key },
+    where: { key_companyId: { key: validated.key, companyId } },
     data: {
       value: validated.value,
       updatedAt: new Date(),

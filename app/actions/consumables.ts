@@ -5,7 +5,6 @@ import { prisma } from '@/lib/server/prisma'
 import { requireAuth } from '@/lib/server/auth'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/server/cache'
-import { unstable_cache } from 'next/cache'
 
 const consumableSchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -13,13 +12,7 @@ const consumableSchema = z.object({
   size: z.number().positive('La taille doit être positive'),
 })
 
-const getConsumablesLocal = unstable_cache(
-  async () => prisma.consumable.findMany({ orderBy: { name: 'asc' } }),
-  ['consumables'],
-  { tags: ['consumables'] }
-)
-
-export async function getConsumables() {
+export async function getConsumables(companyId: number) {
   const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
   const crmUrl = await getCrmApiUrl()
   if (crmUrl) {
@@ -37,29 +30,35 @@ export async function getConsumables() {
       }
     } catch { /* fallback local */ }
   }
-  return getConsumablesLocal()
+  return prisma.consumable.findMany({ where: { companyId }, orderBy: { name: 'asc' } })
 }
 
 export async function createConsumable(data: z.infer<typeof consumableSchema>) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = consumableSchema.parse(data)
-  await prisma.consumable.create({ data: validated })
+  await prisma.consumable.create({ data: { ...validated, companyId } })
   revalidatePath('/dashboard/consumables')
   revalidateCache('consumables')
 }
 
 export async function updateConsumable(id: number, data: z.infer<typeof consumableSchema>) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = consumableSchema.parse(data)
-  await prisma.consumable.update({ where: { id }, data: validated })
+  await prisma.consumable.update({ where: { id, companyId }, data: validated })
   revalidatePath('/dashboard/consumables')
   revalidateCache('consumables')
 }
 
 export async function deleteConsumable(id: number) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validId = z.number().int().positive().parse(id)
-  await prisma.consumable.delete({ where: { id: validId } })
+  await prisma.consumable.delete({ where: { id: validId, companyId } })
   revalidatePath('/dashboard/consumables')
   revalidateCache('consumables')
 }

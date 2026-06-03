@@ -57,6 +57,7 @@ export const authConfig = {
         token.lastName = user.lastName
         token.role = user.role
         token.permissions = user.permissions
+        token.companyId = user.companyId ?? null
       }
       return token
     },
@@ -68,6 +69,7 @@ export const authConfig = {
         session.user.lastName = token.lastName
         session.user.role = token.role ?? 'USER'
         session.user.permissions = token.permissions
+        session.user.companyId = token.companyId ?? null
       }
       return session
     },

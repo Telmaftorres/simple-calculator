@@ -96,6 +96,7 @@ export interface PricingInput {
   material: PackagingMaterial
   widthMm: number
   quantity: number
+  companyId?: number
 }
 
 export interface PricingResult {
@@ -151,17 +152,18 @@ export function getSuggestedUnitPricePure(
 export async function getSuggestedUnitPrice(
   input: PricingInput
 ): Promise<PricingResult> {
-  const { category, material, widthMm, quantity } = input
+  const { category, material, widthMm, quantity, companyId } = input
+  if (!companyId) throw new Error('getSuggestedUnitPrice: companyId requis')
 
   const size = resolveSize(material, widthMm)
   const quantityBand = resolveQuantityBand(quantity)
 
   const [rule, coeff] = await Promise.all([
-    prisma.packagingPricingRule.findUnique({
-      where: { category_material_size: { category, material, size } },
+    prisma.packagingPricingRule.findFirst({
+      where: { category, material, size, companyId },
     }),
-    prisma.quantityCoefficient.findUnique({
-      where: { quantityBand },
+    prisma.quantityCoefficient.findFirst({
+      where: { quantityBand, companyId },
     }),
   ])
 

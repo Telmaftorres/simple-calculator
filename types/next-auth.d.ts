@@ -6,8 +6,9 @@ declare module 'next-auth' {
     mustChangePassword?: boolean
     firstName?: string | null
     lastName?: string | null
-    role: 'ADMIN' | 'USER'        // ✅ non-optionnel
+    role: 'ADMIN' | 'USER'
     permissions?: string[]
+    companyId?: number | null
   }
 
   interface Session {
@@ -16,8 +17,9 @@ declare module 'next-auth' {
       mustChangePassword?: boolean
       firstName?: string | null
       lastName?: string | null
-      role: 'ADMIN' | 'USER'      // ✅ non-optionnel
+      role: 'ADMIN' | 'USER'
       permissions?: string[]
+      companyId?: number | null
     } & DefaultSession['user']
   }
 }
@@ -28,7 +30,8 @@ declare module 'next-auth/jwt' {
     mustChangePassword?: boolean
     firstName?: string | null
     lastName?: string | null
-    role?: 'ADMIN' | 'USER'       // reste optionnel dans le JWT — normal
+    role?: 'ADMIN' | 'USER'
     permissions?: string[]
+    companyId?: number | null
   }
 }

@@ -5,7 +5,6 @@ import { prisma } from '@/lib/server/prisma'
 import { requireAuth } from '@/lib/server/auth'
 import { revalidatePath } from 'next/cache'
 import { revalidateCache } from '@/lib/server/cache'
-import { unstable_cache } from 'next/cache'
 
 const accessorySchema = z.object({
   name: z.string().min(1, 'Le nom est requis'),
@@ -19,13 +18,8 @@ const accessorySchema = z.object({
   weight: z.number().positive().optional(),
 })
 
-const getAccessoriesLocal = unstable_cache(
-  async () => prisma.accessory.findMany({ orderBy: { name: 'asc' } }),
-  ['accessories'],
-  { tags: ['accessories'] }
-)
-
-export async function getAccessories() {
+export async function getAccessories(companyId?: number) {
+  const cid = companyId ?? (await requireAuth()).user.companyId ?? 0
   const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
   const crmUrl = await getCrmApiUrl()
   if (crmUrl) {
@@ -43,30 +37,36 @@ export async function getAccessories() {
       }
     } catch { /* fallback local */ }
   }
-  return getAccessoriesLocal()
+  return prisma.accessory.findMany({ where: { companyId: cid }, orderBy: { name: 'asc' } })
 }
 
 export async function createAccessory(data: z.infer<typeof accessorySchema>) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = accessorySchema.parse(data)
-  const accessory = await prisma.accessory.create({ data: validated })
+  const accessory = await prisma.accessory.create({ data: { ...validated, companyId } })
   revalidatePath('/dashboard/accessories')
   revalidateCache('accessories')
   return accessory
 }
 
 export async function updateAccessory(id: number, data: z.infer<typeof accessorySchema>) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = accessorySchema.parse(data)
-  await prisma.accessory.update({ where: { id }, data: validated })
+  await prisma.accessory.update({ where: { id, companyId }, data: validated })
   revalidatePath('/dashboard/accessories')
   revalidateCache('accessories')
 }
 
 export async function deleteAccessory(id: number) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validId = z.number().int().positive().parse(id)
-  await prisma.accessory.delete({ where: { id: validId } })
+  await prisma.accessory.delete({ where: { id: validId, companyId } })
   revalidatePath('/dashboard/accessories')
   revalidateCache('accessories')
 }

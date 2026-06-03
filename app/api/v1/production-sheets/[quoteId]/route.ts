@@ -12,14 +12,15 @@ export async function GET(
 ) {
   const authHeader = req.headers.get('Authorization')
   const key = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-  if (!(await validateApiKey(key))) return unauthorized()
+  const { valid, companyId } = await validateApiKey(key)
+  if (!valid || !companyId) return unauthorized()
 
   const { quoteId: raw } = await params
   const quoteId = parseInt(raw)
   if (isNaN(quoteId)) return NextResponse.json({ error: 'ID invalide' }, { status: 400 })
 
-  const quote = await prisma.quote.findUnique({
-    where: { id: quoteId },
+  const quote = await prisma.quote.findFirst({
+    where: { id: quoteId, companyId },
     include: {
       productionSheet: {
         include: {

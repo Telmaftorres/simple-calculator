@@ -29,23 +29,29 @@ const elementSchema = z.object({
 // ── PLATES ──
 
 export async function createPlate(data: z.infer<typeof plateSchema>) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = plateSchema.parse(data)
-  await prisma.plate.create({ data: validated })
+  await prisma.plate.create({ data: { ...validated, companyId } })
   revalidateEntity('plates', '/dashboard/plates', '/')
 }
 
 export async function updatePlate(id: number, data: z.infer<typeof plateSchema>) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = plateSchema.parse(data)
-  await prisma.plate.update({ where: { id }, data: validated })
+  await prisma.plate.update({ where: { id, companyId }, data: validated })
   revalidateEntity('plates', '/dashboard/plates', '/')
 }
 
 export async function deletePlate(id: number) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validId = z.number().int().positive().parse(id)
-  await prisma.plate.delete({ where: { id: validId } })
+  await prisma.plate.delete({ where: { id: validId, companyId } })
   revalidateEntity('plates', '/dashboard/plates', '/')
 }
 
@@ -56,13 +62,16 @@ export async function createProductType(
   flatWidthFormula?: string,
   flatHeightFormula?: string
 ) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = productTypeSchema.parse({ name, flatWidthFormula, flatHeightFormula })
   const result = await prisma.productType.create({
     data: {
       name: validated.name,
       flatWidthFormula: validated.flatWidthFormula || 'l',
       flatHeightFormula: validated.flatHeightFormula || 'L',
+      companyId,
     },
   })
   revalidateEntity('product-types', '/dashboard/products', '/')
@@ -76,10 +85,12 @@ export async function updateProductType(
   flatHeightFormula?: string,
   imageUrl?: string | null,
 ) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = productTypeSchema.parse({ name, flatWidthFormula, flatHeightFormula })
   await prisma.productType.update({
-    where: { id },
+    where: { id, companyId },
     data: {
       name: validated.name,
       flatWidthFormula: validated.flatWidthFormula || undefined,
@@ -91,9 +102,11 @@ export async function updateProductType(
 }
 
 export async function deleteProductType(id: number) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validId = z.number().int().positive().parse(id)
-  await prisma.productType.delete({ where: { id: validId } })
+  await prisma.productType.delete({ where: { id: validId, companyId } })
   revalidateEntity('product-types', '/dashboard/products', '/')
 }
 

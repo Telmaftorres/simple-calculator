@@ -40,13 +40,14 @@ export default async function Home({
   const session = await auth()
   const userName = session?.user?.firstName || session?.user?.name?.split(' ')[0] || 'Inconnu'
 
+  const companyId = session?.user?.companyId ?? 0
   const [productTypes, plates, accessories, consumables, settings, packagingRules] = await Promise.all([
-    getProductTypes(),
-    getPlates(),
-    getAccessories(),
-    getConsumables(),
-    getSettingsMap(),
-    getPackagingRules(),
+    getProductTypes(companyId),
+    getPlates(companyId),
+    getAccessories(companyId),
+    getConsumables(companyId),
+    getSettingsMap(companyId),
+    getPackagingRules(companyId),
   ])
 
   // For production/actuals mode, load the quote with its production sheet

@@ -1,18 +1,17 @@
 'use server'
 
 import { prisma } from '@/lib/server/prisma'
-import { unstable_cache } from 'next/cache'
-import { requireAdmin } from '@/lib/server/auth'
+import { requireAdmin, requireAuth } from '@/lib/server/auth'
 import { revalidateCache } from '@/lib/server/cache'
 
-export const getStudies = unstable_cache(
-  async () => prisma.study.findMany({ orderBy: { createdAt: 'desc' } }),
-  ['studies'],
-  { tags: ['studies'] }
-)
+export async function getStudies(companyId: number) {
+  return prisma.study.findMany({ where: { companyId }, orderBy: { createdAt: 'desc' } })
+}
 
-export const getProductTypes = unstable_cache(
-  async () => prisma.productType.findMany({
+export async function getProductTypes(companyId?: number) {
+  const cid = companyId ?? (await requireAuth()).user.companyId ?? 0
+  return prisma.productType.findMany({
+    where: { companyId: cid },
     include: {
       elements: true,
       templates: {
@@ -127,18 +126,11 @@ export const getProductTypes = unstable_cache(
       },
     },
     orderBy: { name: 'asc' },
-  }),
-  ['product-types'],
-  { tags: ['product-types'] }
-)
+  })
+}
 
-const getPlatesLocal = unstable_cache(
-  async () => prisma.plate.findMany({ orderBy: { name: 'asc' } }),
-  ['plates'],
-  { tags: ['plates'] }
-)
-
-export async function getPlates() {
+export async function getPlates(companyId?: number) {
+  const cid = companyId ?? (await requireAuth()).user.companyId ?? 0
   const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
   const crmUrl = await getCrmApiUrl()
   if (crmUrl) {
@@ -156,7 +148,7 @@ export async function getPlates() {
       }
     } catch { /* fallback local */ }
   }
-  return getPlatesLocal()
+  return prisma.plate.findMany({ where: { companyId: cid }, orderBy: { name: 'asc' } })
 }
 
 export type PackagingRulesData = {
@@ -164,17 +156,13 @@ export type PackagingRulesData = {
   coefficients: { minQuantity: number; maxQuantity: number | null; coefficient: number }[]
 }
 
-export const getPackagingRules = unstable_cache(
-  async (): Promise<PackagingRulesData> => {
-    const [rules, coefficients] = await Promise.all([
-      prisma.packagingPricingRule.findMany({ orderBy: [{ category: 'asc' }, { material: 'asc' }, { size: 'asc' }] }),
-      prisma.quantityCoefficient.findMany({ orderBy: { minQuantity: 'asc' } }),
-    ])
-    return { rules, coefficients }
-  },
-  ['packaging-rules'],
-  { tags: ['packaging-rules'] }
-)
+export async function getPackagingRules(companyId: number): Promise<PackagingRulesData> {
+  const [rules, coefficients] = await Promise.all([
+    prisma.packagingPricingRule.findMany({ where: { companyId }, orderBy: [{ category: 'asc' }, { material: 'asc' }, { size: 'asc' }] }),
+    prisma.quantityCoefficient.findMany({ where: { companyId }, orderBy: { minQuantity: 'asc' } }),
+  ])
+  return { rules, coefficients }
+}
 
 export type PackagingRuleForAdmin = {
   id: number
@@ -192,34 +180,30 @@ export type QuantityCoefficientForAdmin = {
   coefficient: number
 }
 
-export async function getPackagingRulesForAdmin(): Promise<{
+export async function getPackagingRulesForAdmin(companyId: number): Promise<{
   rules: PackagingRuleForAdmin[]
   coefficients: QuantityCoefficientForAdmin[]
 }> {
   const [rules, coefficients] = await Promise.all([
-    prisma.packagingPricingRule.findMany({
-      orderBy: [{ category: 'asc' }, { material: 'asc' }, { size: 'asc' }],
-    }),
-    prisma.quantityCoefficient.findMany({ orderBy: { minQuantity: 'asc' } }),
+    prisma.packagingPricingRule.findMany({ where: { companyId }, orderBy: [{ category: 'asc' }, { material: 'asc' }, { size: 'asc' }] }),
+    prisma.quantityCoefficient.findMany({ where: { companyId }, orderBy: { minQuantity: 'asc' } }),
   ])
   return { rules, coefficients }
 }
 
 export async function updatePackagingPricingRule(id: number, baseUnitPrice: number): Promise<void> {
-  await requireAdmin()
-  await prisma.packagingPricingRule.update({
-    where: { id },
-    data: { baseUnitPrice },
-  })
+  const session = await requireAdmin()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
+  await prisma.packagingPricingRule.update({ where: { id, companyId }, data: { baseUnitPrice } })
   revalidateCache('packaging-rules')
 }
 
 export async function updateQuantityCoefficient(id: number, coefficient: number): Promise<void> {
-  await requireAdmin()
-  await prisma.quantityCoefficient.update({
-    where: { id },
-    data: { coefficient },
-  })
+  const session = await requireAdmin()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
+  await prisma.quantityCoefficient.update({ where: { id, companyId }, data: { coefficient } })
   revalidateCache('packaging-rules')
 }
 
@@ -238,8 +222,9 @@ export type PackagingSupplierQuoteForAdmin = {
   notes: string | null
 }
 
-export async function getPackagingSupplierQuotes(): Promise<PackagingSupplierQuoteForAdmin[]> {
+export async function getPackagingSupplierQuotes(companyId: number): Promise<PackagingSupplierQuoteForAdmin[]> {
   const quotes = await prisma.packagingSupplierQuote.findMany({
+    where: { companyId },
     orderBy: [{ category: 'asc' }, { material: 'asc' }, { quotedAt: 'desc' }],
   })
   return quotes.map((q) => ({ ...q, quotedAt: q.quotedAt.toISOString() }))
@@ -249,12 +234,9 @@ function sizeMetric(q: { dimWidth: number | null; dimHeight: number | null; dimD
   const w = q.dimWidth ?? 0
   const h = q.dimHeight ?? 0
   const d = q.dimDepth ?? 0
-  // Use volume; if depth missing use surface area as fallback
   return d > 0 ? w * h * d : w * h
 }
 
-// Assigns PETIT/MOYEN/GRAND by tertile within a sorted list of quotes.
-// Returns a map of size → average unitPrice (only for non-empty groups).
 function computeTertileAverages(
   quotes: { unitPrice: number; dimWidth: number | null; dimHeight: number | null; dimDepth: number | null }[]
 ): Record<string, number> {
@@ -275,17 +257,17 @@ function computeTertileAverages(
   return result
 }
 
-async function recalculatePackagingByMaterial(category: string, material: string): Promise<void> {
+async function recalculatePackagingByMaterial(category: string, material: string, companyId: number): Promise<void> {
   const quotes = await prisma.packagingSupplierQuote.findMany({
-    where: { category, material },
+    where: { category, material, companyId },
     select: { unitPrice: true, dimWidth: true, dimHeight: true, dimDepth: true },
   })
   const averages = computeTertileAverages(quotes)
   for (const [size, avg] of Object.entries(averages)) {
     await prisma.packagingPricingRule.upsert({
-      where: { category_material_size: { category, material, size } },
+      where: { category_material_size_companyId: { category, material, size, companyId } },
       update: { baseUnitPrice: avg },
-      create: { category, material, size, baseUnitPrice: avg },
+      create: { category, material, size, baseUnitPrice: avg, companyId },
     })
   }
   revalidateCache('packaging-rules')
@@ -302,7 +284,9 @@ export async function createPackagingSupplierQuote(data: {
   quotedAt?: string
   notes?: string
 }): Promise<void> {
-  await requireAdmin()
+  const session = await requireAdmin()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   await prisma.packagingSupplierQuote.create({
     data: {
       supplierName: data.supplierName,
@@ -314,9 +298,10 @@ export async function createPackagingSupplierQuote(data: {
       unitPrice: data.unitPrice,
       quotedAt: data.quotedAt ? new Date(data.quotedAt) : new Date(),
       notes: data.notes ?? null,
+      companyId,
     },
   })
-  await recalculatePackagingByMaterial(data.category, data.material)
+  await recalculatePackagingByMaterial(data.category, data.material, companyId)
 }
 
 export async function updatePackagingSupplierQuote(
@@ -331,8 +316,10 @@ export async function updatePackagingSupplierQuote(
     notes?: string
   }
 ): Promise<void> {
-  await requireAdmin()
-  const existing = await prisma.packagingSupplierQuote.findUniqueOrThrow({ where: { id } })
+  const session = await requireAdmin()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
+  const existing = await prisma.packagingSupplierQuote.findFirstOrThrow({ where: { id, companyId } })
   await prisma.packagingSupplierQuote.update({
     where: { id },
     data: {
@@ -345,12 +332,14 @@ export async function updatePackagingSupplierQuote(
       ...(data.notes !== undefined && { notes: data.notes }),
     },
   })
-  await recalculatePackagingByMaterial(existing.category, existing.material)
+  await recalculatePackagingByMaterial(existing.category, existing.material, companyId)
 }
 
 export async function deletePackagingSupplierQuote(id: number): Promise<void> {
-  await requireAdmin()
-  const existing = await prisma.packagingSupplierQuote.findUniqueOrThrow({ where: { id } })
+  const session = await requireAdmin()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
+  const existing = await prisma.packagingSupplierQuote.findFirstOrThrow({ where: { id, companyId } })
   await prisma.packagingSupplierQuote.delete({ where: { id } })
-  await recalculatePackagingByMaterial(existing.category, existing.material)
+  await recalculatePackagingByMaterial(existing.category, existing.material, companyId)
 }

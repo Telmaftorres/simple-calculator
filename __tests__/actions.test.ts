@@ -32,7 +32,7 @@ describe('Server Actions: get-data', () => {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (prisma.plate.findMany as any).mockResolvedValue(mockPlates)
 
-    const plates = await getPlates()
+    const plates = await getPlates(1)
     expect(plates).toHaveLength(1)
     expect(plates[0].name).toBe('Plaque 1')
   })
@@ -44,7 +44,7 @@ describe('Server Actions: get-data', () => {
       // eslint-disable-next-line @typescript-eslint/no-explicit-any
       (prisma.productType.findMany as any).mockResolvedValue(mockProductTypes)
 
-      const productTypes = await getProductTypes()
+      const productTypes = await getProductTypes(1)
       expect(productTypes).toHaveLength(1)
       expect(productTypes[0].name).toBe('Stand')
   })

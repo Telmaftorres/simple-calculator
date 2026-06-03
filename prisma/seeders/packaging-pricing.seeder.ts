@@ -30,22 +30,22 @@ const QUANTITY_COEFFICIENTS = [
   { quantityBand: 'GRANDE_SERIE',  minQuantity: 200,  maxQuantity: null, coefficient: 0.92 },
 ] as const
 
-export async function seedPackagingPricing(prisma: PrismaClient): Promise<void> {
+export async function seedPackagingPricing(prisma: PrismaClient, companyId: number): Promise<void> {
   console.log('📦 Seeding packaging pricing rules...')
 
   for (const rule of PRICING_RULES) {
     await prisma.packagingPricingRule.upsert({
-      where: { category_material_size: { category: rule.category, material: rule.material, size: rule.size } },
+      where: { category_material_size_companyId: { category: rule.category, material: rule.material, size: rule.size, companyId } },
       update: { baseUnitPrice: rule.baseUnitPrice },
-      create: rule,
+      create: { ...rule, companyId },
     })
   }
 
   for (const coeff of QUANTITY_COEFFICIENTS) {
     await prisma.quantityCoefficient.upsert({
-      where: { quantityBand: coeff.quantityBand },
+      where: { quantityBand_companyId: { quantityBand: coeff.quantityBand, companyId } },
       update: { minQuantity: coeff.minQuantity, maxQuantity: coeff.maxQuantity, coefficient: coeff.coefficient },
-      create: coeff,
+      create: { ...coeff, companyId },
     })
   }
 

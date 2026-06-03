@@ -12,7 +12,7 @@ import { logAction } from '@/lib/server/audit'
 function buildQuoteData(
   validated: CreateQuoteInput,
   extra: { reference: string; studyId: number; userId: string }
-): Omit<Prisma.QuoteUncheckedCreateInput, 'id' | 'createdAt' | 'updatedAt'> {
+): Omit<Prisma.QuoteUncheckedCreateInput, 'id' | 'createdAt' | 'updatedAt' | 'companyId'> {
   const {
     studyNumber,
     elements,
@@ -38,7 +38,7 @@ function buildQuoteData(
   }
 }
 
-async function generateReference(parentReference?: string): Promise<string> {
+async function generateReference(companyId: number, parentReference?: string): Promise<string> {
   const now = new Date()
   const month = String(now.getMonth() + 1).padStart(2, '0')
   const year = String(now.getFullYear()).slice(-2)
@@ -46,7 +46,7 @@ async function generateReference(parentReference?: string): Promise<string> {
   if (parentReference) {
     const base = parentReference.replace(/-[A-Z]$/, '')
     const existing = await prisma.quote.findMany({
-      where: { reference: { startsWith: base } },
+      where: { reference: { startsWith: base }, companyId },
       select: { reference: true },
     })
     const usedLetters = existing
@@ -63,14 +63,17 @@ async function generateReference(parentReference?: string): Promise<string> {
 
 export async function createQuote(data: CreateQuoteInput) {
   const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = createQuoteSchema.parse(data)
 
   const study = await prisma.study.upsert({
-    where: { number: validated.studyNumber },
+    where: { number_companyId: { number: validated.studyNumber, companyId } },
     update: {},
     create: {
       number: validated.studyNumber,
       name: `Etude ${validated.studyNumber}`,
+      companyId,
     },
   })
 
@@ -84,7 +87,7 @@ export async function createQuote(data: CreateQuoteInput) {
     }
   }
 
-  const reference = await generateReference(validated.parentReference)
+  const reference = await generateReference(companyId, validated.parentReference)
   const { transportDeliveries } = validated
 
   const quote = await prisma.quote.create({
@@ -94,6 +97,7 @@ export async function createQuote(data: CreateQuoteInput) {
         studyId: study.id,
         userId: session.user.id,
       }),
+      companyId,
       accessories: {
         create: validated.accessories?.map((acc) => ({
           accessoryId: acc.id,
@@ -184,15 +188,17 @@ export async function createQuote(data: CreateQuoteInput) {
 
 export async function updateQuote(id: number, data: CreateQuoteInput) {
   const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validated = createQuoteSchema.parse(data)
 
-  const existing = await prisma.quote.findUnique({ where: { id }, select: { userId: true, reference: true } })
+  const existing = await prisma.quote.findFirst({ where: { id, companyId }, select: { userId: true, reference: true } })
   if (!existing) throw new Error('Devis introuvable')
 
   const study = await prisma.study.upsert({
-    where: { number: validated.studyNumber },
+    where: { number_companyId: { number: validated.studyNumber, companyId } },
     update: {},
-    create: { number: validated.studyNumber, name: `Etude ${validated.studyNumber}` },
+    create: { number: validated.studyNumber, name: `Etude ${validated.studyNumber}`, companyId },
   })
 
   const { transportDeliveries } = validated
@@ -253,16 +259,22 @@ const QUOTE_LIST_INCLUDE = {
 } as const
 
 export async function getUserQuotes() {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) return []
   return await prisma.quote.findMany({
+    where: { userId: session.user.id, companyId },
     include: QUOTE_LIST_INCLUDE,
     orderBy: { createdAt: 'desc' },
   })
 }
 
 export async function getAllQuotes() {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) return []
   return await prisma.quote.findMany({
+    where: { companyId },
     include: QUOTE_LIST_INCLUDE,
     orderBy: { createdAt: 'desc' },
   })
@@ -270,9 +282,11 @@ export async function getAllQuotes() {
 
 export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
   const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
 
-  const source = await prisma.quote.findUnique({
-    where: { id: quoteId },
+  const source = await prisma.quote.findFirst({
+    where: { id: quoteId, companyId },
     include: {
       accessories: true,
       consumables: true,
@@ -284,7 +298,7 @@ export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
 
   if (!source) throw new Error('Devis introuvable')
 
-  const targetUser = await prisma.user.findUnique({ where: { id: targetUserId }, select: { id: true } })
+  const targetUser = await prisma.user.findFirst({ where: { id: targetUserId, companyId }, select: { id: true } })
   if (!targetUser) throw new Error('Utilisateur destinataire introuvable')
 
   const {
@@ -303,7 +317,7 @@ export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
     ...scalarFields
   } = source
 
-  const reference = await generateReference()
+  const reference = await generateReference(companyId)
 
   await prisma.quote.create({
     data: {
@@ -340,9 +354,11 @@ export async function sendQuoteToUser(quoteId: number, targetUserId: string) {
 
 export async function deleteQuote(id: number) {
   const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
   const validId = z.number().int().positive().parse(id)
 
-  const quote = await prisma.quote.findUnique({ where: { id: validId }, select: { reference: true, userId: true } })
+  const quote = await prisma.quote.findFirst({ where: { id: validId, companyId }, select: { reference: true, userId: true } })
   if (!quote) throw new Error('Devis introuvable')
 
   // Suppression explicite de tous les enfants pour éviter tout problème de cascade FK
@@ -389,9 +405,11 @@ export async function deleteQuote(id: number) {
 }
 
 export async function getQuoteById(id: number) {
-  await requireAuth()
-  const quote = await prisma.quote.findUnique({
-    where: { id },
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) return null
+  const quote = await prisma.quote.findFirst({
+    where: { id, companyId },
     include: {
       study: true,
       productType: { include: { elements: true } },
@@ -416,10 +434,12 @@ export async function getQuoteById(id: number) {
 }
 
 export async function getQuoteDetail(id: number) {
-  await requireAuth()
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) return null
 
-  const quote = await prisma.quote.findUnique({
-    where: { id },
+  const quote = await prisma.quote.findFirst({
+    where: { id, companyId },
     include: {
       study: true,
       productType: { include: { elements: true } },
@@ -458,7 +478,9 @@ export async function patchQuoteFlags(
   data: { hasAssemblyNotice?: boolean; hasPoseEtiquette?: boolean }
 ) {
   const session = await requireAuth()
-  const existing = await prisma.quote.findUnique({ where: { id }, select: { userId: true } })
+  const companyId = session.user.companyId
+  if (!companyId) throw new Error('Aucune company associée')
+  const existing = await prisma.quote.findFirst({ where: { id, companyId }, select: { id: true } })
   if (!existing) throw new Error('Devis introuvable')
   await prisma.quote.update({ where: { id }, data })
   revalidatePath(`/dashboard/my-quotes/${id}`)

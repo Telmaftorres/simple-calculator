@@ -9,9 +9,11 @@ function unauthorized() {
 export async function GET(req: NextRequest) {
   const authHeader = req.headers.get('Authorization')
   const key = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null
-  if (!(await validateApiKey(key))) return unauthorized()
+  const { valid, companyId } = await validateApiKey(key)
+  if (!valid || !companyId) return unauthorized()
 
   const quotes = await prisma.quote.findMany({
+    where: { companyId },
     select: {
       id: true,
       reference: true,

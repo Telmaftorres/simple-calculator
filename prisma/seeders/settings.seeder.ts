@@ -43,7 +43,7 @@ import {
   PLATE_BORDER_MM,
 } from '../../lib/config/pricing'
 
-export async function seedSettings(prisma: PrismaClient): Promise<void> {
+export async function seedSettings(prisma: PrismaClient, companyId: number): Promise<void> {
   console.log('⚙️ Seeding settings...')
   const settings = [
     { key: 'HOURLY_RATE_PRINT', value: String(HOURLY_RATE_PRINT), label: 'Taux horaire impression', unit: '€/h' },
@@ -101,14 +101,14 @@ export async function seedSettings(prisma: PrismaClient): Promise<void> {
     'MARGIN_MATERIAUX',
     'MARGIN_EMBALLAGE',
   ]
-  await prisma.setting.deleteMany({ where: { key: { in: obsoleteKeys } } })
+  await prisma.setting.deleteMany({ where: { key: { in: obsoleteKeys }, companyId } })
   console.log('Anciennes constantes supprimées :', obsoleteKeys)
 
   for (const setting of settings) {
     await prisma.setting.upsert({
-      where: { key: setting.key },
-      update: { label: setting.label, unit: setting.unit },
-      create: setting,
+      where: { key_companyId: { key: setting.key, companyId } },
+      update: { label: setting.label, unit: (setting as { unit?: string }).unit },
+      create: { ...setting, companyId },
     })
   }
   console.log('✅ Settings seed: terminé.')
