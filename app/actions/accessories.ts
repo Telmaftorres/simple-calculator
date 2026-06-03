@@ -26,13 +26,15 @@ const getAccessoriesLocal = unstable_cache(
 )
 
 export async function getAccessories() {
-  const { getCrmApiUrl } = await import('./crm-config')
+  const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
   const crmUrl = await getCrmApiUrl()
   if (crmUrl) {
     try {
+      const headers = await getCrmHeaders()
       const res = await fetch(`${crmUrl.replace(/\/$/, '')}/accessoires`, {
         signal: AbortSignal.timeout(5000),
         next: { revalidate: 60 },
+        headers,
       })
       if (res.ok) {
         const data = await res.json()

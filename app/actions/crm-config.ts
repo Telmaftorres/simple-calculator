@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache'
 
 const CRM_URL_KEY = 'CRM_API_URL'
 const CRM_API_KEY = 'CRM_API_KEY'
+const CRM_OUTBOUND_KEY = 'CRM_OUTBOUND_KEY'
 
 export async function getCrmApiUrl(): Promise<string | null> {
   const setting = await prisma.setting.findUnique({ where: { key: CRM_URL_KEY } })
@@ -24,13 +25,38 @@ export async function setCrmApiUrl(url: string | null) {
   revalidatePath('/dashboard')
 }
 
+export async function getCrmOutboundKey(): Promise<string | null> {
+  const setting = await prisma.setting.findUnique({ where: { key: CRM_OUTBOUND_KEY } })
+  return setting?.value || null
+}
+
+export async function setCrmOutboundKey(key: string | null) {
+  await requireAuth()
+  const value = key?.trim() || ''
+  await prisma.setting.upsert({
+    where: { key: CRM_OUTBOUND_KEY },
+    update: { value },
+    create: { key: CRM_OUTBOUND_KEY, value, label: 'Clé API CRM sortante' },
+  })
+  revalidatePath('/settings/crm')
+}
+
+export async function getCrmHeaders(): Promise<Record<string, string>> {
+  const outboundKey = await getCrmOutboundKey()
+  return {
+    Accept: 'application/json',
+    ...(outboundKey ? { Authorization: `Bearer ${outboundKey}` } : {}),
+  }
+}
+
 export async function testCrmConnection(url: string): Promise<{ ok: boolean; message: string }> {
   await requireAuth()
   const trimmed = url.trim().replace(/\/$/, '')
   try {
+    const headers = await getCrmHeaders()
     const res = await fetch(`${trimmed}/accessoires`, {
       signal: AbortSignal.timeout(5000),
-      headers: { 'Accept': 'application/json' },
+      headers,
     })
     if (!res.ok) return { ok: false, message: `Erreur HTTP ${res.status}` }
     await res.json()

@@ -3,16 +3,17 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { setCrmApiUrl, testCrmConnection, generateApiKey } from '@/app/actions/crm-config'
+import { setCrmApiUrl, testCrmConnection, generateApiKey, setCrmOutboundKey } from '@/app/actions/crm-config'
 import { syncCrmSignedQuotes, type SyncResult } from '@/app/actions/crm-sync'
 import { Plug, Unplug, CheckCircle, XCircle, Loader2, Key, Copy, RefreshCw, Link } from 'lucide-react'
 
 interface Props {
   initialUrl: string | null
   initialApiKey: string | null
+  initialOutboundKey: string | null
 }
 
-export function CrmConfigClient({ initialUrl, initialApiKey }: Props) {
+export function CrmConfigClient({ initialUrl, initialApiKey, initialOutboundKey }: Props) {
   const [url, setUrl] = useState(initialUrl ?? '')
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -21,6 +22,8 @@ export function CrmConfigClient({ initialUrl, initialApiKey }: Props) {
   const [generatingKey, setGeneratingKey] = useState(false)
   const [syncing, setSyncing] = useState(false)
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
+  const [outboundKey, setOutboundKey] = useState(initialOutboundKey ?? '')
+  const [savingOutbound, setSavingOutbound] = useState(false)
 
   const isConnected = !!initialUrl
 
@@ -82,6 +85,18 @@ export function CrmConfigClient({ initialUrl, initialApiKey }: Props) {
     toast.success('Clé copiée')
   }
 
+  const handleSaveOutboundKey = async () => {
+    setSavingOutbound(true)
+    try {
+      await setCrmOutboundKey(outboundKey || null)
+      toast.success(outboundKey ? 'Clé API CRM enregistrée' : 'Clé supprimée')
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setSavingOutbound(false)
+    }
+  }
+
   const handleSync = async () => {
     setSyncing(true)
     setSyncResult(null)
@@ -122,7 +137,7 @@ export function CrmConfigClient({ initialUrl, initialApiKey }: Props) {
           className="w-full px-3 py-2 text-sm border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
         />
         <p className="text-xs text-slate-400">
-          Le calculateur appellera <code className="bg-slate-100 px-1 rounded">/accessoires</code>, <code className="bg-slate-100 px-1 rounded">/matieres</code> et <code className="bg-slate-100 px-1 rounded">/devis?status=signe</code> sur cette URL.
+          Le calculateur appellera <code className="bg-slate-100 px-1 rounded">/matieres</code>, <code className="bg-slate-100 px-1 rounded">/accessoires</code>, <code className="bg-slate-100 px-1 rounded">/consommables</code> et <code className="bg-slate-100 px-1 rounded">/devis?status=signe</code> sur cette URL.
         </p>
       </div>
 
@@ -148,6 +163,33 @@ export function CrmConfigClient({ initialUrl, initialApiKey }: Props) {
             <Unplug className="h-4 w-4 mr-1.5" /> Déconnecter
           </Button>
         )}
+      </div>
+
+      {/* Séparateur */}
+      <div className="border-t border-slate-200" />
+
+      {/* Clé API sortante (Calculateur → CRM) */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Key className="h-4 w-4 text-slate-500" />
+          <p className="text-sm font-semibold text-slate-700">Clé API (Calculateur → CRM)</p>
+        </div>
+        <p className="text-xs text-slate-500">
+          Si votre CRM exige une authentification, saisissez ici la clé API. Elle sera envoyée dans le header{' '}
+          <code className="bg-slate-100 px-1 rounded">Authorization: Bearer &lt;clé&gt;</code> à chaque appel sortant.
+        </p>
+        <div className="flex gap-2">
+          <input
+            type="text"
+            value={outboundKey}
+            onChange={e => setOutboundKey(e.target.value)}
+            placeholder="sk_..."
+            className="flex-1 px-3 py-2 text-sm font-mono border border-slate-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-slate-800"
+          />
+          <Button size="sm" onClick={handleSaveOutboundKey} disabled={savingOutbound} className="bg-slate-900 hover:bg-slate-700">
+            {savingOutbound ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
+          </Button>
+        </div>
       </div>
 
       {/* Séparateur */}
@@ -222,7 +264,7 @@ export function CrmConfigClient({ initialUrl, initialApiKey }: Props) {
         <div className="space-y-2 text-xs font-mono">
           <div className="bg-white rounded-lg border border-slate-200 p-3 space-y-1">
             <p className="text-slate-500 font-sans font-medium">CRM expose (calculateur lit) :</p>
-            <p className="text-emerald-600">GET /matieres &nbsp; GET /accessoires &nbsp; GET /devis?status=signe</p>
+            <p className="text-emerald-600">GET /matieres &nbsp; GET /accessoires &nbsp; GET /consommables &nbsp; GET /devis?status=signe</p>
           </div>
           <div className="bg-white rounded-lg border border-slate-200 p-3 space-y-1">
             <p className="text-slate-500 font-sans font-medium">Calculateur expose (CRM lit) :</p>

@@ -2,7 +2,7 @@
 
 import { prisma } from '@/lib/server/prisma'
 import { requireAuth } from '@/lib/server/auth'
-import { getCrmApiUrl, type CrmSignedQuote } from './crm-config'
+import { getCrmApiUrl, getCrmHeaders, type CrmSignedQuote } from './crm-config'
 
 export type SyncResult = {
   created: number
@@ -21,9 +21,10 @@ export async function syncCrmSignedQuotes(): Promise<SyncResult> {
   let signedQuotes: CrmSignedQuote[]
 
   try {
+    const headers = await getCrmHeaders()
     const res = await fetch(`${base}/devis?status=signe`, {
       signal: AbortSignal.timeout(8000),
-      headers: { Accept: 'application/json' },
+      headers,
     })
     if (!res.ok) throw new Error(`HTTP ${res.status}`)
     signedQuotes = await res.json()

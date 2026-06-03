@@ -1,12 +1,12 @@
 import Link from 'next/link'
 import { ArrowLeft, FileText } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { getCrmApiUrl, getApiKey } from '@/app/actions/crm-config'
+import { getCrmApiUrl, getApiKey, getCrmOutboundKey } from '@/app/actions/crm-config'
 import { CrmConfigClient } from './CrmConfigClient'
 import { ModeToggle } from '@/components/layout/ModeToggle'
 
 export default async function CrmSettingsPage() {
-  const [crmUrl, apiKey] = await Promise.all([getCrmApiUrl(), getApiKey()])
+  const [crmUrl, apiKey, outboundKey] = await Promise.all([getCrmApiUrl(), getApiKey(), getCrmOutboundKey()])
 
   return (
     <div className="max-w-4xl mx-auto py-12 px-4 space-y-8">
@@ -36,7 +36,7 @@ export default async function CrmSettingsPage() {
         </div>
       </div>
 
-      <CrmConfigClient initialUrl={crmUrl} initialApiKey={apiKey} />
+      <CrmConfigClient initialUrl={crmUrl} initialApiKey={apiKey} initialOutboundKey={outboundKey} />
     </div>
   )
 }

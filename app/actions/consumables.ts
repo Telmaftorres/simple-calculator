@@ -13,11 +13,32 @@ const consumableSchema = z.object({
   size: z.number().positive('La taille doit être positive'),
 })
 
-export const getConsumables = unstable_cache(
+const getConsumablesLocal = unstable_cache(
   async () => prisma.consumable.findMany({ orderBy: { name: 'asc' } }),
   ['consumables'],
   { tags: ['consumables'] }
 )
+
+export async function getConsumables() {
+  const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
+  const crmUrl = await getCrmApiUrl()
+  if (crmUrl) {
+    try {
+      const headers = await getCrmHeaders()
+      const res = await fetch(`${crmUrl.replace(/\/$/, '')}/consommables`, {
+        signal: AbortSignal.timeout(5000),
+        next: { revalidate: 60 },
+        headers,
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return (data as { id: number | string; name: string; price: number; size: number }[])
+          .map((c, i) => ({ id: typeof c.id === 'number' ? c.id : i + 1, name: c.name, price: c.price, size: c.size }))
+      }
+    } catch { /* fallback local */ }
+  }
+  return getConsumablesLocal()
+}
 
 export async function createConsumable(data: z.infer<typeof consumableSchema>) {
   await requireAuth()

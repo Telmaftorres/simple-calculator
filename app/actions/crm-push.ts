@@ -1,7 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/server/prisma'
-import { getCrmApiUrl } from './crm-config'
+import { getCrmApiUrl, getCrmHeaders } from './crm-config'
 
 export type CrmPushLine = {
   description: string
@@ -24,10 +24,11 @@ export async function pushQuoteToCrm(quoteId: number, payload: CrmPushPayload): 
 
   const base = crmUrl.replace(/\/$/, '')
   try {
+    const headers = await getCrmHeaders()
     const res = await fetch(`${base}/devis`, {
       method: 'POST',
       signal: AbortSignal.timeout(8000),
-      headers: { 'Content-Type': 'application/json', Accept: 'application/json' },
+      headers: { ...headers, 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
     })
     if (!res.ok) return

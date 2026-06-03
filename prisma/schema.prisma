@@ -7,17 +7,43 @@ datasource db {
   url      = env("DATABASE_URL")
 }
 
+model Company {
+  id          Int      @id @default(autoincrement())
+  name        String
+  slug        String   @unique
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  users                   User[]
+  studies                 Study[]
+  quotes                  Quote[]
+  plates                  Plate[]
+  accessories             Accessory[]
+  consumables             Consumable[]
+  productTypes            ProductType[]
+  packagingSupplierQuotes PackagingSupplierQuote[]
+  packagingPricingRules   PackagingPricingRule[]
+  quantityCoefficients    QuantityCoefficient[]
+  settings                Setting[]
+  auditLogs               AuditLog[]
+  transportShipments      TransportShipment[]
+}
+
 model Study {
   id        Int      @id @default(autoincrement())
   number    String   @unique
   name      String?
   createdAt DateTime @default(now())
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
   quotes    Quote[]
 }
 
 model ProductType {
   id                Int               @id @default(autoincrement())
   name              String            @unique
+  companyId         Int?
+  company           Company?          @relation(fields: [companyId], references: [id])
   flatWidthFormula  String            @default("l")
   flatHeightFormula String            @default("L")
   imageUrl          String?
@@ -206,6 +232,8 @@ model Element {
 
 model PackagingSupplierQuote {
   id           Int      @id @default(autoincrement())
+  companyId    Int?
+  company      Company? @relation(fields: [companyId], references: [id])
   supplierName String
   category     String   // 'ETUI' | 'CAISSE' | 'PLAQUE_RAINEE'
   material     String   // 'B' | 'EB'
@@ -221,6 +249,8 @@ model PackagingSupplierQuote {
 
 model PackagingPricingRule {
   id            Int      @id @default(autoincrement())
+  companyId     Int?
+  company       Company? @relation(fields: [companyId], references: [id])
   category      String   // 'ETUI' | 'CAISSE' | 'PLAQUE_RAINEE'
   material      String   // 'B' | 'EB' | 'C' | 'BC'
   size          String   // 'PETIT' | 'MOYEN' | 'GRAND'
@@ -233,6 +263,8 @@ model PackagingPricingRule {
 
 model QuantityCoefficient {
   id           Int      @id @default(autoincrement())
+  companyId    Int?
+  company      Company? @relation(fields: [companyId], references: [id])
   quantityBand String   @unique // 'PETITE_SERIE' | 'MOYENNE_SERIE' | 'GRANDE_SERIE'
   minQuantity  Int
   maxQuantity  Int?     // null = pas de borne sup (GRANDE_SERIE)
@@ -243,6 +275,8 @@ model QuantityCoefficient {
 
 model Plate {
   id               Int               @id @default(autoincrement())
+  companyId        Int?
+  company          Company?          @relation(fields: [companyId], references: [id])
   name             String            @unique
   width            Int
   height           Int
@@ -260,6 +294,8 @@ model Plate {
 
 model Accessory {
   id                  Int                        @id @default(autoincrement())
+  companyId           Int?
+  company             Company?                   @relation(fields: [companyId], references: [id])
   name                String
   description         String?
   price               Float
@@ -368,6 +404,8 @@ model Quote {
   // ── CRM sync ──
   crmQuoteId                         String?           @unique  // ID du devis dans le CRM (pour dédupliquer les syncs)
   crmSyncedAt                        DateTime?                  // Date de création auto depuis le CRM
+  companyId                          Int?
+  company                            Company?          @relation(fields: [companyId], references: [id])
 
   @@index([userId, createdAt])
 }
@@ -573,6 +611,8 @@ model QuoteActuals {
 
 model Consumable {
   id               Int               @id @default(autoincrement())
+  companyId        Int?
+  company          Company?          @relation(fields: [companyId], references: [id])
   name             String
   price            Float
   size             Float
@@ -617,6 +657,8 @@ model User {
   updatedAt          DateTime @updatedAt
   permissions        String[]
   role               Role     @default(USER)
+  companyId          Int?
+  company            Company? @relation(fields: [companyId], references: [id])
   quotes             Quote[]
 }
 
@@ -631,6 +673,8 @@ model Setting {
   value     String
   label     String
   unit      String?
+  companyId Int?
+  company   Company? @relation(fields: [companyId], references: [id])
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
@@ -686,6 +730,8 @@ model QuoteTransportDelivery {
 model AuditLog {
   id         Int      @id @default(autoincrement())
   createdAt  DateTime @default(now())
+  companyId  Int?
+  company    Company? @relation(fields: [companyId], references: [id])
   userId     String?
   userName   String?
   action     String   // "CREATE_QUOTE" | "DELETE_QUOTE" | "UPSERT_ACTUALS" | "CREATE_USER" | "UPDATE_USER" | "DELETE_USER" | "UPDATE_SETTING"
@@ -697,6 +743,8 @@ model AuditLog {
 model TransportShipment {
   id            String   @id @default(cuid())
   createdAt     DateTime @default(now())
+  companyId     Int?
+  company       Company? @relation(fields: [companyId], references: [id])
   clientName    String
   plvType       String   // ex: "Présentoir comptoir", "Totem", "Cube"
   plvFormat     String   // ex: "350x276x275mm"

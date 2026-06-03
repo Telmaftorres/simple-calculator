@@ -139,13 +139,15 @@ const getPlatesLocal = unstable_cache(
 )
 
 export async function getPlates() {
-  const { getCrmApiUrl } = await import('./crm-config')
+  const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
   const crmUrl = await getCrmApiUrl()
   if (crmUrl) {
     try {
+      const headers = await getCrmHeaders()
       const res = await fetch(`${crmUrl.replace(/\/$/, '')}/matieres`, {
         signal: AbortSignal.timeout(5000),
         next: { revalidate: 60 },
+        headers,
       })
       if (res.ok) {
         const data = await res.json()
