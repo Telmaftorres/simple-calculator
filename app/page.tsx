@@ -22,9 +22,9 @@ export const metadata: Metadata = {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string }>
+  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string; study_id?: string }>
 }) {
-  const { editId, viewId, prodId, actualsId } = await searchParams
+  const { editId, viewId, prodId, actualsId, study_id } = await searchParams
 
   // Determine mode
   let mode: CalculatorMode = 'quote'
@@ -124,6 +124,7 @@ export default async function Home({
             mode={mode}
             targetQuoteId={targetQuoteId}
             productionSheetExtra={productionSheetExtra}
+            initialStudyId={study_id}
           />
         </section>
       </div>

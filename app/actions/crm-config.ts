@@ -112,6 +112,31 @@ export async function validateApiKey(key: string | null): Promise<{ valid: boole
   return { valid: true, companyId: setting.companyId }
 }
 
+// ── Récupérer les infos d'une étude depuis le CRM ──
+export async function getStudyFromCrm(studyId: string): Promise<{ studyNumber: string; clientName: string } | null> {
+  const companyId = await getCompanyId()
+  if (!companyId) return null
+  const [urlSetting, keySetting] = await Promise.all([
+    prisma.setting.findUnique({ where: { key_companyId: { key: CRM_URL_KEY, companyId } } }),
+    prisma.setting.findUnique({ where: { key_companyId: { key: CRM_OUTBOUND_KEY, companyId } } }),
+  ])
+  if (!urlSetting?.value) return null
+  try {
+    const res = await fetch(`${urlSetting.value.replace(/\/$/, '')}/etudes/${studyId}`, {
+      headers: {
+        Authorization: `Bearer ${keySetting?.value ?? ''}`,
+        Accept: 'application/json',
+      },
+      signal: AbortSignal.timeout(5000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    return { studyNumber: data.studyNumber, clientName: data.clientName }
+  } catch {
+    return null
+  }
+}
+
 // ── Types CRM ──
 export type CrmAccessory = { id: number | string; name: string; price: number; description?: string }
 export type CrmPlate = { id: number | string; name: string; width: number; height: number; cost: number; material?: string }

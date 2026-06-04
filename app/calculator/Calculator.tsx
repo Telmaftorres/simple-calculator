@@ -1,12 +1,12 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
 import { LayoutDashboard, Calculator as CalcIcon, Settings } from 'lucide-react'
 import Link from 'next/link'
 import type { CalculatorProps } from '@/types/calculator'
 import { useCalculator } from '@/hooks/useCalculator'
-import { CalculatorContext } from './context/CalculatorContext'
+import { CalculatorContext, useCalculatorContext } from './context/CalculatorContext'
 import { ScreenSuccess } from './screens/ScreenSuccess'
 import { ScreenRecap } from './screens/ScreenRecap'
 import { SectionPresentation } from './sections/SectionPresentation'
@@ -132,6 +132,20 @@ function ImpositionDisplay({
   )
 }
 
+function StudyPrefill({ studyId }: { studyId: string }) {
+  const { setStudyNumber, setField } = useCalculatorContext()
+  useEffect(() => {
+    import('@/app/actions/crm-config').then(({ getStudyFromCrm }) => {
+      getStudyFromCrm(studyId).then((data) => {
+        if (!data) return
+        setStudyNumber(data.studyNumber)
+        setField('client', data.clientName)
+      })
+    })
+  }, [studyId]) // eslint-disable-line react-hooks/exhaustive-deps
+  return null
+}
+
 export default function Calculator({
   productTypes: initialProductTypes,
   plates,
@@ -145,6 +159,7 @@ export default function Calculator({
   mode = 'quote',
   targetQuoteId,
   productionSheetExtra,
+  initialStudyId,
 }: CalculatorProps) {
   const calc = useCalculator(
     initialProductTypes,
@@ -169,6 +184,7 @@ export default function Calculator({
       accessories,
       consumables,
     }}>
+      {initialStudyId && <StudyPrefill studyId={initialStudyId} />}
       {calc.screenState === 'recap' ? (
         <ScreenRecap />
       ) : (
@@ -207,7 +223,7 @@ export default function Calculator({
                 </Link>
               )}
               {mode === 'quote' && (
-                <Link href="/dashboard">
+                <Link href="/dashboard" target="_blank">
                   <Button variant="outline" className="text-slate-900 border-white hover:bg-slate-200">
                     <LayoutDashboard className="mr-2 h-4 w-4" /> Dashboard
                   </Button>

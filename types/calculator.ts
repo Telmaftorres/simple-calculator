@@ -210,6 +210,7 @@ export interface CalculatorProps {
   packagingRules?: import('@/app/actions/reference-data').PackagingRulesData
   mode?: CalculatorMode
   targetQuoteId?: number
+  initialStudyId?: string
   // Extra data passed when in production/actuals mode
   productionSheetExtra?: {
     status?: string
