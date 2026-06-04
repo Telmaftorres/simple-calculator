@@ -36,12 +36,12 @@ ALTER TABLE "Setting"               ALTER COLUMN "companyId" SET NOT NULL;
 ALTER TABLE "User"                  ALTER COLUMN "companyId" SET NOT NULL;
 
 -- ── 3. Supprimer les anciennes contraintes globales ──
-ALTER TABLE "Study"               DROP CONSTRAINT IF EXISTS "Study_number_key";
-ALTER TABLE "Plate"               DROP CONSTRAINT IF EXISTS "Plate_name_key";
-ALTER TABLE "ProductType"         DROP CONSTRAINT IF EXISTS "ProductType_name_key";
-ALTER TABLE "Setting"             DROP CONSTRAINT IF EXISTS "Setting_key_key";
-ALTER TABLE "QuantityCoefficient" DROP CONSTRAINT IF EXISTS "QuantityCoefficient_quantityBand_key";
-ALTER TABLE "PackagingPricingRule" DROP CONSTRAINT IF EXISTS "PackagingPricingRule_category_material_size_key";
+DROP INDEX IF EXISTS "Study_number_key";
+DROP INDEX IF EXISTS "Plate_name_key";
+DROP INDEX IF EXISTS "ProductType_name_key";
+DROP INDEX IF EXISTS "Setting_key_key";
+DROP INDEX IF EXISTS "QuantityCoefficient_quantityBand_key";
+DROP INDEX IF EXISTS "PackagingPricingRule_category_material_size_key";
 
 -- ── 4. Ajouter les contraintes composites (par company) ──
 CREATE UNIQUE INDEX "Study_number_companyId_key"            ON "Study"("number", "companyId");

@@ -25,8 +25,8 @@ export async function getConsumables(companyId: number) {
       })
       if (res.ok) {
         const data = await res.json()
-        return (data as { id: number | string; name: string; price: number; size: number }[])
-          .map((c, i) => ({ id: typeof c.id === 'number' ? c.id : i + 1, name: c.name, price: c.price, size: c.size }))
+        return (data as { id: number | string; name: string; price: number; size?: number }[])
+          .map((c, i) => ({ id: typeof c.id === 'number' ? c.id : i + 1, name: c.name, price: c.price, size: c.size ?? 1 }))
       }
     } catch { /* fallback local */ }
   }
