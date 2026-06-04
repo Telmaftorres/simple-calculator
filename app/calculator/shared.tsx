@@ -93,7 +93,10 @@ export function SectionDisplay({
   return (
     <div className={`rounded-xl border ${colors.border} overflow-hidden shadow-sm`}>
       {/* Header */}
-      <div className={`${colors.header} px-5 py-3 flex items-center justify-between`}>
+      <div
+        className={`${colors.header} px-5 py-3 flex items-center justify-between ${hasToggle ? 'cursor-pointer select-none' : ''}`}
+        onClick={hasToggle ? () => onToggle!(!enabled) : undefined}
+      >
         <div className="flex items-center gap-3">
           <span className={`text-xs font-bold px-2 py-0.5 rounded-full ${colors.badge}`}>
             {number}
@@ -101,15 +104,13 @@ export function SectionDisplay({
           <h3 className={`font-semibold text-sm ${colors.title}`}>{title}</h3>
         </div>
 
-        {/* ✅ Toggle ON/OFF */}
+        {/* ✅ Toggle ON/OFF — visuel uniquement, le clic est sur tout le header */}
         {hasToggle && (
-          <button
-            onClick={() => onToggle(!enabled)}
+          <div
             className={`
-              relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200 focus:outline-none
+              relative inline-flex h-6 w-11 items-center rounded-full transition-colors duration-200
               ${enabled ? colors.toggleOn : colors.toggleOff}
             `}
-            aria-label={enabled ? 'Désactiver' : 'Activer'}
           >
             <span
               className={`
@@ -117,7 +118,7 @@ export function SectionDisplay({
                 ${enabled ? 'translate-x-6' : 'translate-x-1'}
               `}
             />
-          </button>
+          </div>
         )}
       </div>
 
