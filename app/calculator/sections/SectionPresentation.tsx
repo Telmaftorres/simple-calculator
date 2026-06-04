@@ -251,7 +251,7 @@ export function SectionPresentation() {
               />
             </div>
 
-            <div className="space-y-2">
+            <div className="space-y-2 md:col-span-2">
               <div className="flex items-center justify-between">
                 <Label>Matière</Label>
                 <button
