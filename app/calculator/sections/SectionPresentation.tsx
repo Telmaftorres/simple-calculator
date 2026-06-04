@@ -98,15 +98,6 @@ export function SectionPresentation() {
             placeholder="Nom du client"
           />
         </div>
-        <div className="space-y-2">
-          <Label>A l&apos;attention de</Label>
-          <Input
-            value={formState.contactName ?? ''}
-            onChange={(e) => setField('contactName', e.target.value)}
-            placeholder="Prénom Nom du contact"
-          />
-        </div>
-
         {/* ── Nom du type PLV — affiché en lecture seule en mode multi ── */}
         {isMultiProduct && productSearch && (
           <div className="space-y-2">
