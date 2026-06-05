@@ -135,6 +135,7 @@ function ImpositionDisplay({
 function StudyPrefill({ studyId }: { studyId: string }) {
   const { setStudyNumber, setField } = useCalculatorContext()
   useEffect(() => {
+    setField('crmStudyId', studyId)
     import('@/app/actions/crm-config').then(({ getStudyFromCrm }) => {
       getStudyFromCrm(studyId).then((data) => {
         if (!data) return

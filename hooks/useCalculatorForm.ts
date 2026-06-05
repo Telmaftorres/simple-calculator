@@ -6,6 +6,7 @@ import { v4 as uuidv4 } from 'uuid'
 
 export const initialFormState = {
   studyNumber: 'ET' as string,
+  crmStudyId: null as string | null,
   selectedProductTypeId: '' as string,
   productSearch: '' as string,
   isProductDropdownOpen: false as boolean,
