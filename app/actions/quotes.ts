@@ -404,6 +404,15 @@ export async function deleteQuote(id: number) {
   revalidatePath('/dashboard/my-quotes')
 }
 
+export async function getQuoteByReference(reference: string) {
+  const session = await requireAuth()
+  const companyId = session.user.companyId
+  if (!companyId) return null
+  const quote = await prisma.quote.findFirst({ where: { reference, companyId } })
+  if (!quote) return null
+  return getQuoteById(quote.id)
+}
+
 export async function getQuoteById(id: number) {
   const session = await requireAuth()
   const companyId = session.user.companyId

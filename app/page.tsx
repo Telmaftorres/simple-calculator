@@ -1,7 +1,7 @@
 import { auth } from '@/auth'
 import Calculator from './calculator/Calculator'
 import { getProductTypes, getPlates, getPackagingRules } from './actions/reference-data'
-import { getQuoteById } from './actions/quotes'
+import { getQuoteById, getQuoteByReference } from './actions/quotes'
 import { getQuoteWithProductionSheet } from './actions/production-sheet'
 import { getAccessories } from './actions/accessories'
 import { getConsumables } from './actions/consumables'
@@ -22,9 +22,9 @@ export const metadata: Metadata = {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string; study_id?: string }>
+  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string; study_id?: string; chiffrage_ref?: string }>
 }) {
-  const { editId, viewId, prodId, actualsId, study_id } = await searchParams
+  const { editId, viewId, prodId, actualsId, study_id, chiffrage_ref } = await searchParams
 
   // Determine mode
   let mode: CalculatorMode = 'quote'
@@ -90,6 +90,11 @@ export default async function Home({
     } else {
       initialQuote = await getQuoteById(parseInt(idToFetch))
     }
+  }
+
+  // Chargement depuis le bouton crayon du CRM (?chiffrage_ref=DEV-001)
+  if (!initialQuote && chiffrage_ref) {
+    initialQuote = await getQuoteByReference(chiffrage_ref)
   }
 
   return (
