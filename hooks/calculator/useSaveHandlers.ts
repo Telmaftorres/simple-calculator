@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation'
 import { createQuote } from '@/app/actions/quotes'
 import { saveProductionSheetFull } from '@/app/actions/production-sheet'
 import { saveActualsFromCalc } from '@/app/actions/actuals'
-import { pushQuoteToCrm } from '@/app/actions/crm-push'
+import { pushQuoteToCrm, pushChiffrageData, pushChiffragePdf } from '@/app/actions/crm-push'
 import { buildCrmLines } from '@/lib/crm/buildCrmLines'
 import { toast } from 'sonner'
 import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
@@ -91,6 +91,8 @@ export interface SaveContext {
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
   initialQuoteReference?: string | null
+  crmStudyId?: string | null
+  getPdfBlob?: (() => Promise<Blob>) | null
   // Production/actuals mode
   targetQuoteId?: number
   prodStatus: 'en_attente' | 'en_cours' | 'termine'
@@ -344,6 +346,22 @@ export function useSaveHandlers(ctx: SaveContext) {
             transportMargin: costResult.transportMargin,
           }),
         }).catch(() => { /* silencieux */ })
+      }
+
+      // Push chiffrage CRM en best-effort (fire-and-forget)
+      if (ctx.crmStudyId) {
+        const studyId = parseInt(ctx.crmStudyId)
+        if (!isNaN(studyId)) {
+          ;(async () => {
+            try {
+              const chiffrageId = await pushChiffrageData(quote.reference, studyId)
+              if (chiffrageId && ctx.getPdfBlob) {
+                const blob = await ctx.getPdfBlob()
+                await pushChiffragePdf(chiffrageId, blob)
+              }
+            } catch { /* silencieux */ }
+          })()
+        }
       }
 
       setScreenState('success')

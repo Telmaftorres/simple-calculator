@@ -18,6 +18,42 @@ export type CrmPushPayload = {
   lignes: CrmPushLine[]
 }
 
+export async function pushChiffrageData(reference: string | null, studyId: number): Promise<number | null> {
+  if (!reference) return null
+  const crmUrl = await getCrmApiUrl()
+  if (!crmUrl) return null
+  try {
+    const headers = await getCrmHeaders()
+    const res = await fetch(`${crmUrl.replace(/\/$/, '')}/chiffrage`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(8000),
+      headers: { ...headers, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reference, study_id: studyId }),
+    })
+    if (!res.ok) return null
+    const json = await res.json().catch(() => null)
+    return json?.id ?? null
+  } catch {
+    return null
+  }
+}
+
+export async function pushChiffragePdf(chiffrageId: number, pdfBlob: Blob): Promise<void> {
+  const crmUrl = await getCrmApiUrl()
+  if (!crmUrl) return
+  try {
+    const headers = await getCrmHeaders()
+    const form = new FormData()
+    form.append('file', pdfBlob, `chiffrage-${chiffrageId}.pdf`)
+    await fetch(`${crmUrl.replace(/\/$/, '')}/chiffrage/${chiffrageId}/pdf`, {
+      method: 'POST',
+      signal: AbortSignal.timeout(30000),
+      headers,
+      body: form,
+    })
+  } catch { /* silencieux */ }
+}
+
 export async function pushQuoteToCrm(quoteId: number, payload: CrmPushPayload): Promise<void> {
   const crmUrl = await getCrmApiUrl()
   if (!crmUrl) return

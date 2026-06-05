@@ -313,6 +313,33 @@ export function useCalculator(
     costResult, totalCostMulti, totalQuantityMulti, transportTotal, fuelSurchargePct,
     computedPackagingDimensions, selectedProductType, selectedAccessories, selectedConsumables,
     initialQuoteReference: initialQuote?.reference,
+    crmStudyId: formState.crmStudyId ?? null,
+    getPdfBlob: formState.crmStudyId ? async () => {
+      const { pdf } = await import('@react-pdf/renderer')
+      const { QuotePDF } = await import('@/components/pdf/QuotePDF')
+      const { createElement } = await import('react')
+      const pdfProps = {
+        quoteInfo: {
+          studyNumber,
+          reference: '',
+          productName: isMultiProduct ? `Devis multi-produits (${productSlotResults.length} produits)` : productSearch,
+          quantity: isMultiProduct ? totalQuantityMulti : quantity,
+        },
+        formValues: formState,
+        costResult,
+        selectedPlate: isMultiProduct ? undefined : selectedPlate,
+        impositionResult: impositionResult ?? undefined,
+        selectedAccessories,
+        selectedConsumables,
+        isMultiProduct,
+        productSlotResults,
+        totalCostMulti,
+        amalgameGroups,
+        amalgameGroupResults,
+      }
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      return pdf(createElement(QuotePDF, { ...pdfProps, mode: 'internal' }) as any).toBlob()
+    } : null,
     targetQuoteId, ...prodState,
     setScreenState,
   })
