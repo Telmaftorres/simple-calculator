@@ -4,7 +4,7 @@ import { useMemo } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { calculateMultiImposition } from '@/lib/calculation/amalgame-multi-imposition'
-import { HOURLY_RATE_CUTTING, CUTTING_SETUP_STANDARD_COST, CUTTING_SETUP_COMPLEX_COST } from '@/lib/config/pricing'
+import { HOURLY_RATE_CUTTING, HOURLY_RATE_CUTTING_COST, CUTTING_SETUP_STANDARD_COST, CUTTING_SETUP_COMPLEX_COST } from '@/lib/config/pricing'
 import type { AmalgameGroup, AmalgameGroupResult, Plate, ProductSlot, ProductSlotResult, ImpositionResult } from '@/types/calculator'
 import { resolveVerso } from './utils'
 
@@ -29,12 +29,14 @@ function computeGroupResult(
   const emptyPrintingCostData = {
     cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0,
     setupCost: 0, machineCost: 0, setupTimeMin: 0, machineTimeMin: 0,
+    inkCostRaw: 0, machineCostBrut: 0, costBrut: 0,
   }
   const empty: AmalgameGroupResult = {
     groupId: group.id, platesCount: 0, materialCostRaw: 0, materialCostMarged: 0,
     machineTimeMin: 0, printingCost: 0, printingCostData: emptyPrintingCostData, inkVolumeL: 0,
     cuttingMachineTimeMin: 0, cuttingMachineCost: 0,
     cuttingSetupCost: 0, totalCost: 0, multiImposition: null,
+    materialCostBrut: 0, cuttingMachineCostBrut: 0, totalCostBrut: 0,
   }
   const slotsInGroup = products.filter((s) => s.amalgameGroupId === group.id)
   if (slotsInGroup.length === 0) return empty
@@ -72,17 +74,24 @@ function computeGroupResult(
 
   // Cutting is per plate for all amalgame group types
   const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
+  const hourlyRateCuttingCost = settings?.HOURLY_RATE_CUTTING_COST ?? HOURLY_RATE_CUTTING_COST
   const cuttingMachineTimeMin = platesCount > 0 ? (platesCount * group.cuttingTimePerPoseSeconds) / 60 : 0
   const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRateCutting
+  const cuttingMachineCostBrut = (cuttingMachineTimeMin / 60) * hourlyRateCuttingCost
   const cuttingSetupCost = group.cuttingSetupType === 'standard'
     ? (settings?.CUTTING_SETUP_STANDARD_COST ?? CUTTING_SETUP_STANDARD_COST)
     : group.cuttingSetupType === 'complexe'
       ? (settings?.CUTTING_SETUP_COMPLEX_COST ?? CUTTING_SETUP_COMPLEX_COST)
       : 0
   const cuttingTotal = cuttingMachineCost + cuttingSetupCost
+  const cuttingTotalBrut = cuttingMachineCostBrut + cuttingSetupCost
 
   if (group.amalgameType === 'decoupe') {
-    return { ...empty, platesCount, cuttingMachineTimeMin, cuttingMachineCost, cuttingSetupCost, totalCost: cuttingTotal, multiImposition: multiImp }
+    return {
+      ...empty, platesCount, cuttingMachineTimeMin, cuttingMachineCost, cuttingSetupCost,
+      totalCost: cuttingTotal, multiImposition: multiImp,
+      cuttingMachineCostBrut, totalCostBrut: cuttingTotalBrut,
+    }
   }
 
   const { effectiveInkMl: groupEffectiveInkMl, effectiveIsRectoVerso: groupEffectiveIsRectoVerso } =
@@ -131,6 +140,9 @@ function computeGroupResult(
     cuttingSetupCost,
     totalCost: groupCosts.totalCost + cuttingMachineCost + cuttingSetupCost,
     multiImposition: multiImp,
+    materialCostBrut: groupCosts.materialCostRaw,
+    cuttingMachineCostBrut,
+    totalCostBrut: groupCosts.totalCostBrut + cuttingMachineCostBrut + cuttingSetupCost,
   }
 }
 
@@ -250,6 +262,9 @@ export function useImpositionResults({
           cuttingSetupTimeMin: slotCosts.cuttingSetupTimeMin,
           inkVolumeL: slotCosts.inkVolumeL,
           subtotal: slotCosts.totalCost,
+          printingCostBrut: slotCosts.printingCostBrut,
+          cuttingCostBrut: slotCosts.cuttingCostBrut,
+          subtotalBrut: slotCosts.totalCostBrut,
         },
       }
     })

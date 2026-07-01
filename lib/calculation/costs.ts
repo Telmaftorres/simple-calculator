@@ -5,6 +5,13 @@ import {
   HOURLY_RATE_BE,
   HOURLY_RATE_BAT,
   HOURLY_RATE_CUTTING,
+  HOURLY_RATE_PRINT_COST,
+  HOURLY_RATE_CUTTING_COST,
+  HOURLY_RATE_ASSEMBLY_COST,
+  HOURLY_RATE_CONDITIONING_COST,
+  HOURLY_RATE_PACKAGING_COST,
+  HOURLY_RATE_BE_COST,
+  HOURLY_RATE_BAT_COST,
   INK_COST_PER_LITER,
   INK_COST_VARNISH_PER_LITER,
   INK_COST_FLAT_COLOR_PER_LITER,
@@ -155,6 +162,14 @@ export function calculateCosts(params: {
   const hourlyRateBAT = settings?.HOURLY_RATE_BAT ?? HOURLY_RATE_BAT
   const hourlyRateConditioning = settings?.HOURLY_RATE_CONDITIONING ?? HOURLY_RATE_CONDITIONING
   const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
+  // ── Taux horaires coûtants (brut) ──
+  const hourlyRatePrintCost = settings?.HOURLY_RATE_PRINT_COST ?? HOURLY_RATE_PRINT_COST
+  const hourlyRateCuttingCost = settings?.HOURLY_RATE_CUTTING_COST ?? HOURLY_RATE_CUTTING_COST
+  const hourlyRateAssemblyCost = settings?.HOURLY_RATE_ASSEMBLY_COST ?? HOURLY_RATE_ASSEMBLY_COST
+  const hourlyRateConditioningCost = settings?.HOURLY_RATE_CONDITIONING_COST ?? HOURLY_RATE_CONDITIONING_COST
+  const hourlyRatePackagingCost = settings?.HOURLY_RATE_PACKAGING_COST ?? HOURLY_RATE_PACKAGING_COST
+  const hourlyRateBECost = settings?.HOURLY_RATE_BE_COST ?? HOURLY_RATE_BE_COST
+  const hourlyRateBATCost = settings?.HOURLY_RATE_BAT_COST ?? HOURLY_RATE_BAT_COST
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
   const inkCostFlatColorPerLiter = settings?.INK_COST_FLAT_COLOR_PER_LITER ?? INK_COST_FLAT_COLOR_PER_LITER
@@ -185,6 +200,7 @@ export function calculateCosts(params: {
     const noImpression = {
       cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0,
       setupCost: 0, machineCost: 0, setupTimeMin: 0, machineTimeMin: 0,
+      inkCostRaw: 0, machineCostBrut: 0, costBrut: 0,
     }
     if (!hasImpression) return noImpression
 
@@ -200,8 +216,12 @@ export function calculateCosts(params: {
       const inkCost = standardVolumeL * inkCostPerLiter * inkMarginStandard
         + varnishVolumeL * inkCostVarnishPerLiter * inkMarginVarnish
         + flatColorVolumeL * inkCostFlatColorPerLiter * inkMarginFlatColor
+      const inkCostRaw = standardVolumeL * inkCostPerLiter
+        + varnishVolumeL * inkCostVarnishPerLiter
+        + flatColorVolumeL * inkCostFlatColorPerLiter
       const machineTimeMin = amalgameOverride.machineTimeMin
       const machineCost = (machineTimeMin / 60) * hourlyRatePrint
+      const machineCostBrut = (machineTimeMin / 60) * hourlyRatePrintCost
       const setupCost = printSetupType === 'standard' ? printSetupStandardCost
         : printSetupType === 'complexe' ? printSetupComplexCost : 0
       return {
@@ -209,6 +229,7 @@ export function calculateCosts(params: {
         timeMin: machineTimeMin, inkCost, laborCost: machineCost,
         inkVolumeL: standardVolumeL + varnishVolumeL + flatColorVolumeL,
         setupCost, machineCost, setupTimeMin: 0, machineTimeMin,
+        inkCostRaw, machineCostBrut, costBrut: inkCostRaw + machineCostBrut + setupCost,
       }
     }
 
@@ -233,6 +254,10 @@ export function calculateCosts(params: {
     const varnishInkCost = varnishVolumeL * inkCostVarnishPerLiter * inkMarginVarnish
     const flatColorInkCost = flatColorVolumeL * inkCostFlatColorPerLiter * inkMarginFlatColor
     const inkCost = standardInkCost + varnishInkCost + flatColorInkCost
+    // Encre au prix d'achat (sans marge encre) pour le brut
+    const inkCostRaw = standardVolumeL * inkCostPerLiter
+      + varnishVolumeL * inkCostVarnishPerLiter
+      + flatColorVolumeL * inkCostFlatColorPerLiter
 
     const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
     const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
@@ -248,6 +273,7 @@ export function calculateCosts(params: {
       ? machineTimeMinOverride
       : autoMachineTimeMin
     const machineCost = (machineTimeMin / 60) * hourlyRatePrint
+    const machineCostBrut = (machineTimeMin / 60) * hourlyRatePrintCost
 
     const setupCost = (() => {
       if (printSetupType === 'standard') return printSetupStandardCost
@@ -265,6 +291,9 @@ export function calculateCosts(params: {
       machineCost,
       setupTimeMin: 0,
       machineTimeMin,
+      inkCostRaw,
+      machineCostBrut,
+      costBrut: inkCostRaw + machineCostBrut + setupCost,
     }
   })()
 
@@ -285,12 +314,20 @@ export function calculateCosts(params: {
   const cuttingSetupTimeMin = 0
   const cuttingMachineCost = (cuttingMachineTimeMin / 60) * hourlyRateCutting
   const cuttingCost = cuttingMachineCost + cuttingSetupCost
+  // Brut : temps découpe × taux coûtant (le calage reste un forfait, identique)
+  const cuttingMachineCostBrut = (cuttingMachineTimeMin / 60) * hourlyRateCuttingCost
+  const cuttingCostBrut = cuttingMachineCostBrut + cuttingSetupCost
 
   // ── Façonnage ──
   const assemblyCost = (() => {
     if (!hasFaconnage) return 0
     const totalHours = (assemblyTimePerPieceSeconds * quantity) / 3600
     return totalHours * hourlyRateAssembly
+  })()
+  const assemblyCostBrut = (() => {
+    if (!hasFaconnage) return 0
+    const totalHours = (assemblyTimePerPieceSeconds * quantity) / 3600
+    return totalHours * hourlyRateAssemblyCost
   })()
 
   // ── Conditionnement ──
@@ -302,10 +339,23 @@ export function calculateCosts(params: {
     const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * quantity : 0
     return timeCost + noticeCost + etiquetteCost
   })()
+  const packagingCostBrut = (() => {
+    if (!hasConditionnement) return 0
+    const totalHours = (packTimePerPieceSeconds * quantity) / 3600
+    const timeCost = totalHours * hourlyRateConditioningCost
+    // Notices & étiquettes sont des coûts réels par pièce → conservés au brut
+    const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
+    const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * quantity : 0
+    return timeCost + noticeCost + etiquetteCost
+  })()
 
   // ── Accessoires ──
   const accessoriesCost = hasAccessoires
     ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0) * ((accessoriesMargePercent ?? 0) > 0 ? accessoriesMargePercent! : 1)
+    : 0
+  // Brut : prix d'achat des accessoires, sans coefficient de marge
+  const accessoriesCostBrut = hasAccessoires
+    ? selectedAccessories.reduce((sum, item) => sum + item.price * item.quantity, 0)
     : 0
 
   const consumablesCost = hasFaconnage
@@ -377,10 +427,29 @@ export function calculateCosts(params: {
 
   const packagingTotalCost = (packagingMaterialCost + packagingCuttingCost) * ((packagingMargePercent ?? 0) > 0 ? packagingMargePercent! : 1)
 
+  // ── Emballage brut (sans coeff matière, sans marge %) ──
+  // NB B/EB externe : le prix unitaire fournisseur peut inclure un coefficient de bande appliqué en amont.
+  const packagingMaterialCostBrut = (() => {
+    if (!hasPackaging || packagingQuantity <= 0) return 0
+    if (isExternalPackaging) return effectivePackagingUnitPrice * packagingQuantity
+    if (!packagingPlate || packagingWidth <= 0 || packagingHeight <= 0 || packagingItemsPerPlate <= 0) return 0
+    return packagingPlatesNeeded * packagingPlate.cost
+  })()
+  const packagingCuttingCostBrut = (() => {
+    if (!hasPackaging || packagingQuantity <= 0) return 0
+    if (isExternalPackaging) return 0
+    const machineMinutes = (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
+    return (machineMinutes / 60) * hourlyRatePackagingCost + packagingSetupCost
+  })()
+  const packagingTotalCostBrut = packagingMaterialCostBrut + packagingCuttingCostBrut
+
   // ── Bureau d'études ──
   const beCost = hasBE ? (beTimeMinutes / 60) * hourlyRateBE : 0
   const batCost = hasBE ? (batTimeMinutes / 60) * hourlyRateBAT : 0
   const beTotalCost = beCost + batCost
+  const beCostBrut = hasBE ? (beTimeMinutes / 60) * hourlyRateBECost : 0
+  const batCostBrut = hasBE ? (batTimeMinutes / 60) * hourlyRateBATCost : 0
+  const beTotalCostBrut = beCostBrut + batCostBrut
 
 // ── Coefficient matière ──
 const materialMarginCoeff = (() => {
@@ -415,6 +484,21 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     packagingTotalCost +
     beTotalCost +
     transportCostMarged
+
+  // ── Total brut (coût de revient réel) ──
+  const printingCostBrut = printingCostData.costBrut ?? 0
+  const totalCostBrut =
+    dossierFeeCost +
+    materialCostRaw +
+    printingCostBrut +
+    cuttingCostBrut +
+    assemblyCostBrut +
+    packagingCostBrut +
+    accessoriesCostBrut +
+    consumablesCost +
+    packagingTotalCostBrut +
+    beTotalCostBrut +
+    (transportTotal ?? 0)
 
   return {
     printingCostData,
@@ -452,6 +536,20 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     transportMargin,
     accessoriesMargePercent: accessoriesMargePercent ?? 0,
     packagingMargePercent: packagingMargePercent ?? 0,
+    // ── Brut (coût de revient, hors marge) ──
+    totalCostBrut,
+    printingCostBrut,
+    cuttingMachineCostBrut,
+    cuttingCostBrut,
+    assemblyCostBrut,
+    packagingCostBrut,
+    accessoriesCostBrut,
+    packagingMaterialCostBrut,
+    packagingCuttingCostBrut,
+    packagingTotalCostBrut,
+    beCostBrut,
+    batCostBrut,
+    beTotalCostBrut,
   }
 }
 
