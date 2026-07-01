@@ -4,6 +4,16 @@ export const PRINT_SETUP_COMPLEX_COST = 25
 export const CUTTING_SETUP_STANDARD_COST = 15
 export const CUTTING_SETUP_COMPLEX_COST = 25
 
+// ── Taux horaires coûtants (coût de revient réel, hors marge) ──
+// Estimations de départ à affiner : MO chargée + coût machine, sans marge.
+export const HOURLY_RATE_PRINT_COST = 40
+export const HOURLY_RATE_CUTTING_COST = 36
+export const HOURLY_RATE_ASSEMBLY_COST = 31
+export const HOURLY_RATE_CONDITIONING_COST = 27
+export const HOURLY_RATE_PACKAGING_COST = 32
+export const HOURLY_RATE_BE_COST = 45
+export const HOURLY_RATE_BAT_COST = 42
+
 // ── Impression ──
 export const HOURLY_RATE_PRINT = 50
 export const PRINT_SETUP_TIME_MIN = 15

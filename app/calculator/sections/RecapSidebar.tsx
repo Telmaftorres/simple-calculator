@@ -1,3 +1,4 @@
+import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Layers } from 'lucide-react'
@@ -22,6 +23,7 @@ export function RecapSidebar() {
     isMultiProduct,
     productSlotResults,
     totalCostMulti,
+    totalCostMultiBrut,
     totalQuantityMulti,
     formState,
     showMargeCommerciale,
@@ -54,9 +56,25 @@ export function RecapSidebar() {
     materialMarginCoeff,
     transportTotal: transportCost,
     transportCostMarged,
+    // ── Brut ──
+    totalCostBrut,
+    materialCostRaw,
+    cuttingMachineCostBrut,
+    assemblyCostBrut,
+    packagingCostBrut,
+    accessoriesCostBrut,
+    packagingTotalCostBrut,
+    beCostBrut,
+    batCostBrut,
   } = costResult
 
-  const displayTotal = isMultiProduct ? totalCostMulti : totalCost
+  // ── Toggle Brut / Margé ──
+  const [recapMode, setRecapMode] = useState<'marge' | 'brut'>('marge')
+  const brut = recapMode === 'brut'
+
+  const displayTotal = brut
+    ? (isMultiProduct ? totalCostMultiBrut : totalCostBrut)
+    : (isMultiProduct ? totalCostMulti : totalCost)
   const displayQuantity = isMultiProduct ? totalQuantityMulti : quantity
 
   return (
@@ -64,9 +82,31 @@ export function RecapSidebar() {
       <Card className="sticky top-6 border-slate-200 shadow-xl bg-white/80 backdrop-blur">
         <CardHeader className="bg-slate-50 border-b border-slate-100">
           <CardTitle>Récapitulatif</CardTitle>
-          <CardDescription>Coût Total Estimé</CardDescription>
+          <CardDescription>{brut ? 'Coût de revient (brut)' : 'Prix de vente (margé)'}</CardDescription>
         </CardHeader>
         <CardContent className="space-y-4 pt-6">
+
+          {/* ── Toggle Brut / Margé ── */}
+          <div className="flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
+            <button
+              type="button"
+              onClick={() => setRecapMode('marge')}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                !brut ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Margé
+            </button>
+            <button
+              type="button"
+              onClick={() => setRecapMode('brut')}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                brut ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Brut
+            </button>
+          </div>
 
           {/* ── Mode multi-produits ── */}
           {isMultiProduct ? (
@@ -87,21 +127,21 @@ export function RecapSidebar() {
                     </div>
                     <CostRow
                       label="Matière"
-                      value={result.costResult.materialCostMarged}
+                      value={brut ? result.costResult.materialCost : result.costResult.materialCostMarged}
                       details={result.impositionResult
-                        ? `${result.impositionResult.platesNeeded} plaque(s) × coeff. ×${result.costResult.materialMarginCoeff.toFixed(1)}`
+                        ? `${result.impositionResult.platesNeeded} plaque(s)${brut ? '' : ` × coeff. ×${result.costResult.materialMarginCoeff.toFixed(1)}`}`
                         : undefined}
                     />
                     {slot.hasImpression && (
                       <>
                         <CostRow
                           label="Impression (encre)"
-                          value={result.costResult.printingCostData.inkCost}
+                          value={brut ? (result.costResult.printingCostData.inkCostRaw ?? 0) : result.costResult.printingCostData.inkCost}
                           details={`${result.costResult.inkVolumeL.toFixed(3)} L`}
                         />
                         <CostRow
                           label="Impression (machine)"
-                          value={result.costResult.printingCostData.machineCost}
+                          value={brut ? (result.costResult.printingCostData.machineCostBrut ?? 0) : result.costResult.printingCostData.machineCost}
                           details={formatMinutes(result.costResult.printingCostData.machineTimeMin)}
                         />
                       </>
@@ -114,7 +154,7 @@ export function RecapSidebar() {
                     ) : (
                       <CostRow
                         label="Découpe"
-                        value={result.costResult.cuttingCost}
+                        value={brut ? result.costResult.cuttingCostBrut : result.costResult.cuttingCost}
                         details={result.costResult.cuttingMachineTimeMin > 0
                           ? formatMinutes(result.costResult.cuttingMachineTimeMin)
                           : undefined}
@@ -123,7 +163,7 @@ export function RecapSidebar() {
                     {result.costResult.subtotal > 0 && (
                       <div className="flex justify-between text-sm font-semibold text-emerald-700 bg-emerald-50 px-2 py-1.5 rounded-md">
                         <span>Sous-total</span>
-                        <span>{result.costResult.subtotal.toFixed(2)} €</span>
+                        <span>{(brut ? result.costResult.subtotalBrut : result.costResult.subtotal).toFixed(2)} €</span>
                       </div>
                     )}
                   </div>
@@ -136,6 +176,7 @@ export function RecapSidebar() {
                 if (!result || result.totalCost === 0) return null
 
                 const cuttingTotal = result.cuttingMachineCost + result.cuttingSetupCost
+                const cuttingTotalBrut = result.cuttingMachineCostBrut + result.cuttingSetupCost
                 const memberNames = productSlotResults
                   .filter(r => amalgameGroups.find(g => g.id === r.slot.amalgameGroupId)?.id === group.id)
                   .map((r, i) => r.slot.productSearch || `Produit ${i + 1}`)
@@ -166,19 +207,19 @@ export function RecapSidebar() {
                       <>
                         <CostRow
                           label="Matière"
-                          value={result.materialCostMarged}
+                          value={brut ? result.materialCostBrut : result.materialCostMarged}
                           details={result.platesCount > 0 ? `${result.platesCount} plaque(s)` : undefined}
                         />
                         {result.printingCostData.inkCost > 0 && (
                           <CostRow
                             label="Encre"
-                            value={result.printingCostData.inkCost}
+                            value={brut ? (result.printingCostData.inkCostRaw ?? 0) : result.printingCostData.inkCost}
                             details={result.inkVolumeL > 0 ? `${result.inkVolumeL.toFixed(3)} L` : undefined}
                           />
                         )}
                         <CostRow
                           label="Temps machine"
-                          value={result.printingCostData.machineCost}
+                          value={brut ? (result.printingCostData.machineCostBrut ?? 0) : result.printingCostData.machineCost}
                           details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
                         />
                         {result.printingCostData.setupCost > 0 && (
@@ -189,7 +230,7 @@ export function RecapSidebar() {
 
                     <CostRow
                       label="Découpe"
-                      value={cuttingTotal}
+                      value={brut ? cuttingTotalBrut : cuttingTotal}
                       details={result.cuttingMachineTimeMin > 0 ? formatMinutes(result.cuttingMachineTimeMin) : undefined}
                     />
 
@@ -199,7 +240,7 @@ export function RecapSidebar() {
                         : 'text-orange-700 bg-orange-50'
                     }`}>
                       <span>Sous-total</span>
-                      <span>{result.totalCost.toFixed(2)} €</span>
+                      <span>{(brut ? result.totalCostBrut : result.totalCost).toFixed(2)} €</span>
                     </div>
                   </div>
                 )
@@ -218,9 +259,9 @@ export function RecapSidebar() {
             <>
               <CostRow
                 label="Matière"
-                value={materialCostMarged}
+                value={brut ? materialCostRaw : materialCostMarged}
                 details={impositionResult
-                  ? `${impositionResult.platesNeeded} plaque(s) × coeff. ×${materialMarginCoeff.toFixed(1)}`
+                  ? `${impositionResult.platesNeeded} plaque(s)${brut ? '' : ` × coeff. ×${materialMarginCoeff.toFixed(1)}`}`
                   : undefined}
               />
 
@@ -228,12 +269,12 @@ export function RecapSidebar() {
                 <>
                   <CostRow
                     label="Impression (Encre)"
-                    value={printingCostData.inkCost}
+                    value={brut ? (printingCostData.inkCostRaw ?? 0) : printingCostData.inkCost}
                     details={printingCostData.inkCost > 0 ? `${inkVolumeL.toFixed(3)} L` : undefined}
                   />
                   <CostRow
                     label="Impression (temps machine)"
-                    value={printingCostData.machineCost}
+                    value={brut ? (printingCostData.machineCostBrut ?? 0) : printingCostData.machineCost}
                     details={printingCostData.machineTimeMin > 0 ? formatMinutes(printingCostData.machineTimeMin) : undefined}
                   />
                   {printSetupType !== 'none' && printingCostData.setupCost > 0 && (
@@ -244,7 +285,7 @@ export function RecapSidebar() {
 
               <CostRow
                 label="Découpe (temps machine)"
-                value={cuttingMachineCost}
+                value={brut ? cuttingMachineCostBrut : cuttingMachineCost}
                 details={cuttingMachineTimeMin > 0 ? formatMinutes(cuttingMachineTimeMin) : undefined}
               />
               {cuttingSetupType !== 'none' && cuttingSetupCost > 0 && (
@@ -258,13 +299,13 @@ export function RecapSidebar() {
             <>
               <CostRow
                 label="Création / BE"
-                value={beCost}
+                value={brut ? beCostBrut : beCost}
                 details={formState.beTimeMinutes > 0 ? `${formState.beTimeMinutes} min` : undefined}
               />
               {formState.batTimeMinutes > 0 && (
                 <CostRow
                   label="↳ BAT"
-                  value={batCost}
+                  value={brut ? batCostBrut : batCost}
                   details={`${formState.batTimeMinutes} min`}
                 />
               )}
@@ -274,7 +315,7 @@ export function RecapSidebar() {
           {/* ── Sections communes ── */}
           {hasFaconnage && (
             <>
-              <CostRow label="Façonnage" value={assemblyCost} details={getAssemblyDetails()} />
+              <CostRow label="Façonnage" value={brut ? assemblyCostBrut : assemblyCost} details={getAssemblyDetails()} />
               {selectedConsumables.length > 0 && (
                 <CostRow label="Consommables" value={consumablesCost} details={`${selectedConsumables.length} ref(s)`} />
               )}
@@ -282,19 +323,19 @@ export function RecapSidebar() {
           )}
 
           {hasConditionnement && (
-            <CostRow label="Conditionnement" value={packagingCost} details={getPackDetails()} />
+            <CostRow label="Conditionnement" value={brut ? packagingCostBrut : packagingCost} details={getPackDetails()} />
           )}
 
           {hasAccessoires && (
             <CostRow
               label="Accessoires"
-              value={accessoriesCost}
+              value={brut ? accessoriesCostBrut : accessoriesCost}
               details={selectedAccessories.length > 0 ? `${selectedAccessories.length} ref(s)` : undefined}
             />
           )}
 
           {hasPackaging && (
-            <CostRow label="Emballage" value={packagingTotalCost} details={packagingTotalCost > 0 ? 'Matière + découpe' : undefined} />
+            <CostRow label="Emballage" value={brut ? packagingTotalCostBrut : packagingTotalCost} details={packagingTotalCost > 0 ? 'Matière + découpe' : undefined} />
           )}
           {formState.hasDossierFee && dossierFeeCost > 0 && (
             <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />
@@ -303,7 +344,7 @@ export function RecapSidebar() {
           {transportCost > 0 && (
             <CostRow
               label="Transport"
-              value={transportCostMarged}
+              value={brut ? transportCost : transportCostMarged}
               details={formState.transportDeliveries.length > 1
                 ? `${formState.transportDeliveries.length} livraisons`
                 : undefined}
@@ -313,8 +354,8 @@ export function RecapSidebar() {
           {/* ── Total ── */}
           <div className="pt-4 border-t border-slate-200 mt-4">
             <div className="flex justify-between items-end">
-              <div className="text-sm font-medium text-slate-500">Total HT</div>
-              <div className="text-3xl font-bold text-slate-900">{displayTotal.toFixed(2)} €</div>
+              <div className="text-sm font-medium text-slate-500">{brut ? 'Coût de revient' : 'Total HT'}</div>
+              <div className={`text-3xl font-bold ${brut ? 'text-orange-600' : 'text-slate-900'}`}>{displayTotal.toFixed(2)} €</div>
             </div>
             <div className="text-right text-xs text-slate-400 mt-1">
               Soit {(displayTotal / (displayQuantity || 1)).toFixed(2)} € / pièce
@@ -322,8 +363,8 @@ export function RecapSidebar() {
             </div>
           </div>
 
-          {/* ── Marges internes ── */}
-          {(showMargeCommerciale || showMargeSopano) && (
+          {/* ── Marges internes (uniquement en mode margé) ── */}
+          {!brut && (showMargeCommerciale || showMargeSopano) && (
             <div className="pt-3 border-t border-dashed border-slate-200 space-y-2">
               {showMargeCommerciale && (
                 <div className="flex justify-between text-sm text-amber-700">

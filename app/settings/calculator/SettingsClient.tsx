@@ -409,6 +409,7 @@ const CATEGORIES: {
         label: 'Impression',
         keys: [
           'HOURLY_RATE_PRINT',
+          'HOURLY_RATE_PRINT_COST',
           'PRINT_SPEED_PRODUCTION',
           'PRINT_SPEED_QUALITY',
           'PRINT_SPEED_VARNISH',
@@ -442,6 +443,7 @@ const CATEGORIES: {
     emoji: '✂️',
     keys: [
       'HOURLY_RATE_CUTTING',
+      'HOURLY_RATE_CUTTING_COST',
       'CUTTING_SETUP_STANDARD_COST',
       'CUTTING_SETUP_COMPLEX_COST',
     ],
@@ -451,14 +453,14 @@ const CATEGORIES: {
     description: 'Taux horaire façonnage',
     color: 'pink',
     emoji: '🔧',
-    keys: ['HOURLY_RATE_ASSEMBLY'],
+    keys: ['HOURLY_RATE_ASSEMBLY', 'HOURLY_RATE_ASSEMBLY_COST'],
   },
   {
     label: 'Conditionnement',
     description: 'Coûts de la mise en carton et notices',
     color: 'teal',
     emoji: '📦',
-    keys: ['HOURLY_RATE_CONDITIONING', 'ASSEMBLY_NOTICE_COST_PER_PIECE'],
+    keys: ['HOURLY_RATE_CONDITIONING', 'HOURLY_RATE_CONDITIONING_COST', 'ASSEMBLY_NOTICE_COST_PER_PIECE'],
   },
   {
     label: 'Imposition',
@@ -473,7 +475,7 @@ const CATEGORIES: {
     color: 'amber',
     emoji: '🗂️',
     subcategories: [
-      { label: 'Coûts internes', keys: ['HOURLY_RATE_PACKAGING', 'PACKAGING_SETUP_COST'] },
+      { label: 'Coûts internes', keys: ['HOURLY_RATE_PACKAGING', 'HOURLY_RATE_PACKAGING_COST', 'PACKAGING_SETUP_COST'] },
       { label: 'Prix moyens', keys: [] },
       { label: 'Devis fournisseurs', keys: [] },
     ],
@@ -483,7 +485,7 @@ const CATEGORIES: {
     description: 'Taux horaires création/BE et BAT',
     color: 'blue',
     emoji: '📋',
-    keys: ['HOURLY_RATE_BE', 'HOURLY_RATE_BAT'],
+    keys: ['HOURLY_RATE_BE', 'HOURLY_RATE_BAT', 'HOURLY_RATE_BE_COST', 'HOURLY_RATE_BAT_COST'],
   },
   {
   label: 'Matière',

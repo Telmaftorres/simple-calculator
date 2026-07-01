@@ -265,6 +265,11 @@ export function useCalculator(
   const amalgameGroupsSubtotal = amalgameGroupResults.reduce((sum, r) => sum + r.totalCost, 0)
   const totalCostMulti = multiProductsSubtotal + amalgameGroupsSubtotal + costResult.totalCost
 
+  // ── Total brut (coût de revient) en multi-produits ──
+  const multiProductsSubtotalBrut = productSlotResults.reduce((sum, r) => sum + r.costResult.subtotalBrut, 0)
+  const amalgameGroupsSubtotalBrut = amalgameGroupResults.reduce((sum, r) => sum + r.totalCostBrut, 0)
+  const totalCostMultiBrut = multiProductsSubtotalBrut + amalgameGroupsSubtotalBrut + costResult.totalCostBrut
+
   const displayTotalForMarges = isMultiProduct ? totalCostMulti : costResult.totalCost + templateOptionsCost
   const margeCommercialeMontant = showMargeCommerciale ? displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100) : 0
   const margeSopanoMontant = showMargeSopano ? displayTotalForMarges * (MARGE_SOPANO_PERCENT / 100) : 0
@@ -591,7 +596,7 @@ export function useCalculator(
     plvQuantity, setPlvQuantity: (v: number | null) => setField('plvQuantity', v),
     packagingUnitPriceOverride, setPackagingUnitPriceOverride: (v: number | null) => setField('packagingUnitPriceOverride', v),
     products, activeProductIndex, productSlotResults,
-    totalQuantityMulti, totalCostMulti,
+    totalQuantityMulti, totalCostMulti, totalCostMultiBrut,
     addProduct, removeProduct, setActiveProduct, updateProduct,
     addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries,
     showMargeCommerciale, setShowMargeCommerciale: (v: boolean) => setField('showMargeCommerciale', v),

@@ -155,6 +155,10 @@ export interface PrintingCostData {
   machineCost: number
   setupTimeMin: number
   machineTimeMin: number
+  // ── Brut (coût de revient, hors marge) ──
+  inkCostRaw?: number        // encre au prix d'achat (sans marge encre)
+  machineCostBrut?: number   // temps machine × taux horaire coûtant
+  costBrut?: number          // inkCostRaw + machineCostBrut + setupCost
 }
 
 // ── Transport multi-livraisons ──
@@ -276,6 +280,10 @@ export interface AmalgameGroupResult {
   cuttingSetupCost: number
   totalCost: number
   multiImposition: MultiImpositionResult | null
+  // ── Brut (coût de revient, hors marge) ──
+  materialCostBrut: number      // = materialCostRaw
+  cuttingMachineCostBrut: number
+  totalCostBrut: number
 }
 
 export interface ProductSlot {
@@ -352,5 +360,9 @@ export interface ProductSlotResult {
     cuttingSetupTimeMin: number
     inkVolumeL: number
     subtotal: number
+    // ── Brut (coût de revient, hors marge) — materialCost est déjà le brut ──
+    printingCostBrut: number
+    cuttingCostBrut: number
+    subtotalBrut: number
   }
 }
