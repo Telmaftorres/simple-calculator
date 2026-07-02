@@ -1,6 +1,6 @@
 import { auth } from '@/auth'
 import { redirect } from 'next/navigation'
-import { getSettings } from '@/app/actions/settings'
+import { getSettings, ensureCostRateSettings } from '@/app/actions/settings'
 import { getPackagingRulesForAdmin, getPackagingSupplierQuotes } from '@/app/actions/reference-data'
 import { SettingsClient } from './SettingsClient'
 import Link from 'next/link'
@@ -15,6 +15,8 @@ export default async function CalculatorSettingsPage() {
   }
 
   const companyId = session.user.companyId ?? 0
+  // Crée les réglages « coûtants » (brut) manquants avant de charger la liste
+  await ensureCostRateSettings(companyId)
   const [settings, packagingData, supplierQuotes] = await Promise.all([
     getSettings(companyId),
     getPackagingRulesForAdmin(companyId),
