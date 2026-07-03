@@ -122,16 +122,51 @@ export async function getStudyFromCrm(studyId: string): Promise<{ studyNumber: s
   ])
   if (!urlSetting?.value) return null
   try {
-    const res = await fetch(`${urlSetting.value.replace(/\/$/, '')}/etudes/${studyId}`, {
-      headers: {
-        Authorization: `Bearer ${keySetting?.value ?? ''}`,
-        Accept: 'application/json',
-      },
+    const base = urlSetting.value.replace(/\/$/, '')
+    const headers = {
+      Authorization: `Bearer ${keySetting?.value ?? ''}`,
+      Accept: 'application/json',
+    }
+    // L'étude peut être identifiée par son id interne (ex "42") OU par sa référence lisible (ex "ET2606GQMJF").
+    // - id numérique   → GET /etudes/{id}       (réponse { data: {...} })
+    // - référence texte → GET /etudes?q=...      (réponse { data: [...] }) puis correspondance exacte sur reference_etude
+    const isNumericId = /^\d+$/.test(studyId)
+    const lookupUrl = isNumericId
+      ? `${base}/etudes/${studyId}`
+      : `${base}/etudes?q=${encodeURIComponent(studyId)}`
+    const res = await fetch(lookupUrl, {
+      headers,
       signal: AbortSignal.timeout(5000),
     })
     if (!res.ok) return null
-    const data = await res.json()
-    return { studyNumber: data.studyNumber, clientName: data.clientName }
+    const json = await res.json()
+    // L'API Kontfeel enveloppe la ressource dans { data } ; on gère aussi une réponse à plat (ancien CRM de test).
+    let etude = json?.data ?? json
+    if (Array.isArray(etude)) {
+      // Réponse liste (recherche par référence) → on garde uniquement la correspondance exacte, pour ne pas risquer une mauvaise étude.
+      etude = etude.find((e) => String(e?.reference_etude).toLowerCase() === studyId.toLowerCase()) ?? null
+    }
+    if (!etude) return null
+
+    const studyNumber = etude.reference_etude ?? etude.studyNumber ?? String(studyId)
+
+    // Le nom du client n'est pas dans l'étude (juste id_client) → 2e appel /clients/{id}
+    let clientName: string = etude.clientName ?? etude.societe_client ?? ''
+    if (!clientName && etude.id_client != null) {
+      try {
+        const cRes = await fetch(`${base}/clients/${etude.id_client}`, {
+          headers,
+          signal: AbortSignal.timeout(5000),
+        })
+        if (cRes.ok) {
+          const cJson = await cRes.json()
+          const client = cJson?.data ?? cJson
+          clientName = client?.societe_client ?? client?.clientName ?? ''
+        }
+      } catch { /* nom client best-effort */ }
+    }
+
+    return { studyNumber, clientName }
   } catch {
     return null
   }

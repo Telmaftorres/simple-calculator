@@ -22,9 +22,11 @@ export const metadata: Metadata = {
 export default async function Home({
   searchParams,
 }: {
-  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string; study_id?: string; chiffrage_ref?: string }>
+  searchParams: Promise<{ editId?: string; viewId?: string; prodId?: string; actualsId?: string; study_id?: string; ET?: string; et?: string; chiffrage_ref?: string }>
 }) {
-  const { editId, viewId, prodId, actualsId, study_id, chiffrage_ref } = await searchParams
+  const { editId, viewId, prodId, actualsId, study_id, ET, et, chiffrage_ref } = await searchParams
+  // Le CRM ouvre le calculateur avec ?et= (format Pierre). On accepte aussi ?ET= et ?study_id= par sécurité.
+  const studyIdParam = et ?? ET ?? study_id
 
   // Determine mode
   let mode: CalculatorMode = 'quote'
@@ -129,7 +131,7 @@ export default async function Home({
             mode={mode}
             targetQuoteId={targetQuoteId}
             productionSheetExtra={productionSheetExtra}
-            initialStudyId={study_id}
+            initialStudyId={studyIdParam}
           />
         </section>
       </div>
