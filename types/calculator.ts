@@ -10,7 +10,7 @@ import type { ImpositionResult as BaseImpositionResult } from '@/lib/calculation
 import type { MultiImpositionResult } from '@/lib/calculation/amalgame-multi-imposition'
 
 // ── Types Prisma simplifiés ──
-export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost' | 'material'>
+export type Plate = Pick<PrismaPlate, 'id' | 'name' | 'width' | 'height' | 'cost' | 'material'> & { stockRemaining?: number }
 export type Accessory = Pick<PrismaAccessory, 'id' | 'name' | 'price'> & {
   supplierRef?: string | null
   supplierUrl?: string | null

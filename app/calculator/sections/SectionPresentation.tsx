@@ -364,6 +364,11 @@ export function SectionPresentation() {
                               {catalogCost.toFixed(2)} €/pl.
                             </span>
                           )}
+                          {selectedPlateBase?.stockRemaining !== undefined && (
+                            <span className={`mt-0.5 text-[10px] font-medium whitespace-nowrap ${selectedPlateBase.stockRemaining > 0 ? 'text-emerald-600' : 'text-red-500'}`}>
+                              {selectedPlateBase.stockRemaining > 0 ? `${selectedPlateBase.stockRemaining} en stock` : 'rupture de stock'}
+                            </span>
+                          )}
                         </div>
                         <button
                           type="button"
