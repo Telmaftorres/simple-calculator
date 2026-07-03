@@ -129,22 +129,75 @@ export async function getProductTypes(companyId?: number) {
   })
 }
 
+type CrmStockLot = {
+  id_matiere?: string | number
+  stock?: string | number
+  quantite?: string | number
+  cout_unitaire?: string | number
+  date_reception?: string
+}
+
+// "2050 x 1525" ou "1000x1400" → { width, height }
+function parseFormatMatiere(fmt: unknown): { width: number; height: number } {
+  const parts = String(fmt ?? '').split(/\s*[x×]\s*/i)
+  return { width: parseInt(parts[0], 10) || 0, height: parseInt(parts[1], 10) || 0 }
+}
+
+// Une matière a plusieurs lots (réceptions). On en tire un coût unitaire selon la méthode choisie.
+function computeMatiereCost(lots: CrmStockLot[], method: string): number {
+  if (lots.length === 0) return 0
+  const num = (v: unknown) => parseFloat(String(v)) || 0
+  if (method === 'weighted_avg') {
+    const totQty = lots.reduce((s, l) => s + num(l.quantite), 0)
+    if (totQty <= 0) return num(lots[0].cout_unitaire)
+    return lots.reduce((s, l) => s + num(l.cout_unitaire) * num(l.quantite), 0) / totQty
+  }
+  // 'last_in_stock' → priorité aux lots encore en stock ; 'last_purchase' → tous les lots. Puis on prend le plus récent.
+  const inStock = lots.filter((l) => num(l.stock) > 0)
+  const pool = method === 'last_in_stock' && inStock.length > 0 ? inStock : lots
+  const latest = pool.reduce((a, b) => (String(a.date_reception ?? '') >= String(b.date_reception ?? '') ? a : b))
+  return num(latest.cout_unitaire)
+}
+
 export async function getPlates(companyId?: number) {
   const cid = companyId ?? (await requireAuth()).user.companyId ?? 0
-  const { getCrmApiUrl, getCrmHeaders } = await import('./crm-config')
+  const { getCrmApiUrl, getCrmHeaders, getCrmCostMethod } = await import('./crm-config')
   const crmUrl = await getCrmApiUrl()
   if (crmUrl) {
     try {
+      const base = crmUrl.replace(/\/$/, '')
       const headers = await getCrmHeaders()
-      const res = await fetch(`${crmUrl.replace(/\/$/, '')}/matieres`, {
-        signal: AbortSignal.timeout(5000),
-        next: { revalidate: 60 },
-        headers,
-      })
-      if (res.ok) {
-        const data = await res.json()
-        return (data as { id: number | string; name: string; width: number; height: number; cost: number; material?: string }[])
-          .map((p, i) => ({ id: typeof p.id === 'number' ? p.id : i + 1, name: p.name, width: p.width, height: p.height, cost: p.cost, material: p.material ?? '' }))
+      const [matRes, stockRes, costMethod] = await Promise.all([
+        fetch(`${base}/matieres-premieres?par_page=100`, { signal: AbortSignal.timeout(5000), next: { revalidate: 60 }, headers }),
+        fetch(`${base}/stock?par_page=100`, { signal: AbortSignal.timeout(5000), next: { revalidate: 60 }, headers }),
+        getCrmCostMethod(),
+      ])
+      if (matRes.ok) {
+        const matieres = ((await matRes.json())?.data ?? []) as { id_matiere: string | number; nom_matiere?: string; format_matiere?: string }[]
+        // Regroupe les lots de stock par matière (un seul appel, groupé en mémoire).
+        const stockByMat = new Map<string, CrmStockLot[]>()
+        if (stockRes.ok) {
+          for (const s of (((await stockRes.json())?.data ?? []) as CrmStockLot[])) {
+            const k = String(s.id_matiere)
+            const arr = stockByMat.get(k)
+            if (arr) arr.push(s)
+            else stockByMat.set(k, [s])
+          }
+        }
+        return matieres.map((m) => {
+          const { width, height } = parseFormatMatiere(m.format_matiere)
+          const lots = stockByMat.get(String(m.id_matiere)) ?? []
+          const stockRemaining = lots.reduce((sum, l) => sum + (parseFloat(String(l.stock)) || 0), 0)
+          return {
+            id: Number(m.id_matiere) || 0,
+            name: m.nom_matiere ?? '',
+            width,
+            height,
+            cost: computeMatiereCost(lots, costMethod),
+            material: '',
+            stockRemaining,
+          }
+        })
       }
     } catch { /* fallback local */ }
   }

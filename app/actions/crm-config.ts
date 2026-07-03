@@ -7,10 +7,35 @@ import { revalidatePath } from 'next/cache'
 const CRM_URL_KEY = 'CRM_API_URL'
 const CRM_INBOUND_KEY = 'CRM_API_KEY'
 const CRM_OUTBOUND_KEY = 'CRM_OUTBOUND_KEY'
+const CRM_COST_METHOD_KEY = 'CRM_COST_METHOD'
+
+export type CrmCostMethod = 'last_in_stock' | 'last_purchase' | 'weighted_avg'
 
 async function getCompanyId(): Promise<number | null> {
   const session = await requireAuth()
   return session.user.companyId ?? null
+}
+
+// ── Méthode de calcul du coût matière depuis le CRM (une matière a plusieurs lots à des prix différents) ──
+export async function getCrmCostMethod(): Promise<CrmCostMethod> {
+  const companyId = await getCompanyId()
+  if (!companyId) return 'last_in_stock'
+  const setting = await prisma.setting.findUnique({ where: { key_companyId: { key: CRM_COST_METHOD_KEY, companyId } } })
+  const v = setting?.value
+  return v === 'last_purchase' || v === 'weighted_avg' ? v : 'last_in_stock'
+}
+
+export async function setCrmCostMethod(method: CrmCostMethod) {
+  await requireAuth()
+  const companyId = await getCompanyId()
+  if (!companyId) throw new Error('Aucune company associée')
+  await prisma.setting.upsert({
+    where: { key_companyId: { key: CRM_COST_METHOD_KEY, companyId } },
+    update: { value: method },
+    create: { key: CRM_COST_METHOD_KEY, value: method, label: 'Méthode de coût matière CRM', companyId },
+  })
+  revalidatePath('/settings/crm')
+  revalidatePath('/')
 }
 
 export async function getCrmApiUrl(): Promise<string | null> {

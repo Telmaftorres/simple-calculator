@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import { toast } from 'sonner'
 import { Button } from '@/components/ui/button'
-import { setCrmApiUrl, testCrmConnection, generateApiKey, setCrmOutboundKey } from '@/app/actions/crm-config'
+import { setCrmApiUrl, testCrmConnection, generateApiKey, setCrmOutboundKey, setCrmCostMethod, type CrmCostMethod } from '@/app/actions/crm-config'
 import { syncCrmSignedQuotes, type SyncResult } from '@/app/actions/crm-sync'
 import { Plug, Unplug, CheckCircle, XCircle, Loader2, Key, Copy, RefreshCw, Link } from 'lucide-react'
 
@@ -11,9 +11,10 @@ interface Props {
   initialUrl: string | null
   initialApiKey: string | null
   initialOutboundKey: string | null
+  initialCostMethod: CrmCostMethod
 }
 
-export function CrmConfigClient({ initialUrl, initialApiKey, initialOutboundKey }: Props) {
+export function CrmConfigClient({ initialUrl, initialApiKey, initialOutboundKey, initialCostMethod }: Props) {
   const [url, setUrl] = useState(initialUrl ?? '')
   const [saving, setSaving] = useState(false)
   const [testing, setTesting] = useState(false)
@@ -24,6 +25,8 @@ export function CrmConfigClient({ initialUrl, initialApiKey, initialOutboundKey 
   const [syncResult, setSyncResult] = useState<SyncResult | null>(null)
   const [outboundKey, setOutboundKey] = useState(initialOutboundKey ?? '')
   const [savingOutbound, setSavingOutbound] = useState(false)
+  const [costMethod, setCostMethod] = useState<CrmCostMethod>(initialCostMethod)
+  const [savingCost, setSavingCost] = useState(false)
 
   const isConnected = !!initialUrl
 
@@ -94,6 +97,18 @@ export function CrmConfigClient({ initialUrl, initialApiKey, initialOutboundKey 
       toast.error('Erreur lors de la sauvegarde')
     } finally {
       setSavingOutbound(false)
+    }
+  }
+
+  const handleSaveCostMethod = async () => {
+    setSavingCost(true)
+    try {
+      await setCrmCostMethod(costMethod)
+      toast.success('Méthode de coût enregistrée')
+    } catch {
+      toast.error('Erreur lors de la sauvegarde')
+    } finally {
+      setSavingCost(false)
     }
   }
 
@@ -188,6 +203,34 @@ export function CrmConfigClient({ initialUrl, initialApiKey, initialOutboundKey 
           />
           <Button size="sm" onClick={handleSaveOutboundKey} disabled={savingOutbound} className="bg-slate-900 hover:bg-slate-700">
             {savingOutbound ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
+          </Button>
+        </div>
+      </div>
+
+      {/* Séparateur */}
+      <div className="border-t border-slate-200" />
+
+      {/* Méthode de coût matière (CRM) */}
+      <div className="space-y-3">
+        <div className="flex items-center gap-2">
+          <Key className="h-4 w-4 text-slate-500" />
+          <p className="text-sm font-semibold text-slate-700">Coût des matières (depuis le CRM)</p>
+        </div>
+        <p className="text-xs text-slate-500">
+          Une matière a plusieurs lots achetés à des prix différents. Choisissez quel prix le calculateur utilise comme coût.
+        </p>
+        <div className="flex gap-2">
+          <select
+            value={costMethod}
+            onChange={e => setCostMethod(e.target.value as CrmCostMethod)}
+            className="flex-1 px-3 py-2 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-slate-800"
+          >
+            <option value="last_in_stock">Dernier lot encore en stock (recommandé)</option>
+            <option value="last_purchase">Dernier prix d&apos;achat</option>
+            <option value="weighted_avg">Prix moyen pondéré</option>
+          </select>
+          <Button size="sm" onClick={handleSaveCostMethod} disabled={savingCost} className="bg-slate-900 hover:bg-slate-700">
+            {savingCost ? <Loader2 className="h-4 w-4 animate-spin" /> : 'Enregistrer'}
           </Button>
         </div>
       </div>
