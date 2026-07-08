@@ -183,8 +183,13 @@ export function useImpositionResults({
             slot.bordABord ? 0 : poseSpacingMm, undefined, plateBorderMm
           )
           const autoCpp = imp.itemsPerPlate > 0 ? imp.itemsPerPlate : 1
-          const cpp = (slot.itemsPerPlateOverride && slot.itemsPerPlateOverride > 0)
-            ? slot.itemsPerPlateOverride : autoCpp
+          // Priorité au forçage d'amalgame (countPerPlateInGroup, saisi via « Personnaliser l'amalgame »),
+          // puis au forçage individuel (itemsPerPlateOverride), sinon la valeur auto.
+          const cpp = (slot.countPerPlateInGroup && slot.countPerPlateInGroup > 0)
+            ? slot.countPerPlateInGroup
+            : (slot.itemsPerPlateOverride && slot.itemsPerPlateOverride > 0)
+              ? slot.itemsPerPlateOverride
+              : autoCpp
           // Use the group's optimized plate count, not the individual slot's naive count
           const groupPlatesCount = groupPlatesMap.get(group!.id) ?? Math.ceil(slot.quantity / cpp)
           slotImposition = {
