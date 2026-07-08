@@ -147,14 +147,17 @@ function parseFormatMatiere(fmt: unknown): { width: number; height: number } {
 function computeMatiereCost(lots: CrmStockLot[], method: string): number {
   if (lots.length === 0) return 0
   const num = (v: unknown) => parseFloat(String(v)) || 0
+  // On ignore les coûts ≤ 0 (ex : avoir fournisseur qui met un cout_unitaire négatif) → on ne garde que les prix d'achat positifs.
+  const positive = lots.filter((l) => num(l.cout_unitaire) > 0)
+  const usable = positive.length > 0 ? positive : lots
   if (method === 'weighted_avg') {
-    const totQty = lots.reduce((s, l) => s + num(l.quantite), 0)
-    if (totQty <= 0) return num(lots[0].cout_unitaire)
-    return lots.reduce((s, l) => s + num(l.cout_unitaire) * num(l.quantite), 0) / totQty
+    const totQty = usable.reduce((s, l) => s + num(l.quantite), 0)
+    if (totQty <= 0) return num(usable[0].cout_unitaire)
+    return usable.reduce((s, l) => s + num(l.cout_unitaire) * num(l.quantite), 0) / totQty
   }
   // 'last_in_stock' → priorité aux lots encore en stock ; 'last_purchase' → tous les lots. Puis on prend le plus récent.
-  const inStock = lots.filter((l) => num(l.stock) > 0)
-  const pool = method === 'last_in_stock' && inStock.length > 0 ? inStock : lots
+  const inStock = usable.filter((l) => num(l.stock) > 0)
+  const pool = method === 'last_in_stock' && inStock.length > 0 ? inStock : usable
   const latest = pool.reduce((a, b) => (String(a.date_reception ?? '') >= String(b.date_reception ?? '') ? a : b))
   return num(latest.cout_unitaire)
 }
