@@ -5,6 +5,7 @@ import { Plus, Layers, X, TrendingDown, TrendingUp, SlidersHorizontal } from 'lu
 import { useCalculatorContext } from '../../context/CalculatorContext'
 import { GroupEditor } from './GroupEditor'
 import { AmalgameCustomizeDialog } from '../AmalgameCustomizeDialog'
+import { AmalgamePreview } from './AmalgamePreview'
 import type { AmalgameGroup } from '@/types/calculator'
 import { GROUP_COLORS } from '@/types/calculator'
 
@@ -18,6 +19,7 @@ export function AmalgameGroupsPanel() {
     amalgameGroups, setAmalgameGroups,
     amalgameGroupResults,
     products, updateProduct,
+    plates,
   } = useCalculatorContext()
 
   const [showNewForm, setShowNewForm] = useState(false)
@@ -86,6 +88,7 @@ export function AmalgameGroupsPanel() {
         const c = groupColor(group)
         const result = amalgameGroupResults.find(r => r.groupId === group.id)
         const slotsInGroup = products.filter(p => p.amalgameGroupId === group.id)
+        const plateForGroup = plates.find(p => p.id.toString() === group.plateId)
         const isEditing = editingGroupId === group.id
 
         if (isEditing) {
@@ -185,6 +188,16 @@ export function AmalgameGroupsPanel() {
               }
               return null
             })()}
+
+            {/* Aperçu visuel de l'amalgame proposé */}
+            {result?.multiImposition?.feasible && result.multiImposition.strips.length > 0 && plateForGroup && (
+              <AmalgamePreview
+                plateWidth={plateForGroup.width}
+                plateHeight={plateForGroup.height}
+                strips={result.multiImposition.strips}
+                utilization={result.multiImposition.utilization}
+              />
+            )}
 
             {/* Sous-total */}
             {result && result.totalCost > 0 && (
