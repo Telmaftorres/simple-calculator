@@ -133,7 +133,7 @@ function DeliveryRow({
 
         {delivery.mode !== 'AFFRETEMENT' && (
           <div className="space-y-1.5">
-            <Label className="text-xs">Poids total (kg)</Label>
+            <Label className="text-xs">{delivery.mode === 'PACK30' ? 'Poids par colis (kg)' : 'Poids total (kg)'}</Label>
             <Input
               type="number"
               value={delivery.weightKg ?? ''}
@@ -143,6 +143,11 @@ function DeliveryRow({
               }}
               min={0}
             />
+            <p className="text-[10px] text-slate-400">
+              {delivery.mode === 'PACK30'
+                ? '≤ 30 kg par colis · le tarif est multiplié par le nb de colis'
+                : 'Poids total de tous les colis'}
+            </p>
           </div>
         )}
 

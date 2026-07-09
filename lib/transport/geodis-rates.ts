@@ -253,7 +253,9 @@ export function calculateTransport(
   let zone: string | undefined
 
   if (mode === 'PACK30') {
-    basePrice = getPack30Rate(department, weightKg)
+    // Pack 30 = monocolis (≤ 30 kg par colis) → le tarif s'applique par colis, donc × nombre de colis.
+    const rate = getPack30Rate(department, weightKg)
+    basePrice = rate === null ? null : rate * Math.max(1, units)
     zone = PACK30_ZONES[department] ?? 'Z02'
   } else if (mode === 'MESSAGERIE_PLUS') {
     basePrice = getMessagerieRate(department, weightKg)
