@@ -252,17 +252,15 @@ export function SectionImpression() {
 
           {hasVarnish && (
             <div className="mt-3 space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-100">
-              <Label className="text-xs text-purple-700">Vernis (ml / plaque)</Label>
-              <input
-                type="number"
+              <GaugeSlider
+                label="Vernis (ml / plaque)"
+                value={varnishMlPerPlate}
+                max={100}
                 min={0}
-                step="0.1"
-                value={varnishMlPerPlate || ''}
-                onChange={e => setVarnishMlPerPlate(parseFloat(e.target.value) || 0)}
-                placeholder="Ex : 6"
-                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
+                unit="ml"
+                onChange={setVarnishMlPerPlate}
+                gradientColors="from-purple-200 to-purple-500"
               />
-              <p className="text-[10px] text-purple-400">Volume de vernis appliqué par plaque</p>
             </div>
           )}
 
