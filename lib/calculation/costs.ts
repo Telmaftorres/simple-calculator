@@ -68,6 +68,7 @@ export function calculateCosts(params: {
   selectedPlate: Plate | undefined
   inkMlPerPlate: number
   varnishSurfacePercent: number
+  varnishMlPerPlate?: number
   flatColorSurfacePercent: number
   printMode: PrintMode
   isRectoVerso: boolean
@@ -116,6 +117,7 @@ export function calculateCosts(params: {
     selectedPlate,
     inkMlPerPlate,
     varnishSurfacePercent,
+    varnishMlPerPlate: varnishMlInput = 0,
     flatColorSurfacePercent,
     printMode,
     isRectoVerso,
@@ -204,14 +206,19 @@ export function calculateCosts(params: {
     }
     if (!hasImpression) return noImpression
 
+    // Vernis : on utilise le ml/plaque saisi directement (nouveau champ) ; sinon rétro-compat
+    // via l'ancien pourcentage (inkMl × %) → les anciens devis gardent exactement le même coût.
+    const effectiveVarnishMlPerPlate = hasVarnish
+      ? (varnishMlInput > 0 ? varnishMlInput : inkMlPerPlate * (varnishSurfacePercent / 100))
+      : 0
+
     // ── Mode amalgame : machine time fourni en override ──
     if (amalgameOverride) {
       const platesNeeded = amalgameOverride.platesCount
       const multiplier = isRectoVerso ? 2 : 1
-      const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
       const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
       const standardVolumeL = (inkMlPerPlate * platesNeeded * multiplier) / 1000
-      const varnishVolumeL = (inkMlPerPlate * varnishRatio * platesNeeded * multiplier) / 1000
+      const varnishVolumeL = (effectiveVarnishMlPerPlate * platesNeeded * multiplier) / 1000
       const flatColorVolumeL = (inkMlPerPlate * flatColorRatio * platesNeeded * multiplier) / 1000
       const inkCost = standardVolumeL * inkCostPerLiter * inkMarginStandard
         + varnishVolumeL * inkCostVarnishPerLiter * inkMarginVarnish
@@ -238,11 +245,10 @@ export function calculateCosts(params: {
     const multiplier = isRectoVerso ? 2 : 1
     const platesNeeded = impositionResult.platesNeeded
 
-    const varnishRatio = hasVarnish ? (varnishSurfacePercent / 100) : 0
     const flatColorRatio = hasFlatColor ? (flatColorSurfacePercent / 100) : 0
 
     const standardMlPerPlate = inkMlPerPlate * 1
-    const varnishMlPerPlate = inkMlPerPlate * varnishRatio
+    const varnishMlPerPlate = effectiveVarnishMlPerPlate
     const flatColorMlPerPlate = inkMlPerPlate * flatColorRatio
 
     const standardVolumeL = (standardMlPerPlate * platesNeeded * multiplier) / 1000
