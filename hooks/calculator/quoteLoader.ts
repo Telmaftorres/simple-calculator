@@ -70,6 +70,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     inkMlPerPlate: initialQuote.inkMlPerPlate ?? 20,
     inkMlVerso: initialQuote.inkMlVerso ?? 0,
     varnishSurfacePercent: initialQuote.varnishSurfacePercent ?? 0,
+    varnishMlPerPlate: (initialQuote as { varnishMlPerPlate?: number }).varnishMlPerPlate ?? 0,
     flatColorSurfacePercent: initialQuote.flatColorSurfacePercent ?? 0,
     printMode: (initialQuote.printMode as 'production' | 'quality') || 'production',
     isRectoVerso: initialQuote.isRectoVerso || false,

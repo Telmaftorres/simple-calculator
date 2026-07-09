@@ -19,6 +19,7 @@ export function SectionImpression() {
     inkMlPerPlate, setInkMlPerPlate,
     inkMlVerso, setInkMlVerso,
     varnishSurfacePercent, setVarnishSurfacePercent,
+    varnishMlPerPlate, setVarnishMlPerPlate,
     flatColorSurfacePercent, setFlatColorSurfacePercent,
     printSetupType, setPrintSetupType,
     machineTimeMinOverride, setMachineTimeMinOverride,
@@ -251,30 +252,17 @@ export function SectionImpression() {
 
           {hasVarnish && (
             <div className="mt-3 space-y-2 p-3 bg-purple-50 rounded-lg border border-purple-100">
-              <GaugeSlider
-                label="Surface Vernis"
-                value={varnishSurfacePercent}
-                max={100}
+              <Label className="text-xs text-purple-700">Vernis (ml / plaque)</Label>
+              <input
+                type="number"
                 min={0}
-                unit="%"
-                onChange={setVarnishSurfacePercent}
-                gradientColors="from-purple-200 to-purple-500"
+                step="0.1"
+                value={varnishMlPerPlate || ''}
+                onChange={e => setVarnishMlPerPlate(parseFloat(e.target.value) || 0)}
+                placeholder="Ex : 6"
+                className="w-full px-3 py-2 text-sm border border-purple-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-purple-400"
               />
-              <div className="flex gap-2">
-                {FINISHING_SHORTCUTS.map((val) => (
-                  <button
-                    key={val}
-                    onClick={() => setVarnishSurfacePercent(val)}
-                    className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                      varnishSurfacePercent === val
-                        ? 'bg-purple-600 text-white border-purple-600'
-                        : 'text-slate-500 border-slate-200 hover:bg-slate-50'
-                    }`}
-                  >
-                    {val}%
-                  </button>
-                ))}
-              </div>
+              <p className="text-[10px] text-purple-400">Volume de vernis appliqué par plaque</p>
             </div>
           )}
 

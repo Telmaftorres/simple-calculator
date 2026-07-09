@@ -7,6 +7,7 @@ export const QUOTE_DEFAULTS = {
   hasVarnish: false as boolean,
   hasFlatColor: false as boolean,
   varnishSurfacePercent: 0 as number,
+  varnishMlPerPlate: 0 as number,
   flatColorSurfacePercent: 0 as number,
   cuttingTimePerPoseSeconds: 0 as number,
   assemblyTimePerPieceSeconds: 0 as number,

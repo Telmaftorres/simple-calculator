@@ -32,6 +32,7 @@ export interface SaveContext {
   inkMlPerPlate: number
   inkMlVerso: number
   varnishSurfacePercent: number
+  varnishMlPerPlate: number
   flatColorSurfacePercent: number
   printMode: 'production' | 'quality'
   isRectoVerso: boolean
@@ -181,6 +182,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         inkMlPerPlate: isMultiProduct ? 0 : ctx.inkMlPerPlate,
         inkMlVerso: isMultiProduct ? 0 : ctx.inkMlVerso,
         varnishSurfacePercent: isMultiProduct ? 0 : ctx.varnishSurfacePercent,
+        varnishMlPerPlate: isMultiProduct ? 0 : ctx.varnishMlPerPlate,
         flatColorSurfacePercent: isMultiProduct ? 0 : ctx.flatColorSurfacePercent,
         printMode: isMultiProduct ? 'production' : ctx.printMode,
         isRectoVerso: isMultiProduct ? false : ctx.isRectoVerso,
