@@ -261,6 +261,7 @@ export interface AmalgameGroup {
   hasVarnish: boolean
   hasFlatColor: boolean
   varnishSurfacePercent: number
+  varnishMlPerPlate: number
   flatColorSurfacePercent: number
   printSetupType: 'none' | 'standard' | 'complexe'
   machineTimeMinOverride: number | null
@@ -300,6 +301,7 @@ export interface ProductSlot {
   inkMlPerPlate: number
   inkMlVerso: number
   varnishSurfacePercent: number
+  varnishMlPerPlate: number
   flatColorSurfacePercent: number
   hasVarnish: boolean
   hasFlatColor: boolean
@@ -329,6 +331,7 @@ export const DEFAULT_PRODUCT_SLOT: ProductSlot = {
   inkMlPerPlate: 20,
   inkMlVerso: 0,
   varnishSurfacePercent: 0,
+  varnishMlPerPlate: 0,
   flatColorSurfacePercent: 0,
   hasVarnish: false,
   hasFlatColor: false,

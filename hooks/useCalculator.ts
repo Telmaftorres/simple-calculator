@@ -416,7 +416,7 @@ export function useCalculator(
         plateId: r.plateId?.toString() ?? '', cuttingSetupType: 'none' as const,
         cuttingTimePerPoseSeconds: 0, printMode: 'production' as const,
         isRectoVerso: false, rectoVersoType: null, inkMlPerPlate: 20, inkMlVerso: 0,
-        hasVarnish: false, hasFlatColor: false, varnishSurfacePercent: 0,
+        hasVarnish: false, hasFlatColor: false, varnishSurfacePercent: 0, varnishMlPerPlate: 0,
         flatColorSurfacePercent: 0, printSetupType: 'none' as const,
         machineTimeMinOverride: null,
       })))
