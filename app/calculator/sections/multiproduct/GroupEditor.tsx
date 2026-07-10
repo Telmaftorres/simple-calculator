@@ -46,6 +46,7 @@ export function GroupEditor({
   const [hasVarnish, setHasVarnish] = useState(initial?.hasVarnish ?? false)
   const [hasFlatColor, setHasFlatColor] = useState(initial?.hasFlatColor ?? false)
   const [varnishSurfacePercent, setVarnishSurfacePercent] = useState(initial?.varnishSurfacePercent ?? 0)
+  const [varnishMlPerPlate, setVarnishMlPerPlate] = useState(initial?.varnishMlPerPlate ?? 0)
   const [flatColorSurfacePercent, setFlatColorSurfacePercent] = useState(initial?.flatColorSurfacePercent ?? 0)
   const [printSetupType, setPrintSetupType] = useState<'none' | 'standard' | 'complexe'>(initial?.printSetupType ?? 'none')
   const [machineTimeMinOverride, setMachineTimeMinOverride] = useState<number | null>(initial?.machineTimeMinOverride ?? null)
@@ -86,7 +87,7 @@ export function GroupEditor({
       printMode, isRectoVerso, rectoVersoType,
       inkMlPerPlate, inkMlVerso,
       hasVarnish, hasFlatColor,
-      varnishSurfacePercent, flatColorSurfacePercent,
+      varnishSurfacePercent, varnishMlPerPlate, flatColorSurfacePercent,
       printSetupType, machineTimeMinOverride,
     }
     onSave(group, selectedProductIds)
@@ -244,12 +245,7 @@ export function GroupEditor({
             </div>
             {hasVarnish && (
               <div className="space-y-2 p-3 bg-white rounded-lg border border-purple-100">
-                <GaugeSlider label="Surface Vernis" value={varnishSurfacePercent} min={0} max={100} unit="%" onChange={setVarnishSurfacePercent} gradientColors="from-purple-200 to-purple-500" />
-                <div className="flex gap-2">
-                  {FINISHING_SHORTCUTS.map(val => (
-                    <button type="button" key={val} onClick={() => setVarnishSurfacePercent(val)} className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${varnishSurfacePercent === val ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{val}%</button>
-                  ))}
-                </div>
+                <GaugeSlider label="Vernis (ml / plaque)" value={varnishMlPerPlate} min={0} max={100} unit="ml" onChange={setVarnishMlPerPlate} gradientColors="from-purple-200 to-purple-500" />
               </div>
             )}
             {hasFlatColor && (

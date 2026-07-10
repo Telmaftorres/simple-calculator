@@ -292,14 +292,8 @@ export function MultiProductSlotEditor() {
                       </div>
                       {activeSlot.hasVarnish && (
                         <div className="space-y-2 p-3 bg-white rounded-lg border border-purple-100">
-                          <GaugeSlider label="Surface Vernis" value={activeSlot.varnishSurfacePercent} min={0} max={100} unit="%"
-                            onChange={(v) => updateProduct(activeProductIndex, 'varnishSurfacePercent', v)} gradientColors="from-purple-200 to-purple-500" />
-                          <div className="flex gap-2">
-                            {FINISHING_SHORTCUTS.map((val) => (
-                              <button key={val} onClick={() => updateProduct(activeProductIndex, 'varnishSurfacePercent', val)}
-                                className={`flex-1 py-1.5 text-xs font-semibold rounded-lg border transition-all ${activeSlot.varnishSurfacePercent === val ? 'bg-purple-600 text-white border-purple-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}>{val}%</button>
-                            ))}
-                          </div>
+                          <GaugeSlider label="Vernis (ml / plaque)" value={activeSlot.varnishMlPerPlate} min={0} max={100} unit="ml"
+                            onChange={(v) => updateProduct(activeProductIndex, 'varnishMlPerPlate', v)} gradientColors="from-purple-200 to-purple-500" />
                         </div>
                       )}
                       {activeSlot.hasFlatColor && (

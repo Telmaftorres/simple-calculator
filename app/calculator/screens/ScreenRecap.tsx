@@ -22,6 +22,7 @@ export function ScreenRecap() {
     impositionResult,
     inkMlPerPlate,
     varnishSurfacePercent,
+    varnishMlPerPlate,
     flatColorSurfacePercent,
     isRectoVerso,
     rectoVersoType,
@@ -355,7 +356,7 @@ export function ScreenRecap() {
                     <div className="flex justify-between">
                       <dt className="text-slate-500">Finitions</dt>
                       <dd className="font-medium text-right">
-                        {hasVarnish && <span className="text-purple-700">Vernis {varnishSurfacePercent}%</span>}
+                        {hasVarnish && <span className="text-purple-700">Vernis {varnishMlPerPlate > 0 ? `${varnishMlPerPlate} ml` : `${varnishSurfacePercent}%`}</span>}
                         {hasVarnish && hasFlatColor && <span> · </span>}
                         {hasFlatColor && <span className="text-violet-700">Aplat {flatColorSurfacePercent}%</span>}
                       </dd>
