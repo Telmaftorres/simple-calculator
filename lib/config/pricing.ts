@@ -30,7 +30,7 @@ export const HOURLY_RATE_CUTTING = 50
 export const CUTTING_SETUP_MINUTES = 15
 
 // ── Façonnage ──
-export const HOURLY_RATE_ASSEMBLY = 45
+export const HOURLY_RATE_ASSEMBLY = 40
 
 // ── Conditionnement ──
 export const HOURLY_RATE_CONDITIONING = 40
@@ -42,7 +42,7 @@ export const POSE_SPACING_MM = 10
 export const PLATE_BORDER_MM = 10   // marge de bord de plaque, chaque côté (mm)
 
 // ── Emballage ──
-export const HOURLY_RATE_PACKAGING = 45
+export const HOURLY_RATE_PACKAGING = 40
 export const PACKAGING_SETUP_COST = 10
 
 // ── Bureau d'etudes ──
@@ -60,7 +60,7 @@ export const MATERIAL_MARGIN_TIER2 = 3
 export const MATERIAL_MARGIN_TIER3 = 2.5
 export const MATERIAL_MARGIN_TIER4 = 2
 
-export const DOSSIER_FEE = 8
+export const DOSSIER_FEE = 15
 
 // ── Marges internes (lecture seule, jamais sauvegardees en DB) ──
 export const MARGE_COMMERCIALE_PERCENT = 2.5
