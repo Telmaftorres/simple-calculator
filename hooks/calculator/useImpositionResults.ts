@@ -129,6 +129,7 @@ function computeGroupResult(
     hasDossierFee: false,
     hasFournituresEmb: false,
     hasPalette: false,
+    modePrototype: false,
   })
   return {
     groupId: group.id,
@@ -257,6 +258,7 @@ export function useImpositionResults({
         hasDossierFee: false,
         hasFournituresEmb: false,
         hasPalette: false,
+        modePrototype: false,
       })
 
       return {

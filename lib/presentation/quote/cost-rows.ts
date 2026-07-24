@@ -50,6 +50,8 @@ export type QuoteCostRowsParams = {
   fournituresEmbCost?: number
   hasPalette?: boolean
   paletteCost?: number
+  modePrototype?: boolean
+  prototypeFeeCost?: number
   beCost?: number
   batCost?: number
   beTotalCost?: number
@@ -78,6 +80,9 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
   const isClient = p.mode === 'client'
 
   return [
+    ...(p.modePrototype && p.prototypeFeeCost && p.prototypeFeeCost > 0 ? [
+      { label: 'Forfait prototype (BE + dossier)', detail: 'forfait', value: p.prototypeFeeCost },
+    ] : []),
     ...(p.hasDossierFee && p.dossierFeeCost && p.dossierFeeCost > 0 ? [
       { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
     ] : []),

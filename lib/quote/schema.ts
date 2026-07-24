@@ -73,6 +73,7 @@ export const quoteFieldsSchema = z.object({
   hasDossierFee: z.boolean().optional(),
   hasFournituresEmb: z.boolean().optional(),
   hasPalette: z.boolean().optional(),
+  modePrototype: z.boolean().optional(),
   cumulerTemps: z.boolean().optional(),
 
   showMargeCommerciale: z.boolean().optional(),

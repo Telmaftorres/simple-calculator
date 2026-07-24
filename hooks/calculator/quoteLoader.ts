@@ -117,6 +117,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     hasDossierFee: initialQuote.hasDossierFee ?? false,
     hasFournituresEmb: initialQuote.hasFournituresEmb ?? false,
     hasPalette: initialQuote.hasPalette ?? false,
+    modePrototype: initialQuote.modePrototype ?? false,
     cumulerTemps: initialQuote.cumulerTemps ?? false,
     plateCostOverride: initialQuote.plateCostOverride ?? null,
     customPlate: (initialQuote.customPlateName && initialQuote.customPlateWidth && initialQuote.customPlateHeight && initialQuote.customPlateCost)

@@ -41,6 +41,7 @@ export function RecapSidebar() {
     dossierFeeCost,
     fournituresEmbCost,
     paletteCost,
+    prototypeFeeCost,
     inkVolumeL,
     cuttingMachineCost,
     cuttingSetupCost,
@@ -371,6 +372,9 @@ export function RecapSidebar() {
 
           {hasPackaging && (
             <CostRow label="Emballage" value={brut ? packagingTotalCostBrut : packagingTotalCost} details={packagingTotalCost > 0 ? 'Matière + découpe' : undefined} />
+          )}
+          {prototypeFeeCost > 0 && (
+            <CostRow label="Forfait prototype (BE + dossier)" value={prototypeFeeCost} details="forfait" />
           )}
           {formState.hasDossierFee && dossierFeeCost > 0 && (
             <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />

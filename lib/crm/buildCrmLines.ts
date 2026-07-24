@@ -28,6 +28,8 @@ export type CrmLinesInput = {
   hasFournituresEmb?: boolean
   paletteCost?: number
   hasPalette?: boolean
+  prototypeFeeCost?: number
+  modePrototype?: boolean
   transportCostMarged: number
   transportTotal: number
   transportMargin: number
@@ -46,6 +48,10 @@ export function buildCrmLines(p: CrmLinesInput): CrmPushLine[] {
 
   if (p.hasPalette && (p.paletteCost ?? 0) > 0) {
     lines.push({ description: 'Option palette', prixAchat: p.paletteCost!, marge: 1, prixVente: p.paletteCost! })
+  }
+
+  if (p.modePrototype && (p.prototypeFeeCost ?? 0) > 0) {
+    lines.push({ description: 'Forfait prototype (BE + dossier)', prixAchat: p.prototypeFeeCost!, marge: 1, prixVente: p.prototypeFeeCost! })
   }
 
   if (p.materialCostMarged > 0) {
