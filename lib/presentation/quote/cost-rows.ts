@@ -46,6 +46,10 @@ export type QuoteCostRowsParams = {
   batTimeMinutes?: number
   hasDossierFee?: boolean
   dossierFeeCost?: number
+  hasFournituresEmb?: boolean
+  fournituresEmbCost?: number
+  hasPalette?: boolean
+  paletteCost?: number
   beCost?: number
   batCost?: number
   beTotalCost?: number
@@ -76,6 +80,12 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
   return [
     ...(p.hasDossierFee && p.dossierFeeCost && p.dossierFeeCost > 0 ? [
       { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
+    ] : []),
+    ...(p.hasFournituresEmb && p.fournituresEmbCost && p.fournituresEmbCost > 0 ? [
+      { label: 'Fournitures emballage', detail: 'forfait', value: p.fournituresEmbCost },
+    ] : []),
+    ...(p.hasPalette && p.paletteCost && p.paletteCost > 0 ? [
+      { label: 'Option palette', detail: 'forfait', value: p.paletteCost },
     ] : []),
     ...(p.selectedPlate ? [{
       label: 'Matière',

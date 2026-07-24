@@ -39,6 +39,8 @@ export function RecapSidebar() {
   const {
     printingCostData,
     dossierFeeCost,
+    fournituresEmbCost,
+    paletteCost,
     inkVolumeL,
     cuttingMachineCost,
     cuttingSetupCost,
@@ -372,6 +374,12 @@ export function RecapSidebar() {
           )}
           {formState.hasDossierFee && dossierFeeCost > 0 && (
             <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />
+          )}
+          {formState.hasFournituresEmb && fournituresEmbCost > 0 && (
+            <CostRow label="Fournitures emballage" value={fournituresEmbCost} details="forfait" />
+          )}
+          {formState.hasPalette && paletteCost > 0 && (
+            <CostRow label="Option palette" value={paletteCost} details="forfait" />
           )}
 
           {transportCost > 0 && (

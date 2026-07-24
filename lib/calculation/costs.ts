@@ -38,6 +38,8 @@ import {
   INK_MARGIN_VARNISH,
   INK_MARGIN_FLAT_COLOR,
   DOSSIER_FEE,
+  FOURNITURES_EMB_FEE,
+  PALETTE_FEE,
   HOURLY_RATE_CONDITIONING,
   TRANSPORT_MARGIN,
   PACKAGING_B_PETIT_PRICE,
@@ -80,6 +82,8 @@ export function calculateCosts(params: {
   hasVarnish: boolean
   hasFlatColor: boolean
   hasDossierFee?: boolean
+  hasFournituresEmb?: boolean
+  hasPalette?: boolean
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   hasImpression: boolean
@@ -149,6 +153,8 @@ export function calculateCosts(params: {
     beTimeMinutes = 0,
     batTimeMinutes = 0,
     hasDossierFee = false,
+    hasFournituresEmb = false,
+    hasPalette = false,
     degressiveQuantity,
     packagingPlate,
     packagingQuantity,
@@ -213,6 +219,8 @@ export function calculateCosts(params: {
   const mQ4P2 = settings?.MATERIAL_MARGIN_Q4_P2 ?? MATERIAL_MARGIN_Q4_P2
   const mQ4P3 = settings?.MATERIAL_MARGIN_Q4_P3 ?? MATERIAL_MARGIN_Q4_P3
   const dossierFee = settings?.DOSSIER_FEE ?? DOSSIER_FEE
+  const fournituresEmbFee = settings?.FOURNITURES_EMB_FEE ?? FOURNITURES_EMB_FEE
+  const paletteFee = settings?.PALETTE_FEE ?? PALETTE_FEE
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
 
 
@@ -499,8 +507,10 @@ const materialCostRaw = amalgameOverride
   : (impositionResult?.materialCost || 0)
 const materialCostMarged = materialCostRaw * materialMarginCoeff
 
-// ── Frais de dossier ──
+// ── Frais fixes (dossier, fournitures emballage, palette) ──
 const dossierFeeCost = hasDossierFee ? dossierFee : 0
+const fournituresEmbCost = hasFournituresEmb ? fournituresEmbFee : 0
+const paletteCost = hasPalette ? paletteFee : 0
 
   // ── Transport (avec marge) ──
   const transportCostMarged = (transportTotal ?? 0) * transportMargin
@@ -508,6 +518,8 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
   // ── Total ──
   const totalCost =
     dossierFeeCost +
+    fournituresEmbCost +
+    paletteCost +
     materialCostMarged +
     printingCost +
     cuttingCost +
@@ -523,6 +535,8 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
   const printingCostBrut = printingCostData.costBrut ?? 0
   const totalCostBrut =
     dossierFeeCost +
+    fournituresEmbCost +
+    paletteCost +
     materialCostRaw +
     printingCostBrut +
     cuttingCostBrut +
@@ -562,6 +576,8 @@ const dossierFeeCost = hasDossierFee ? dossierFee : 0
     materialCostMarged,
     materialMarginCoeff,
     dossierFeeCost,
+    fournituresEmbCost,
+    paletteCost,
     beCost,
     batCost,
     beTotalCost,

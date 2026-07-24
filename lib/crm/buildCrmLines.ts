@@ -24,6 +24,10 @@ export type CrmLinesInput = {
   hasBE: boolean
   dossierFeeCost: number
   hasDossierFee: boolean
+  fournituresEmbCost?: number
+  hasFournituresEmb?: boolean
+  paletteCost?: number
+  hasPalette?: boolean
   transportCostMarged: number
   transportTotal: number
   transportMargin: number
@@ -34,6 +38,14 @@ export function buildCrmLines(p: CrmLinesInput): CrmPushLine[] {
 
   if (p.hasDossierFee && p.dossierFeeCost > 0) {
     lines.push({ description: 'Frais de dossier', prixAchat: p.dossierFeeCost, marge: 1, prixVente: p.dossierFeeCost })
+  }
+
+  if (p.hasFournituresEmb && (p.fournituresEmbCost ?? 0) > 0) {
+    lines.push({ description: 'Fournitures emballage', prixAchat: p.fournituresEmbCost!, marge: 1, prixVente: p.fournituresEmbCost! })
+  }
+
+  if (p.hasPalette && (p.paletteCost ?? 0) > 0) {
+    lines.push({ description: 'Option palette', prixAchat: p.paletteCost!, marge: 1, prixVente: p.paletteCost! })
   }
 
   if (p.materialCostMarged > 0) {

@@ -127,6 +127,8 @@ function computeGroupResult(
     hasPackaging: false, packagingPlate: undefined, packagingQuantity: 0,
     packagingCuttingTimePerPoseSeconds: 20, packagingWidth: 0, packagingHeight: 0,
     hasDossierFee: false,
+    hasFournituresEmb: false,
+    hasPalette: false,
   })
   return {
     groupId: group.id,
@@ -253,6 +255,8 @@ export function useImpositionResults({
         hasPackaging: false, packagingPlate: undefined, packagingQuantity: 0,
         packagingCuttingTimePerPoseSeconds: 20, packagingWidth: 0, packagingHeight: 0,
         hasDossierFee: false,
+        hasFournituresEmb: false,
+        hasPalette: false,
       })
 
       return {
