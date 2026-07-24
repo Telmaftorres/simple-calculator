@@ -78,6 +78,8 @@ export const MATERIAL_MARGIN_Q4_P2 = 1.8
 export const MATERIAL_MARGIN_Q4_P3 = 1.5
 
 export const DOSSIER_FEE = 15
+export const FOURNITURES_EMB_FEE = 15   // achat scotch, film, bulles, carton
+export const PALETTE_FEE = 5            // option palette (switch Oui/Non)
 
 // ── Marges internes (lecture seule, jamais sauvegardees en DB) ──
 export const MARGE_COMMERCIALE_PERCENT = 2.5

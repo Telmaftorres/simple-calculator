@@ -349,6 +349,22 @@ const FORMULAS: Record<string, {
       return `Frais de dossier activé = ${fee} € forfait fixe`
     },
   },
+  FOURNITURES_EMB_FEE: {
+    usedIn: ['Frais fournitures emballage'],
+    formula: 'si activé → frais_fournitures = FOURNITURES_EMB_FEE',
+    getExample: (v) => {
+      const fee = parseFloat(v.FOURNITURES_EMB_FEE) || 0
+      return `Fournitures emballage activé = ${fee} € forfait fixe`
+    },
+  },
+  PALETTE_FEE: {
+    usedIn: ['Option palette'],
+    formula: 'si activé → option_palette = PALETTE_FEE',
+    getExample: (v) => {
+      const fee = parseFloat(v.PALETTE_FEE) || 0
+      return `Option palette activée = ${fee} € forfait fixe`
+    },
+  },
   MARGE_COMMERCIALE_PERCENT: {
     usedIn: ['Marges internes — Com. commerciale'],
     formula: 'marge_commerciale = total_HT × (pourcentage / 100)',
@@ -508,7 +524,7 @@ const CATEGORIES: {
     description: 'Frais administratifs et marges internes',
     color: 'gray',
     emoji: '📁',
-    keys: ['DOSSIER_FEE', 'MARGE_COMMERCIALE_PERCENT', 'MARGE_SOPANO_PERCENT'],
+    keys: ['DOSSIER_FEE', 'FOURNITURES_EMB_FEE', 'PALETTE_FEE', 'MARGE_COMMERCIALE_PERCENT', 'MARGE_SOPANO_PERCENT'],
   },
   {
     label: 'Transport',

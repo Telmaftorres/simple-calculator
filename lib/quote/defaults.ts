@@ -33,7 +33,9 @@ export const QUOTE_DEFAULTS = {
   packagingMargePercent: 0 as number,
   isMultiProduct: false as boolean,
   plvQuantity: null as number | null,
-  hasDossierFee: false as boolean,
+  hasDossierFee: true as boolean,
+  hasFournituresEmb: true as boolean,
+  hasPalette: false as boolean,
   cumulerTemps: false as boolean,
   // ── Bureau d'études ──
   hasBE: false as boolean,
