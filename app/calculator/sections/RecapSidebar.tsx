@@ -140,11 +140,13 @@ export function RecapSidebar() {
                           value={brut ? (result.costResult.printingCostData.inkCostRaw ?? 0) : result.costResult.printingCostData.inkCost}
                           details={`${result.costResult.inkVolumeL.toFixed(3)} L`}
                         />
-                        <CostRow
-                          label="Impression (machine)"
-                          value={brut ? (result.costResult.printingCostData.machineCostBrut ?? 0) : result.costResult.printingCostData.machineCost}
-                          details={formatMinutes(result.costResult.printingCostData.machineTimeMin)}
-                        />
+                        {!(cumulerTemps && !isInDecoupeGroup) && (
+                          <CostRow
+                            label="Impression (machine)"
+                            value={brut ? (result.costResult.printingCostData.machineCostBrut ?? 0) : result.costResult.printingCostData.machineCost}
+                            details={formatMinutes(result.costResult.printingCostData.machineTimeMin)}
+                          />
+                        )}
                       </>
                     )}
                     {isInDecoupeGroup ? (
@@ -152,6 +154,14 @@ export function RecapSidebar() {
                         <Layers className="h-3 w-3 flex-shrink-0" />
                         <span>Découpe gérée par <strong>{group!.name}</strong></span>
                       </div>
+                    ) : cumulerTemps && slot.hasImpression ? (
+                      <CostRow
+                        label="Impression + Découpe (temps masqué)"
+                        value={brut
+                          ? ((result.costResult.printingCostData.machineCostBrut ?? 0) + result.costResult.cuttingCostBrut)
+                          : (result.costResult.printingCostData.machineCost + result.costResult.cuttingCost)}
+                        details={formatMinutes(Math.max(result.costResult.printingCostData.machineTimeMin, result.costResult.cuttingMachineTimeMin))}
+                      />
                     ) : (
                       <CostRow
                         label="Découpe"
@@ -218,22 +228,34 @@ export function RecapSidebar() {
                             details={result.inkVolumeL > 0 ? `${result.inkVolumeL.toFixed(3)} L` : undefined}
                           />
                         )}
-                        <CostRow
-                          label="Temps machine"
-                          value={brut ? (result.printingCostData.machineCostBrut ?? 0) : result.printingCostData.machineCost}
-                          details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
-                        />
+                        {!cumulerTemps && (
+                          <CostRow
+                            label="Temps machine"
+                            value={brut ? (result.printingCostData.machineCostBrut ?? 0) : result.printingCostData.machineCost}
+                            details={result.machineTimeMin > 0 ? formatMinutes(result.machineTimeMin) : undefined}
+                          />
+                        )}
                         {result.printingCostData.setupCost > 0 && (
                           <CostRow label="Calage impression" value={result.printingCostData.setupCost} />
                         )}
                       </>
                     )}
 
-                    <CostRow
-                      label="Découpe"
-                      value={brut ? cuttingTotalBrut : cuttingTotal}
-                      details={result.cuttingMachineTimeMin > 0 ? formatMinutes(result.cuttingMachineTimeMin) : undefined}
-                    />
+                    {cumulerTemps && group.amalgameType === 'impression_decoupe' ? (
+                      <CostRow
+                        label="Impression + Découpe (temps masqué)"
+                        value={brut
+                          ? ((result.printingCostData.machineCostBrut ?? 0) + cuttingTotalBrut)
+                          : (result.printingCostData.machineCost + cuttingTotal)}
+                        details={formatMinutes(Math.max(result.machineTimeMin, result.cuttingMachineTimeMin))}
+                      />
+                    ) : (
+                      <CostRow
+                        label="Découpe"
+                        value={brut ? cuttingTotalBrut : cuttingTotal}
+                        details={result.cuttingMachineTimeMin > 0 ? formatMinutes(result.cuttingMachineTimeMin) : undefined}
+                      />
+                    )}
 
                     <div className={`flex justify-between text-sm font-semibold px-2 py-1.5 rounded-md ${
                       group.amalgameType === 'impression_decoupe'
@@ -396,13 +418,13 @@ export function RecapSidebar() {
             </div>
           )}
 
-          {!isMultiProduct && hasImpression && (
+          {(hasImpression || isMultiProduct) && (
             <button
               type="button"
               onClick={() => setCumulerTemps(!cumulerTemps)}
               className={`w-full mt-6 px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${cumulerTemps ? 'bg-violet-600 text-white border-violet-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}
             >
-              {cumulerTemps ? '✓ ' : ''}Impression + découpe en même temps (temps masqué)
+              {cumulerTemps ? '✓ ' : ''}Cumuler les temps
             </button>
           )}
 
