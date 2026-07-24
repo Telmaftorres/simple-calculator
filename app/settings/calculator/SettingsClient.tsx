@@ -746,6 +746,7 @@ export function SettingsClient({
   )
   const [saving, setSaving] = useState<string | null>(null)
   const [expandedFormulas, setExpandedFormulas] = useState<Record<string, boolean>>({})
+  const [showDegressifs, setShowDegressifs] = useState(false)
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s]))
 
@@ -787,6 +788,35 @@ export function SettingsClient({
   const categorySettings = activeSub
     ? activeSub.keys.map((key) => settingsMap[key]).filter(Boolean)
     : allKeys.map((key) => settingsMap[key]).filter(Boolean)
+
+  // Coeffs dégressifs = paliers de quantité Q2/Q3/Q4 de la matrice matière (repliés derrière un bouton)
+  const DEGRESSIVE_KEYS = new Set([
+    'MATERIAL_MARGIN_Q2_P1', 'MATERIAL_MARGIN_Q2_P2', 'MATERIAL_MARGIN_Q2_P3',
+    'MATERIAL_MARGIN_Q3_P1', 'MATERIAL_MARGIN_Q3_P2', 'MATERIAL_MARGIN_Q3_P3',
+    'MATERIAL_MARGIN_Q4_P1', 'MATERIAL_MARGIN_Q4_P2', 'MATERIAL_MARGIN_Q4_P3',
+  ])
+  const baseSettings = categorySettings.filter((s) => !DEGRESSIVE_KEYS.has(s.key))
+  const degressiveSettings = categorySettings.filter((s) => DEGRESSIVE_KEYS.has(s.key))
+
+  const renderSettingRow = (setting: (typeof categorySettings)[number], index: number, total: number) => {
+    const formula = FORMULAS[setting.key]
+    const isExpanded = expandedFormulas[setting.key]
+    return (
+      <div key={setting.key} className={index < total - 1 ? 'pb-4 border-b border-slate-100' : ''}>
+        <SettingRowContent
+          setting={setting}
+          formula={formula}
+          isExpanded={!!isExpanded}
+          values={values}
+          saving={saving}
+          activeColors={activeColors}
+          onToggleFormula={() => toggleFormula(setting.key)}
+          onValueChange={(val) => setValues((prev) => ({ ...prev, [setting.key]: val }))}
+          onSave={() => handleSave(setting.key)}
+        />
+      </div>
+    )
+  }
 
   return (
     <div className="flex gap-6 pb-8">
@@ -882,25 +912,25 @@ export function SettingsClient({
 
           {categorySettings.length > 0 && (
             <CardContent className="px-6 py-4 space-y-4">
-              {categorySettings.map((setting, index) => {
-                const formula = FORMULAS[setting.key]
-                const isExpanded = expandedFormulas[setting.key]
-                return (
-                  <div key={setting.key} className={index < categorySettings.length - 1 ? 'pb-4 border-b border-slate-100' : ''}>
-                    <SettingRowContent
-                      setting={setting}
-                      formula={formula}
-                      isExpanded={!!isExpanded}
-                      values={values}
-                      saving={saving}
-                      activeColors={activeColors}
-                      onToggleFormula={() => toggleFormula(setting.key)}
-                      onValueChange={(val) => setValues((prev) => ({ ...prev, [setting.key]: val }))}
-                      onSave={() => handleSave(setting.key)}
-                    />
-                  </div>
-                )
-              })}
+              {baseSettings.map((setting, index) => renderSettingRow(setting, index, baseSettings.length))}
+
+              {degressiveSettings.length > 0 && (
+                <>
+                  <button
+                    type="button"
+                    onClick={() => setShowDegressifs((v) => !v)}
+                    className="w-full flex items-center justify-between px-3 py-2.5 rounded-lg border border-slate-200 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors"
+                  >
+                    <span>📉 Coeffs dégressifs <span className="text-slate-400 font-normal">({degressiveSettings.length})</span></span>
+                    <span className="text-xs text-slate-400">{showDegressifs ? 'Masquer ▲' : 'Afficher ▼'}</span>
+                  </button>
+                  {showDegressifs && (
+                    <div className="space-y-4">
+                      {degressiveSettings.map((setting, index) => renderSettingRow(setting, index, degressiveSettings.length))}
+                    </div>
+                  )}
+                </>
+              )}
             </CardContent>
           )}
         </Card>
