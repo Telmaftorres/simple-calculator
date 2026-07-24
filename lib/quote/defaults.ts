@@ -34,6 +34,7 @@ export const QUOTE_DEFAULTS = {
   isMultiProduct: false as boolean,
   plvQuantity: null as number | null,
   hasDossierFee: false as boolean,
+  cumulerTemps: false as boolean,
   // ── Bureau d'études ──
   hasBE: false as boolean,
   beTimeMinutes: 0 as number,

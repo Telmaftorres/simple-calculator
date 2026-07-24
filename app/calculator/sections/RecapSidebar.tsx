@@ -19,6 +19,7 @@ export function RecapSidebar() {
     hasPackaging,
     quantity,
     handleSave, isServing,
+    cumulerTemps, setCumulerTemps,
     costResult,
     isMultiProduct,
     productSlotResults,
@@ -272,22 +273,32 @@ export function RecapSidebar() {
                     value={brut ? (printingCostData.inkCostRaw ?? 0) : printingCostData.inkCost}
                     details={printingCostData.inkCost > 0 ? `${inkVolumeL.toFixed(3)} L` : undefined}
                   />
-                  <CostRow
-                    label="Impression (temps machine)"
-                    value={brut ? (printingCostData.machineCostBrut ?? 0) : printingCostData.machineCost}
-                    details={printingCostData.machineTimeMin > 0 ? formatMinutes(printingCostData.machineTimeMin) : undefined}
-                  />
+                  {!cumulerTemps && (
+                    <CostRow
+                      label="Impression (temps machine)"
+                      value={brut ? (printingCostData.machineCostBrut ?? 0) : printingCostData.machineCost}
+                      details={printingCostData.machineTimeMin > 0 ? formatMinutes(printingCostData.machineTimeMin) : undefined}
+                    />
+                  )}
                   {printSetupType !== 'none' && printingCostData.setupCost > 0 && (
                     <CostRow label="Calage impression" value={printingCostData.setupCost} details={`${printingCostData.setupTimeMin} min`} />
                   )}
                 </>
               )}
 
-              <CostRow
-                label="Découpe (temps machine)"
-                value={brut ? cuttingMachineCostBrut : cuttingMachineCost}
-                details={cuttingMachineTimeMin > 0 ? formatMinutes(cuttingMachineTimeMin) : undefined}
-              />
+              {cumulerTemps && hasImpression ? (
+                <CostRow
+                  label="Impression + Découpe (temps masqué)"
+                  value={brut ? ((printingCostData.machineCostBrut ?? 0) + cuttingMachineCostBrut) : (printingCostData.machineCost + cuttingMachineCost)}
+                  details={formatMinutes(Math.max(printingCostData.machineTimeMin, cuttingMachineTimeMin))}
+                />
+              ) : (
+                <CostRow
+                  label="Découpe (temps machine)"
+                  value={brut ? cuttingMachineCostBrut : cuttingMachineCost}
+                  details={cuttingMachineTimeMin > 0 ? formatMinutes(cuttingMachineTimeMin) : undefined}
+                />
+              )}
               {cuttingSetupType !== 'none' && cuttingSetupCost > 0 && (
                 <CostRow label="Calage découpe" value={cuttingSetupCost} details={`${cuttingSetupTimeMin} min`} />
               )}
@@ -385,7 +396,17 @@ export function RecapSidebar() {
             </div>
           )}
 
-          <Button className="w-full mt-6 bg-slate-900 hover:bg-slate-800" onClick={handleSave} disabled={isServing}>
+          {!isMultiProduct && hasImpression && (
+            <button
+              type="button"
+              onClick={() => setCumulerTemps(!cumulerTemps)}
+              className={`w-full mt-6 px-3 py-2 text-xs font-semibold rounded-lg border transition-all ${cumulerTemps ? 'bg-violet-600 text-white border-violet-600' : 'text-slate-500 border-slate-200 hover:bg-slate-50'}`}
+            >
+              {cumulerTemps ? '✓ ' : ''}Impression + découpe en même temps (temps masqué)
+            </button>
+          )}
+
+          <Button className="w-full mt-3 bg-slate-900 hover:bg-slate-800" onClick={handleSave} disabled={isServing}>
             {isServing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             Sauvegarder le Devis
           </Button>
