@@ -54,11 +54,27 @@ export const INK_MARGIN_STANDARD = 4.5
 export const INK_MARGIN_VARNISH = 7
 export const INK_MARGIN_FLAT_COLOR = 7
 
-// ── Marges materiel ──
+// ── Marges materiel (ancien barème 4 paliers — encore utilisé pour l'emballage) ──
 export const MATERIAL_MARGIN_TIER1 = 3.5
 export const MATERIAL_MARGIN_TIER2 = 3
 export const MATERIAL_MARGIN_TIER3 = 2.5
 export const MATERIAL_MARGIN_TIER4 = 2
+
+// ── Matrice matière (cahier des charges V1.0) : coeff = f(prix €/m² de la matière, quantité TOTALE du devis) ──
+// Lignes = paliers de quantité  · Q1 = 1-5 ex · Q2 = 6-50 · Q3 = 51-200 · Q4 = >201
+// Colonnes = paliers de prix/m² · P1 = ≤8€ · P2 = 8,01-20€ · P3 = ≥20,01€
+export const MATERIAL_MARGIN_Q1_P1 = 3.5
+export const MATERIAL_MARGIN_Q1_P2 = 2.8
+export const MATERIAL_MARGIN_Q1_P3 = 2.2
+export const MATERIAL_MARGIN_Q2_P1 = 3.0
+export const MATERIAL_MARGIN_Q2_P2 = 2.5
+export const MATERIAL_MARGIN_Q2_P3 = 2.0
+export const MATERIAL_MARGIN_Q3_P1 = 2.6
+export const MATERIAL_MARGIN_Q3_P2 = 2.2
+export const MATERIAL_MARGIN_Q3_P3 = 1.8
+export const MATERIAL_MARGIN_Q4_P1 = 2.2
+export const MATERIAL_MARGIN_Q4_P2 = 1.8
+export const MATERIAL_MARGIN_Q4_P3 = 1.5
 
 export const DOSSIER_FEE = 15
 
