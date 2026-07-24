@@ -74,7 +74,7 @@ export function SectionPresentation() {
                 : 'border-slate-300 text-slate-500 hover:border-slate-400'
             }`}
           >
-            Frais de dossier 8 €
+            Frais de dossier 15 €
           </button>
         </>
       }
