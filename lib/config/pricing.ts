@@ -81,6 +81,10 @@ export const DOSSIER_FEE = 15
 export const FOURNITURES_EMB_FEE = 15   // achat scotch, film, bulles, carton
 export const PALETTE_FEE = 5            // option palette (switch Oui/Non)
 
+// ── Mode Prototype (prix psychologique ≤ 120 € HT) ──
+export const PROTOTYPE_FORFAIT = 25            // écrase le cumul BE + frais de dossier
+export const PROTOTYPE_FOURNITURES_FEE = 10    // fournitures emballage réduites (au lieu de 15)
+
 // ── Marges internes (lecture seule, jamais sauvegardees en DB) ──
 export const MARGE_COMMERCIALE_PERCENT = 2.5
 export const MARGE_SOPANO_PERCENT = 5

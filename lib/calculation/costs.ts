@@ -40,6 +40,8 @@ import {
   DOSSIER_FEE,
   FOURNITURES_EMB_FEE,
   PALETTE_FEE,
+  PROTOTYPE_FORFAIT,
+  PROTOTYPE_FOURNITURES_FEE,
   HOURLY_RATE_CONDITIONING,
   TRANSPORT_MARGIN,
   PACKAGING_B_PETIT_PRICE,
@@ -84,6 +86,7 @@ export function calculateCosts(params: {
   hasDossierFee?: boolean
   hasFournituresEmb?: boolean
   hasPalette?: boolean
+  modePrototype?: boolean
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   hasImpression: boolean
@@ -155,6 +158,7 @@ export function calculateCosts(params: {
     hasDossierFee = false,
     hasFournituresEmb = false,
     hasPalette = false,
+    modePrototype = false,
     degressiveQuantity,
     packagingPlate,
     packagingQuantity,
@@ -221,6 +225,8 @@ export function calculateCosts(params: {
   const dossierFee = settings?.DOSSIER_FEE ?? DOSSIER_FEE
   const fournituresEmbFee = settings?.FOURNITURES_EMB_FEE ?? FOURNITURES_EMB_FEE
   const paletteFee = settings?.PALETTE_FEE ?? PALETTE_FEE
+  const prototypeForfait = settings?.PROTOTYPE_FORFAIT ?? PROTOTYPE_FORFAIT
+  const prototypeFournituresFee = settings?.PROTOTYPE_FOURNITURES_FEE ?? PROTOTYPE_FOURNITURES_FEE
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
 
 
@@ -477,11 +483,12 @@ export function calculateCosts(params: {
   const packagingTotalCostBrut = packagingMaterialCostBrut + packagingCuttingCostBrut
 
   // ── Bureau d'études ──
-  const beCost = hasBE ? (beTimeMinutes / 60) * hourlyRateBE : 0
-  const batCost = hasBE ? (batTimeMinutes / 60) * hourlyRateBAT : 0
+  // En Mode Prototype, le poste BE (+ BAT) est écrasé par le forfait prototype
+  const beCost = (hasBE && !modePrototype) ? (beTimeMinutes / 60) * hourlyRateBE : 0
+  const batCost = (hasBE && !modePrototype) ? (batTimeMinutes / 60) * hourlyRateBAT : 0
   const beTotalCost = beCost + batCost
-  const beCostBrut = hasBE ? (beTimeMinutes / 60) * hourlyRateBECost : 0
-  const batCostBrut = hasBE ? (batTimeMinutes / 60) * hourlyRateBATCost : 0
+  const beCostBrut = (hasBE && !modePrototype) ? (beTimeMinutes / 60) * hourlyRateBECost : 0
+  const batCostBrut = (hasBE && !modePrototype) ? (batTimeMinutes / 60) * hourlyRateBATCost : 0
   const beTotalCostBrut = beCostBrut + batCostBrut
 
 // ── Coefficient matière ──
@@ -507,10 +514,14 @@ const materialCostRaw = amalgameOverride
   : (impositionResult?.materialCost || 0)
 const materialCostMarged = materialCostRaw * materialMarginCoeff
 
-// ── Frais fixes (dossier, fournitures emballage, palette) ──
-const dossierFeeCost = hasDossierFee ? dossierFee : 0
-const fournituresEmbCost = hasFournituresEmb ? fournituresEmbFee : 0
+// ── Frais fixes (dossier, fournitures emballage, palette) + Mode Prototype ──
+// Prototype : dossier écrasé (→ forfait), fournitures réduites à 10 €
+const dossierFeeCost = (hasDossierFee && !modePrototype) ? dossierFee : 0
+const effectiveFournituresFee = modePrototype ? prototypeFournituresFee : fournituresEmbFee
+const fournituresEmbCost = hasFournituresEmb ? effectiveFournituresFee : 0
 const paletteCost = hasPalette ? paletteFee : 0
+// Forfait prototype (écrase le cumul BE + frais de dossier)
+const prototypeFeeCost = modePrototype ? prototypeForfait : 0
 
   // ── Transport (avec marge) ──
   const transportCostMarged = (transportTotal ?? 0) * transportMargin
@@ -520,6 +531,7 @@ const paletteCost = hasPalette ? paletteFee : 0
     dossierFeeCost +
     fournituresEmbCost +
     paletteCost +
+    prototypeFeeCost +
     materialCostMarged +
     printingCost +
     cuttingCost +
@@ -537,6 +549,7 @@ const paletteCost = hasPalette ? paletteFee : 0
     dossierFeeCost +
     fournituresEmbCost +
     paletteCost +
+    prototypeFeeCost +
     materialCostRaw +
     printingCostBrut +
     cuttingCostBrut +
@@ -578,6 +591,7 @@ const paletteCost = hasPalette ? paletteFee : 0
     dossierFeeCost,
     fournituresEmbCost,
     paletteCost,
+    prototypeFeeCost,
     beCost,
     batCost,
     beTotalCost,

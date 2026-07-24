@@ -28,6 +28,7 @@ export function SectionPresentation() {
     hasDossierFee, setHasDossierFee,
     hasFournituresEmb, setHasFournituresEmb,
     hasPalette, setHasPalette,
+    modePrototype, setModePrototype,
     applyTemplate,
     customPlate, setCustomPlate,
     templateOptionSelections, setTemplateOptionSelections, templateOptionsCost,
@@ -97,6 +98,17 @@ export function SectionPresentation() {
             }`}
           >
             Palette +5 €
+          </button>
+          <button
+            onClick={() => setModePrototype(!modePrototype)}
+            title="Forfait BE+dossier bloqué à 25 €, fournitures à 10 €"
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+              modePrototype
+                ? 'bg-amber-500 text-white border-amber-500'
+                : 'border-amber-300 text-amber-600 hover:border-amber-400'
+            }`}
+          >
+            🧪 Mode Prototype
           </button>
         </>
       }

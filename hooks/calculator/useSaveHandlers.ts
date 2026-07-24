@@ -73,6 +73,7 @@ export interface SaveContext {
   hasDossierFee: boolean
   hasFournituresEmb: boolean
   hasPalette: boolean
+  modePrototype: boolean
   cumulerTemps: boolean
   isMultiProduct: boolean
   plvQuantity: number | null
@@ -228,6 +229,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasDossierFee: ctx.hasDossierFee,
         hasFournituresEmb: ctx.hasFournituresEmb,
         hasPalette: ctx.hasPalette,
+        modePrototype: ctx.modePrototype,
         cumulerTemps: ctx.cumulerTemps,
         plateCostOverride: ctx.plateCostOverride ?? null,
         isMultiProduct,
@@ -355,6 +357,8 @@ export function useSaveHandlers(ctx: SaveContext) {
             hasFournituresEmb: ctx.hasFournituresEmb ?? false,
             paletteCost: costResult.paletteCost,
             hasPalette: ctx.hasPalette ?? false,
+            prototypeFeeCost: costResult.prototypeFeeCost,
+            modePrototype: ctx.modePrototype ?? false,
             transportCostMarged: costResult.transportCostMarged,
             transportTotal: costResult.transportTotal,
             transportMargin: costResult.transportMargin,

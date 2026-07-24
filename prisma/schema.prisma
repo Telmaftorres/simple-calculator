@@ -400,6 +400,7 @@ model Quote {
   cumulerTemps                       Boolean           @default(false)
   hasFournituresEmb                  Boolean           @default(false)
   hasPalette                         Boolean           @default(false)
+  modePrototype                      Boolean           @default(false)
   showMargeCommerciale               Boolean           @default(false)
   showMargeSopano                    Boolean           @default(false)
   // ── Transport ──

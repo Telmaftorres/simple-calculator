@@ -63,6 +63,8 @@ export function VoirDevisButton() {
         fournituresEmbCost: costResult.fournituresEmbCost,
         hasPalette: formState.hasPalette,
         paletteCost: costResult.paletteCost,
+        modePrototype: formState.modePrototype,
+        prototypeFeeCost: costResult.prototypeFeeCost,
         transportTotal: costResult.transportTotal > 0 ? costResult.transportTotal : undefined,
         transportCostMarged: costResult.transportTotal > 0 ? costResult.transportCostMarged : undefined,
         transportMargin: costResult.transportMargin,

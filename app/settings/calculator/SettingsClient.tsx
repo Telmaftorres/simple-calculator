@@ -365,6 +365,22 @@ const FORMULAS: Record<string, {
       return `Option palette activée = ${fee} € forfait fixe`
     },
   },
+  PROTOTYPE_FORFAIT: {
+    usedIn: ['Mode Prototype — forfait BE + dossier'],
+    formula: 'si Mode Prototype → BE + frais_dossier = PROTOTYPE_FORFAIT',
+    getExample: (v) => {
+      const fee = parseFloat(v.PROTOTYPE_FORFAIT) || 0
+      return `Mode Prototype = ${fee} € (écrase BE + frais de dossier)`
+    },
+  },
+  PROTOTYPE_FOURNITURES_FEE: {
+    usedIn: ['Mode Prototype — fournitures emballage'],
+    formula: 'si Mode Prototype → frais_fournitures = PROTOTYPE_FOURNITURES_FEE',
+    getExample: (v) => {
+      const fee = parseFloat(v.PROTOTYPE_FOURNITURES_FEE) || 0
+      return `Mode Prototype = ${fee} € de fournitures (au lieu de 15 €)`
+    },
+  },
   MARGE_COMMERCIALE_PERCENT: {
     usedIn: ['Marges internes — Com. commerciale'],
     formula: 'marge_commerciale = total_HT × (pourcentage / 100)',
@@ -524,7 +540,7 @@ const CATEGORIES: {
     description: 'Frais administratifs et marges internes',
     color: 'gray',
     emoji: '📁',
-    keys: ['DOSSIER_FEE', 'FOURNITURES_EMB_FEE', 'PALETTE_FEE', 'MARGE_COMMERCIALE_PERCENT', 'MARGE_SOPANO_PERCENT'],
+    keys: ['DOSSIER_FEE', 'FOURNITURES_EMB_FEE', 'PALETTE_FEE', 'PROTOTYPE_FORFAIT', 'PROTOTYPE_FOURNITURES_FEE', 'MARGE_COMMERCIALE_PERCENT', 'MARGE_SOPANO_PERCENT'],
   },
   {
     label: 'Transport',
