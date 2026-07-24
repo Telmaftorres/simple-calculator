@@ -71,6 +71,7 @@ export interface SaveContext {
   beTimeMinutes: number
   batTimeMinutes: number
   hasDossierFee: boolean
+  cumulerTemps: boolean
   isMultiProduct: boolean
   plvQuantity: number | null
   products: ProductSlot[]
@@ -223,6 +224,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         beTimeMinutes: ctx.beTimeMinutes,
         batTimeMinutes: ctx.batTimeMinutes,
         hasDossierFee: ctx.hasDossierFee,
+        cumulerTemps: ctx.cumulerTemps,
         plateCostOverride: ctx.plateCostOverride ?? null,
         isMultiProduct,
         plvQuantity: isMultiProduct ? (ctx.plvQuantity ?? null) : null,

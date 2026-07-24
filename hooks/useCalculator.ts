@@ -313,7 +313,7 @@ export function useCalculator(
     packagingQuantity, packagingCuttingTimePerPoseSeconds, packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
     hasConditionnement, hasAccessoires, accessoriesMargePercent, packagingMargePercent, hasBE, beTimeMinutes, batTimeMinutes,
-    hasDossierFee, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
+    hasDossierFee, cumulerTemps, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
     transportDeliveries: formState.transportDeliveries,
     impositionResult, productSlotResults, amalgameGroupResults, amalgameGroups,
     costResult, totalCostMulti, totalQuantityMulti, transportTotal, fuelSurchargePct,
