@@ -81,7 +81,7 @@ export function useCalculator(
     packagingProductHeight, packagingProductThickness, packagingPlateId, packagingQuantity,
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
-    isMultiProduct, products, activeProductIndex, hasDossierFee, showMargeCommerciale, showMargeSopano,
+    isMultiProduct, products, activeProductIndex, hasDossierFee, cumulerTemps, showMargeCommerciale, showMargeSopano,
     machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord, itemsPerPlateOverride,
     accessoriesMargePercent, packagingMargePercent,
   } = formState
@@ -588,6 +588,7 @@ export function useCalculator(
     packagingQuantity, setPackagingQuantity: (v: number) => setField('packagingQuantity', v),
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds: (v: number) => setField('packagingCuttingTimePerPoseSeconds', v),
     hasDossierFee, setHasDossierFee: (v: boolean) => setField('hasDossierFee', v),
+    cumulerTemps, setCumulerTemps: (v: boolean) => setField('cumulerTemps', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,
     handleCreateProductType, handleCreateProductTypeForSlot, handleCreateAccessory,
