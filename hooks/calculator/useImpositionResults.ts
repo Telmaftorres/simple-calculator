@@ -105,6 +105,7 @@ function computeGroupResult(
   }
   const groupCosts = calculateCosts({
     quantity: Math.max(...slotsInGroup.map((s) => s.quantity)),
+    degressiveQuantity: products.reduce((sum, p) => sum + (p.quantity || 0), 0),
     impositionResult: groupImposition,
     selectedPlate: plate,
     inkMlPerPlate: groupEffectiveInkMl,
@@ -230,6 +231,7 @@ export function useImpositionResults({
 
       const slotCosts = calculateCosts({
         quantity: slot.quantity,
+        degressiveQuantity: products.reduce((sum, p) => sum + (p.quantity || 0), 0),
         impositionResult: slotImposition,
         selectedPlate: plate,
         inkMlPerPlate: isInImpressionGroup ? 0 : slotEffectiveInkMl,

@@ -30,6 +30,10 @@ import {
   MATERIAL_MARGIN_TIER2,
   MATERIAL_MARGIN_TIER3,
   MATERIAL_MARGIN_TIER4,
+  MATERIAL_MARGIN_Q1_P1, MATERIAL_MARGIN_Q1_P2, MATERIAL_MARGIN_Q1_P3,
+  MATERIAL_MARGIN_Q2_P1, MATERIAL_MARGIN_Q2_P2, MATERIAL_MARGIN_Q2_P3,
+  MATERIAL_MARGIN_Q3_P1, MATERIAL_MARGIN_Q3_P2, MATERIAL_MARGIN_Q3_P3,
+  MATERIAL_MARGIN_Q4_P1, MATERIAL_MARGIN_Q4_P2, MATERIAL_MARGIN_Q4_P3,
   INK_MARGIN_STANDARD,
   INK_MARGIN_VARNISH,
   INK_MARGIN_FLAT_COLOR,
@@ -64,6 +68,7 @@ import type {
 
 export function calculateCosts(params: {
   quantity: number
+  degressiveQuantity?: number
   impositionResult: ImpositionResult | null
   selectedPlate: Plate | undefined
   inkMlPerPlate: number
@@ -144,6 +149,7 @@ export function calculateCosts(params: {
     beTimeMinutes = 0,
     batTimeMinutes = 0,
     hasDossierFee = false,
+    degressiveQuantity,
     packagingPlate,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
@@ -193,6 +199,19 @@ export function calculateCosts(params: {
   const materialMarginTier2 = settings?.MATERIAL_MARGIN_TIER2 ?? MATERIAL_MARGIN_TIER2
   const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
   const materialMarginTier4 = settings?.MATERIAL_MARGIN_TIER4 ?? MATERIAL_MARGIN_TIER4
+  // Matrice matière (prix/m² × quantité) — 12 coeffs réglables
+  const mQ1P1 = settings?.MATERIAL_MARGIN_Q1_P1 ?? MATERIAL_MARGIN_Q1_P1
+  const mQ1P2 = settings?.MATERIAL_MARGIN_Q1_P2 ?? MATERIAL_MARGIN_Q1_P2
+  const mQ1P3 = settings?.MATERIAL_MARGIN_Q1_P3 ?? MATERIAL_MARGIN_Q1_P3
+  const mQ2P1 = settings?.MATERIAL_MARGIN_Q2_P1 ?? MATERIAL_MARGIN_Q2_P1
+  const mQ2P2 = settings?.MATERIAL_MARGIN_Q2_P2 ?? MATERIAL_MARGIN_Q2_P2
+  const mQ2P3 = settings?.MATERIAL_MARGIN_Q2_P3 ?? MATERIAL_MARGIN_Q2_P3
+  const mQ3P1 = settings?.MATERIAL_MARGIN_Q3_P1 ?? MATERIAL_MARGIN_Q3_P1
+  const mQ3P2 = settings?.MATERIAL_MARGIN_Q3_P2 ?? MATERIAL_MARGIN_Q3_P2
+  const mQ3P3 = settings?.MATERIAL_MARGIN_Q3_P3 ?? MATERIAL_MARGIN_Q3_P3
+  const mQ4P1 = settings?.MATERIAL_MARGIN_Q4_P1 ?? MATERIAL_MARGIN_Q4_P1
+  const mQ4P2 = settings?.MATERIAL_MARGIN_Q4_P2 ?? MATERIAL_MARGIN_Q4_P2
+  const mQ4P3 = settings?.MATERIAL_MARGIN_Q4_P3 ?? MATERIAL_MARGIN_Q4_P3
   const dossierFee = settings?.DOSSIER_FEE ?? DOSSIER_FEE
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
 
@@ -458,12 +477,21 @@ export function calculateCosts(params: {
   const beTotalCostBrut = beCostBrut + batCostBrut
 
 // ── Coefficient matière ──
+// Coeff matière = matrice (prix au m² × quantité totale du devis)
+const degressiveQty = degressiveQuantity ?? quantity
 const materialMarginCoeff = (() => {
   if (!selectedPlate) return 1
-  if (selectedPlate.cost < 5) return materialMarginTier1
-  if (selectedPlate.cost < 10) return materialMarginTier2
-  if (selectedPlate.cost < 20) return materialMarginTier3
-  return materialMarginTier4
+  const areaM2 = (selectedPlate.width * selectedPlate.height) / 1_000_000
+  const pricePerM2 = areaM2 > 0 ? selectedPlate.cost / areaM2 : selectedPlate.cost
+  const col = pricePerM2 <= 8 ? 0 : pricePerM2 <= 20 ? 1 : 2                                  // ≤8 · 8-20 · >20 €/m²
+  const row = degressiveQty <= 5 ? 0 : degressiveQty <= 50 ? 1 : degressiveQty <= 200 ? 2 : 3 // 1-5 · 6-50 · 51-200 · >201
+  const matrix = [
+    [mQ1P1, mQ1P2, mQ1P3],
+    [mQ2P1, mQ2P2, mQ2P3],
+    [mQ3P1, mQ3P2, mQ3P3],
+    [mQ4P1, mQ4P2, mQ4P3],
+  ]
+  return matrix[row][col]
 })()
 
 const materialCostRaw = amalgameOverride
