@@ -49,10 +49,11 @@ export const PACKAGING_SETUP_COST = 10
 export const HOURLY_RATE_BE = 90
 export const HOURLY_RATE_BAT = 70
 
-// ── Marges encre ──
-export const INK_MARGIN_STANDARD = 4.5
-export const INK_MARGIN_VARNISH = 7
-export const INK_MARGIN_FLAT_COLOR = 7
+// ── Marges encre (coefficient de sécurité CDC V1.0 : x3,5) ──
+// Standard 95 €/L × 3,5 = 332,50 €/L · Vernis/Blanc 120 €/L × 3,5 = 420 €/L
+export const INK_MARGIN_STANDARD = 3.5
+export const INK_MARGIN_VARNISH = 3.5
+export const INK_MARGIN_FLAT_COLOR = 3.5
 
 // ── Marges materiel (ancien barème 4 paliers — encore utilisé pour l'emballage) ──
 export const MATERIAL_MARGIN_TIER1 = 3.5
