@@ -35,6 +35,7 @@ const EXTERNAL_SIZES: { id: ExternalSize; label: string }[] = [
 export function SectionEmballage() {
   const {
     hasPackaging, setHasPackaging,
+    hasFournituresEmb, setHasFournituresEmb,
     packagingBoxType, setPackagingBoxType,
     packagingMaterialType, setPackagingMaterialType,
     packagingExternalSize, setPackagingExternalSize,
@@ -99,6 +100,18 @@ export function SectionEmballage() {
       color="amber"
       enabled={hasPackaging}
       onToggle={setHasPackaging}
+      headerButtons={
+        <button
+          onClick={() => setHasFournituresEmb(!hasFournituresEmb)}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+            hasFournituresEmb
+              ? 'bg-slate-700 text-white border-slate-700'
+              : 'border-slate-300 text-slate-500 hover:border-slate-400'
+          }`}
+        >
+          Fournitures emb. 15 €
+        </button>
+      }
     >
       <div className="space-y-5">
 

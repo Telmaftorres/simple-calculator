@@ -230,7 +230,7 @@ function DeliveryRow({
 }
 
 export function SectionTransport() {
-  const { formState, addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries, settings } =
+  const { formState, addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries, settings, hasPalette, setHasPalette } =
     useCalculatorContext()
 
   const [showImport, setShowImport] = useState(false)
@@ -257,7 +257,23 @@ export function SectionTransport() {
   }, [transportDeliveries, fuelSurchargePct])
 
   return (
-    <SectionDisplay number="10" title="Transport" color="sky">
+    <SectionDisplay
+      number="10"
+      title="Transport"
+      color="sky"
+      headerButtons={
+        <button
+          onClick={() => setHasPalette(!hasPalette)}
+          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+            hasPalette
+              ? 'bg-slate-700 text-white border-slate-700'
+              : 'border-slate-300 text-slate-500 hover:border-slate-400'
+          }`}
+        >
+          Palette +5 €
+        </button>
+      }
+    >
       {showImport && (
         <ImportTransportDialog
           existingCount={transportDeliveries.length}

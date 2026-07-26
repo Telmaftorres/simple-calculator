@@ -26,8 +26,6 @@ export function SectionPresentation() {
     addProduct,
     products,
     hasDossierFee, setHasDossierFee,
-    hasFournituresEmb, setHasFournituresEmb,
-    hasPalette, setHasPalette,
     modePrototype, setModePrototype,
     applyTemplate,
     customPlate, setCustomPlate,
@@ -78,26 +76,6 @@ export function SectionPresentation() {
             }`}
           >
             Frais de dossier 15 €
-          </button>
-          <button
-            onClick={() => setHasFournituresEmb(!hasFournituresEmb)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-              hasFournituresEmb
-                ? 'bg-slate-700 text-white border-slate-700'
-                : 'border-slate-300 text-slate-500 hover:border-slate-400'
-            }`}
-          >
-            Fournitures emb. 15 €
-          </button>
-          <button
-            onClick={() => setHasPalette(!hasPalette)}
-            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-              hasPalette
-                ? 'bg-slate-700 text-white border-slate-700'
-                : 'border-slate-300 text-slate-500 hover:border-slate-400'
-            }`}
-          >
-            Palette +5 €
           </button>
           <button
             onClick={() => setModePrototype(!modePrototype)}
