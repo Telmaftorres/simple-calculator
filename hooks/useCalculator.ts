@@ -272,8 +272,9 @@ export function useCalculator(
   const totalCostMultiBrut = multiProductsSubtotalBrut + amalgameGroupsSubtotalBrut + costResult.totalCostBrut
 
   const displayTotalForMarges = isMultiProduct ? totalCostMulti : costResult.totalCost + templateOptionsCost
-  const margeCommercialeMontant = showMargeCommerciale ? displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100) : 0
-  const margeSopanoMontant = showMargeSopano ? displayTotalForMarges * (MARGE_SOPANO_PERCENT / 100) : 0
+  // Commissions désormais INCLUSES dans le prix (via /0,925 dans costs.ts) — montants toujours calculés pour l'affichage
+  const margeCommercialeMontant = displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100)
+  const margeSopanoMontant = displayTotalForMarges * (MARGE_SOPANO_PERCENT / 100)
   const totalNet = displayTotalForMarges - margeCommercialeMontant - margeSopanoMontant
 
   // ── Formatting callbacks ──

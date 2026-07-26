@@ -27,11 +27,8 @@ export function RecapSidebar() {
     totalCostMultiBrut,
     totalQuantityMulti,
     formState,
-    showMargeCommerciale,
-    showMargeSopano,
     margeCommercialeMontant,
     margeSopanoMontant,
-    totalNet,
     amalgameGroups,
     amalgameGroupResults,
   } = useCalculatorContext()
@@ -80,6 +77,12 @@ export function RecapSidebar() {
     ? (isMultiProduct ? totalCostMultiBrut : totalCostBrut)
     : (isMultiProduct ? totalCostMulti : totalCost)
   const displayQuantity = isMultiProduct ? totalQuantityMulti : quantity
+
+  // ── Commissions incluses (via /0,925) + alerte anti-perte ──
+  const commissionIncluse = margeCommercialeMontant + margeSopanoMontant
+  const salePriceTotal = isMultiProduct ? totalCostMulti : totalCost
+  const costRevientTotal = isMultiProduct ? totalCostMultiBrut : totalCostBrut
+  const venteAPerte = salePriceTotal > 0 && salePriceTotal < costRevientTotal
 
   return (
     <div className="lg:col-span-1">
@@ -396,6 +399,10 @@ export function RecapSidebar() {
             />
           )}
 
+          {!brut && commissionIncluse > 0 && (
+            <CostRow label="Marge commerciale + Sopano" value={commissionIncluse} details="incluse" />
+          )}
+
           {/* ── Total ── */}
           <div className="pt-4 border-t border-slate-200 mt-4">
             <div className="flex justify-between items-end">
@@ -408,25 +415,13 @@ export function RecapSidebar() {
             </div>
           </div>
 
-          {/* ── Marges internes (uniquement en mode margé) ── */}
-          {!brut && (showMargeCommerciale || showMargeSopano) && (
-            <div className="pt-3 border-t border-dashed border-slate-200 space-y-2">
-              {showMargeCommerciale && (
-                <div className="flex justify-between text-sm text-amber-700">
-                  <span>- Com. commerciale (2.5%)</span>
-                  <span>-{margeCommercialeMontant.toFixed(2)} €</span>
-                </div>
-              )}
-              {showMargeSopano && (
-                <div className="flex justify-between text-sm text-amber-700">
-                  <span>- Com. Sopano (5%)</span>
-                  <span>-{margeSopanoMontant.toFixed(2)} €</span>
-                </div>
-              )}
-              <div className="flex justify-between font-bold text-slate-900 pt-1 border-t border-slate-200">
-                <span>Net interne</span>
-                <span>{totalNet.toFixed(2)} €</span>
-              </div>
+          {/* ── Alerte anti-perte ── */}
+          {venteAPerte && (
+            <div className="flex items-start gap-2 mt-3 px-3 py-2 rounded-lg bg-red-50 border border-red-200 text-red-700 text-xs">
+              <span className="text-sm leading-none">⚠️</span>
+              <span>
+                <strong>Vente à perte</strong> — prix de vente {salePriceTotal.toFixed(2)} € &lt; coût de revient {costRevientTotal.toFixed(2)} €.
+              </span>
             </div>
           )}
 

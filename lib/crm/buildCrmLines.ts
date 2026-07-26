@@ -30,6 +30,7 @@ export type CrmLinesInput = {
   hasPalette?: boolean
   prototypeFeeCost?: number
   modePrototype?: boolean
+  commissionCost?: number
   transportCostMarged: number
   transportTotal: number
   transportMargin: number
@@ -52,6 +53,10 @@ export function buildCrmLines(p: CrmLinesInput): CrmPushLine[] {
 
   if (p.modePrototype && (p.prototypeFeeCost ?? 0) > 0) {
     lines.push({ description: 'Forfait prototype (BE + dossier)', prixAchat: p.prototypeFeeCost!, marge: 1, prixVente: p.prototypeFeeCost! })
+  }
+
+  if ((p.commissionCost ?? 0) > 0) {
+    lines.push({ description: 'Marge commerciale + Sopano', prixAchat: p.commissionCost!, marge: 1, prixVente: p.commissionCost! })
   }
 
   if (p.materialCostMarged > 0) {
