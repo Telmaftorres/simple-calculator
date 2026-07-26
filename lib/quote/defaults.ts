@@ -34,7 +34,7 @@ export const QUOTE_DEFAULTS = {
   isMultiProduct: false as boolean,
   plvQuantity: null as number | null,
   hasDossierFee: true as boolean,
-  hasFournituresEmb: true as boolean,
+  hasFournituresEmb: false as boolean,
   hasPalette: false as boolean,
   modePrototype: false as boolean,
   cumulerTemps: false as boolean,
