@@ -236,30 +236,6 @@ export default function Calculator({
           <div className={`grid grid-cols-1 gap-8 ${mode === 'quote' ? 'lg:grid-cols-3' : ''}`}>
             <div className={`space-y-8 ${mode === 'quote' ? 'lg:col-span-2' : ''}`}>
               <ErrorBoundary>
-              {/* ── Marges internes ── */}
-              <div className="flex items-center gap-3 bg-slate-800 text-white px-6 py-3 rounded-lg">
-                <span className="text-sm font-medium text-slate-300 mr-2">Marges internes :</span>
-                <button
-                  onClick={() => calc.setShowMargeCommerciale(!calc.showMargeCommerciale)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    calc.showMargeCommerciale
-                      ? 'bg-amber-500 text-white border-amber-500'
-                      : 'border-slate-500 text-slate-400 hover:border-slate-300'
-                  }`}
-                >
-                  Com. commerciale 2.5%
-                </button>
-                <button
-                  onClick={() => calc.setShowMargeSopano(!calc.showMargeSopano)}
-                  className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-                    calc.showMargeSopano
-                      ? 'bg-amber-500 text-white border-amber-500'
-                      : 'border-slate-500 text-slate-400 hover:border-slate-300'
-                  }`}
-                >
-                  Com. Sopano 5%
-                </button>
-              </div>
 
               <SectionPresentation />
 

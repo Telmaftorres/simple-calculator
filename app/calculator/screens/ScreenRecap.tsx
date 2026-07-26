@@ -103,6 +103,7 @@ export function ScreenRecap() {
     paletteCost: costResult.paletteCost,
     modePrototype: formState.modePrototype,
     prototypeFeeCost: costResult.prototypeFeeCost,
+    commissionCost: costResult.commissionCost,
     transportTotal: costResult.transportTotal > 0 ? costResult.transportTotal : undefined,
     transportCostMarged: costResult.transportTotal > 0 ? costResult.transportCostMarged : undefined,
     transportMargin: costResult.transportMargin,

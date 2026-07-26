@@ -359,6 +359,7 @@ export function useSaveHandlers(ctx: SaveContext) {
             hasPalette: ctx.hasPalette ?? false,
             prototypeFeeCost: costResult.prototypeFeeCost,
             modePrototype: ctx.modePrototype ?? false,
+            commissionCost: costResult.commissionCost,
             transportCostMarged: costResult.transportCostMarged,
             transportTotal: costResult.transportTotal,
             transportMargin: costResult.transportMargin,

@@ -52,6 +52,7 @@ export type QuoteCostRowsParams = {
   paletteCost?: number
   modePrototype?: boolean
   prototypeFeeCost?: number
+  commissionCost?: number
   beCost?: number
   batCost?: number
   beTotalCost?: number
@@ -186,6 +187,9 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
             })(),
         value: p.transportCostMarged ?? p.transportTotal,
       },
+    ] : []),
+    ...(!isClient && p.commissionCost && p.commissionCost > 0 ? [
+      { label: 'Marge commerciale + Sopano', detail: 'incluse', value: p.commissionCost },
     ] : []),
   ]
 }

@@ -44,6 +44,8 @@ import {
   PROTOTYPE_FOURNITURES_FEE,
   HOURLY_RATE_CONDITIONING,
   TRANSPORT_MARGIN,
+  MARGE_COMMERCIALE_PERCENT,
+  MARGE_SOPANO_PERCENT,
   PACKAGING_B_PETIT_PRICE,
   PACKAGING_B_MOYEN_PRICE,
   PACKAGING_B_GRAND_PRICE,
@@ -228,6 +230,9 @@ export function calculateCosts(params: {
   const prototypeForfait = settings?.PROTOTYPE_FORFAIT ?? PROTOTYPE_FORFAIT
   const prototypeFournituresFee = settings?.PROTOTYPE_FOURNITURES_FEE ?? PROTOTYPE_FOURNITURES_FEE
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
+  const margeCommercialePct = settings?.MARGE_COMMERCIALE_PERCENT ?? MARGE_COMMERCIALE_PERCENT
+  const margeSopanoPct = settings?.MARGE_SOPANO_PERCENT ?? MARGE_SOPANO_PERCENT
+  const commissionDivisor = 1 - ((margeCommercialePct + margeSopanoPct) / 100)   // 0,925
 
 
   // ── Impression ──
@@ -528,7 +533,8 @@ const prototypeFeeCost = modePrototype ? prototypeForfait : 0
   const transportCostMarged = (transportTotal ?? 0) * transportMargin
 
   // ── Total ──
-  const totalCost =
+  // ── Prix de vente : /0,925 pour intégrer les commissions (marge commerciale 2,5 % + Sopano 5 %) — CDC brique 3 ──
+  const totalCostBeforeCommission =
     dossierFeeCost +
     fournituresEmbCost +
     paletteCost +
@@ -543,6 +549,8 @@ const prototypeFeeCost = modePrototype ? prototypeForfait : 0
     packagingTotalCost +
     beTotalCost +
     transportCostMarged
+  const totalCost = commissionDivisor > 0 ? totalCostBeforeCommission / commissionDivisor : totalCostBeforeCommission
+  const commissionCost = totalCost - totalCostBeforeCommission
 
   // ── Total brut (coût de revient réel) ──
   const printingCostBrut = printingCostData.costBrut ?? 0
@@ -575,6 +583,7 @@ const prototypeFeeCost = modePrototype ? prototypeForfait : 0
     accessoriesCost,
     consumablesCost,
     totalCost,
+    commissionCost,
     inkVolumeL: printingCostData.inkVolumeL,
     packagingMaterialCost,
     packagingCuttingCost,
