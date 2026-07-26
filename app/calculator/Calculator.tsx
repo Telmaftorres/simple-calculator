@@ -266,7 +266,7 @@ export default function Calculator({
               {/* ── Mode multi-produits ── */}
               {calc.isMultiProduct ? (
                 <>
-                  <SectionBureauEtudes />
+                  {!calc.modePrototype && <SectionBureauEtudes />}
                   <SectionMultiProduct />
                 </>
               ) : (
@@ -284,7 +284,7 @@ export default function Calculator({
                       />
                     </SectionDisplay>
                   )}
-                  <SectionBureauEtudes />
+                  {!calc.modePrototype && <SectionBureauEtudes />}
                   <SectionImpression />
                   <SectionDecoupe />
                 </>
@@ -294,7 +294,7 @@ export default function Calculator({
               <SectionFaconnage />
               <SectionConditionnement />
               <SectionAccessoires />
-              <SectionEmballage />
+              {!calc.modePrototype && <SectionEmballage />}
               <SectionTransport />
 
               {/* ── Sections spécifiques au mode fiche de production ── */}

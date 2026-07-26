@@ -86,7 +86,7 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasDossierFee && p.dossierFeeCost && p.dossierFeeCost > 0 ? [
       { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
     ] : []),
-    ...(p.hasFournituresEmb && p.fournituresEmbCost && p.fournituresEmbCost > 0 ? [
+    ...(p.fournituresEmbCost && p.fournituresEmbCost > 0 ? [
       { label: 'Fournitures emballage', detail: 'forfait', value: p.fournituresEmbCost },
     ] : []),
     ...(p.hasPalette && p.paletteCost && p.paletteCost > 0 ? [

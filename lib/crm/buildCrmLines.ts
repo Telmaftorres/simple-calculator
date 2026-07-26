@@ -42,7 +42,7 @@ export function buildCrmLines(p: CrmLinesInput): CrmPushLine[] {
     lines.push({ description: 'Frais de dossier', prixAchat: p.dossierFeeCost, marge: 1, prixVente: p.dossierFeeCost })
   }
 
-  if (p.hasFournituresEmb && (p.fournituresEmbCost ?? 0) > 0) {
+  if ((p.fournituresEmbCost ?? 0) > 0) {
     lines.push({ description: 'Fournitures emballage', prixAchat: p.fournituresEmbCost!, marge: 1, prixVente: p.fournituresEmbCost! })
   }
 
