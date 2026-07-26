@@ -379,7 +379,7 @@ export function RecapSidebar() {
           {formState.hasDossierFee && dossierFeeCost > 0 && (
             <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />
           )}
-          {formState.hasFournituresEmb && fournituresEmbCost > 0 && (
+          {fournituresEmbCost > 0 && (
             <CostRow label="Fournitures emballage" value={fournituresEmbCost} details="forfait" />
           )}
           {formState.hasPalette && paletteCost > 0 && (

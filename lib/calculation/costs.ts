@@ -518,7 +518,8 @@ const materialCostMarged = materialCostRaw * materialMarginCoeff
 // Prototype : dossier écrasé (→ forfait), fournitures réduites à 10 €
 const dossierFeeCost = (hasDossierFee && !modePrototype) ? dossierFee : 0
 const effectiveFournituresFee = modePrototype ? prototypeFournituresFee : fournituresEmbFee
-const fournituresEmbCost = hasFournituresEmb ? effectiveFournituresFee : 0
+// En Mode Prototype, le forfait fournitures (10 €) s'applique automatiquement (toggle masqué, conforme CDC)
+const fournituresEmbCost = (hasFournituresEmb || modePrototype) ? effectiveFournituresFee : 0
 const paletteCost = hasPalette ? paletteFee : 0
 // Forfait prototype (écrase le cumul BE + frais de dossier)
 const prototypeFeeCost = modePrototype ? prototypeForfait : 0
