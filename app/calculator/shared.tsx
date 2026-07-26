@@ -76,6 +76,8 @@ interface SectionDisplayProps {
   onToggle?: (v: boolean) => void
   // ✅ Boutons sous le header
   headerButtons?: React.ReactNode
+  // ✅ Bouton à côté du titre (dans le header)
+  titleButton?: React.ReactNode
 }
 
 export function SectionDisplay({
@@ -86,6 +88,7 @@ export function SectionDisplay({
   enabled,
   onToggle,
   headerButtons,
+  titleButton,
 }: SectionDisplayProps) {
   const colors = colorMap[color] || colorMap.blue
   const hasToggle = enabled !== undefined && onToggle !== undefined
@@ -102,6 +105,7 @@ export function SectionDisplay({
             {number}
           </span>
           <h3 className={`font-semibold text-sm ${colors.title}`}>{title}</h3>
+          {titleButton}
         </div>
 
         {/* ✅ Toggle ON/OFF — visuel uniquement, le clic est sur tout le header */}

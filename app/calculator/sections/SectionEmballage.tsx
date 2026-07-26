@@ -100,10 +100,10 @@ export function SectionEmballage() {
       color="amber"
       enabled={hasPackaging}
       onToggle={setHasPackaging}
-      headerButtons={
+      titleButton={
         <button
-          onClick={() => setHasFournituresEmb(!hasFournituresEmb)}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+          onClick={(e) => { e.stopPropagation(); setHasFournituresEmb(!hasFournituresEmb) }}
+          className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
             hasFournituresEmb
               ? 'bg-slate-700 text-white border-slate-700'
               : 'border-slate-300 text-slate-500 hover:border-slate-400'
