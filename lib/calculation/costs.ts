@@ -89,6 +89,7 @@ export function calculateCosts(params: {
   hasFournituresEmb?: boolean
   hasPalette?: boolean
   modePrototype?: boolean
+  hasMargeCommerciale?: boolean
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   hasImpression: boolean
@@ -161,6 +162,7 @@ export function calculateCosts(params: {
     hasFournituresEmb = false,
     hasPalette = false,
     modePrototype = false,
+    hasMargeCommerciale = true,
     degressiveQuantity,
     packagingPlate,
     packagingQuantity,
@@ -232,7 +234,8 @@ export function calculateCosts(params: {
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
   const margeCommercialePct = settings?.MARGE_COMMERCIALE_PERCENT ?? MARGE_COMMERCIALE_PERCENT
   const margeSopanoPct = settings?.MARGE_SOPANO_PERCENT ?? MARGE_SOPANO_PERCENT
-  const commissionDivisor = 1 - ((margeCommercialePct + margeSopanoPct) / 100)   // 0,925
+  // Marge commerciale (2,5 %) optionnelle : retirée si le patron a trouvé le client (Sopano toujours appliquée)
+  const commissionDivisor = 1 - (((hasMargeCommerciale ? margeCommercialePct : 0) + margeSopanoPct) / 100)
 
 
   // ── Impression ──

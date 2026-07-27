@@ -26,6 +26,7 @@ export function SectionPresentation() {
     addProduct,
     products,
     hasDossierFee, setHasDossierFee,
+    hasMargeCommerciale, setHasMargeCommerciale,
     applyTemplate,
     customPlate, setCustomPlate,
     templateOptionSelections, setTemplateOptionSelections, templateOptionsCost,
@@ -75,6 +76,17 @@ export function SectionPresentation() {
             }`}
           >
             Frais de dossier 15 €
+          </button>
+          <button
+            onClick={() => setHasMargeCommerciale(!hasMargeCommerciale)}
+            title="Décocher si le patron a trouvé le client (pas de commission commerciale)"
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+              hasMargeCommerciale
+                ? 'bg-slate-700 text-white border-slate-700'
+                : 'border-slate-300 text-slate-500 hover:border-slate-400'
+            }`}
+          >
+            Marge commerciale 2,5 %
           </button>
         </>
       }

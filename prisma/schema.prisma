@@ -401,6 +401,7 @@ model Quote {
   hasFournituresEmb                  Boolean           @default(false)
   hasPalette                         Boolean           @default(false)
   modePrototype                      Boolean           @default(false)
+  hasMargeCommerciale                Boolean           @default(true)
   showMargeCommerciale               Boolean           @default(false)
   showMargeSopano                    Boolean           @default(false)
   // ── Transport ──

@@ -74,6 +74,7 @@ export interface SaveContext {
   hasFournituresEmb: boolean
   hasPalette: boolean
   modePrototype: boolean
+  hasMargeCommerciale: boolean
   cumulerTemps: boolean
   isMultiProduct: boolean
   plvQuantity: number | null
@@ -230,6 +231,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasFournituresEmb: ctx.hasFournituresEmb,
         hasPalette: ctx.hasPalette,
         modePrototype: ctx.modePrototype,
+        hasMargeCommerciale: ctx.hasMargeCommerciale,
         cumulerTemps: ctx.cumulerTemps,
         plateCostOverride: ctx.plateCostOverride ?? null,
         isMultiProduct,

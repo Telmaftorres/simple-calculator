@@ -81,7 +81,7 @@ export function useCalculator(
     packagingProductHeight, packagingProductThickness, packagingPlateId, packagingQuantity,
     packagingCuttingTimePerPoseSeconds, printSetupType, cuttingSetupType, hasImpression,
     hasFaconnage, hasConditionnement, hasAccessoires, hasBE, beTimeMinutes, batTimeMinutes,
-    isMultiProduct, products, activeProductIndex, hasDossierFee, hasFournituresEmb, hasPalette, modePrototype, cumulerTemps, showMargeCommerciale, showMargeSopano,
+    isMultiProduct, products, activeProductIndex, hasDossierFee, hasFournituresEmb, hasPalette, modePrototype, hasMargeCommerciale, cumulerTemps, showMargeCommerciale, showMargeSopano,
     machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord, itemsPerPlateOverride,
     accessoriesMargePercent, packagingMargePercent,
   } = formState
@@ -191,7 +191,7 @@ export function useCalculator(
 
   // ── Memoized multi-product calculations ──
   const { amalgameGroupResults, productSlotResults } = useImpositionResults({
-    isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm: effectiveSpacing, plateBorderMm,
+    isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm: effectiveSpacing, plateBorderMm, hasMargeCommerciale,
   })
 
   const totalQuantityMulti = isMultiProduct ? products.reduce((sum, p) => sum + p.quantity, 0) : 0
@@ -250,7 +250,7 @@ export function useCalculator(
     selectedAccessories, selectedConsumables,
     settings: settingsWithPackagingPrice,
     hasPackaging, packagingMaterialType, packagingExternalSize,
-    hasBE, beTimeMinutes, batTimeMinutes, hasDossierFee, hasFournituresEmb, hasPalette, modePrototype,
+    hasBE, beTimeMinutes, batTimeMinutes, hasDossierFee, hasFournituresEmb, hasPalette, modePrototype, hasMargeCommerciale,
     packagingPlate, packagingQuantity, packagingCuttingTimePerPoseSeconds,
     packagingWidth: computedPackagingDimensions.width,
     packagingHeight: computedPackagingDimensions.height,
@@ -273,7 +273,7 @@ export function useCalculator(
 
   const displayTotalForMarges = isMultiProduct ? totalCostMulti : costResult.totalCost + templateOptionsCost
   // Commissions désormais INCLUSES dans le prix (via /0,925 dans costs.ts) — montants toujours calculés pour l'affichage
-  const margeCommercialeMontant = displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100)
+  const margeCommercialeMontant = hasMargeCommerciale ? displayTotalForMarges * (MARGE_COMMERCIALE_PERCENT / 100) : 0
   const margeSopanoMontant = displayTotalForMarges * (MARGE_SOPANO_PERCENT / 100)
   const totalNet = displayTotalForMarges - margeCommercialeMontant - margeSopanoMontant
 
@@ -314,7 +314,7 @@ export function useCalculator(
     packagingQuantity, packagingCuttingTimePerPoseSeconds, packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
     hasConditionnement, hasAccessoires, accessoriesMargePercent, packagingMargePercent, hasBE, beTimeMinutes, batTimeMinutes,
-    hasDossierFee, hasFournituresEmb, hasPalette, modePrototype, cumulerTemps, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
+    hasDossierFee, hasFournituresEmb, hasPalette, modePrototype, hasMargeCommerciale, cumulerTemps, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
     transportDeliveries: formState.transportDeliveries,
     impositionResult, productSlotResults, amalgameGroupResults, amalgameGroups,
     costResult, totalCostMulti, totalQuantityMulti, transportTotal, fuelSurchargePct,
@@ -592,6 +592,7 @@ export function useCalculator(
     hasFournituresEmb, setHasFournituresEmb: (v: boolean) => setField('hasFournituresEmb', v),
     hasPalette, setHasPalette: (v: boolean) => setField('hasPalette', v),
     modePrototype, setModePrototype: (v: boolean) => setField('modePrototype', v),
+    hasMargeCommerciale, setHasMargeCommerciale: (v: boolean) => setField('hasMargeCommerciale', v),
     cumulerTemps, setCumulerTemps: (v: boolean) => setField('cumulerTemps', v),
     handleAddAccessory, handleRemoveAccessory,
     handleAddConsumable, handleRemoveConsumable,

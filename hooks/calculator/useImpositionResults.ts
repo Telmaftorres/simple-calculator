@@ -16,6 +16,7 @@ interface ImpositionResultsParams {
   settings?: Record<string, number>
   poseSpacingMm: number
   plateBorderMm: number
+  hasMargeCommerciale: boolean
 }
 
 function computeGroupResult(
@@ -25,6 +26,7 @@ function computeGroupResult(
   settings: Record<string, number> | undefined,
   poseSpacingMm: number,
   plateBorderMm: number,
+  hasMargeCommerciale: boolean,
 ): AmalgameGroupResult {
   const emptyPrintingCostData = {
     cost: 0, timeMin: 0, inkCost: 0, laborCost: 0, inkVolumeL: 0,
@@ -130,6 +132,7 @@ function computeGroupResult(
     hasFournituresEmb: false,
     hasPalette: false,
     modePrototype: false,
+    hasMargeCommerciale,
   })
   return {
     groupId: group.id,
@@ -159,13 +162,14 @@ export function useImpositionResults({
   settings,
   poseSpacingMm,
   plateBorderMm,
+  hasMargeCommerciale,
 }: ImpositionResultsParams) {
   return useMemo(() => {
     if (!isMultiProduct) return { amalgameGroupResults: [] as AmalgameGroupResult[], productSlotResults: [] as ProductSlotResult[] }
 
     // Step 1: compute group results first so we know the optimized platesCount per group
     const amalgameGroupResults = amalgameGroups.map((group) =>
-      computeGroupResult(group, products, plates, settings, poseSpacingMm, plateBorderMm)
+      computeGroupResult(group, products, plates, settings, poseSpacingMm, plateBorderMm, hasMargeCommerciale)
     )
 
     // Map groupId → optimized platesCount for use in per-slot imposition
@@ -259,6 +263,7 @@ export function useImpositionResults({
         hasFournituresEmb: false,
         hasPalette: false,
         modePrototype: false,
+        hasMargeCommerciale,
       })
 
       return {
@@ -285,5 +290,5 @@ export function useImpositionResults({
     })
 
     return { amalgameGroupResults, productSlotResults }
-  }, [isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm, plateBorderMm])
+  }, [isMultiProduct, amalgameGroups, products, plates, settings, poseSpacingMm, plateBorderMm, hasMargeCommerciale])
 }

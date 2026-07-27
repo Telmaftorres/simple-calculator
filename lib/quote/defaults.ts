@@ -37,6 +37,7 @@ export const QUOTE_DEFAULTS = {
   hasFournituresEmb: false as boolean,
   hasPalette: false as boolean,
   modePrototype: false as boolean,
+  hasMargeCommerciale: true as boolean,
   cumulerTemps: false as boolean,
   // ── Bureau d'études ──
   hasBE: false as boolean,
