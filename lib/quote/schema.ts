@@ -74,6 +74,7 @@ export const quoteFieldsSchema = z.object({
   hasFournituresEmb: z.boolean().optional(),
   hasPalette: z.boolean().optional(),
   modePrototype: z.boolean().optional(),
+  hasMargeCommerciale: z.boolean().optional(),
   cumulerTemps: z.boolean().optional(),
 
   showMargeCommerciale: z.boolean().optional(),

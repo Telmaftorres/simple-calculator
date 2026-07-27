@@ -118,6 +118,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     hasFournituresEmb: initialQuote.hasFournituresEmb ?? false,
     hasPalette: initialQuote.hasPalette ?? false,
     modePrototype: initialQuote.modePrototype ?? false,
+    hasMargeCommerciale: initialQuote.hasMargeCommerciale ?? true,
     cumulerTemps: initialQuote.cumulerTemps ?? false,
     plateCostOverride: initialQuote.plateCostOverride ?? null,
     customPlate: (initialQuote.customPlateName && initialQuote.customPlateWidth && initialQuote.customPlateHeight && initialQuote.customPlateCost)

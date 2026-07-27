@@ -400,7 +400,7 @@ export function RecapSidebar() {
           )}
 
           {!brut && commissionIncluse > 0 && (
-            <CostRow label="Marge commerciale + Sopano" value={commissionIncluse} details="incluse" />
+            <CostRow label={formState.hasMargeCommerciale ? 'Marge commerciale + Sopano' : 'Marge Sopano'} value={commissionIncluse} details="incluse" />
           )}
 
           {/* ── Total ── */}
