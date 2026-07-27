@@ -195,12 +195,27 @@ export default function Calculator({
             mode === 'production' ? 'bg-emerald-900' : mode === 'actuals' ? 'bg-sky-900' : 'bg-slate-900'
           } text-white`}>
             <div>
-              <h1 className="text-2xl font-bold flex items-center gap-2">
-                <CalcIcon className={`h-6 w-6 ${mode === 'production' ? 'text-emerald-300' : mode === 'actuals' ? 'text-sky-300' : 'text-emerald-400'}`} />
-                {mode === 'production' && 'Fiche de production'}
-                {mode === 'actuals' && 'Données réelles'}
-                {mode === 'quote' && 'Calculateur Kontfeel'}
-              </h1>
+              <div className="flex items-center gap-3">
+                <h1 className="text-2xl font-bold flex items-center gap-2">
+                  <CalcIcon className={`h-6 w-6 ${mode === 'production' ? 'text-emerald-300' : mode === 'actuals' ? 'text-sky-300' : 'text-emerald-400'}`} />
+                  {mode === 'production' && 'Fiche de production'}
+                  {mode === 'actuals' && 'Données réelles'}
+                  {mode === 'quote' && 'Calculateur Kontfeel'}
+                </h1>
+                {mode === 'quote' && (
+                  <button
+                    onClick={() => calc.setModePrototype(!calc.modePrototype)}
+                    title="Forfait BE + dossier 25 €, fournitures 10 €"
+                    className={`px-3 py-1 text-xs font-semibold rounded-lg border transition-all ${
+                      calc.modePrototype
+                        ? 'bg-amber-500 text-white border-amber-500'
+                        : 'border-amber-400/60 text-amber-200 hover:bg-amber-500/20'
+                    }`}
+                  >
+                    🧪 Mode Prototype
+                  </button>
+                )}
+              </div>
               {mode !== 'quote' && initialQuote?.reference && (
                 <p className="text-sm text-slate-300 mt-0.5">Devis {initialQuote.reference} — {initialQuote.client ?? ''}</p>
               )}
