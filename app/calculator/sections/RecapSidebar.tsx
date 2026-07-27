@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Loader2, Layers } from 'lucide-react'
+import { Loader2, Layers, Info } from 'lucide-react'
 import { CostRow } from '../shared'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
@@ -71,6 +71,7 @@ export function RecapSidebar() {
 
   // ── Toggle Brut / Margé ──
   const [recapMode, setRecapMode] = useState<'marge' | 'brut'>('marge')
+  const [showCalcDetail, setShowCalcDetail] = useState(false)
   const brut = recapMode === 'brut'
 
   const displayTotal = brut
@@ -83,6 +84,8 @@ export function RecapSidebar() {
   const salePriceTotal = isMultiProduct ? totalCostMulti : totalCost
   const costRevientTotal = isMultiProduct ? totalCostMultiBrut : totalCostBrut
   const venteAPerte = salePriceTotal > 0 && salePriceTotal < costRevientTotal
+  const baseHT = salePriceTotal - commissionIncluse
+  const divisorLabel = formState.hasMargeCommerciale ? '0,925' : '0,95'
 
   return (
     <div className="lg:col-span-1">
@@ -400,7 +403,20 @@ export function RecapSidebar() {
           )}
 
           {!brut && commissionIncluse > 0 && (
-            <CostRow label={formState.hasMargeCommerciale ? 'Marge commerciale + Sopano' : 'Marge Sopano'} value={commissionIncluse} details="incluse" />
+            <div className="flex justify-between items-start text-sm">
+              <div className="flex-1 min-w-0 flex items-center gap-1">
+                <span className="text-slate-600">{formState.hasMargeCommerciale ? 'Marge commerciale + Sopano' : 'Marge Sopano'}</span>
+                <button
+                  type="button"
+                  onClick={() => setShowCalcDetail(true)}
+                  className="text-slate-400 hover:text-blue-600 shrink-0"
+                  title="Détail du calcul du prix"
+                >
+                  <Info className="h-3.5 w-3.5" />
+                </button>
+              </div>
+              <span className="font-semibold text-slate-800 ml-4 shrink-0">{commissionIncluse.toFixed(2)} €</span>
+            </div>
           )}
 
           {/* ── Total ── */}
@@ -441,6 +457,43 @@ export function RecapSidebar() {
           </Button>
         </CardContent>
       </Card>
+
+      {showCalcDetail && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4" onClick={() => setShowCalcDetail(false)}>
+          <div className="bg-white rounded-xl shadow-xl max-w-sm w-full p-5 space-y-3" onClick={(e) => e.stopPropagation()}>
+            <div className="flex items-center justify-between">
+              <h3 className="font-semibold text-slate-900">Détail du calcul du prix</h3>
+              <button type="button" onClick={() => setShowCalcDetail(false)} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
+            </div>
+            <div className="space-y-2 text-sm">
+              <div className="flex justify-between">
+                <span className="text-slate-500">Sous-total (coûts)</span>
+                <span className="font-medium text-slate-800">{baseHT.toFixed(2)} €</span>
+              </div>
+              <div className="pt-2 border-t border-slate-100 text-xs text-slate-400">
+                Commissions incluses (÷ {divisorLabel}) :
+              </div>
+              {formState.hasMargeCommerciale && (
+                <div className="flex justify-between text-slate-600">
+                  <span>· Marge commerciale (2,5 %)</span>
+                  <span>+{margeCommercialeMontant.toFixed(2)} €</span>
+                </div>
+              )}
+              <div className="flex justify-between text-slate-600">
+                <span>· Marge Sopano (5 %)</span>
+                <span>+{margeSopanoMontant.toFixed(2)} €</span>
+              </div>
+              <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-slate-200">
+                <span>Total HT</span>
+                <span>{salePriceTotal.toFixed(2)} €</span>
+              </div>
+              <p className="text-xs text-slate-400 pt-1">
+                Prix de vente = sous-total ÷ {divisorLabel} (intègre les commissions).
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   )
 }
