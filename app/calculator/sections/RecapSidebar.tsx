@@ -466,13 +466,7 @@ export function RecapSidebar() {
               <button type="button" onClick={() => setShowCalcDetail(false)} className="text-slate-400 hover:text-slate-600 text-xl leading-none">×</button>
             </div>
             <div className="space-y-2 text-sm">
-              <div className="flex justify-between">
-                <span className="text-slate-500">Sous-total (coûts)</span>
-                <span className="font-medium text-slate-800">{baseHT.toFixed(2)} €</span>
-              </div>
-              <div className="pt-2 border-t border-slate-100 text-xs text-slate-400">
-                Commissions incluses (÷ {divisorLabel}) :
-              </div>
+              <div className="text-xs text-slate-400">Commissions incluses :</div>
               {formState.hasMargeCommerciale && (
                 <div className="flex justify-between text-slate-600">
                   <span>· Marge commerciale (2,5 %)</span>
@@ -483,8 +477,12 @@ export function RecapSidebar() {
                 <span>· Marge Sopano (5 %)</span>
                 <span>+{margeSopanoMontant.toFixed(2)} €</span>
               </div>
+              <div className="flex justify-between pt-2 border-t border-slate-100">
+                <span className="text-slate-500">Sous-total (coûts)</span>
+                <span className="font-medium text-slate-800">{baseHT.toFixed(2)} €</span>
+              </div>
               <div className="flex justify-between font-bold text-slate-900 pt-2 border-t border-slate-200">
-                <span>Total HT</span>
+                <span>Total HT (÷ {divisorLabel})</span>
                 <span>{salePriceTotal.toFixed(2)} €</span>
               </div>
               <p className="text-xs text-slate-400 pt-1">
