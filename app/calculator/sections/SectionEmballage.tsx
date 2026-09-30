@@ -82,13 +82,15 @@ export function SectionEmballage() {
 
   // Plaques C/BC pour le sélecteur — filtrées sur la catégorie emballage explicite (page Plaques)
   const packagingPlates = plates.filter((p) => p.packagingCategory === packagingMaterialType)
+  // Toutes les autres matières restent choisissables (catégorie absente ou mal renseignée)
+  const otherPlates = plates.filter((p) => p.packagingCategory !== packagingMaterialType)
 
   // Présélection auto de la première matière C/BC disponible (l'utilisateur peut toujours changer)
   useEffect(() => {
     if (isExternal || packagingPlates.length === 0) return
-    const stillValid = packagingPlates.some((p) => p.id.toString() === packagingPlateId)
+    const stillValid = plates.some((p) => p.id.toString() === packagingPlateId)
     if (!stillValid) setPackagingPlateId(packagingPlates[0].id.toString())
-  }, [isExternal, packagingPlates, packagingPlateId, setPackagingPlateId])
+  }, [isExternal, packagingPlates, plates, packagingPlateId, setPackagingPlateId])
 
   // Auto-remplir depuis le produit courant / plus grand
   const handleAutoFill = () => {
@@ -359,24 +361,34 @@ export function SectionEmballage() {
             {/* Matière d'emballage (plaque C/BC) */}
             <div className="space-y-2">
               <Label>Matière d&apos;emballage</Label>
-              {packagingPlates.length === 0 ? (
-                <p className="text-sm text-slate-500 italic">
-                  Aucune matière {packagingMaterialType} disponible.{' '}
-                  <a href="/dashboard/plates" className="text-amber-600 underline">Ajouter une matière</a>
-                </p>
-              ) : (
-                <select
-                  value={packagingPlateId}
-                  onChange={(e) => setPackagingPlateId(e.target.value)}
-                  className="w-full flex h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
-                >
-                  <option value="">Choisir une matière...</option>
-                  {packagingPlates.map((p) => (
+              <select
+                value={packagingPlateId}
+                onChange={(e) => setPackagingPlateId(e.target.value)}
+                className="w-full flex h-10 rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+              >
+                <option value="">Choisir une matière...</option>
+                {packagingPlates.length > 0 && (
+                  <optgroup label={`Matières ${packagingMaterialType}`}>
+                    {packagingPlates.map((p) => (
+                      <option key={p.id} value={p.id.toString()}>
+                        {p.name} ({p.width}×{p.height}mm) — {p.cost.toFixed(2)} €/plaque
+                      </option>
+                    ))}
+                  </optgroup>
+                )}
+                <optgroup label="Autres matières">
+                  {otherPlates.map((p) => (
                     <option key={p.id} value={p.id.toString()}>
-                      {p.name} — {p.material} ({p.width}×{p.height}mm) — {p.cost.toFixed(2)} €/plaque
+                      {p.name} ({p.width}×{p.height}mm) — {p.cost.toFixed(2)} €/plaque
                     </option>
                   ))}
-                </select>
+                </optgroup>
+              </select>
+              {packagingPlates.length === 0 && (
+                <p className="text-xs text-slate-500 italic">
+                  Aucune matière classée {packagingMaterialType} :{' '}
+                  <a href="/dashboard/plates" className="text-amber-600 underline">renseigner la catégorie emballage</a>
+                </p>
               )}
             </div>
 
