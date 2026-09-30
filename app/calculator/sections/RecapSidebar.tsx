@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardHeader, CardTitle, CardDescription, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Loader2, Layers, Info } from 'lucide-react'
-import { CostRow } from '../shared'
+import { CostRow, MargeCoeffEditor } from '../shared'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 
@@ -31,6 +31,15 @@ export function RecapSidebar() {
     margeSopanoMontant,
     amalgameGroups,
     amalgameGroupResults,
+    hasVarnish,
+    hasFlatColor,
+    materialMarginOverride, setMaterialMarginOverride,
+    inkMarginStandardOverride, setInkMarginStandardOverride,
+    inkMarginVarnishOverride, setInkMarginVarnishOverride,
+    inkMarginFlatColorOverride, setInkMarginFlatColorOverride,
+    transportMarginOverride, setTransportMarginOverride,
+    accessoriesMargePercent, setAccessoriesMargePercent,
+    packagingMargePercent, setPackagingMargePercent,
   } = useCalculatorContext()
 
   const {
@@ -58,6 +67,10 @@ export function RecapSidebar() {
     materialMarginCoeff,
     transportTotal: transportCost,
     transportCostMarged,
+    transportMargin,
+    inkMarginStandard,
+    inkMarginVarnish,
+    inkMarginFlatColor,
     // ── Brut ──
     totalCostBrut,
     materialCostRaw,
@@ -297,6 +310,9 @@ export function RecapSidebar() {
                 details={impositionResult
                   ? `${impositionResult.platesNeeded} plaque(s)${brut ? '' : ` × coeff. ×${materialMarginCoeff.toFixed(1)}`}`
                   : undefined}
+                marginEditor={!brut && impositionResult ? (
+                  <MargeCoeffEditor value={materialMarginCoeff} override={materialMarginOverride} onChange={setMaterialMarginOverride} />
+                ) : undefined}
               />
 
               {hasImpression && (
@@ -305,6 +321,17 @@ export function RecapSidebar() {
                     label="Impression (encre)"
                     value={brut ? (printingCostData.inkCostRaw ?? 0) : printingCostData.inkCost}
                     details={printingCostData.inkCost > 0 ? `${inkVolumeL.toFixed(3)} L` : undefined}
+                    marginEditor={!brut && printingCostData.inkCost > 0 ? (
+                      <span className="flex flex-col gap-0.5">
+                        <MargeCoeffEditor label="Standard" value={inkMarginStandard} override={inkMarginStandardOverride} onChange={setInkMarginStandardOverride} />
+                        {hasVarnish && (
+                          <MargeCoeffEditor label="Vernis" value={inkMarginVarnish} override={inkMarginVarnishOverride} onChange={setInkMarginVarnishOverride} />
+                        )}
+                        {hasFlatColor && (
+                          <MargeCoeffEditor label="Blanc" value={inkMarginFlatColor} override={inkMarginFlatColorOverride} onChange={setInkMarginFlatColorOverride} />
+                        )}
+                      </span>
+                    ) : undefined}
                   />
                   {!cumulerTemps && (
                     <CostRow
@@ -375,15 +402,27 @@ export function RecapSidebar() {
               label="Accessoires"
               value={brut ? accessoriesCostBrut : accessoriesCost}
               details={selectedAccessories.length > 0 ? `${selectedAccessories.length} ref(s)` : undefined}
+              marginEditor={!brut ? (
+                <MargeCoeffEditor value={1} override={accessoriesMargePercent} onChange={setAccessoriesMargePercent} />
+              ) : undefined}
             />
           )}
 
-          {hasPackaging && (
-            <>
-              <CostRow label="Emballage (matière)" value={brut ? packagingEmbMaterialCostBrut : packagingEmbMaterialCost} />
-              <CostRow label="Emballage (découpe)" value={brut ? packagingEmbCuttingCostBrut : packagingEmbCuttingCost} />
-            </>
-          )}
+          {hasPackaging && (() => {
+            const packagingMarginMultiplier = !brut && (packagingMargePercent ?? 0) > 0 ? packagingMargePercent! : 1
+            return (
+              <>
+                <CostRow
+                  label="Emballage (matière)"
+                  value={brut ? packagingEmbMaterialCostBrut : packagingEmbMaterialCost * packagingMarginMultiplier}
+                  marginEditor={!brut ? (
+                    <MargeCoeffEditor value={1} override={packagingMargePercent} onChange={setPackagingMargePercent} />
+                  ) : undefined}
+                />
+                <CostRow label="Emballage (découpe)" value={brut ? packagingEmbCuttingCostBrut : packagingEmbCuttingCost * packagingMarginMultiplier} />
+              </>
+            )
+          })()}
           {prototypeFeeCost > 0 && (
             <CostRow label="Forfait prototype (BE + dossier)" value={prototypeFeeCost} details="forfait" />
           )}
@@ -408,6 +447,9 @@ export function RecapSidebar() {
               details={formState.transportDeliveries.length > 1
                 ? `${formState.transportDeliveries.length} livraisons`
                 : undefined}
+              marginEditor={!brut ? (
+                <MargeCoeffEditor value={transportMargin} override={transportMarginOverride} onChange={setTransportMarginOverride} />
+              ) : undefined}
             />
           )}
 

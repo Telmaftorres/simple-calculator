@@ -351,6 +351,8 @@ model Quote {
   packTimePerPieceSeconds            Int               @default(0)
   hasAssemblyNotice                  Boolean           @default(false)
   hasPoseEtiquette                   Boolean           @default(false)
+  hasKitMode                         Boolean           @default(false)
+  kitQuantity                        Int               @default(0)
   plateId                            Int?
   plateCostOverride                  Float?            // prix/plaque négocié, écrase le tarif catalogue
   customPlateName                    String?           // matière personnalisée (non enregistrée en DB)
@@ -393,6 +395,11 @@ model Quote {
   hasAccessoires                     Boolean           @default(false)
   accessoriesMargePercent            Float             @default(0)
   packagingMargePercent              Float             @default(0)
+  materialMarginOverride             Float             @default(0)
+  inkMarginStandardOverride          Float             @default(0)
+  inkMarginVarnishOverride           Float             @default(0)
+  inkMarginFlatColorOverride         Float             @default(0)
+  transportMarginOverride            Float             @default(0)
   isMultiProduct                     Boolean           @default(false)
   plvQuantity                        Int?              // Nombre de PLV (mode multi-produit) — base pour façonnage, conditionnement, transport
   products                           QuoteProduct[]

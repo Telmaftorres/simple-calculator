@@ -52,6 +52,7 @@ export function SectionEmballage() {
     computedPackagingDimensions,
     largestProduct,
     isMultiProduct,
+    hasKitMode, kitQuantity,
     flatWidth, flatHeight,
     plates,
     costResult,
@@ -68,6 +69,13 @@ export function SectionEmballage() {
   } = costResult
 
   const isExternal = packagingMaterialType === 'B' || packagingMaterialType === 'EB'
+
+  // Mode Kit : la quantité d'emballages suit le nombre de kits (plus besoin de la saisir séparément)
+  useEffect(() => {
+    if (hasKitMode && kitQuantity > 0 && packagingQuantity !== kitQuantity) {
+      setPackagingQuantity(kitQuantity)
+    }
+  }, [hasKitMode, kitQuantity, packagingQuantity, setPackagingQuantity])
 
   // Plaques C/BC pour le sélecteur — filtrées sur la catégorie emballage explicite (page Plaques)
   const packagingPlates = plates.filter((p) => p.packagingCategory === packagingMaterialType)
@@ -186,13 +194,14 @@ export function SectionEmballage() {
 
             {/* Quantité */}
             <div className="space-y-2">
-              <Label>Quantité d&apos;emballages</Label>
+              <Label>Quantité d&apos;emballages{hasKitMode ? ' (pilotée par le nombre de kits)' : ''}</Label>
               <input
                 type="number" min={1}
                 value={packagingQuantity || ''}
                 onChange={(e) => setPackagingQuantity(parseInt(e.target.value) || 0)}
+                disabled={hasKitMode}
                 placeholder="Ex : 500"
-                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
               />
             </div>
 
@@ -368,13 +377,14 @@ export function SectionEmballage() {
 
             {/* Quantité */}
             <div className="space-y-2">
-              <Label>Quantité d&apos;emballages</Label>
+              <Label>Quantité d&apos;emballages{hasKitMode ? ' (pilotée par le nombre de kits)' : ''}</Label>
               <input
                 type="number" min={1}
                 value={packagingQuantity || ''}
                 onChange={(e) => setPackagingQuantity(parseInt(e.target.value) || 0)}
+                disabled={hasKitMode}
                 placeholder="Ex : 500"
-                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm"
+                className="flex h-10 w-full rounded-md border border-slate-200 bg-white px-3 py-2 text-sm disabled:bg-slate-50 disabled:text-slate-400"
               />
             </div>
 

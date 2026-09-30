@@ -42,11 +42,18 @@ export const quoteFieldsSchema = z.object({
   packTimePerPieceSeconds: z.number().int().optional(),
   hasAssemblyNotice: z.boolean().optional(),
   hasPoseEtiquette: z.boolean().optional(),
+  hasKitMode: z.boolean().optional(),
+  kitQuantity: z.number().int().min(0).optional(),
   hasConditionnement: z.boolean().optional(),
 
   hasAccessoires: z.boolean().optional(),
   accessoriesMargePercent: z.number().min(0).optional(),
   packagingMargePercent: z.number().min(0).optional(),
+  materialMarginOverride: z.number().min(0).optional(),
+  inkMarginStandardOverride: z.number().min(0).optional(),
+  inkMarginVarnishOverride: z.number().min(0).optional(),
+  inkMarginFlatColorOverride: z.number().min(0).optional(),
+  transportMarginOverride: z.number().min(0).optional(),
 
   hasPackaging: z.boolean().optional(),
   packagingBoxType: z.enum(['etui', 'caisse', 'plaque_rainee']).optional(),

@@ -75,7 +75,7 @@ export function useCalculator(
     quantity, selectedPlateId, flatWidth, flatHeight, inkMlPerPlate, inkMlVerso,
     varnishSurfacePercent, varnishMlPerPlate, flatColorSurfacePercent, printMode, isRectoVerso, hasVarnish,
     hasFlatColor, rectoVersoType, cuttingTimePerPoseSeconds, assemblyTimePerPieceSeconds,
-    packTimePerPieceSeconds, hasAssemblyNotice, hasPoseEtiquette, currentAccessoryId, currentAccessoryQty,
+    packTimePerPieceSeconds, hasAssemblyNotice, hasPoseEtiquette, hasKitMode, kitQuantity, currentAccessoryId, currentAccessoryQty,
     currentConsumableId, currentConsumableSize, hasPackaging, packagingBoxType,
     packagingMaterialType, packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId, packagingQuantity,
@@ -84,6 +84,7 @@ export function useCalculator(
     isMultiProduct, products, activeProductIndex, hasDossierFee, hasFournituresEmb, hasPalette, paletteQuantity, modePrototype, hasMargeCommerciale, cumulerTemps, showMargeCommerciale, showMargeSopano,
     machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord, itemsPerPlateOverride,
     accessoriesMargePercent, packagingMargePercent,
+    materialMarginOverride, inkMarginStandardOverride, inkMarginVarnishOverride, inkMarginFlatColorOverride, transportMarginOverride,
   } = formState
 
   const {
@@ -247,6 +248,7 @@ export function useCalculator(
     cuttingTimePerPoseSeconds: isMultiProduct ? 0 : cuttingTimePerPoseSeconds,
     machineTimeMinOverride: isMultiProduct ? null : (machineTimeMinOverride ?? null),
     assemblyTimePerPieceSeconds, packTimePerPieceSeconds, hasAssemblyNotice, hasPoseEtiquette,
+    hasKitMode: isMultiProduct ? false : hasKitMode, kitQuantity: isMultiProduct ? 0 : kitQuantity,
     selectedAccessories, selectedConsumables,
     settings: settingsWithPackagingPrice,
     hasPackaging, packagingMaterialType, packagingExternalSize,
@@ -258,6 +260,11 @@ export function useCalculator(
     transportTotal: transportTotal > 0 ? transportTotal : undefined,
     accessoriesMargePercent,
     packagingMargePercent,
+    materialMarginOverride,
+    inkMarginStandardOverride,
+    inkMarginVarnishOverride,
+    inkMarginFlatColorOverride,
+    transportMarginOverride,
   })
 
   const templateOptionsCost = templateOptionSelections.reduce((sum, s) => sum + s.priceHT * s.quantity, 0)
@@ -291,12 +298,12 @@ export function useCalculator(
 
   const getPackDetails = useCallback(() => formatPackDetails({
     packTimePerPieceSeconds,
-    quantity: isMultiProduct ? quantiteForFaconnage : quantity,
+    quantity: (!isMultiProduct && hasKitMode && kitQuantity > 0) ? kitQuantity : (isMultiProduct ? quantiteForFaconnage : quantity),
     hasAssemblyNotice,
     assemblyNoticeCostPerPiece: costResult.assemblyNoticeCostPerPiece,
     hasPoseEtiquette,
     poseEtiquetteCostPerPiece: costResult.poseEtiquetteCostPerPiece,
-  }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece, hasPoseEtiquette, costResult.poseEtiquetteCostPerPiece])
+  }), [packTimePerPieceSeconds, quantity, isMultiProduct, totalQuantityMulti, hasAssemblyNotice, costResult.assemblyNoticeCostPerPiece, hasPoseEtiquette, costResult.poseEtiquetteCostPerPiece, hasKitMode, kitQuantity])
 
   // ── Save handlers ──
   const { isServing, handleSave, handleSaveProd, handleSaveActuals } = useSaveHandlers({
@@ -308,12 +315,13 @@ export function useCalculator(
     varnishSurfacePercent, varnishMlPerPlate, flatColorSurfacePercent, printMode,
     isRectoVerso, rectoVersoType, hasVarnish, hasFlatColor,
     cuttingTimePerPoseSeconds, machineTimeMinOverride, bordABord, itemsPerPlateOverride, plvQuantity, assemblyTimePerPieceSeconds, packTimePerPieceSeconds,
-    hasAssemblyNotice, hasPoseEtiquette, hasPackaging, packagingBoxType, packagingMaterialType,
+    hasAssemblyNotice, hasPoseEtiquette, hasKitMode, kitQuantity, hasPackaging, packagingBoxType, packagingMaterialType,
     packagingExternalSize, packagingProductLength, packagingProductWidth,
     packagingProductHeight, packagingProductThickness, packagingPlateId,
     packagingQuantity, packagingCuttingTimePerPoseSeconds, packagingUnitPriceOverride: packagingUnitPriceOverride ?? null,
     printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
     hasConditionnement, hasAccessoires, accessoriesMargePercent, packagingMargePercent, hasBE, beTimeMinutes, batTimeMinutes,
+    materialMarginOverride, inkMarginStandardOverride, inkMarginVarnishOverride, inkMarginFlatColorOverride, transportMarginOverride,
     hasDossierFee, hasFournituresEmb, hasPalette, paletteQuantity, modePrototype, hasMargeCommerciale, cumulerTemps, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
     transportDeliveries: formState.transportDeliveries,
     impositionResult, productSlotResults, amalgameGroupResults, amalgameGroups,
@@ -563,6 +571,8 @@ export function useCalculator(
     packTimePerPieceSeconds, setPackTimePerPieceSeconds: (v: number) => setField('packTimePerPieceSeconds', v),
     hasAssemblyNotice, setHasAssemblyNotice: (v: boolean) => setField('hasAssemblyNotice', v),
     hasPoseEtiquette, setHasPoseEtiquette: (v: boolean) => setField('hasPoseEtiquette', v),
+    hasKitMode, setHasKitMode: (v: boolean) => setField('hasKitMode', v),
+    kitQuantity, setKitQuantity: (v: number) => setField('kitQuantity', v),
     hasConditionnement, setHasConditionnement: (v: boolean) => setField('hasConditionnement', v),
     selectedAccessories,
     currentAccessoryId, setCurrentAccessoryId: (v: string) => setField('currentAccessoryId', v),
@@ -570,6 +580,11 @@ export function useCalculator(
     hasAccessoires, setHasAccessoires: (v: boolean) => setField('hasAccessoires', v),
     accessoriesMargePercent, setAccessoriesMargePercent: (v: number) => setField('accessoriesMargePercent', v),
     packagingMargePercent, setPackagingMargePercent: (v: number) => setField('packagingMargePercent', v),
+    materialMarginOverride, setMaterialMarginOverride: (v: number) => setField('materialMarginOverride', v),
+    inkMarginStandardOverride, setInkMarginStandardOverride: (v: number) => setField('inkMarginStandardOverride', v),
+    inkMarginVarnishOverride, setInkMarginVarnishOverride: (v: number) => setField('inkMarginVarnishOverride', v),
+    inkMarginFlatColorOverride, setInkMarginFlatColorOverride: (v: number) => setField('inkMarginFlatColorOverride', v),
+    transportMarginOverride, setTransportMarginOverride: (v: number) => setField('transportMarginOverride', v),
     selectedConsumables,
     currentConsumableId, setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
     currentConsumableSize, setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),

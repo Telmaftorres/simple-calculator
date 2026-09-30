@@ -158,6 +158,32 @@ describe('calculateCosts', () => {
       const noticeCost = ASSEMBLY_NOTICE_COST_PER_PIECE * 100
       expect(result.packagingCost).toBeCloseTo(timeCost + noticeCost, 2)
     })
+
+    it('mode Kit : calcule sur le nombre de kits plutôt que la quantité (ex. 500 PLV → 100 kits)', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        quantity: 500,
+        packTimePerPieceSeconds: 30,
+        hasAssemblyNotice: true,
+        hasKitMode: true,
+        kitQuantity: 100,
+      })
+      const timeCost = (30 * 100 / 3600) * HOURLY_RATE_CONDITIONING
+      const noticeCost = ASSEMBLY_NOTICE_COST_PER_PIECE * 100
+      expect(result.packagingCost).toBeCloseTo(timeCost + noticeCost, 2)
+    })
+
+    it('mode Kit ignoré si kitQuantity = 0 (retombe sur la quantité normale)', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        quantity: 500,
+        packTimePerPieceSeconds: 30,
+        hasKitMode: true,
+        kitQuantity: 0,
+      })
+      const timeCost = (30 * 500 / 3600) * HOURLY_RATE_CONDITIONING
+      expect(result.packagingCost).toBeCloseTo(timeCost, 2)
+    })
   })
 
   describe('printingCostData', () => {
@@ -379,6 +405,34 @@ describe('calculateCosts', () => {
     it('materialCostMarged = materialCostRaw × materialMarginCoeff', () => {
       const result = calculateCosts({ ...defaultParams })
       expect(result.materialCostMarged).toBeCloseTo(result.materialCostRaw * result.materialMarginCoeff, 2)
+    })
+
+    it('materialMarginOverride remplace le coefficient de la matrice', () => {
+      const result = calculateCosts({ ...defaultParams, materialMarginOverride: 5 })
+      expect(result.materialMarginCoeff).toBe(5)
+    })
+  })
+
+  describe('surcharges de marge par devis (encre, transport)', () => {
+    it('inkMarginStandardOverride remplace INK_MARGIN_STANDARD', () => {
+      const result = calculateCosts({ ...defaultParams, inkMarginStandardOverride: 6 })
+      expect(result.inkMarginStandard).toBe(6)
+    })
+
+    it('inkMarginVarnishOverride remplace INK_MARGIN_VARNISH', () => {
+      const result = calculateCosts({ ...defaultParams, hasVarnish: true, inkMarginVarnishOverride: 7 })
+      expect(result.inkMarginVarnish).toBe(7)
+    })
+
+    it('transportMarginOverride remplace TRANSPORT_MARGIN', () => {
+      const result = calculateCosts({ ...defaultParams, transportTotal: 100, transportMarginOverride: 3 })
+      expect(result.transportMargin).toBe(3)
+      expect(result.transportCostMarged).toBeCloseTo(300, 2)
+    })
+
+    it('une surcharge à 0 est ignorée (retombe sur le réglage entreprise)', () => {
+      const result = calculateCosts({ ...defaultParams, materialMarginOverride: 0 })
+      expect(result.materialMarginCoeff).not.toBe(0)
     })
   })
 

@@ -113,6 +113,8 @@ export function calculateCosts(params: {
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
   hasPoseEtiquette: boolean
+  hasKitMode?: boolean
+  kitQuantity?: number
   selectedAccessories: SelectedAccessory[]
   selectedConsumables: SelectedConsumable[]
   settings?: Record<string, number>
@@ -137,6 +139,11 @@ export function calculateCosts(params: {
   packagingUnitPriceOverride?: number | null
   accessoriesMargePercent?: number
   packagingMargePercent?: number
+  materialMarginOverride?: number
+  inkMarginStandardOverride?: number
+  inkMarginVarnishOverride?: number
+  inkMarginFlatColorOverride?: number
+  transportMarginOverride?: number
 }) {
   const {
     quantity,
@@ -161,6 +168,8 @@ export function calculateCosts(params: {
     packTimePerPieceSeconds,
     hasAssemblyNotice,
     hasPoseEtiquette,
+    hasKitMode = false,
+    kitQuantity = 0,
     selectedAccessories,
     selectedConsumables,
     settings,
@@ -188,6 +197,11 @@ export function calculateCosts(params: {
     packagingUnitPriceOverride,
     accessoriesMargePercent,
     packagingMargePercent,
+    materialMarginOverride,
+    inkMarginStandardOverride,
+    inkMarginVarnishOverride,
+    inkMarginFlatColorOverride,
+    transportMarginOverride,
   } = params
 
   const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
@@ -219,9 +233,10 @@ export function calculateCosts(params: {
   const poseSpacingMm = settings?.POSE_SPACING_MM ?? POSE_SPACING_MM
   const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
   const packagingSetupCost = settings?.PACKAGING_SETUP_COST ?? PACKAGING_SETUP_COST
-  const inkMarginStandard = settings?.INK_MARGIN_STANDARD ?? INK_MARGIN_STANDARD
-  const inkMarginVarnish = settings?.INK_MARGIN_VARNISH ?? INK_MARGIN_VARNISH
-  const inkMarginFlatColor = settings?.INK_MARGIN_FLAT_COLOR ?? INK_MARGIN_FLAT_COLOR
+  // Marges encre : surcouche éditable par devis (prioritaire sur les réglages entreprise)
+  const inkMarginStandard = (inkMarginStandardOverride ?? 0) > 0 ? inkMarginStandardOverride! : (settings?.INK_MARGIN_STANDARD ?? INK_MARGIN_STANDARD)
+  const inkMarginVarnish = (inkMarginVarnishOverride ?? 0) > 0 ? inkMarginVarnishOverride! : (settings?.INK_MARGIN_VARNISH ?? INK_MARGIN_VARNISH)
+  const inkMarginFlatColor = (inkMarginFlatColorOverride ?? 0) > 0 ? inkMarginFlatColorOverride! : (settings?.INK_MARGIN_FLAT_COLOR ?? INK_MARGIN_FLAT_COLOR)
   // Matrice matière (prix/m² × quantité) — 12 coeffs réglables, partagée matière produit + matière emballage
   const mQ1P1 = settings?.MATERIAL_MARGIN_Q1_P1 ?? MATERIAL_MARGIN_Q1_P1
   const mQ1P2 = settings?.MATERIAL_MARGIN_Q1_P2 ?? MATERIAL_MARGIN_Q1_P2
@@ -240,7 +255,7 @@ export function calculateCosts(params: {
   const paletteFee = settings?.PALETTE_FEE ?? PALETTE_FEE
   const prototypeForfait = settings?.PROTOTYPE_FORFAIT ?? PROTOTYPE_FORFAIT
   const prototypeFournituresFee = settings?.PROTOTYPE_FOURNITURES_FEE ?? PROTOTYPE_FOURNITURES_FEE
-  const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
+  const transportMargin = (transportMarginOverride ?? 0) > 0 ? transportMarginOverride! : (settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN)
   const margeCommercialePct = settings?.MARGE_COMMERCIALE_PERCENT ?? MARGE_COMMERCIALE_PERCENT
   const margeSopanoPct = settings?.MARGE_SOPANO_PERCENT ?? MARGE_SOPANO_PERCENT
   // Marge commerciale (2,5 %) optionnelle : retirée si le patron a trouvé le client (Sopano toujours appliquée)
@@ -387,21 +402,24 @@ export function calculateCosts(params: {
   })()
 
   // ── Conditionnement ──
+  // En mode Kit, la notice/étiquette/temps de conditionnement se calent sur le nombre de kits
+  // (pas la quantité de PLV) : ex. 500 PLV groupées en 100 kits → calcul sur 100.
+  const conditioningQuantity = hasKitMode && kitQuantity > 0 ? kitQuantity : quantity
   const packagingCost = (() => {
     if (!hasConditionnement) return 0
-    const totalHours = (packTimePerPieceSeconds * quantity) / 3600
+    const totalHours = (packTimePerPieceSeconds * conditioningQuantity) / 3600
     const timeCost = totalHours * hourlyRateConditioning
-    const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
-    const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * quantity : 0
+    const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * conditioningQuantity : 0
+    const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * conditioningQuantity : 0
     return timeCost + noticeCost + etiquetteCost
   })()
   const packagingCostBrut = (() => {
     if (!hasConditionnement) return 0
-    const totalHours = (packTimePerPieceSeconds * quantity) / 3600
+    const totalHours = (packTimePerPieceSeconds * conditioningQuantity) / 3600
     const timeCost = totalHours * hourlyRateConditioningCost
     // Notices & étiquettes sont des coûts réels par pièce → conservés au brut
-    const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * quantity : 0
-    const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * quantity : 0
+    const noticeCost = hasAssemblyNotice ? assemblyNoticeCostPerPiece * conditioningQuantity : 0
+    const etiquetteCost = hasPoseEtiquette ? poseEtiquetteCostPerPiece * conditioningQuantity : 0
     return timeCost + noticeCost + etiquetteCost
   })()
 
@@ -514,6 +532,7 @@ export function calculateCosts(params: {
 // Coeff matière = matrice (prix au m² × quantité totale du devis)
 const degressiveQty = degressiveQuantity ?? quantity
 const materialMarginCoeff = (() => {
+  if ((materialMarginOverride ?? 0) > 0) return materialMarginOverride!
   if (!selectedPlate) return 1
   const areaM2 = (selectedPlate.width * selectedPlate.height) / 1_000_000
   const pricePerM2 = areaM2 > 0 ? selectedPlate.cost / areaM2 : selectedPlate.cost
@@ -622,6 +641,9 @@ const prototypeFeeCost = modePrototype ? prototypeForfait : 0
     transportTotal: transportTotal ?? 0,
     transportCostMarged,
     transportMargin,
+    inkMarginStandard,
+    inkMarginVarnish,
+    inkMarginFlatColor,
     accessoriesMargePercent: accessoriesMargePercent ?? 0,
     packagingMargePercent: packagingMargePercent ?? 0,
     // ── Brut (coût de revient, hors marge) ──

@@ -47,6 +47,8 @@ export interface SaveContext {
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
   hasPoseEtiquette: boolean
+  hasKitMode: boolean
+  kitQuantity: number
   hasPackaging: boolean
   packagingBoxType: 'etui' | 'caisse' | 'plaque_rainee'
   packagingMaterialType: 'B' | 'EB' | 'C' | 'BC'
@@ -67,6 +69,11 @@ export interface SaveContext {
   hasAccessoires: boolean
   accessoriesMargePercent: number
   packagingMargePercent: number
+  materialMarginOverride: number
+  inkMarginStandardOverride: number
+  inkMarginVarnishOverride: number
+  inkMarginFlatColorOverride: number
+  transportMarginOverride: number
   hasBE: boolean
   beTimeMinutes: number
   batTimeMinutes: number
@@ -203,6 +210,8 @@ export function useSaveHandlers(ctx: SaveContext) {
         packTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
         hasAssemblyNotice: ctx.hasAssemblyNotice,
         hasPoseEtiquette: ctx.hasPoseEtiquette,
+        hasKitMode: ctx.hasKitMode,
+        kitQuantity: ctx.kitQuantity,
         hasPackaging: ctx.hasPackaging,
         packagingBoxType: ctx.packagingBoxType,
         packagingMaterialType: ctx.packagingMaterialType,
@@ -225,6 +234,11 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasAccessoires: ctx.hasAccessoires,
         accessoriesMargePercent: ctx.accessoriesMargePercent,
         packagingMargePercent: ctx.packagingMargePercent,
+        materialMarginOverride: ctx.materialMarginOverride,
+        inkMarginStandardOverride: ctx.inkMarginStandardOverride,
+        inkMarginVarnishOverride: ctx.inkMarginVarnishOverride,
+        inkMarginFlatColorOverride: ctx.inkMarginFlatColorOverride,
+        transportMarginOverride: ctx.transportMarginOverride,
         hasBE: ctx.hasBE,
         beTimeMinutes: ctx.beTimeMinutes,
         batTimeMinutes: ctx.batTimeMinutes,

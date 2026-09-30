@@ -148,18 +148,51 @@ interface CostRowProps {
   label: string
   value: number
   details?: string
+  marginEditor?: React.ReactNode
 }
 
-export function CostRow({ label, value, details }: CostRowProps) {
+export function CostRow({ label, value, details, marginEditor }: CostRowProps) {
   return (
     <div className="flex justify-between items-start text-sm">
       <div className="flex-1 min-w-0">
         <span className="text-slate-600">{label}</span>
         {details && <p className="text-xs text-slate-400 mt-0.5">{details}</p>}
+        {marginEditor}
       </div>
       <span className="font-semibold text-slate-800 ml-4 shrink-0">
         {value.toFixed(2)} €
       </span>
     </div>
+  )
+}
+
+// ── Marge éditable par ligne (mode Margé uniquement) ──
+export function MargeCoeffEditor({ value, override, onChange, label }: {
+  value: number
+  override: number
+  onChange: (v: number) => void
+  label?: string
+}) {
+  return (
+    <span className="inline-flex items-center gap-1 mt-0.5" onClick={(e) => e.stopPropagation()}>
+      <span className="text-xs text-slate-400">{label ? `${label} ×` : 'coeff ×'}</span>
+      <input
+        type="number"
+        step="0.1"
+        min={0}
+        value={override > 0 ? override : (value ? Number(value.toFixed(2)) : '')}
+        onChange={(e) => onChange(parseFloat(e.target.value) || 0)}
+        className="w-14 h-5 text-xs text-center border border-slate-200 rounded bg-white"
+      />
+      {override > 0 && (
+        <button
+          onClick={() => onChange(0)}
+          className="text-xs text-slate-400 hover:text-slate-600"
+          title="Revenir au coefficient des réglages"
+        >
+          ↺
+        </button>
+      )}
+    </span>
   )
 }
