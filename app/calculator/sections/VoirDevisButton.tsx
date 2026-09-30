@@ -27,6 +27,8 @@ export function VoirDevisButton() {
         impositionResult: isMultiProduct ? null : impositionResult,
         selectedPlate: isMultiProduct ? undefined : selectedPlate,
         hasImpression: isMultiProduct ? false : hasImpression,
+        hasVarnish: formState.hasVarnish, varnishType: formState.varnishType, varnishSurfacePercent: formState.varnishSurfacePercent,
+        hasFlatColor: formState.hasFlatColor, flatColorSurfacePercent: formState.flatColorSurfacePercent,
         inkVolumeL: costResult.inkVolumeL,
         printingCostData: costResult.printingCostData,
         printSetupType: isMultiProduct ? 'none' : formState.printSetupType,

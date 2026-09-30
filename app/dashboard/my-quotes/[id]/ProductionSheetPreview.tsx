@@ -1,6 +1,8 @@
 'use client'
 
 import type { Quote } from './quote-detail-shared'
+import { buildPrintInfo } from '@/lib/presentation/print-info'
+import { formatMinutes } from '@/lib/format'
 import { ProductionQRCode } from './ProductionQRCode'
 
 type PreviewRun = {
@@ -114,6 +116,14 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
   const effectiveRVType = ps?.prodRectoVersoType ?? quote.rectoVersoType
   const effectiveHasVarnish = ps?.prodHasVarnish ?? quote.hasVarnish
   const effectiveHasFlatColor = ps?.prodHasFlatColor ?? quote.hasFlatColor
+  const printInfo = buildPrintInfo({
+    hasVarnish: effectiveHasVarnish, varnishType: quote.varnishType, varnishSurfacePercent: quote.varnishSurfacePercent,
+    hasFlatColor: effectiveHasFlatColor, flatColorSurfacePercent: quote.flatColorSurfacePercent,
+    platesPerTray: quote.platesPerTray,
+    totalMachineTimeMin: ps?.prodMachineTimeMinOverride ?? quote.machineTimeMinOverride ?? quote.printingMachineTimeMin,
+    platesCount: ps?.prodMachineTimeMinOverride != null ? effectivePlatesCount : quote.platesCount,
+    isRectoVerso: quote.isRectoVerso,
+  })
   const effectiveAssembly = ps?.prodAssemblyTimePerPieceSeconds ?? quote.assemblyTimePerPieceSeconds
   const effectivePack = ps?.prodPackTimePerPieceSeconds ?? quote.packTimePerPieceSeconds
   const effectiveItemsPerPlate = ps?.prodItemsPerPlate ?? quote.itemsPerPlate
@@ -245,8 +255,9 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
           {(quote.hasImpression || isAmalgameImpression) && (
             <SectionCard title="Impression" colorClass="bg-purple-600 text-white">
               <Row label="Mode" value={rvLabel(effectiveIsRV, effectiveRVType)} />
-              {effectiveHasVarnish && <Row label="Vernis" value="Oui" />}
-              {effectiveHasFlatColor && <Row label="Blanc" value="Oui" />}
+              {printInfo.varnish && <Row label="Vernis" value={printInfo.varnish} />}
+              {printInfo.white && <Row label="Blanc" value={printInfo.white} />}
+              {!quote.isMultiProduct && <Row label="Plaques / plateau" value={quote.platesPerTray} />}
               {(quote.plate || quote.customPlateName) && (
                 <Row label="Plaque" value={quote.plate?.name ?? quote.customPlateName} />
               )}
@@ -256,6 +267,9 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
                 const min = ps?.prodMachineTimeMinOverride ?? quote.machineTimeMinOverride ?? quote.printingMachineTimeMin
                 return min != null ? <Row label="Tps machine" value={fmtMin(Math.round(min))} /> : null
               })()}
+              {!quote.isMultiProduct && printInfo.perPlateMin != null && (
+                <Row label="Tps / plaque" value={formatMinutes(printInfo.perPlateMin)} />
+              )}
               {isAmalgameImpression && runs.length > 0 && (
                 <div className="mt-1.5 space-y-1">
                   {runs.map((run, i) => (

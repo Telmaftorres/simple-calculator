@@ -65,6 +65,8 @@ export function ScreenRecap() {
     impositionResult: isMultiProduct ? null : impositionResult,
     selectedPlate: isMultiProduct ? undefined : selectedPlate,
     hasImpression: isMultiProduct ? false : hasImpression,
+    hasVarnish, varnishType: formState.varnishType, varnishSurfacePercent,
+    hasFlatColor, flatColorSurfacePercent,
     inkVolumeL: costResult.inkVolumeL,
     printingCostData: costResult.printingCostData,
     printSetupType: isMultiProduct ? 'none' : formState.printSetupType,

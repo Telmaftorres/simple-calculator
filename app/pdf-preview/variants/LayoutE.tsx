@@ -1,5 +1,6 @@
 'use client'
 import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer'
+import type { PrintInfo } from '@/lib/presentation/print-info'
 
 export type QuoteForPDF = {
   id: number
@@ -44,6 +45,7 @@ export type QuoteForPDF = {
     cuttingTimePerPlateSeconds?: number | null  // découpe "par plaque" : prioritaire sur le temps par pose
     machineTimeMinOverride: number | null
     printingMachineTimeMin?: number | null      // temps d'impression calculé par le calculateur
+    print?: PrintInfo | null                    // vernis, blanc, plaques/plateau, temps par plaque
     isRectoVerso: boolean
     rectoVersoType: string | null
     plate: { name: string; width: number; height: number } | null
@@ -173,9 +175,9 @@ function FillField({ label }: { label: string }) {
   )
 }
 
-function SpecRow({ label, value, barColor, last }: { label: string; value: string; barColor: string; last?: boolean }) {
+function SpecRow({ label, value, barColor, last, compact }: { label: string; value: string; barColor: string; last?: boolean; compact?: boolean }) {
   return (
-    <View style={[s.specListRow, last ? { borderBottomWidth: 0 } : {}]}>
+    <View style={[s.specListRow, compact ? { paddingVertical: 3 } : {}, last ? { borderBottomWidth: 0 } : {}]}>
       <View style={[s.specListBar, { backgroundColor: barColor }]} />
       <Text style={s.specListLabel}>{label}</Text>
       <Text style={s.specListValue}>{value}</Text>
@@ -307,15 +309,15 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                 <View style={s.groupBlockBody}>
                   <View style={s.specsCol}>
                     <View style={s.specList}>
-                      <SpecRow label="Matiere" value={run.plate?.name ?? '—'} barColor={col.bar} />
-                      <SpecRow label="Format plaque" value={run.plate && run.plate.width > 0 ? `${run.plate.width}x${run.plate.height} mm` : '—'} barColor={col.bar} />
-                      <SpecRow label="Nb plaques" value={run.platesCount != null ? `${run.platesCount} pl.` : '—'} barColor={col.bar} />
+                      <SpecRow label="Matiere" value={run.plate?.name ?? '—'} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Format plaque" value={run.plate && run.plate.width > 0 ? `${run.plate.width}x${run.plate.height} mm` : '—'} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Nb plaques" value={run.platesCount != null ? `${run.platesCount} pl.` : '—'} barColor={col.bar} compact={!traceBelow} />
                       <SpecRow
                         label="Decoupe"
                         value={run.cuttingTimePerPlateSeconds
                           ? `${fmtSec(run.cuttingTimePerPlateSeconds)}/plaque`
                           : run.cuttingTimePerPoseSeconds > 0 ? `${fmtSec(run.cuttingTimePerPoseSeconds)}/pose` : '—'}
-                        barColor={col.bar}
+                        barColor={col.bar} compact={!traceBelow}
                         last={!run.hasImpression && !run.isRectoVerso}
                       />
                       {run.hasImpression && (
@@ -327,11 +329,30 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                               : (run.machineTimeMinOverride ?? run.printingMachineTimeMin)
                             return min != null ? fmtTime(Math.round(min * 60)) : '—'
                           })()}
-                          barColor={col.bar}
+                          barColor={col.bar} compact={!traceBelow}
                         />
                       )}
-                      {run.isRectoVerso && <SpecRow label="R/V" value={run.rectoVersoType === 'identical' ? 'Identique' : 'Different'} barColor={col.bar} last />}
-                      {run.hasImpression && !run.isRectoVerso && <SpecRow label="Impression" value="Recto seul" barColor={col.bar} last />}
+                      {run.hasImpression && run.print?.perPlateMin != null && (
+                        <SpecRow label="Tps / plaque" value={fmtTime(run.print.perPlateMin * 60)} barColor={col.bar} compact={!traceBelow} />
+                      )}
+                      {run.hasImpression && run.print?.platesPerTray != null && (
+                        <SpecRow label="Plaques/plateau" value={String(run.print.platesPerTray)} barColor={col.bar} compact={!traceBelow} />
+                      )}
+                      {traceBelow && run.hasImpression && run.print?.varnish && (
+                        <SpecRow label="Vernis" value={run.print.varnish} barColor={col.bar} compact={!traceBelow} />
+                      )}
+                      {traceBelow && run.hasImpression && run.print?.white && (
+                        <SpecRow label="Blanc" value={run.print.white} barColor={col.bar} compact={!traceBelow} />
+                      )}
+                      {!traceBelow && run.hasImpression && (run.print?.varnish || run.print?.white) && (
+                        <SpecRow
+                          label="Finitions"
+                          value={[run.print?.varnish && `Vernis ${run.print.varnish}`, run.print?.white && `Blanc ${run.print.white}`].filter(Boolean).join(' / ')}
+                          barColor={col.bar} compact={!traceBelow}
+                        />
+                      )}
+                      {run.isRectoVerso && <SpecRow label="R/V" value={run.rectoVersoType === 'identical' ? 'Identique' : 'Different'} barColor={col.bar} compact={!traceBelow} last />}
+                      {run.hasImpression && !run.isRectoVerso && <SpecRow label="Impression" value="Recto seul" barColor={col.bar} compact={!traceBelow} last />}
                     </View>
                   </View>
                   <View style={s.rightCol}>
@@ -380,12 +401,12 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                 <View style={s.groupBlockBody}>
                   <View style={s.specsCol}>
                     <View style={s.specList}>
-                      <SpecRow label="Matiere" value={p.plate?.name ?? '—'} barColor={col.bar} />
-                      <SpecRow label="Format plaque" value={p.plate ? `${p.plate.width}x${p.plate.height} mm` : '—'} barColor={col.bar} />
-                      <SpecRow label="Format a plat" value={`${p.flatWidth}x${p.flatHeight} mm`} barColor={col.bar} />
-                      <SpecRow label="Nb plaques" value={`${p.platesCount ?? '—'} pl.`} barColor={col.bar} />
-                      <SpecRow label="Decoupe" value={p.cuttingTimePerPoseSeconds > 0 ? `${fmtSec(p.cuttingTimePerPoseSeconds)}/pose` : '—'} barColor={col.bar} />
-                      <SpecRow label="Quantite" value={`${p.quantity} ex`} barColor={col.bar} last />
+                      <SpecRow label="Matiere" value={p.plate?.name ?? '—'} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Format plaque" value={p.plate ? `${p.plate.width}x${p.plate.height} mm` : '—'} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Format a plat" value={`${p.flatWidth}x${p.flatHeight} mm`} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Nb plaques" value={`${p.platesCount ?? '—'} pl.`} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Decoupe" value={p.cuttingTimePerPoseSeconds > 0 ? `${fmtSec(p.cuttingTimePerPoseSeconds)}/pose` : '—'} barColor={col.bar} compact={!traceBelow} />
+                      <SpecRow label="Quantite" value={`${p.quantity} ex`} barColor={col.bar} compact={!traceBelow} last />
                     </View>
                   </View>
                   <View style={s.rightCol}>

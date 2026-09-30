@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
+import { buildPrintInfo } from '@/lib/presentation/print-info'
 import { Button } from '@/components/ui/button'
 import { Download, FileText } from 'lucide-react'
 import { toast } from 'sonner'
@@ -457,6 +458,13 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   // Pour un devis simple sans amalgame, on crée un run synthétique.
   const buildQuoteForPdf = () => {
     const prodRuns = ps.productionAmalgameRuns
+    // Infos impression d'un run du devis (le temps a été calculé sur le nb de plaques du devis)
+    const runPrint = (r: Quote['amalgameRuns'][number] | undefined) => r ? buildPrintInfo({
+      hasVarnish: r.hasVarnish, varnishSurfacePercent: r.varnishSurfacePercent,
+      hasFlatColor: r.hasFlatColor, flatColorSurfacePercent: r.flatColorSurfacePercent,
+      totalMachineTimeMin: r.machineTimeMinOverride ?? r.printingMachineTimeMin,
+      platesCount: r.platesCount, isRectoVerso: r.isRectoVerso,
+    }) : null
 
     // Matières corrigées dans le bloc « Matière(s) » : elles priment sur celles du devis (par nom de produit)
     const correctedPlateByName = new Map(
@@ -482,6 +490,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
             cuttingTimePerPoseSeconds: r.cuttingTimePerPoseSeconds ?? quoteMatch?.cuttingTimePerPoseSeconds ?? 0,
             machineTimeMinOverride: quoteMatch?.machineTimeMinOverride ?? null,
             printingMachineTimeMin: quoteMatch?.printingMachineTimeMin ?? null,
+            print: runPrint(quoteMatch),
             isRectoVerso: quoteMatch?.isRectoVerso ?? false,
             rectoVersoType: quoteMatch?.rectoVersoType ?? null,
             plate: plate ? { name: plate.name, width: plate.width, height: plate.height } : null,
@@ -499,7 +508,7 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
       }
     }
     const isSimple = !quote.isMultiProduct && quote.amalgameRuns.length === 0 && quote.products.length === 0
-    if (!isSimple) return { ...quote, products }
+    if (!isSimple) return { ...quote, products, amalgameRuns: quote.amalgameRuns.map(r => ({ ...r, print: runPrint(r) })) }
 
     const plate = quote.plate
       ? { name: quote.plate.name, width: quote.plate.width, height: quote.plate.height }
@@ -516,6 +525,15 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
         cuttingTimePerPlateSeconds: quote.cuttingByPlate ? quote.cuttingTimePerPlateSeconds : null,
         machineTimeMinOverride: ps.prodMachineTimeMinOverride ?? quote.machineTimeMinOverride,
         printingMachineTimeMin: quote.printingMachineTimeMin,
+        print: buildPrintInfo({
+          hasVarnish: ps.prodHasVarnish ?? quote.hasVarnish, varnishType: quote.varnishType,
+          varnishSurfacePercent: quote.varnishSurfacePercent,
+          hasFlatColor: ps.prodHasFlatColor ?? quote.hasFlatColor, flatColorSurfacePercent: quote.flatColorSurfacePercent,
+          platesPerTray: quote.platesPerTray,
+          totalMachineTimeMin: ps.prodMachineTimeMinOverride ?? quote.machineTimeMinOverride ?? quote.printingMachineTimeMin,
+          platesCount: ps.prodMachineTimeMinOverride != null ? (ps.prodPlatesCount ?? quote.platesCount) : quote.platesCount,
+          isRectoVerso: quote.isRectoVerso,
+        }),
         isRectoVerso: ps.prodIsRectoVerso ?? quote.isRectoVerso,
         rectoVersoType: ps.prodRectoVersoType ?? quote.rectoVersoType,
         plate,

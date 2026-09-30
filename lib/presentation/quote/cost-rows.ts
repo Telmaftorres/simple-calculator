@@ -1,4 +1,6 @@
 import { PACKAGING_SUPPLIER_PRICING_ENABLED } from '@/lib/config/pricing'
+import { buildPrintInfo } from '@/lib/presentation/print-info'
+import { formatMinutes } from '@/lib/format'
 import type { ImpositionResult, PrintingCostData, SelectedAccessory, SelectedConsumable, Plate } from '@/types/calculator'
 
 export type CostRow = {
@@ -12,6 +14,11 @@ export type QuoteCostRowsParams = {
   impositionResult: ImpositionResult | null | undefined
   selectedPlate: Plate | undefined
   hasImpression: boolean
+  hasVarnish?: boolean
+  varnishType?: string | null
+  varnishSurfacePercent?: number
+  hasFlatColor?: boolean
+  flatColorSurfacePercent?: number
   inkVolumeL: number
   printingCostData: PrintingCostData
   printSetupType: 'none' | 'standard' | 'complexe'
@@ -79,6 +86,23 @@ function sizeLabel(s: string | null | undefined): string {
   return s.charAt(0).toUpperCase() + s.slice(1)
 }
 
+// Détail interne de la ligne « Impression (machine) » : temps total, temps par plaque,
+// plaques sur le plateau, vernis (type · %) et blanc (%)
+function printMachineDetail(p: QuoteCostRowsParams): string {
+  const tb = p.printingCostData.timeBreakdown
+  const info = buildPrintInfo({
+    hasVarnish: p.hasVarnish ?? false, varnishType: p.varnishType, varnishSurfacePercent: p.varnishSurfacePercent,
+    hasFlatColor: p.hasFlatColor ?? false, flatColorSurfacePercent: p.flatColorSurfacePercent,
+  })
+  const parts = [`${Math.round(p.printingCostData.machineTimeMin)} min`]
+  if (tb && tb.totalMin > 0 && tb.totalMin === p.printingCostData.machineTimeMin) {
+    parts.push(`${formatMinutes(tb.perPlateMin)}/plaque`, `${tb.platesPerTray} pl./plateau`)
+  }
+  if (info.varnish) parts.push(`Vernis ${info.varnish}`)
+  if (info.white) parts.push(`Blanc ${info.white}`)
+  return parts.join(' · ')
+}
+
 export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
   const isClient = p.mode === 'client'
 
@@ -108,7 +132,7 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
       { label: 'Impression (encre)', detail: isClient ? '—' : `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
       {
         label: 'Impression (machine)',
-        detail: isClient ? '—' : `${Math.round(p.printingCostData.machineTimeMin)} min`,
+        detail: isClient ? '—' : printMachineDetail(p),
         value: isClient
           ? p.printingCostData.machineCost + (p.printSetupType !== 'none' ? (p.printingCostData.setupCost ?? 0) : 0)
           : p.printingCostData.machineCost,

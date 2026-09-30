@@ -44,6 +44,10 @@ export type Quote = {
   isRectoVerso: boolean
   rectoVersoType: string | null
   hasVarnish: boolean; hasFlatColor: boolean
+  varnishType: string | null
+  varnishSurfacePercent: number
+  flatColorSurfacePercent: number
+  platesPerTray: number
   hasAssemblyNotice: boolean
   hasPoseEtiquette: boolean
   isMultiProduct: boolean
@@ -76,6 +80,10 @@ export type Quote = {
     inkMlPerPlate: number
     isRectoVerso: boolean
     rectoVersoType: string | null
+    hasVarnish: boolean
+    hasFlatColor: boolean
+    varnishSurfacePercent: number
+    flatColorSurfacePercent: number
     plate: { id: number; name: string; width: number; height: number } | null
     items: { name: string; flatWidth: number; flatHeight: number; countPerPlate: number; quantityPerUnit: number }[]
   }[]
