@@ -8,6 +8,8 @@ import { z } from 'zod'
 import { revalidateCache } from '@/lib/server/cache'
 import { createQuoteSchema, type CreateQuoteInput } from '@/lib/quote/schema'
 import { logAction } from '@/lib/server/audit'
+import { getSettingsMap } from './settings'
+import { computePrintingMachineTimeMin } from '@/lib/calculation/printing-time'
 
 function buildQuoteData(
   validated: CreateQuoteInput,
@@ -480,7 +482,38 @@ export async function getQuoteDetail(id: number) {
   })
 
   if (!quote) return null
-  return quote
+
+  // Devis enregistrés avant le stockage du temps d'impression : on le recalcule avec la même
+  // formule que le calculateur, pour que la fiche de prod l'affiche aussi pour ces devis.
+  const needsSimple = quote.printingMachineTimeMin == null && quote.hasImpression && !quote.isMultiProduct
+  const needsRuns = quote.amalgameRuns.some(r => r.hasImpression && r.printingMachineTimeMin == null)
+  if (!needsSimple && !needsRuns) return quote
+
+  const settings = await getSettingsMap(companyId)
+  const plateW = quote.plate?.width ?? quote.customPlateWidth ?? 0
+  const plateH = quote.plate?.height ?? quote.customPlateHeight ?? 0
+  return {
+    ...quote,
+    printingMachineTimeMin: needsSimple && plateW > 0 && plateH > 0 && quote.platesCount
+      ? computePrintingMachineTimeMin({
+          plateWidthMm: plateW, plateHeightMm: plateH, platesCount: quote.platesCount,
+          printMode: quote.printMode, isRectoVerso: quote.isRectoVerso,
+          hasVarnish: quote.hasVarnish, hasFlatColor: quote.hasFlatColor, settings,
+        })
+      : quote.printingMachineTimeMin,
+    amalgameRuns: quote.amalgameRuns.map(r =>
+      r.hasImpression && r.printingMachineTimeMin == null && r.plate && r.platesCount
+        ? {
+            ...r,
+            printingMachineTimeMin: computePrintingMachineTimeMin({
+              plateWidthMm: r.plate.width, plateHeightMm: r.plate.height, platesCount: r.platesCount,
+              printMode: r.printMode, isRectoVerso: r.isRectoVerso,
+              hasVarnish: r.hasVarnish, hasFlatColor: r.hasFlatColor, settings,
+            }),
+          }
+        : r
+    ),
+  }
 }
 
 export async function patchQuoteFlags(

@@ -15,8 +15,6 @@ import {
   INK_COST_PER_LITER,
   INK_COST_VARNISH_PER_LITER,
   INK_COST_FLAT_COLOR_PER_LITER,
-  PRINT_SPEED_PRODUCTION,
-  PRINT_SPEED_QUALITY,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   POSE_ETIQUETTE_COST_PER_PIECE,
   POSE_SPACING_MM,
@@ -59,6 +57,7 @@ const B_EB_PRICE_DEFAULTS: Record<string, number> = {
   PACKAGING_EB_GRAND_PRICE,
 }
 import { calculateImposition } from '@/lib/calculation/imposition'
+import { computePrintingMachineTimeMin } from '@/lib/calculation/printing-time'
 import type {
   ImpositionResult,
   SelectedAccessory,
@@ -230,8 +229,6 @@ export function calculateCosts(params: {
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
   const inkCostFlatColorPerLiter = settings?.INK_COST_FLAT_COLOR_PER_LITER ?? INK_COST_FLAT_COLOR_PER_LITER
-  const printSpeedProduction = settings?.PRINT_SPEED_PRODUCTION ?? PRINT_SPEED_PRODUCTION
-  const printSpeedQuality = settings?.PRINT_SPEED_QUALITY ?? PRINT_SPEED_QUALITY
   const printSetupStandardCost = settings?.PRINT_SETUP_STANDARD_COST ?? PRINT_SETUP_STANDARD_COST
   const printSetupComplexCost = settings?.PRINT_SETUP_COMPLEX_COST ?? PRINT_SETUP_COMPLEX_COST
   const cuttingSetupStandardCost = settings?.CUTTING_SETUP_STANDARD_COST ?? CUTTING_SETUP_STANDARD_COST
@@ -338,16 +335,16 @@ export function calculateCosts(params: {
       + varnishVolumeL * inkCostVarnishPerLiter
       + flatColorVolumeL * inkCostFlatColorPerLiter
 
-    const plateAreaM2 = (selectedPlate.width * selectedPlate.height) / 1000000
-    const pace = printMode === 'production' ? printSpeedProduction : printSpeedQuality
-    const baseMachineTimeMin = plateAreaM2 * pace * multiplier * platesNeeded
-
-    const printSpeedVarnish = settings?.PRINT_SPEED_VARNISH ?? 1.5
-    const printSpeedFlatColor = settings?.PRINT_SPEED_FLAT_COLOR ?? 1.5
-    const varnishTimeMin = hasVarnish ? (plateAreaM2 * printSpeedVarnish * multiplier * platesNeeded) : 0
-    const flatColorTimeMin = hasFlatColor ? (plateAreaM2 * printSpeedFlatColor * multiplier * platesNeeded) : 0
-
-    const autoMachineTimeMin = baseMachineTimeMin + varnishTimeMin + flatColorTimeMin
+    const autoMachineTimeMin = computePrintingMachineTimeMin({
+      plateWidthMm: selectedPlate.width,
+      plateHeightMm: selectedPlate.height,
+      platesCount: platesNeeded,
+      printMode,
+      isRectoVerso,
+      hasVarnish,
+      hasFlatColor,
+      settings,
+    })
     const machineTimeMin = (machineTimeMinOverride != null && machineTimeMinOverride > 0)
       ? machineTimeMinOverride
       : autoMachineTimeMin

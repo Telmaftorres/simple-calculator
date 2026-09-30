@@ -154,6 +154,8 @@ const s = StyleSheet.create({
   fillField: { flex: 1 },
   fillLabel: { fontSize: 7.5, color: C.mid, marginBottom: 12 },
   fillLine: { borderBottomWidth: 1, borderBottomColor: C.dark },
+  remarksHint: { fontSize: 7, color: C.mid, marginBottom: 4 },
+  remarksLine: { borderBottomWidth: 1, borderBottomColor: C.border, height: 16 },
 })
 
 function FillField({ label }: { label: string }) {
@@ -381,6 +383,7 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             <View style={s.fillRow}>
               <FillField label="Rebuts (plaques imprimees en plus)" />
               <FillField label="Nb de chutes creees" />
+              <FillField label="Format des chutes" />
               <FillField label="Temps reel impression" />
               <FillField label="Temps reel decoupe" />
             </View>
@@ -482,10 +485,18 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                 {quote.hasFaconnage && <FillField label="Temps reel faconnage" />}
                 {quote.hasConditionnement && <FillField label="Temps reel conditionnement" />}
                 {quote.hasPackaging && <FillField label="Temps reel emballage" />}
-                <FillField label="Observations" />
               </View>
             </View>
           )}
+
+          {/* Remarques atelier — problèmes rencontrés et propositions */}
+          <View style={s.fillBox} wrap={false}>
+            <Text style={s.fillTitle}>Remarques atelier</Text>
+            <Text style={s.remarksHint}>
+              Problemes rencontres (couleur pas bonne, decoupe compliquee...), propositions d&apos;amelioration
+            </Text>
+            {[0, 1, 2, 3].map(i => <View key={i} style={s.remarksLine} />)}
+          </View>
         </View>
 
         {/* Bande bas page 2 : temps total */}

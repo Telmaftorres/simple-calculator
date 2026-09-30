@@ -115,21 +115,21 @@ export function RecapSidebar() {
           <div className="flex rounded-lg bg-slate-100 p-1 text-sm font-medium">
             <button
               type="button"
-              onClick={() => setRecapMode('marge')}
-              className={`flex-1 rounded-md py-1.5 transition-colors ${
-                !brut ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
-              }`}
-            >
-              Margé
-            </button>
-            <button
-              type="button"
               onClick={() => setRecapMode('brut')}
               className={`flex-1 rounded-md py-1.5 transition-colors ${
                 brut ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
               }`}
             >
               Brut
+            </button>
+            <button
+              type="button"
+              onClick={() => setRecapMode('marge')}
+              className={`flex-1 rounded-md py-1.5 transition-colors ${
+                !brut ? 'bg-white text-slate-900 shadow-sm' : 'text-slate-500 hover:text-slate-700'
+              }`}
+            >
+              Margé
             </button>
           </div>
 
