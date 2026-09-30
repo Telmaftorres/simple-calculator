@@ -50,6 +50,7 @@ export type QuoteCostRowsParams = {
   fournituresEmbCost?: number
   hasPalette?: boolean
   paletteCost?: number
+  paletteQuantity?: number
   modePrototype?: boolean
   prototypeFeeCost?: number
   commissionCost?: number
@@ -88,10 +89,10 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
       { label: 'Frais de dossier', detail: 'forfait', value: p.dossierFeeCost },
     ] : []),
     ...(p.fournituresEmbCost && p.fournituresEmbCost > 0 ? [
-      { label: 'Fournitures emballage', detail: 'forfait', value: p.fournituresEmbCost },
+      { label: 'Consommables emballage', detail: 'forfait', value: p.fournituresEmbCost },
     ] : []),
     ...(p.hasPalette && p.paletteCost && p.paletteCost > 0 ? [
-      { label: 'Option palette', detail: 'forfait', value: p.paletteCost },
+      { label: 'Option palette', detail: p.paletteQuantity && p.paletteQuantity > 1 ? `× ${p.paletteQuantity}` : 'forfait', value: p.paletteCost },
     ] : []),
     ...(p.selectedPlate ? [{
       label: 'Matière',
@@ -103,9 +104,9 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
       value: p.materialCostMarged ?? p.impositionResult?.materialCost ?? 0,
     }] : []),
     ...(p.hasImpression ? [
-      { label: 'Impression (Encre)', detail: isClient ? '—' : `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
+      { label: 'Impression (encre)', detail: isClient ? '—' : `${p.inkVolumeL.toFixed(3)} L`, value: p.printingCostData.inkCost },
       {
-        label: 'Impression (Machine)',
+        label: 'Impression (machine)',
         detail: isClient ? '—' : `${Math.round(p.printingCostData.machineTimeMin)} min`,
         value: isClient
           ? p.printingCostData.machineCost + (p.printSetupType !== 'none' ? (p.printingCostData.setupCost ?? 0) : 0)
@@ -144,20 +145,29 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
     ...(p.hasAccessoires && p.accessoriesCost > 0 ? [
       { label: 'Accessoires', detail: `${p.selectedAccessories.length} réf.`, value: p.accessoriesCost },
     ] : []),
-    ...(p.hasPackaging && p.packagingTotalCost > 0 ? [
-      {
+    ...(p.hasPackaging && p.packagingTotalCost > 0 ? (() => {
+      const isExternal = p.packagingMaterialType === 'B' || p.packagingMaterialType === 'EB'
+
+      // Interne, matière produite en interne (C/BC) : détail matière / découpe sur deux lignes,
+      // comme dans le récap du calculateur — inchangé côté client (une seule ligne résumée).
+      if (!isExternal && !isClient) {
+        return [
+          { label: 'Emballage (matière)', detail: '', value: p.packagingMaterialCost },
+          { label: 'Emballage (découpe)', detail: '', value: p.packagingCuttingCost },
+        ]
+      }
+
+      return [{
         label: (() => {
           const parts: string[] = ['Emballage']
           if (p.packagingBoxType) parts.push(`— ${boxTypeLabel(p.packagingBoxType)}`)
           if (p.packagingMaterialType) {
-            const isExternal = p.packagingMaterialType === 'B' || p.packagingMaterialType === 'EB'
             const sizePart = isExternal && p.packagingExternalSize ? ` (${sizeLabel(p.packagingExternalSize)})` : ''
             parts.push(`${p.packagingMaterialType}${sizePart}`)
           }
           return parts.join(' ')
         })(),
         detail: (() => {
-          const isExternal = p.packagingMaterialType === 'B' || p.packagingMaterialType === 'EB'
           if (isExternal) {
             if (isClient) return 'Fournisseur externe'
             const displayPrice = p.effectivePackagingUnitPrice ?? p.packagingExternalUnitPrice
@@ -165,11 +175,11 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
               ? `Fournisseur externe — ${displayPrice.toFixed(4)} €/pce`
               : 'Fournisseur externe'
           }
-          return isClient ? '—' : `Mat. ${p.packagingMaterialCost.toFixed(2)}€ + Déc. ${p.packagingCuttingCost.toFixed(2)}€`
+          return '—'
         })(),
         value: p.packagingTotalCost,
-      },
-    ] : []),
+      }]
+    })() : []),
     ...(p.transportTotal !== undefined && p.transportTotal > 0 ? [
       {
         label: 'Transport',

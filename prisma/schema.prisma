@@ -290,6 +290,8 @@ model Plate {
   height           Int
   cost             Float
   material         String
+  packagingCategory String?
+  crmMaterialId    String?           // id_matiere du CRM si cette plaque est synchronisée depuis le CRM
   quotes                    Quote[]
   packagingQuotes           Quote[]                        @relation("PackagingPlate")
   quoteProducts             QuoteProduct[]
@@ -300,6 +302,7 @@ model Plate {
   productionProductLineElements ProductionProductLineElement[]
 
   @@unique([name, companyId])
+  @@unique([companyId, crmMaterialId])
 }
 
 model Accessory {
@@ -400,6 +403,7 @@ model Quote {
   cumulerTemps                       Boolean           @default(false)
   hasFournituresEmb                  Boolean           @default(false)
   hasPalette                         Boolean           @default(false)
+  paletteQuantity                    Int               @default(1) // nb palettes si hasPalette (rétrocompat : anciens devis = 1)
   modePrototype                      Boolean           @default(false)
   hasMargeCommerciale                Boolean           @default(true)
   showMargeCommerciale               Boolean           @default(false)

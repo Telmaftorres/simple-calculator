@@ -85,8 +85,8 @@ describe('buildCostRows — Matière', () => {
 describe('buildCostRows — Impression', () => {
   it('n\'affiche pas les lignes d\'impression si hasImpression = false', () => {
     const rows = buildCostRows({ ...base, hasImpression: false })
-    expect(labels(rows)).not.toContain('Impression (Encre)')
-    expect(labels(rows)).not.toContain('Impression (Machine)')
+    expect(labels(rows)).not.toContain('Impression (encre)')
+    expect(labels(rows)).not.toContain('Impression (machine)')
   })
 
   it('affiche les lignes d\'impression si hasImpression = true', () => {
@@ -96,8 +96,8 @@ describe('buildCostRows — Impression', () => {
       inkVolumeL: 0.1,
       printingCostData: { cost: 57, timeMin: 8, inkCost: 45, machineCost: 12, machineTimeMin: 8, setupCost: 0, laborCost: 12, inkVolumeL: 0.1, setupTimeMin: 0 },
     })
-    expect(labels(rows)).toContain('Impression (Encre)')
-    expect(labels(rows)).toContain('Impression (Machine)')
+    expect(labels(rows)).toContain('Impression (encre)')
+    expect(labels(rows)).toContain('Impression (machine)')
   })
 
   it('affiche le calage si printSetupType != none et setupCost > 0', () => {
@@ -293,7 +293,7 @@ describe('buildCostRows — Emballage', () => {
     expect(labels(rows)).not.toContain('Emballage')
   })
 
-  it('affiche Emballage avec matière + découpe dans le détail', () => {
+  it('affiche matière et découpe sur deux lignes séparées (interne)', () => {
     const rows = buildCostRows({
       ...base,
       hasPackaging: true,
@@ -301,10 +301,24 @@ describe('buildCostRows — Emballage', () => {
       packagingMaterialCost: 37.5,
       packagingCuttingCost: 10,
     })
-    const row = rows.find(r => r.label === 'Emballage')!
+    const matiereRow = rows.find(r => r.label === 'Emballage (matière)')!
+    const decoupeRow = rows.find(r => r.label === 'Emballage (découpe)')!
+    expect(matiereRow.value).toBe(37.5)
+    expect(decoupeRow.value).toBe(10)
+  })
+
+  it('garde une ligne unique côté client', () => {
+    const rows = buildCostRows({
+      ...base,
+      mode: 'client',
+      hasPackaging: true,
+      packagingTotalCost: 47.5,
+      packagingMaterialCost: 37.5,
+      packagingCuttingCost: 10,
+    })
+    expect(labels(rows)).not.toContain('Emballage (matière)')
+    const row = rows.find(r => r.label.startsWith('Emballage'))!
     expect(row.value).toBe(47.5)
-    expect(row.detail).toContain('37.50€')
-    expect(row.detail).toContain('10.00€')
   })
 })
 
@@ -369,12 +383,12 @@ describe('buildCostRows — ordre et structure globale', () => {
     })
     const mainLabels = rows.filter(r => !r.sub).map(r => r.label)
     expect(mainLabels.indexOf('Frais de dossier')).toBeLessThan(mainLabels.indexOf('Matière'))
-    expect(mainLabels.indexOf('Matière')).toBeLessThan(mainLabels.indexOf('Impression (Encre)'))
+    expect(mainLabels.indexOf('Matière')).toBeLessThan(mainLabels.indexOf('Impression (encre)'))
     expect(mainLabels.indexOf('Découpe')).toBeLessThan(mainLabels.indexOf('Bureau d\'études'))
     expect(mainLabels.indexOf('Bureau d\'études')).toBeLessThan(mainLabels.indexOf('Façonnage'))
     expect(mainLabels.indexOf('Façonnage')).toBeLessThan(mainLabels.indexOf('Conditionnement'))
     expect(mainLabels.indexOf('Conditionnement')).toBeLessThan(mainLabels.indexOf('Accessoires'))
-    expect(mainLabels.indexOf('Accessoires')).toBeLessThan(mainLabels.indexOf('Emballage'))
-    expect(mainLabels.indexOf('Emballage')).toBeLessThan(mainLabels.indexOf('Transport'))
+    expect(mainLabels.indexOf('Accessoires')).toBeLessThan(mainLabels.indexOf('Emballage (matière)'))
+    expect(mainLabels.indexOf('Emballage (découpe)')).toBeLessThan(mainLabels.indexOf('Transport'))
   })
 })

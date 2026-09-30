@@ -48,7 +48,8 @@ export function RecapSidebar() {
     packagingCost,
     accessoriesCost,
     consumablesCost,
-    packagingTotalCost,
+    packagingMaterialCost: packagingEmbMaterialCost,
+    packagingCuttingCost: packagingEmbCuttingCost,
     totalCost,
     beCost,
     batCost,
@@ -64,13 +65,14 @@ export function RecapSidebar() {
     assemblyCostBrut,
     packagingCostBrut,
     accessoriesCostBrut,
-    packagingTotalCostBrut,
+    packagingMaterialCostBrut: packagingEmbMaterialCostBrut,
+    packagingCuttingCostBrut: packagingEmbCuttingCostBrut,
     beCostBrut,
     batCostBrut,
   } = costResult
 
   // ── Toggle Brut / Margé ──
-  const [recapMode, setRecapMode] = useState<'marge' | 'brut'>('marge')
+  const [recapMode, setRecapMode] = useState<'marge' | 'brut'>('brut')
   const [showCalcDetail, setShowCalcDetail] = useState(false)
   const brut = recapMode === 'brut'
 
@@ -300,7 +302,7 @@ export function RecapSidebar() {
               {hasImpression && (
                 <>
                   <CostRow
-                    label="Impression (Encre)"
+                    label="Impression (encre)"
                     value={brut ? (printingCostData.inkCostRaw ?? 0) : printingCostData.inkCost}
                     details={printingCostData.inkCost > 0 ? `${inkVolumeL.toFixed(3)} L` : undefined}
                   />
@@ -377,7 +379,10 @@ export function RecapSidebar() {
           )}
 
           {hasPackaging && (
-            <CostRow label="Emballage" value={brut ? packagingTotalCostBrut : packagingTotalCost} details={packagingTotalCost > 0 ? 'Matière + découpe' : undefined} />
+            <>
+              <CostRow label="Emballage (matière)" value={brut ? packagingEmbMaterialCostBrut : packagingEmbMaterialCost} />
+              <CostRow label="Emballage (découpe)" value={brut ? packagingEmbCuttingCostBrut : packagingEmbCuttingCost} />
+            </>
           )}
           {prototypeFeeCost > 0 && (
             <CostRow label="Forfait prototype (BE + dossier)" value={prototypeFeeCost} details="forfait" />
@@ -386,10 +391,14 @@ export function RecapSidebar() {
             <CostRow label="Frais de dossier" value={dossierFeeCost} details="forfait" />
           )}
           {fournituresEmbCost > 0 && (
-            <CostRow label="Fournitures emballage" value={fournituresEmbCost} details="forfait" />
+            <CostRow label="Consommables emballage" value={fournituresEmbCost} details="forfait" />
           )}
           {formState.hasPalette && paletteCost > 0 && (
-            <CostRow label="Option palette" value={paletteCost} details="forfait" />
+            <CostRow
+              label="Option palette"
+              value={paletteCost}
+              details={formState.paletteQuantity > 1 ? `× ${formState.paletteQuantity}` : 'forfait'}
+            />
           )}
 
           {transportCost > 0 && (

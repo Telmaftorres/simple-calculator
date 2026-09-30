@@ -23,6 +23,8 @@ import {
 } from '@/components/ui/dialog'
 import { createPlate, updatePlate, deletePlate } from '@/app/actions/catalog'
 
+type PackagingCategory = 'B' | 'EB' | 'C' | 'BC'
+
 type Plate = {
   id: number
   name: string
@@ -30,6 +32,7 @@ type Plate = {
   height: number
   cost: number
   material: string
+  packagingCategory: string | null
 }
 
 export default function PlatesClient({ initialPlates }: { initialPlates: Plate[] }) {
@@ -46,10 +49,11 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
     height: '',
     cost: '',
     material: '',
+    packagingCategory: '' as PackagingCategory | '',
   })
 
   const resetForm = () => {
-    setFormData({ name: '', width: '', height: '', cost: '', material: '' })
+    setFormData({ name: '', width: '', height: '', cost: '', material: '', packagingCategory: '' })
     setEditingPlate(null)
   }
 
@@ -62,6 +66,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
         height: plate.height.toString(),
         cost: plate.cost.toString(),
         material: plate.material,
+        packagingCategory: (plate.packagingCategory ?? '') as PackagingCategory | '',
       })
     } else {
       resetForm()
@@ -79,6 +84,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
       height: parseInt(formData.height),
       cost: parseFloat(formData.cost),
       material: formData.material,
+      packagingCategory: formData.packagingCategory || null,
     }
 
     try {
@@ -127,6 +133,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
             <TableRow>
               <TableHead>Nom</TableHead>
               <TableHead>Matière</TableHead>
+              <TableHead>Catégorie emballage</TableHead>
               <TableHead>Dimensions (mm)</TableHead>
               <TableHead className="text-right">Coût (€)</TableHead>
               <TableHead className="text-right">Actions</TableHead>
@@ -137,6 +144,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
               <TableRow key={plate.id}>
                 <TableCell className="font-medium">{plate.name}</TableCell>
                 <TableCell>{plate.material}</TableCell>
+                <TableCell>{plate.packagingCategory ?? '—'}</TableCell>
                 <TableCell>
                   {plate.width} x {plate.height}
                 </TableCell>
@@ -172,7 +180,7 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
             ))}
             {initialPlates.length === 0 && (
               <TableRow>
-                <TableCell colSpan={5} className="text-center py-8 text-slate-500">
+                <TableCell colSpan={6} className="text-center py-8 text-slate-500">
                   Aucune plaque enregistrée.
                 </TableCell>
               </TableRow>
@@ -206,6 +214,21 @@ export default function PlatesClient({ initialPlates }: { initialPlates: Plate[]
                 placeholder="ex: Carton Microbis"
                 required
               />
+            </div>
+            <div className="grid gap-2">
+              <Label htmlFor="packagingCategory">Catégorie emballage (optionnel)</Label>
+              <select
+                id="packagingCategory"
+                value={formData.packagingCategory}
+                onChange={(e) => setFormData({ ...formData, packagingCategory: e.target.value as PackagingCategory | '' })}
+                className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-sm"
+              >
+                <option value="">Aucune</option>
+                <option value="B">B</option>
+                <option value="EB">EB</option>
+                <option value="C">C</option>
+                <option value="BC">BC</option>
+              </select>
             </div>
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">

@@ -119,7 +119,7 @@ export async function seedSettings(prisma: PrismaClient, companyId: number): Pro
     { key: 'MATERIAL_MARGIN_Q4_P2', value: String(MATERIAL_MARGIN_Q4_P2), label: 'Coeff matière · >201 ex · 8-20 €/m²', unit: 'x' },
     { key: 'MATERIAL_MARGIN_Q4_P3', value: String(MATERIAL_MARGIN_Q4_P3), label: 'Coeff matière · >201 ex · >20 €/m²', unit: 'x' },
     { key: 'DOSSIER_FEE', value: String(DOSSIER_FEE), label: 'Frais de dossier', unit: '€' },
-    { key: 'FOURNITURES_EMB_FEE', value: String(FOURNITURES_EMB_FEE), label: 'Frais fournitures emballage', unit: '€' },
+    { key: 'FOURNITURES_EMB_FEE', value: String(FOURNITURES_EMB_FEE), label: 'Frais consommables emballage', unit: '€' },
     { key: 'PALETTE_FEE', value: String(PALETTE_FEE), label: 'Option palette', unit: '€' },
     { key: 'PROTOTYPE_FORFAIT', value: String(PROTOTYPE_FORFAIT), label: 'Mode Prototype · forfait BE+dossier', unit: '€' },
     { key: 'PROTOTYPE_FOURNITURES_FEE', value: String(PROTOTYPE_FOURNITURES_FEE), label: 'Mode Prototype · fournitures', unit: '€' },

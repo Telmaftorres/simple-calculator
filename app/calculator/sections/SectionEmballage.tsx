@@ -1,5 +1,6 @@
 'use client'
 
+import { useEffect } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { GaugeSlider } from '@/components/calculator/GaugeSlider'
@@ -68,17 +69,15 @@ export function SectionEmballage() {
 
   const isExternal = packagingMaterialType === 'B' || packagingMaterialType === 'EB'
 
-  // Plaques C/BC pour le sélecteur
-  const packagingPlates = plates.filter((p) => {
-    const m = p.material.toLowerCase()
-    if (packagingMaterialType === 'C') {
-      return m === 'c' || m.startsWith('c ') || m.startsWith('c(') || m.includes('cannelure')
-    }
-    if (packagingMaterialType === 'BC') {
-      return m.startsWith('bc') || m.includes('bc')
-    }
-    return m.startsWith('bc') || m === 'c' || m.startsWith('c ') || m.startsWith('c(') || m.includes('carton')
-  })
+  // Plaques C/BC pour le sélecteur — filtrées sur la catégorie emballage explicite (page Plaques)
+  const packagingPlates = plates.filter((p) => p.packagingCategory === packagingMaterialType)
+
+  // Présélection auto de la première matière C/BC disponible (l'utilisateur peut toujours changer)
+  useEffect(() => {
+    if (isExternal || packagingPlates.length === 0) return
+    const stillValid = packagingPlates.some((p) => p.id.toString() === packagingPlateId)
+    if (!stillValid) setPackagingPlateId(packagingPlates[0].id.toString())
+  }, [isExternal, packagingPlates, packagingPlateId, setPackagingPlateId])
 
   // Auto-remplir depuis le produit courant / plus grand
   const handleAutoFill = () => {
@@ -109,7 +108,7 @@ export function SectionEmballage() {
               : 'border-slate-300 text-slate-500 hover:border-slate-400'
           }`}
         >
-          Fournitures emb. 15 €
+          Consommables emb. 15 €
         </button>
       }
     >

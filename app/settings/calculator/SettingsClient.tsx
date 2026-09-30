@@ -304,43 +304,6 @@ const FORMULAS: Record<string, {
       return `(${timeMin} min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
     },
   },
-  MATERIAL_MARGIN_TIER1: {
-    usedIn: ['Matière — plaque < 5 €'],
-    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
-    getExample: (v) => {
-      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER1) || 0
-      const cost = 10
-      return `Matière 10 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
-    },
-  },
-  MATERIAL_MARGIN_TIER2: {
-    usedIn: ['Matière — plaque 5 à 10 €'],
-    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
-    getExample: (v) => {
-      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER2) || 0
-      const cost = 20
-      return `Matière 20 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
-    },
-  },
-  MATERIAL_MARGIN_TIER3: {
-    usedIn: ['Matière — plaque 10 à 20 €'],
-    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
-    getExample: (v) => {
-      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER3) || 0
-      const cost = 50
-      return `Matière 50 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
-    },
-  },
-  MATERIAL_MARGIN_TIER4: {
-    usedIn: ['Matière — plaque > 20 €'],
-    formula: 'coût_matière_margé = coût_matière_brut × coefficient',
-    getExample: (v) => {
-      const coeff = parseFloat(v.MATERIAL_MARGIN_TIER4) || 0
-      const cost = 100
-      return `Matière 100 € brut × ${coeff} = ${(cost * coeff).toFixed(2)} € facturé`
-    },
-  },
-
   DOSSIER_FEE: {
     usedIn: ['Frais de dossier'],
     formula: 'si activé → frais_dossier = DOSSIER_FEE',
@@ -350,11 +313,11 @@ const FORMULAS: Record<string, {
     },
   },
   FOURNITURES_EMB_FEE: {
-    usedIn: ['Frais fournitures emballage'],
-    formula: 'si activé → frais_fournitures = FOURNITURES_EMB_FEE',
+    usedIn: ['Frais consommables emballage'],
+    formula: 'si activé → frais_consommables = FOURNITURES_EMB_FEE',
     getExample: (v) => {
       const fee = parseFloat(v.FOURNITURES_EMB_FEE) || 0
-      return `Fournitures emballage activé = ${fee} € forfait fixe`
+      return `Consommables emballage activé = ${fee} € forfait fixe`
     },
   },
   PALETTE_FEE: {
@@ -525,10 +488,6 @@ const CATEGORIES: {
     color: 'teal',
     emoji: '🧱',
     keys: [
-      'MATERIAL_MARGIN_TIER1',
-      'MATERIAL_MARGIN_TIER2',
-      'MATERIAL_MARGIN_TIER3',
-      'MATERIAL_MARGIN_TIER4',
       'MATERIAL_MARGIN_Q1_P1', 'MATERIAL_MARGIN_Q1_P2', 'MATERIAL_MARGIN_Q1_P3',
       'MATERIAL_MARGIN_Q2_P1', 'MATERIAL_MARGIN_Q2_P2', 'MATERIAL_MARGIN_Q2_P3',
       'MATERIAL_MARGIN_Q3_P1', 'MATERIAL_MARGIN_Q3_P2', 'MATERIAL_MARGIN_Q3_P3',

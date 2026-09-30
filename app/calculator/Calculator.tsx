@@ -232,7 +232,7 @@ export default function Calculator({
                 </Link>
               )}
               {isAdmin && mode === 'quote' && (
-                <Link href="/settings">
+                <Link href="/settings" target="_blank">
                   <Button variant="ghost" size="icon" className="text-slate-300 hover:text-white hover:bg-slate-800">
                     <Settings className="h-5 w-5" />
                   </Button>

@@ -117,6 +117,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     hasDossierFee: initialQuote.hasDossierFee ?? false,
     hasFournituresEmb: initialQuote.hasFournituresEmb ?? false,
     hasPalette: initialQuote.hasPalette ?? false,
+    paletteQuantity: initialQuote.paletteQuantity ?? 1,
     modePrototype: initialQuote.modePrototype ?? false,
     hasMargeCommerciale: initialQuote.hasMargeCommerciale ?? true,
     cumulerTemps: initialQuote.cumulerTemps ?? false,

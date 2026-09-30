@@ -18,13 +18,18 @@ import {
   CUTTING_SETUP_STANDARD_COST,
   ASSEMBLY_NOTICE_COST_PER_PIECE,
   DOSSIER_FEE,
-  MATERIAL_MARGIN_TIER1,
-  MATERIAL_MARGIN_TIER2,
-  MATERIAL_MARGIN_TIER3,
-  MATERIAL_MARGIN_TIER4,
+  MATERIAL_MARGIN_Q1_P1,
+  MATERIAL_MARGIN_Q3_P1,
+  MATERIAL_MARGIN_Q3_P2,
+  MATERIAL_MARGIN_Q3_P3,
+  MARGE_COMMERCIALE_PERCENT,
+  MARGE_SOPANO_PERCENT,
   PACKAGING_SETUP_COST,
   TRANSPORT_MARGIN,
 } from '@/lib/config/pricing'
+
+// Commissions (marge commerciale + Sopano) appliquées par défaut sur totalCost — CDC brique 3
+const commissionDivisor = 1 - (MARGE_COMMERCIALE_PERCENT + MARGE_SOPANO_PERCENT) / 100
 
 const mockPlate = {
   id: 1,
@@ -99,7 +104,7 @@ describe('calculateCosts', () => {
         result.packagingCost +
         result.accessoriesCost +
         result.consumablesCost
-      expect(result.totalCost).toBeCloseTo(expected, 2)
+      expect(result.totalCost).toBeCloseTo(expected / commissionDivisor, 2)
     })
   })
 
@@ -341,33 +346,34 @@ describe('calculateCosts', () => {
     it('inclut les frais de dossier dans le total', () => {
       const sans = calculateCosts({ ...defaultParams, hasDossierFee: false })
       const avec = calculateCosts({ ...defaultParams, hasDossierFee: true })
-      expect(avec.totalCost).toBeCloseTo(sans.totalCost + DOSSIER_FEE, 2)
+      expect(avec.totalCost).toBeCloseTo(sans.totalCost + DOSSIER_FEE / commissionDivisor, 2)
     })
   })
 
   describe('materialMarginCoeff', () => {
-    it('applique MATERIAL_MARGIN_TIER1 si coût plaque < 5€', () => {
+    // mockPlate fait 1000×1000mm = 1 m², donc prix/m² = cost. quantity par défaut = 100 → bande 51-200 ex (Q3).
+    it('applique MATERIAL_MARGIN_Q3_P1 si prix/m² ≤ 8€', () => {
       const plate = { ...mockPlate, cost: 3 }
       const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
-      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER1)
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_Q3_P1)
     })
 
-    it('applique MATERIAL_MARGIN_TIER2 si coût plaque entre 5 et 10€', () => {
-      const plate = { ...mockPlate, cost: 7 }
-      const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
-      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER2)
-    })
-
-    it('applique MATERIAL_MARGIN_TIER3 si coût plaque entre 10 et 20€', () => {
+    it('applique MATERIAL_MARGIN_Q3_P2 si prix/m² entre 8 et 20€', () => {
       const plate = { ...mockPlate, cost: 15 }
       const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
-      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER3)
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_Q3_P2)
     })
 
-    it('applique MATERIAL_MARGIN_TIER4 si coût plaque > 20€', () => {
+    it('applique MATERIAL_MARGIN_Q3_P3 si prix/m² > 20€', () => {
       const plate = { ...mockPlate, cost: 25 }
       const result = calculateCosts({ ...defaultParams, selectedPlate: plate })
-      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_TIER4)
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_Q3_P3)
+    })
+
+    it('applique MATERIAL_MARGIN_Q1_P1 si quantité ≤ 5 (même bande de prix)', () => {
+      const plate = { ...mockPlate, cost: 3 }
+      const result = calculateCosts({ ...defaultParams, selectedPlate: plate, quantity: 3 })
+      expect(result.materialMarginCoeff).toBe(MATERIAL_MARGIN_Q1_P1)
     })
 
     it('materialCostMarged = materialCostRaw × materialMarginCoeff', () => {
@@ -399,9 +405,9 @@ describe('calculateCosts', () => {
     })
 
     it('calcule le coût matière emballage', () => {
-      // Plaque 800×600, carton 200×150, spacing 10mm
-      // L'imposition avec espacement retourne 13 items/plaque (orientation mixte)
-      // 100 cartons → ceil(100/13) = 8 plaques × 5€ × MATERIAL_MARGIN_TIER2(coût 5€ → tier2=3) = 120€
+      // Plaque 800×600 à 5€ → 10,42 €/m² (bande 8-20 €/m²), qté 100 (bande 51-200 ex) → coeff MATERIAL_MARGIN_Q3_P2
+      // Carton 200×150, spacing 10mm : l'imposition avec espacement retourne 13 items/plaque (orientation mixte)
+      // 100 cartons → ceil(100/13) = 8 plaques × 5€ × coeff
       const result = calculateCosts({
         ...defaultParams,
         hasPackaging: true,
@@ -414,7 +420,7 @@ describe('calculateCosts', () => {
       const platesNeeded = Math.ceil(100 / result.packagingItemsPerPlate)
       expect(result.packagingPlatesNeeded).toBe(platesNeeded)
       expect(result.packagingMaterialCost).toBeCloseTo(
-        platesNeeded * packagingPlate.cost * MATERIAL_MARGIN_TIER2, 2
+        platesNeeded * packagingPlate.cost * MATERIAL_MARGIN_Q3_P2, 2
       )
     })
 
@@ -658,7 +664,7 @@ describe('calculateCosts', () => {
     it('transport est inclus dans totalCost', () => {
       const sans = calculateCosts({ ...defaultParams, transportTotal: 0 })
       const avec = calculateCosts({ ...defaultParams, transportTotal: 100 })
-      expect(avec.totalCost).toBeCloseTo(sans.totalCost + avec.transportCostMarged, 2)
+      expect(avec.totalCost).toBeCloseTo(sans.totalCost + avec.transportCostMarged / commissionDivisor, 2)
     })
 
     it('marge transport configurable via settings', () => {

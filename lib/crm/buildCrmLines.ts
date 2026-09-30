@@ -28,6 +28,7 @@ export type CrmLinesInput = {
   hasFournituresEmb?: boolean
   paletteCost?: number
   hasPalette?: boolean
+  paletteQuantity?: number
   prototypeFeeCost?: number
   modePrototype?: boolean
   commissionCost?: number
@@ -44,11 +45,12 @@ export function buildCrmLines(p: CrmLinesInput): CrmPushLine[] {
   }
 
   if ((p.fournituresEmbCost ?? 0) > 0) {
-    lines.push({ description: 'Fournitures emballage', prixAchat: p.fournituresEmbCost!, marge: 1, prixVente: p.fournituresEmbCost! })
+    lines.push({ description: 'Consommables emballage', prixAchat: p.fournituresEmbCost!, marge: 1, prixVente: p.fournituresEmbCost! })
   }
 
   if (p.hasPalette && (p.paletteCost ?? 0) > 0) {
-    lines.push({ description: 'Option palette', prixAchat: p.paletteCost!, marge: 1, prixVente: p.paletteCost! })
+    const description = p.paletteQuantity && p.paletteQuantity > 1 ? `Option palette ×${p.paletteQuantity}` : 'Option palette'
+    lines.push({ description, prixAchat: p.paletteCost!, marge: 1, prixVente: p.paletteCost! })
   }
 
   if (p.modePrototype && (p.prototypeFeeCost ?? 0) > 0) {

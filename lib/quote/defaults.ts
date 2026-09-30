@@ -36,6 +36,7 @@ export const QUOTE_DEFAULTS = {
   hasDossierFee: true as boolean,
   hasFournituresEmb: false as boolean,
   hasPalette: false as boolean,
+  paletteQuantity: 1 as number,
   modePrototype: false as boolean,
   hasMargeCommerciale: true as boolean,
   cumulerTemps: false as boolean,

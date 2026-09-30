@@ -26,10 +26,6 @@ import {
   PRINT_SETUP_COMPLEX_COST,
   CUTTING_SETUP_STANDARD_COST,
   CUTTING_SETUP_COMPLEX_COST,
-  MATERIAL_MARGIN_TIER1,
-  MATERIAL_MARGIN_TIER2,
-  MATERIAL_MARGIN_TIER3,
-  MATERIAL_MARGIN_TIER4,
   MATERIAL_MARGIN_Q1_P1, MATERIAL_MARGIN_Q1_P2, MATERIAL_MARGIN_Q1_P3,
   MATERIAL_MARGIN_Q2_P1, MATERIAL_MARGIN_Q2_P2, MATERIAL_MARGIN_Q2_P3,
   MATERIAL_MARGIN_Q3_P1, MATERIAL_MARGIN_Q3_P2, MATERIAL_MARGIN_Q3_P3,
@@ -72,6 +68,21 @@ import type {
   PrintMode,
 } from '@/types/calculator'
 
+// Coeff matière = matrice (prix au m² × quantité) — partagé entre matière produit et matière d'emballage
+function materialMarginFromMatrix(
+  cost: number,
+  widthMm: number,
+  heightMm: number,
+  qty: number,
+  matrix: [[number, number, number], [number, number, number], [number, number, number], [number, number, number]]
+): number {
+  const areaM2 = (widthMm * heightMm) / 1_000_000
+  const pricePerM2 = areaM2 > 0 ? cost / areaM2 : cost
+  const col = pricePerM2 <= 8 ? 0 : pricePerM2 <= 20 ? 1 : 2                  // ≤8 · 8-20 · >20 €/m²
+  const row = qty <= 5 ? 0 : qty <= 50 ? 1 : qty <= 200 ? 2 : 3               // 1-5 · 6-50 · 51-200 · >201
+  return matrix[row][col]
+}
+
 export function calculateCosts(params: {
   quantity: number
   degressiveQuantity?: number
@@ -88,6 +99,7 @@ export function calculateCosts(params: {
   hasDossierFee?: boolean
   hasFournituresEmb?: boolean
   hasPalette?: boolean
+  paletteQuantity?: number
   modePrototype?: boolean
   hasMargeCommerciale?: boolean
   printSetupType: 'none' | 'standard' | 'complexe'
@@ -161,6 +173,7 @@ export function calculateCosts(params: {
     hasDossierFee = false,
     hasFournituresEmb = false,
     hasPalette = false,
+    paletteQuantity = 1,
     modePrototype = false,
     hasMargeCommerciale = true,
     degressiveQuantity,
@@ -209,11 +222,7 @@ export function calculateCosts(params: {
   const inkMarginStandard = settings?.INK_MARGIN_STANDARD ?? INK_MARGIN_STANDARD
   const inkMarginVarnish = settings?.INK_MARGIN_VARNISH ?? INK_MARGIN_VARNISH
   const inkMarginFlatColor = settings?.INK_MARGIN_FLAT_COLOR ?? INK_MARGIN_FLAT_COLOR
-  const materialMarginTier1 = settings?.MATERIAL_MARGIN_TIER1 ?? MATERIAL_MARGIN_TIER1
-  const materialMarginTier2 = settings?.MATERIAL_MARGIN_TIER2 ?? MATERIAL_MARGIN_TIER2
-  const materialMarginTier3 = settings?.MATERIAL_MARGIN_TIER3 ?? MATERIAL_MARGIN_TIER3
-  const materialMarginTier4 = settings?.MATERIAL_MARGIN_TIER4 ?? MATERIAL_MARGIN_TIER4
-  // Matrice matière (prix/m² × quantité) — 12 coeffs réglables
+  // Matrice matière (prix/m² × quantité) — 12 coeffs réglables, partagée matière produit + matière emballage
   const mQ1P1 = settings?.MATERIAL_MARGIN_Q1_P1 ?? MATERIAL_MARGIN_Q1_P1
   const mQ1P2 = settings?.MATERIAL_MARGIN_Q1_P2 ?? MATERIAL_MARGIN_Q1_P2
   const mQ1P3 = settings?.MATERIAL_MARGIN_Q1_P3 ?? MATERIAL_MARGIN_Q1_P3
@@ -439,10 +448,12 @@ export function calculateCosts(params: {
 
   const packagingMaterialMarginCoeff = (() => {
     if (!packagingPlate) return 1
-    if (packagingPlate.cost < 5) return materialMarginTier1
-    if (packagingPlate.cost < 10) return materialMarginTier2
-    if (packagingPlate.cost < 20) return materialMarginTier3
-    return materialMarginTier4
+    return materialMarginFromMatrix(packagingPlate.cost, packagingPlate.width, packagingPlate.height, packagingQuantity, [
+      [mQ1P1, mQ1P2, mQ1P3],
+      [mQ2P1, mQ2P2, mQ2P3],
+      [mQ3P1, mQ3P2, mQ3P3],
+      [mQ4P1, mQ4P2, mQ4P3],
+    ])
   })()
 
   // Prix unitaire B/EB (depuis settings ou config)
@@ -528,7 +539,7 @@ const dossierFeeCost = (hasDossierFee && !modePrototype) ? dossierFee : 0
 const effectiveFournituresFee = modePrototype ? prototypeFournituresFee : fournituresEmbFee
 // En Mode Prototype, le forfait fournitures (10 €) s'applique automatiquement (toggle masqué, conforme CDC)
 const fournituresEmbCost = (hasFournituresEmb || modePrototype) ? effectiveFournituresFee : 0
-const paletteCost = hasPalette ? paletteFee : 0
+const paletteCost = hasPalette ? paletteFee * paletteQuantity : 0
 // Forfait prototype (écrase le cumul BE + frais de dossier)
 const prototypeFeeCost = modePrototype ? prototypeForfait : 0
 

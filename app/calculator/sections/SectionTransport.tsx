@@ -7,7 +7,7 @@ import { Button } from '@/components/ui/button'
 import { SectionDisplay } from '../shared'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { calculateTransport, suggestTransportMode, type TransportMode } from '@/lib/transport/geodis-rates'
-import { GEODIS_FUEL_SURCHARGE_PERCENT, TRANSPORT_MARGIN } from '@/lib/config/pricing'
+import { GEODIS_FUEL_SURCHARGE_PERCENT, TRANSPORT_MARGIN, PALETTE_FEE } from '@/lib/config/pricing'
 import { Plus, Trash2, FileSpreadsheet, AlertTriangle } from 'lucide-react'
 import type { TransportDeliveryForm } from '@/types/calculator'
 import { ImportTransportDialog } from './ImportTransportDialog'
@@ -230,7 +230,7 @@ function DeliveryRow({
 }
 
 export function SectionTransport() {
-  const { formState, addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries, settings, hasPalette, setHasPalette } =
+  const { formState, addTransportDelivery, removeTransportDelivery, updateTransportDelivery, bulkAddTransportDeliveries, settings, hasPalette, setHasPalette, paletteQuantity, setPaletteQuantity } =
     useCalculatorContext()
 
   const [showImport, setShowImport] = useState(false)
@@ -239,6 +239,7 @@ export function SectionTransport() {
   const { transportDeliveries } = formState
   const fuelSurchargePct = settings?.GEODIS_FUEL_SURCHARGE_PERCENT ?? GEODIS_FUEL_SURCHARGE_PERCENT
   const transportMargin = settings?.TRANSPORT_MARGIN ?? TRANSPORT_MARGIN
+  const paletteFee = settings?.PALETTE_FEE ?? PALETTE_FEE
 
   const grandTotal = useMemo(() => {
     return transportDeliveries.reduce((sum, d) => {
@@ -262,16 +263,35 @@ export function SectionTransport() {
       title="Transport"
       color="sky"
       headerButtons={
-        <button
-          onClick={() => setHasPalette(!hasPalette)}
-          className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
-            hasPalette
-              ? 'bg-slate-700 text-white border-slate-700'
-              : 'border-slate-300 text-slate-500 hover:border-slate-400'
-          }`}
-        >
-          Palette +5 €
-        </button>
+        <div className="flex items-center gap-1.5">
+          <button
+            onClick={() => setHasPalette(!hasPalette)}
+            className={`px-3 py-1.5 text-xs font-semibold rounded-lg border transition-all ${
+              hasPalette
+                ? 'bg-slate-700 text-white border-slate-700'
+                : 'border-slate-300 text-slate-500 hover:border-slate-400'
+            }`}
+          >
+            {hasPalette ? `Palette ${paletteFee}€ × ${paletteQuantity}` : `Palette +${paletteFee}€`}
+          </button>
+          {hasPalette && (
+            <div className="flex items-center gap-1 bg-slate-100 rounded-lg px-1">
+              <button
+                onClick={() => setPaletteQuantity(Math.max(1, paletteQuantity - 1))}
+                className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 font-bold"
+              >
+                −
+              </button>
+              <span className="text-xs font-semibold w-4 text-center">{paletteQuantity}</span>
+              <button
+                onClick={() => setPaletteQuantity(paletteQuantity + 1)}
+                className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 font-bold"
+              >
+                +
+              </button>
+            </div>
+          )}
+        </div>
       }
     >
       {showImport && (

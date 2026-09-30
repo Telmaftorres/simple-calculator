@@ -11,6 +11,7 @@ const plateSchema = z.object({
   height: z.number().int().positive('La hauteur doit être positive'),
   cost: z.number().positive('Le coût doit être positif'),
   material: z.string().min(1, 'La matière est requise'),
+  packagingCategory: z.enum(['B', 'EB', 'C', 'BC']).nullable().optional(),
 })
 
 const productTypeSchema = z.object({

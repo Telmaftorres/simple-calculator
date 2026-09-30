@@ -5,6 +5,7 @@ import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { INK_SHORTCUTS, FINISHING_SHORTCUTS } from '@/lib/config/ui'
+import { INK_COST_VARNISH_PER_LITER } from '@/lib/config/pricing'
 
 type SetupType = 'none' | 'standard' | 'complexe'
 
@@ -18,20 +19,19 @@ export function SectionImpression() {
     hasFlatColor, setHasFlatColor,
     inkMlPerPlate, setInkMlPerPlate,
     inkMlVerso, setInkMlVerso,
-    varnishSurfacePercent, setVarnishSurfacePercent,
     varnishMlPerPlate, setVarnishMlPerPlate,
     flatColorSurfacePercent, setFlatColorSurfacePercent,
     printSetupType, setPrintSetupType,
     machineTimeMinOverride, setMachineTimeMinOverride,
     costResult,
+    settings,
   } = useCalculatorContext()
 
   const [showOverride, setShowOverride] = useState(false)
 
   const { printingCostData } = costResult
-  const varnishRatio = hasVarnish ? varnishSurfacePercent : 0
   const flatColorRatio = hasFlatColor ? flatColorSurfacePercent : 0
-  const standardPercent = 100
+  const varnishCostPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
 
   return (
     <SectionDisplay
@@ -296,13 +296,19 @@ export function SectionImpression() {
           {(hasVarnish || hasFlatColor) && (
             <div className="mt-2 p-2 bg-slate-50 rounded-lg border border-slate-200 text-xs space-y-1">
               <div className="flex justify-between text-slate-600">
-                <span>Encre standard</span>
-                <span className="font-semibold">{standardPercent}%</span>
+                <span>Encre standard{rectoVersoType === 'different' ? ' (recto)' : ''}</span>
+                <span className="font-semibold">{inkMlPerPlate} ml</span>
               </div>
+              {rectoVersoType === 'different' && (
+                <div className="flex justify-between text-slate-600">
+                  <span>Encre standard (verso)</span>
+                  <span className="font-semibold">{inkMlVerso} ml</span>
+                </div>
+              )}
               {hasVarnish && (
                 <div className="flex justify-between text-purple-700">
-                  <span>Vernis (120 €/L)</span>
-                  <span className="font-semibold">{varnishSurfacePercent}%</span>
+                  <span>Vernis ({varnishCostPerLiter} €/L)</span>
+                  <span className="font-semibold">{varnishMlPerPlate} ml</span>
                 </div>
               )}
               {hasFlatColor && (
