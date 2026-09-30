@@ -1,3 +1,4 @@
+import { PACKAGING_SUPPLIER_PRICING_ENABLED } from '@/lib/config/pricing'
 import type { ImpositionResult, PrintingCostData, SelectedAccessory, SelectedConsumable, Plate } from '@/types/calculator'
 
 export type CostRow = {
@@ -162,7 +163,7 @@ export function buildCostRows(p: QuoteCostRowsParams): CostRow[] {
           const parts: string[] = ['Emballage']
           if (p.packagingBoxType) parts.push(`— ${boxTypeLabel(p.packagingBoxType)}`)
           if (p.packagingMaterialType) {
-            const sizePart = isExternal && p.packagingExternalSize ? ` (${sizeLabel(p.packagingExternalSize)})` : ''
+            const sizePart = PACKAGING_SUPPLIER_PRICING_ENABLED && isExternal && p.packagingExternalSize ? ` (${sizeLabel(p.packagingExternalSize)})` : ''
             parts.push(`${p.packagingMaterialType}${sizePart}`)
           }
           return parts.join(' ')

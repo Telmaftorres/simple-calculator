@@ -177,7 +177,8 @@ export function SectionEmballage() {
         {isExternal && (
           <div className="space-y-4">
 
-            {/* Format */}
+            {/* Format (petit / moyen / grand) : masqué tant que les prix fournisseurs sont désactivés */}
+            {PACKAGING_SUPPLIER_PRICING_ENABLED && (
             <div className="space-y-2">
               <Label>Format</Label>
               <div className="flex gap-2">
@@ -196,6 +197,7 @@ export function SectionEmballage() {
                 ))}
               </div>
             </div>
+            )}
 
             {/* Quantité */}
             <div className="space-y-2">
