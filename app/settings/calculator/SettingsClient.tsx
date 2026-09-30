@@ -9,6 +9,7 @@ import { toast } from 'sonner'
 import { Save, ChevronDown, ChevronUp, FlaskConical } from 'lucide-react'
 import { PackagingPricingClient } from './PackagingPricingClient'
 import { SupplierQuotesClient } from './SupplierQuotesClient'
+import { PACKAGING_SUPPLIER_PRICING_ENABLED } from '@/lib/config/pricing'
 import type { PackagingRuleForAdmin, QuantityCoefficientForAdmin, PackagingSupplierQuoteForAdmin } from '@/app/actions/reference-data'
 
 interface Setting {
@@ -466,13 +467,16 @@ const CATEGORIES: {
   },
   {
     label: 'Emballage',
-    description: 'Coûts internes, prix moyens fournisseurs et devis',
+    description: PACKAGING_SUPPLIER_PRICING_ENABLED ? 'Coûts internes, prix moyens fournisseurs et devis' : 'Coûts internes',
     color: 'amber',
     emoji: '🗂️',
     subcategories: [
       { label: 'Coûts internes', keys: ['HOURLY_RATE_PACKAGING', 'HOURLY_RATE_PACKAGING_COST', 'PACKAGING_SETUP_COST'] },
-      { label: 'Prix moyens', keys: [] },
-      { label: 'Devis fournisseurs', keys: [] },
+      // Prix moyens B/EB et devis fournisseurs : masqués tant que le système est désactivé (code conservé)
+      ...(PACKAGING_SUPPLIER_PRICING_ENABLED ? [
+        { label: 'Prix moyens', keys: [] },
+        { label: 'Devis fournisseurs', keys: [] },
+      ] : []),
     ],
   },
   {

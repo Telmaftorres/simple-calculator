@@ -46,6 +46,7 @@ import {
   PACKAGING_EB_PETIT_PRICE,
   PACKAGING_EB_MOYEN_PRICE,
   PACKAGING_EB_GRAND_PRICE,
+  PACKAGING_SUPPLIER_PRICING_ENABLED,
 } from '@/lib/config/pricing'
 
 const B_EB_PRICE_DEFAULTS: Record<string, number> = {
@@ -483,6 +484,7 @@ export function calculateCosts(params: {
 
   // Prix unitaire B/EB (depuis settings ou config)
   const packagingExternalUnitPrice = (() => {
+    if (!PACKAGING_SUPPLIER_PRICING_ENABLED) return 0  // prix B/EB saisi à la main uniquement
     if (!isExternalPackaging || !packagingExternalSize) return 0
     const mat = packagingMaterialType!.toUpperCase()
     const sz = packagingExternalSize.toUpperCase()

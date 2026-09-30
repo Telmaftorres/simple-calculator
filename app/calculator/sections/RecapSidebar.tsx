@@ -5,13 +5,14 @@ import { Loader2, Layers, Info } from 'lucide-react'
 import { CostRow, MargeCoeffEditor } from '../shared'
 import { formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
+import { toast } from 'sonner'
 
 export function RecapSidebar() {
   const {
     impositionResult, selectedPlate,
     hasImpression,
-    printSetupType,
-    cuttingSetupType,
+    printSetupType, setPrintSetupType,
+    cuttingSetupType, setCuttingSetupType,
     hasFaconnage, getAssemblyDetails,
     hasConditionnement, getPackDetails,
     hasAccessoires, selectedAccessories,
@@ -88,6 +89,16 @@ export function RecapSidebar() {
   const [recapMode, setRecapMode] = useState<'marge' | 'brut'>('brut')
   const [showCalcDetail, setShowCalcDetail] = useState(false)
   const brut = recapMode === 'brut'
+
+  // Retrait rapide d'un calage depuis le récap, annulable depuis la notification
+  const removeSetup = (kind: 'impression' | 'decoupe') => {
+    const previous = kind === 'impression' ? printSetupType : cuttingSetupType
+    const set = kind === 'impression' ? setPrintSetupType : setCuttingSetupType
+    set('none')
+    toast(`Calage ${kind === 'impression' ? 'impression' : 'découpe'} retiré`, {
+      action: { label: 'Annuler', onClick: () => set(previous) },
+    })
+  }
 
   const displayTotal = brut
     ? (isMultiProduct ? totalCostMultiBrut : totalCostBrut)
@@ -341,7 +352,13 @@ export function RecapSidebar() {
                     />
                   )}
                   {printSetupType !== 'none' && printingCostData.setupCost > 0 && (
-                    <CostRow label="Calage impression" value={printingCostData.setupCost} details={`${printingCostData.setupTimeMin} min`} />
+                    <CostRow
+                      label="Calage impression"
+                      value={printingCostData.setupCost}
+                      details={`${printingCostData.setupTimeMin} min`}
+                      onRemove={!brut ? () => removeSetup('impression') : undefined}
+                      removeLabel="Retirer le calage impression"
+                    />
                   )}
                 </>
               )}
@@ -360,7 +377,13 @@ export function RecapSidebar() {
                 />
               )}
               {cuttingSetupType !== 'none' && cuttingSetupCost > 0 && (
-                <CostRow label="Calage découpe" value={cuttingSetupCost} details={`${cuttingSetupTimeMin} min`} />
+                <CostRow
+                  label="Calage découpe"
+                  value={cuttingSetupCost}
+                  details={`${cuttingSetupTimeMin} min`}
+                  onRemove={!brut ? () => removeSetup('decoupe') : undefined}
+                  removeLabel="Retirer le calage découpe"
+                />
               )}
             </>
           )}

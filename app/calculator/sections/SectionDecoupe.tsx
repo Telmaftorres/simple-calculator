@@ -98,7 +98,7 @@ export function SectionDecoupe() {
                 label="Temps par Plaque"
                 value={cuttingTimePerPlateSeconds}
                 min={0}
-                max={900}
+                max={1800}
                 unit="sec"
                 onChange={setCuttingTimePerPlateSeconds}
                 formatValue={formatTimeSeconds}

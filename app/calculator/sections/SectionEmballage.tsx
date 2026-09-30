@@ -8,6 +8,7 @@ import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { CUTTING_SHORTCUTS, CUTTING_SHORTCUTS_PER_PLATE } from '@/lib/config/ui'
+import { PACKAGING_SUPPLIER_PRICING_ENABLED } from '@/lib/config/pricing'
 import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 type BoxType = 'etui' | 'caisse' | 'plaque_rainee'
@@ -208,20 +209,22 @@ export function SectionEmballage() {
             </div>
 
             {/* Récap B/EB */}
-            {packagingExternalSize && packagingQuantity > 0 && (
+            {(packagingExternalSize || !PACKAGING_SUPPLIER_PRICING_ENABLED) && packagingQuantity > 0 && (
               <div className="bg-amber-50 rounded-lg p-4 border border-amber-100 space-y-2 text-sm">
-                <div className="flex justify-between text-slate-600">
-                  <span>Prix catalogue {packagingMaterialType} {packagingExternalSize}</span>
-                  <span className="font-medium">
-                    {packagingExternalUnitPrice === 0
-                      ? <span className="text-amber-600 italic">Non configuré</span>
-                      : `${packagingExternalUnitPrice.toFixed(4)} €/pce`}
-                  </span>
-                </div>
+                {PACKAGING_SUPPLIER_PRICING_ENABLED && (
+                  <div className="flex justify-between text-slate-600">
+                    <span>Prix catalogue {packagingMaterialType} {packagingExternalSize}</span>
+                    <span className="font-medium">
+                      {packagingExternalUnitPrice === 0
+                        ? <span className="text-amber-600 italic">Non configuré</span>
+                        : `${packagingExternalUnitPrice.toFixed(4)} €/pce`}
+                    </span>
+                  </div>
+                )}
                 <div className="space-y-1">
                   <div className="flex items-center justify-between text-slate-600">
-                    <span>Prix réel / pce</span>
-                    {packagingUnitPriceOverride != null && (
+                    <span>{PACKAGING_SUPPLIER_PRICING_ENABLED ? 'Prix réel / pce' : 'Prix unitaire HT / pce'}</span>
+                    {PACKAGING_SUPPLIER_PRICING_ENABLED && packagingUnitPriceOverride != null && (
                       <button
                         type="button"
                         onClick={() => setPackagingUnitPriceOverride(null)}
@@ -240,7 +243,7 @@ export function SectionEmballage() {
                       const v = parseFloat(e.target.value)
                       setPackagingUnitPriceOverride(isNaN(v) || e.target.value === '' ? null : v)
                     }}
-                    placeholder={`Catalogue : ${packagingExternalUnitPrice.toFixed(4)} €/pce`}
+                    placeholder={PACKAGING_SUPPLIER_PRICING_ENABLED ? `Catalogue : ${packagingExternalUnitPrice.toFixed(4)} €/pce` : 'Ex : 1.20'}
                     className="flex h-8 w-full rounded-md border border-amber-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-1 focus:ring-amber-400"
                   />
                 </div>
@@ -432,7 +435,7 @@ export function SectionEmballage() {
                   <GaugeSlider
                     label="Temps de découpe par plaque"
                     value={packagingCuttingTimePerPlateSeconds}
-                    min={0} max={900} unit="sec"
+                    min={0} max={1800} unit="sec"
                     onChange={setPackagingCuttingTimePerPlateSeconds}
                     formatValue={formatTimeSeconds}
                     gradientColors="from-amber-300 to-orange-500"

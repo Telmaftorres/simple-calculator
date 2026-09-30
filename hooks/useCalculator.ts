@@ -4,7 +4,8 @@ import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { calculateImposition } from '@/lib/calculation/imposition'
 import { createProductType } from '@/app/actions/catalog'
 import { toast } from 'sonner'
-import { POSE_SPACING_MM, PLATE_BORDER_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT, GEODIS_FUEL_SURCHARGE_PERCENT } from '@/lib/config/pricing'
+import { POSE_SPACING_MM, PLATE_BORDER_MM, MARGE_COMMERCIALE_PERCENT, MARGE_SOPANO_PERCENT, GEODIS_FUEL_SURCHARGE_PERCENT, PACKAGING_SUPPLIER_PRICING_ENABLED } from '@/lib/config/pricing'
+import { legacyPackagingCatalogPrice } from '@/lib/calculation/packaging-catalog'
 import { calculateCosts } from '@/lib/calculation/costs'
 import { calculateTransport, type TransportMode } from '@/lib/transport/geodis-rates'
 import { useCalculatorForm } from './useCalculatorForm'
@@ -111,6 +112,19 @@ export function useCalculator(
     quoteLoaded.current = true
 
     const { formPayload, accessories: accs, consumables: cons, amalgameGroups: groups } = parseQuoteForLoad(initialQuote)
+    // Ancien devis B/EB chiffré au prix catalogue (système devis fournisseurs, désormais masqué) :
+    // on recopie ce prix dans le champ "Prix unitaire" pour que le prix du devis ne bouge pas.
+    if (!PACKAGING_SUPPLIER_PRICING_ENABLED && formPayload.packagingUnitPriceOverride == null) {
+      const legacyPrice = legacyPackagingCatalogPrice({
+        materialType: formPayload.packagingMaterialType,
+        size: formPayload.packagingExternalSize,
+        boxType: formPayload.packagingBoxType,
+        quantity: formPayload.packagingQuantity ?? 0,
+        settings,
+        rules: packagingRules,
+      })
+      if (legacyPrice > 0) formPayload.packagingUnitPriceOverride = legacyPrice
+    }
     loadQuote(formPayload)
 
     if (accs.length > 0) setSelectedAccessories(accs)

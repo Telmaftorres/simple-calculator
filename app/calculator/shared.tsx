@@ -149,17 +149,30 @@ interface CostRowProps {
   value: number
   details?: string
   marginEditor?: React.ReactNode
+  onRemove?: () => void
+  removeLabel?: string
 }
 
-export function CostRow({ label, value, details, marginEditor }: CostRowProps) {
+export function CostRow({ label, value, details, marginEditor, onRemove, removeLabel }: CostRowProps) {
   return (
-    <div className="flex justify-between items-start text-sm">
+    <div className="group flex justify-between items-start text-sm">
       <div className="flex-1 min-w-0">
         <span className="text-slate-600">{label}</span>
         {details && <p className="text-xs text-slate-400 mt-0.5">{details}</p>}
         {marginEditor}
       </div>
-      <span className="font-semibold text-slate-800 ml-4 shrink-0">
+      <span className="font-semibold text-slate-800 ml-4 shrink-0 flex items-center gap-1">
+        {onRemove && (
+          <button
+            type="button"
+            onClick={onRemove}
+            title={removeLabel ?? 'Retirer'}
+            aria-label={removeLabel ?? 'Retirer'}
+            className="w-4 h-4 flex items-center justify-center rounded text-slate-300 hover:text-red-500 hover:bg-red-50 opacity-0 group-hover:opacity-100 focus-visible:opacity-100 transition-opacity text-xs leading-none"
+          >
+            ×
+          </button>
+        )}
         {value.toFixed(2)} €
       </span>
     </div>

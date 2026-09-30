@@ -542,7 +542,8 @@ describe('calculateCosts', () => {
   describe('emballage B/EB (externe, prix unitaire)', () => {
     const packagingPlate = { id: 99, name: 'BC Test', width: 800, height: 600, cost: 5, material: 'BC' }
 
-    it('coût matière = prix unitaire × quantité pour type B', () => {
+    // Prix catalogue (devis fournisseurs) désactivé : seul le prix saisi à la main compte
+    it('prix catalogue ignoré : sans prix saisi, coût matière B = 0', () => {
       const result = calculateCosts({
         ...defaultParams,
         hasPackaging: true,
@@ -554,11 +555,11 @@ describe('calculateCosts', () => {
         packagingHeight: 0,
         settings: { PACKAGING_B_PETIT_PRICE: 1.5 },
       })
-      expect(result.packagingExternalUnitPrice).toBe(1.5)
-      expect(result.packagingMaterialCost).toBeCloseTo(1.5 * 100, 2)
+      expect(result.packagingExternalUnitPrice).toBe(0)
+      expect(result.packagingMaterialCost).toBe(0)
     })
 
-    it('coût matière = prix unitaire × quantité pour type EB', () => {
+    it('coût matière = prix saisi × quantité pour type EB', () => {
       const result = calculateCosts({
         ...defaultParams,
         hasPackaging: true,
@@ -568,9 +569,8 @@ describe('calculateCosts', () => {
         packagingPlate,
         packagingWidth: 0,
         packagingHeight: 0,
-        settings: { PACKAGING_EB_MOYEN_PRICE: 2.18 },
+        packagingUnitPriceOverride: 2.18,
       })
-      expect(result.packagingExternalUnitPrice).toBe(2.18)
       expect(result.packagingMaterialCost).toBeCloseTo(2.18 * 50, 2)
     })
 
@@ -650,7 +650,7 @@ describe('calculateCosts', () => {
         packagingWidth: 0,
         packagingHeight: 0,
         packagingCuttingTimePerPoseSeconds: 20,
-        settings: { PACKAGING_B_GRAND_PRICE: 3.13 },
+        packagingUnitPriceOverride: 3.13,
       })
       expect(result.packagingTotalCost).toBeCloseTo(3.13 * 75, 2)
       expect(result.packagingCuttingCost).toBe(0)

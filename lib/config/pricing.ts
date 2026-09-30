@@ -94,6 +94,9 @@ export const GEODIS_FUEL_SURCHARGE_PERCENT = 2.9
 export const TRANSPORT_MARGIN = 1.4
 
 // ── Emballage B/EB (fournisseur externe, prix unitaire €/pce) ──
+// Prix catalogue issus des devis fournisseurs (prix moyens × coefficient quantité) : désactivé,
+// le prix B/EB est saisi à la main dans le calculateur. Passer à true pour réactiver le système.
+export const PACKAGING_SUPPLIER_PRICING_ENABLED = false
 // À configurer dans les paramètres (valeurs 0 = non configuré)
 export const PACKAGING_B_PETIT_PRICE = 0
 export const PACKAGING_B_MOYEN_PRICE = 0
