@@ -300,6 +300,7 @@ model Plate {
   quoteAmalgameRuns         QuoteAmalgameRun[]
   productionProductLines    ProductionProductLine[]
   productionProductLineElements ProductionProductLineElement[]
+  productionAmalgameRuns    ProductionAmalgameRun[]
 
   @@unique([name, companyId])
   @@unique([companyId, crmMaterialId])
@@ -347,6 +348,7 @@ model Quote {
   cuttingByPlate                     Boolean           @default(false)
   cuttingTimePerPlateSeconds         Int               @default(0)
   machineTimeMinOverride             Float?
+  printingMachineTimeMin             Float?            // temps machine impression calculé à l'enregistrement (repris sur la fiche de prod)
   itemsPerPlateOverride              Int?
   bordABord                          Boolean           @default(false)
   assemblyTimePerPieceSeconds        Int               @default(0)
@@ -463,6 +465,7 @@ model QuoteAmalgameRun {
   flatColorSurfacePercent   Float                  @default(0)
   printSetupType            String                 @default("none")
   machineTimeMinOverride    Float?
+  printingMachineTimeMin    Float?
   mainPerPlate              Int?
   platesCount               Int?
   position                  Int                    @default(0)
@@ -575,6 +578,9 @@ model ProductionAmalgameRun {
   position          Int      @default(0)
   notes             String?
   platesCount       Int?
+  plateId                   Int?
+  cuttingTimePerPoseSeconds Int?
+  plate             Plate?                   @relation(fields: [plateId], references: [id], onDelete: SetNull)
   productionSheet   ProductionSheet          @relation(fields: [productionSheetId], references: [id], onDelete: Cascade)
   items             ProductionAmalgameItem[]
 }

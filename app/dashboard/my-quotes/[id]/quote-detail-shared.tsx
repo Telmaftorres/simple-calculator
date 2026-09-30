@@ -29,6 +29,10 @@ export type Quote = {
   totalCost: number | null
   transportTotal: number | null
   cuttingTimePerPoseSeconds: number | null
+  cuttingByPlate: boolean
+  cuttingTimePerPlateSeconds: number
+  printingMachineTimeMin: number | null
+  machineTimeMinOverride: number | null
   assemblyTimePerPieceSeconds: number | null
   packTimePerPieceSeconds: number | null
   hasFaconnage: boolean
@@ -56,6 +60,9 @@ export type Quote = {
   study: { number: string } | null
   productType: { name: string } | null
   plate: { id: number; name: string; cost: number; width: number; height: number } | null
+  customPlateName: string | null
+  customPlateWidth: number | null
+  customPlateHeight: number | null
   plvQuantity: number | null
   hasAmalgame: boolean
   amalgameRuns: {
@@ -65,6 +72,7 @@ export type Quote = {
     platesCount: number | null
     cuttingTimePerPoseSeconds: number
     machineTimeMinOverride: number | null
+    printingMachineTimeMin: number | null
     inkMlPerPlate: number
     isRectoVerso: boolean
     rectoVersoType: string | null
@@ -137,6 +145,8 @@ export type Quote = {
       notes: string | null
       position: number
       platesCount: number | null
+      plate: { id: number; name: string; width: number; height: number } | null
+      cuttingTimePerPoseSeconds: number | null
       items: {
         id: number
         name: string

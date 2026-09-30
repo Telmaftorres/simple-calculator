@@ -10,8 +10,11 @@ import {
   type AmalgameRunInput,
 } from '@/app/actions/production-amalgame'
 import { upsertProductionSheet } from '@/app/actions/production-sheet'
+import { getPlates } from '@/app/actions/reference-data'
 import type { Quote } from './quote-detail-shared'
 import type { SavedProductLine } from './ProduitsBlock'
+
+type Plate = { id: number; name: string; material: string }
 
 // ── Types ──
 
@@ -37,6 +40,8 @@ type LocalRun = {
   name: string
   open: boolean
   platesCount: string
+  plateId: number | null
+  cuttingTimePerPoseSeconds: string
   items: RunItem[]
 }
 
@@ -88,12 +93,17 @@ function getAvailableItems(savedProducts: SavedProductLine[], quote: Quote): Ava
 }
 
 // ── Init depuis DB ──
-function initRunsFromDB(dbRuns: NonNullable<Quote['productionSheet']>['productionAmalgameRuns']): LocalRun[] {
-  return dbRuns.map(r => ({
+function initRunsFromDB(dbRuns: NonNullable<Quote['productionSheet']>['productionAmalgameRuns'], quote: Quote): LocalRun[] {
+  return dbRuns.map(r => {
+    // Pré-remplit depuis le run du devis (même nom) si rien n'a encore été saisi pour ce run
+    const quoteMatch = quote.amalgameRuns.find(qr => qr.name.toLowerCase() === r.name.toLowerCase())
+    return {
     tempId: tid(),
     name: r.name,
     open: false,
     platesCount: (r.platesCount ?? '').toString(),
+    plateId: r.plate?.id ?? quoteMatch?.plate?.id ?? null,
+    cuttingTimePerPoseSeconds: (r.cuttingTimePerPoseSeconds ?? quoteMatch?.cuttingTimePerPoseSeconds ?? '').toString(),
     items: r.items.map(it => ({
       tempId: tid(),
       name: it.name,
@@ -103,7 +113,8 @@ function initRunsFromDB(dbRuns: NonNullable<Quote['productionSheet']>['productio
       countPerPlate: it.countPerPlate.toString(),
       quantityPerUnit: it.quantityPerUnit.toString(),
     })),
-  }))
+    }
+  })
 }
 
 // ── Init depuis les items disponibles ──
@@ -115,6 +126,8 @@ function initRunsFromSource(available: AvailableItem[], quote: Quote): LocalRun[
       name: r.name,
       open: true,
       platesCount: (r.platesCount ?? '').toString(),
+      plateId: r.plate?.id ?? null,
+      cuttingTimePerPoseSeconds: (r.cuttingTimePerPoseSeconds ?? '').toString(),
       items: r.items.map(it => ({
         tempId: tid(),
         name: it.name,
@@ -126,13 +139,17 @@ function initRunsFromSource(available: AvailableItem[], quote: Quote): LocalRun[
       })),
     }))
   }
-  // Sinon : un groupe avec tous les items
-  if (available.length === 0) return [{ tempId: tid(), name: '', open: true, platesCount: '', items: [] }]
+  // Sinon : un groupe avec tous les items (matière du devis simple par défaut)
+  const defaultPlateId = quote.plate?.id ?? null
+  const defaultCutting = (quote.cuttingTimePerPoseSeconds ?? '').toString()
+  if (available.length === 0) return [{ tempId: tid(), name: '', open: true, platesCount: '', plateId: defaultPlateId, cuttingTimePerPoseSeconds: defaultCutting, items: [] }]
   return [{
     tempId: tid(),
     name: '',
     open: true,
     platesCount: '',
+    plateId: defaultPlateId,
+    cuttingTimePerPoseSeconds: defaultCutting,
     items: available.map(it => ({ tempId: tid(), ...it, countPerPlate: '1', quantityPerUnit: '1' })),
   }]
 }
@@ -248,9 +265,10 @@ function AddItemPicker({ available, onAdd }: {
 }
 
 // ── Éditeur d'un run ──
-function RunEditor({ run, available, onUpdate, onDelete }: {
+function RunEditor({ run, available, plates, onUpdate, onDelete }: {
   run: LocalRun
   available: AvailableItem[]
+  plates: Plate[]
   onUpdate: (r: LocalRun) => void
   onDelete: () => void
 }) {
@@ -289,6 +307,37 @@ function RunEditor({ run, available, onUpdate, onDelete }: {
 
       {run.open && (
         <div className="px-3 pb-3 pt-2 space-y-1">
+          {/* Matière + temps de découpe du groupe (repris sur la fiche de prod imprimée) */}
+          <div className="grid grid-cols-[1fr_auto] gap-2 pb-2 mb-1 border-b border-slate-100">
+            <div className="space-y-0.5">
+              <span className="text-[9px] text-slate-400 uppercase tracking-wide">Matière</span>
+              <select
+                value={run.plateId ?? ''}
+                onChange={e => onUpdate({ ...run, plateId: e.target.value ? parseInt(e.target.value) : null })}
+                className="w-full px-2 py-1 text-xs border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-slate-800"
+              >
+                <option value="">— choisir</option>
+                {plates.map(p => (
+                  <option key={p.id} value={p.id}>{p.name}</option>
+                ))}
+              </select>
+            </div>
+            <div className="space-y-0.5">
+              <span className="text-[9px] text-slate-400 uppercase tracking-wide">Découpe/pose</span>
+              <div className="flex items-center gap-1">
+                <input
+                  type="number"
+                  min={0}
+                  value={run.cuttingTimePerPoseSeconds}
+                  onChange={e => onUpdate({ ...run, cuttingTimePerPoseSeconds: e.target.value })}
+                  placeholder="—"
+                  className="w-16 px-1.5 py-1 text-xs text-center border border-slate-200 rounded-lg focus:outline-none focus:ring-1 focus:ring-slate-800"
+                />
+                <span className="text-[10px] text-slate-400">s</span>
+              </div>
+            </div>
+          </div>
+
           {run.items.length === 0 && (
             <p className="text-xs text-slate-400 py-1">Aucun élément — ajoutez-en depuis la liste.</p>
           )}
@@ -319,12 +368,17 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
   const available = getAvailableItems(savedProducts, quote)
 
   const [runs, setRuns] = useState<LocalRun[]>(() =>
-    dbRuns.length > 0 ? initRunsFromDB(dbRuns) : initRunsFromSource(available, quote)
+    dbRuns.length > 0 ? initRunsFromDB(dbRuns, quote) : initRunsFromSource(available, quote)
   )
   const [scope, setScope] = useState<'decoupe' | 'decoupe_impression'>(
     (quote.productionSheet?.amalgameScope as 'decoupe' | 'decoupe_impression') ?? 'decoupe_impression'
   )
   const [saving, setSaving] = useState(false)
+  const [plates, setPlates] = useState<Plate[]>([])
+
+  useEffect(() => {
+    getPlates().then(setPlates)
+  }, [])
 
   const handleSave = async () => {
     setSaving(true)
@@ -333,6 +387,8 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
       const payload: AmalgameRunInput[] = runs.map(r => ({
         name: r.name || 'Groupe sans nom',
         platesCount: r.platesCount ? parseInt(r.platesCount) : null,
+        plateId: r.plateId,
+        cuttingTimePerPoseSeconds: r.cuttingTimePerPoseSeconds ? parseInt(r.cuttingTimePerPoseSeconds) : null,
         items: r.items.map(it => ({
           name: it.name,
           flatWidth: it.flatWidth,
@@ -388,13 +444,14 @@ export function AmalgameBlock({ quote, savedProducts }: { quote: Quote; savedPro
             key={run.tempId}
             run={run}
             available={available}
+            plates={plates}
             onUpdate={updated => setRuns(prev => prev.map((r, i) => i === ri ? updated : r))}
             onDelete={() => setRuns(prev => prev.filter((_, i) => i !== ri))}
           />
         ))}
 
         <button
-          onClick={() => setRuns(prev => [...prev, { tempId: tid(), name: '', open: true, platesCount: '', items: [] }])}
+          onClick={() => setRuns(prev => [...prev, { tempId: tid(), name: '', open: true, platesCount: '', plateId: null, cuttingTimePerPoseSeconds: '', items: [] }])}
           className="flex items-center gap-2 px-4 py-2 text-sm font-medium text-slate-600 border border-dashed border-slate-300 rounded-xl hover:border-slate-400 hover:text-slate-800 transition-colors bg-white w-full justify-center"
         >
           <Plus className="h-4 w-4" /> Ajouter un groupe

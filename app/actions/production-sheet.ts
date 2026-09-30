@@ -79,6 +79,16 @@ export async function saveProductionSheetFull(
     conditionnementType?: string | null
     conditionnementNotes?: string | null
     achatsNotes?: string | null
+    // Valeurs du calculateur, écrites dans les colonnes lues par la fiche de prod / le PDF
+    prodCuttingTimePerPoseSeconds?: number | null
+    prodMachineTimeMinOverride?: number | null
+    prodAssemblyTimePerPieceSeconds?: number | null
+    prodPackTimePerPieceSeconds?: number | null
+    prodInkMlPerPlate?: number | null
+    prodPlatesCount?: number | null
+    prodIsRectoVerso?: boolean | null
+    prodHasVarnish?: boolean | null
+    prodHasFlatColor?: boolean | null
   }
 ) {
   await assertOwner(quoteId)

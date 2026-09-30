@@ -12,15 +12,15 @@ import type { Quote } from './quote-detail-shared'
 type Plate = { id: number; name: string; width: number; height: number; cost: number; material: string }
 
 function getQuotePlate(quote: Quote, lineName: string): Plate | null {
+  // Ne devine jamais la matière d'un autre produit sans correspondance exacte de nom.
   if (quote.isMultiProduct && quote.products.length > 0) {
     const match = quote.products.find(p =>
       (p.productTypeName ?? '').toLowerCase() === lineName.toLowerCase()
-    ) ?? quote.products[0]
+    )
     return (match?.plate as Plate | null) ?? null
   }
   if (quote.amalgameRuns.length > 0) {
     const run = quote.amalgameRuns.find(r => r.name.toLowerCase() === lineName.toLowerCase())
-      ?? quote.amalgameRuns[0]
     return (run?.plate as Plate | null) ?? null
   }
   return (quote.plate as Plate | null) ?? null

@@ -210,6 +210,7 @@ export function useSaveHandlers(ctx: SaveContext) {
         cuttingByPlate: isMultiProduct ? false : ctx.cuttingByPlate,
         cuttingTimePerPlateSeconds: isMultiProduct ? 0 : ctx.cuttingTimePerPlateSeconds,
         machineTimeMinOverride: isMultiProduct ? null : (ctx.machineTimeMinOverride ?? null),
+        printingMachineTimeMin: (!isMultiProduct && ctx.hasImpression) ? (costResult.printingCostData.machineTimeMin || null) : null,
         itemsPerPlateOverride: isMultiProduct ? null : (ctx.itemsPerPlateOverride ?? null),
         bordABord: ctx.bordABord,
         assemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
@@ -342,6 +343,7 @@ export function useSaveHandlers(ctx: SaveContext) {
           flatColorSurfacePercent: g.flatColorSurfacePercent,
           printSetupType: g.printSetupType,
           machineTimeMinOverride: g.machineTimeMinOverride ?? null,
+          printingMachineTimeMin: g.amalgameType === 'impression_decoupe' ? (amalgameGroupResults[i]?.machineTimeMin || null) : null,
           mainPerPlate: null,
           platesCount: amalgameGroupResults[i]?.platesCount ?? null,
           position: i,
@@ -460,6 +462,15 @@ export function useSaveHandlers(ctx: SaveContext) {
           conditionnementType: ctx.prodConditionnementType,
           conditionnementNotes: ctx.prodConditionnementNotes,
           achatsNotes: ctx.prodAchatsNotes,
+          prodCuttingTimePerPoseSeconds: ctx.cuttingTimePerPoseSeconds,
+          prodMachineTimeMinOverride: ctx.machineTimeMinOverride ?? (ctx.hasImpression ? (ctx.costResult.printingCostData.machineTimeMin || null) : null),
+          prodAssemblyTimePerPieceSeconds: ctx.assemblyTimePerPieceSeconds,
+          prodPackTimePerPieceSeconds: ctx.packTimePerPieceSeconds,
+          prodInkMlPerPlate: ctx.inkMlPerPlate,
+          prodPlatesCount: ctx.impositionResult?.platesNeeded ?? null,
+          prodIsRectoVerso: ctx.isRectoVerso,
+          prodHasVarnish: ctx.hasVarnish,
+          prodHasFlatColor: ctx.hasFlatColor,
         }
       )
       toast.success('Fiche de production sauvegardée !')

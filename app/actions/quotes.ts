@@ -467,7 +467,7 @@ export async function getQuoteDetail(id: number) {
         include: {
           productionAmalgameRuns: {
             orderBy: { position: 'asc' },
-            include: { items: { orderBy: { position: 'asc' } } },
+            include: { items: { orderBy: { position: 'asc' } }, plate: true },
           },
           productionProductLines: {
             orderBy: { position: 'asc' },

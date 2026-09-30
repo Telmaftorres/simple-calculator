@@ -56,15 +56,16 @@ function SectionCard({ title, colorClass, children }: { title: string; colorClas
 }
 
 function findQuotePlate(quote: Quote, lineName: string): { name: string } | null {
+  // Ne devine jamais la matière d'un autre produit : sans correspondance exacte, on
+  // affiche « — » plutôt qu'un risque de matière erronée.
   if (quote.isMultiProduct && quote.products.length > 0) {
     const match = quote.products.find(p =>
       (p.productTypeName ?? '').toLowerCase() === lineName.toLowerCase()
-    ) ?? quote.products[0]
+    )
     return match?.plate ?? null
   }
   if (quote.amalgameRuns.length > 0) {
     const run = quote.amalgameRuns.find(r => r.name.toLowerCase() === lineName.toLowerCase())
-      ?? quote.amalgameRuns[0]
     return run?.plate ?? null
   }
   return quote.plate ?? null
@@ -81,14 +82,19 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
   const isAmalgameImpression = hasAmalgame && amalgameScope === 'decoupe_impression'
 
   const runs: PreviewRun[] = prodRuns.length > 0
-    ? prodRuns.map(r => ({
-        name: r.name,
-        platesCount: r.platesCount,
-        cuttingTimeSec: null,
-        hasImpression: true,
-        plateName: null,
-        items: r.items.map(it => ({ name: it.name, countPerPlate: it.countPerPlate })),
-      }))
+    ? prodRuns.map(r => {
+        // Repli sur le run du devis (même nom) tant que la matière/le temps n'ont pas
+        // été saisis pour ce run de production spécifiquement.
+        const quoteMatch = quoteRuns.find(qr => qr.name.toLowerCase() === r.name.toLowerCase())
+        return {
+          name: r.name,
+          platesCount: r.platesCount,
+          cuttingTimeSec: r.cuttingTimePerPoseSeconds ?? quoteMatch?.cuttingTimePerPoseSeconds ?? null,
+          hasImpression: quoteMatch?.hasImpression ?? true,
+          plateName: r.plate?.name ?? quoteMatch?.plate?.name ?? null,
+          items: r.items.map(it => ({ name: it.name, countPerPlate: it.countPerPlate })),
+        }
+      })
     : quoteRuns.map(r => ({
         name: r.name,
         platesCount: r.platesCount,
@@ -195,7 +201,7 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
               <>
                 <Row
                   label={`${quote.productType.name}${quote.flatWidth ? ` (${quote.flatWidth}×${quote.flatHeight})` : ''}`}
-                  value={quote.plate?.name ?? '—'}
+                  value={quote.plate?.name ?? quote.customPlateName ?? '—'}
                 />
               </>
             ) : (
@@ -241,12 +247,15 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
               <Row label="Mode" value={rvLabel(effectiveIsRV, effectiveRVType)} />
               {effectiveHasVarnish && <Row label="Vernis" value="Oui" />}
               {effectiveHasFlatColor && <Row label="Blanc" value="Oui" />}
-              {quote.plate && <Row label="Plaque" value={quote.plate.name} />}
+              {(quote.plate || quote.customPlateName) && (
+                <Row label="Plaque" value={quote.plate?.name ?? quote.customPlateName} />
+              )}
               {effectivePlatesCount != null && <Row label="Nb plaques" value={effectivePlatesCount} />}
               {effectiveInk != null && <Row label="Encre" value={`${effectiveInk} ml`} />}
-              {ps?.prodMachineTimeMinOverride != null && (
-                <Row label="Tps machine" value={`${ps.prodMachineTimeMinOverride} min`} />
-              )}
+              {(() => {
+                const min = ps?.prodMachineTimeMinOverride ?? quote.machineTimeMinOverride ?? quote.printingMachineTimeMin
+                return min != null ? <Row label="Tps machine" value={fmtMin(Math.round(min))} /> : null
+              })()}
               {isAmalgameImpression && runs.length > 0 && (
                 <div className="mt-1.5 space-y-1">
                   {runs.map((run, i) => (
@@ -285,7 +294,9 @@ export function ProductionSheetPreview({ quote }: { quote: Quote }) {
               ))
             ) : (
               <>
-                {effectiveCutting != null && <Row label="Temps/pose" value={fmtSec(effectiveCutting)} />}
+                {quote.cuttingByPlate && quote.cuttingTimePerPlateSeconds > 0
+                  ? <Row label="Temps/plaque" value={fmtSec(quote.cuttingTimePerPlateSeconds)} />
+                  : effectiveCutting != null && <Row label="Temps/pose" value={fmtSec(effectiveCutting)} />}
                 {effectiveItemsPerPlate != null && <Row label="Pièces/plaque" value={effectiveItemsPerPlate} />}
               </>
             )}

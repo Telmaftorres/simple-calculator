@@ -35,6 +35,7 @@ export const quoteFieldsSchema = z.object({
   cuttingByPlate: z.boolean().optional(),
   cuttingTimePerPlateSeconds: z.number().int().optional(),
   machineTimeMinOverride: z.number().min(0).nullable().optional(),
+  printingMachineTimeMin: z.number().min(0).nullable().optional(),
   itemsPerPlateOverride: z.number().int().positive().nullable().optional(),
   bordABord: z.boolean().optional(),
 
@@ -164,6 +165,7 @@ const amalgameRunSchema = z.object({
   flatColorSurfacePercent: z.number().min(0).max(100).optional(),
   printSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   machineTimeMinOverride: z.number().min(0).nullable().optional(),
+  printingMachineTimeMin: z.number().min(0).nullable().optional(),
   mainPerPlate: z.number().int().positive().nullable().optional(),
   platesCount: z.number().int().min(0).nullable().optional(),
   position: z.number().int().min(0),

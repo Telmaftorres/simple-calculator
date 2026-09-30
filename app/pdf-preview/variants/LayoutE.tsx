@@ -41,7 +41,9 @@ export type QuoteForPDF = {
     hasImpression: boolean
     platesCount: number | null
     cuttingTimePerPoseSeconds: number
+    cuttingTimePerPlateSeconds?: number | null  // découpe "par plaque" : prioritaire sur le temps par pose
     machineTimeMinOverride: number | null
+    printingMachineTimeMin?: number | null      // temps d'impression calculé par le calculateur
     isRectoVerso: boolean
     rectoVersoType: string | null
     plate: { name: string; width: number; height: number } | null
@@ -145,7 +147,23 @@ const s = StyleSheet.create({
   summarySub: { fontSize: 7.5, color: C.mid, marginTop: 2 },
   footer: { position: 'absolute', bottom: 6, left: 22, right: 22, flexDirection: 'row', justifyContent: 'space-between', borderTopWidth: 1, borderTopColor: C.border, paddingTop: 3 },
   footerText: { fontSize: 6, color: C.mid },
+  // Encart à remplir à la main par l'atelier
+  fillBox: { marginTop: 8, borderWidth: 1.5, borderColor: C.dark, borderStyle: 'dashed', borderRadius: 4, padding: '6 12 8 12' },
+  fillTitle: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', letterSpacing: 1, textTransform: 'uppercase', marginBottom: 6 },
+  fillRow: { flexDirection: 'row', gap: 16 },
+  fillField: { flex: 1 },
+  fillLabel: { fontSize: 7.5, color: C.mid, marginBottom: 12 },
+  fillLine: { borderBottomWidth: 1, borderBottomColor: C.dark },
 })
+
+function FillField({ label }: { label: string }) {
+  return (
+    <View style={s.fillField}>
+      <Text style={s.fillLabel}>{label}</Text>
+      <View style={s.fillLine} />
+    </View>
+  )
+}
 
 function SpecRow({ label, value, barColor, last }: { label: string; value: string; barColor: string; last?: boolean }) {
   return (
@@ -170,6 +188,13 @@ function OpCard({ title, bgColor, textColor, children }: { title: string; bgColo
 
 function OpRow({ label, value }: { label: string; value: string }) {
   return <View style={s.opRow}><Text style={s.opLabel}>{label}</Text><Text style={s.opValue}>{value}</Text></View>
+}
+
+function fmtSec(s: number): string {
+  if (s < 60) return `${s}s`
+  const m = Math.floor(s / 60)
+  const rem = s % 60
+  return rem > 0 ? `${m}min${rem}s` : `${m} min`
 }
 
 function fmtTime(totalSeconds: number): string {
@@ -214,13 +239,26 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
   const totalPlates = runs.reduce((sum, r) => sum + (r.platesCount ?? 0), 0) +
     standaloneProducts.reduce((sum, p) => sum + (p.platesCount ?? 0), 0)
 
-  const cuttingSeconds = runs.reduce((sum, r) => sum + r.cuttingTimePerPoseSeconds * (r.platesCount ?? 0), 0) +
-    standaloneProducts.reduce((sum, p) => sum + p.cuttingTimePerPoseSeconds * (p.platesCount ?? 0), 0)
+  // Découpe : temps par pose × nombre total de poses (plaques × poses par plaque),
+  // ou temps par plaque × plaques quand la découpe est saisie "par plaque".
+  const posesPerPlate = (r: Q['amalgameRuns'][number], ri: number) => {
+    if (r.items.length > 0) return r.items.reduce((n, it) => n + it.countPerPlate, 0)
+    const groupPoses = quote.products
+      .filter(p => p.amalgameGroupIndex === ri)
+      .reduce((n, p) => n + (p.countPerPlateInGroup ?? 0), 0)
+    return groupPoses > 0 ? groupPoses : 1
+  }
+  const runCuttingSeconds = (r: Q['amalgameRuns'][number], ri: number) =>
+    r.cuttingTimePerPlateSeconds
+      ? r.cuttingTimePerPlateSeconds * (r.platesCount ?? 0)
+      : r.cuttingTimePerPoseSeconds * (r.platesCount ?? 0) * posesPerPlate(r, ri)
+  const cuttingSeconds = runs.reduce((sum, r, ri) => sum + runCuttingSeconds(r, ri), 0) +
+    standaloneProducts.reduce((sum, p) => sum + p.cuttingTimePerPoseSeconds * p.quantity, 0)
   const impressionSeconds = ps.prodMachineTimeMinOverride != null
     ? ps.prodMachineTimeMinOverride * 60
     : runs
         .filter(r => r.hasImpression)
-        .reduce((sum, r) => sum + (r.machineTimeMinOverride ?? 0) * 60, 0)
+        .reduce((sum, r) => sum + (r.machineTimeMinOverride ?? r.printingMachineTimeMin ?? 0) * 60, 0)
   const faconnageSeconds = quote.hasFaconnage ? (ps.prodAssemblyTimePerPieceSeconds ?? 0) * qty : 0
   const conditionnementSeconds = quote.hasConditionnement ? (ps.prodPackTimePerPieceSeconds ?? 0) * qty : 0
   const beSeconds = quote.hasBE ? (quote.beTimeMinutes + quote.batTimeMinutes) * 60 : 0
@@ -255,8 +293,28 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                   <View style={s.specsCol}>
                     <View style={s.specList}>
                       <SpecRow label="Matiere" value={run.plate?.name ?? '—'} barColor={col.bar} />
-                      <SpecRow label="Format plaque" value={`${run.plate?.width}x${run.plate?.height} mm`} barColor={col.bar} />
-                      <SpecRow label="Nb plaques" value={`${run.platesCount} pl.`} barColor={col.bar} last={!run.isRectoVerso && !run.hasImpression} />
+                      <SpecRow label="Format plaque" value={run.plate && run.plate.width > 0 ? `${run.plate.width}x${run.plate.height} mm` : '—'} barColor={col.bar} />
+                      <SpecRow label="Nb plaques" value={run.platesCount != null ? `${run.platesCount} pl.` : '—'} barColor={col.bar} />
+                      <SpecRow
+                        label="Decoupe"
+                        value={run.cuttingTimePerPlateSeconds
+                          ? `${fmtSec(run.cuttingTimePerPlateSeconds)}/plaque`
+                          : run.cuttingTimePerPoseSeconds > 0 ? `${fmtSec(run.cuttingTimePerPoseSeconds)}/pose` : '—'}
+                        barColor={col.bar}
+                        last={!run.hasImpression && !run.isRectoVerso}
+                      />
+                      {run.hasImpression && (
+                        <SpecRow
+                          label="Tps impression"
+                          value={(() => {
+                            const min = runs.length === 1 && ps.prodMachineTimeMinOverride != null
+                              ? ps.prodMachineTimeMinOverride
+                              : (run.machineTimeMinOverride ?? run.printingMachineTimeMin)
+                            return min != null ? fmtTime(Math.round(min * 60)) : '—'
+                          })()}
+                          barColor={col.bar}
+                        />
+                      )}
                       {run.isRectoVerso && <SpecRow label="R/V" value={run.rectoVersoType === 'identical' ? 'Identique' : 'Different'} barColor={col.bar} last />}
                       {run.hasImpression && !run.isRectoVerso && <SpecRow label="Impression" value="Recto seul" barColor={col.bar} last />}
                     </View>
@@ -299,9 +357,10 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                   <View style={s.specsCol}>
                     <View style={s.specList}>
                       <SpecRow label="Matiere" value={p.plate?.name ?? '—'} barColor={col.bar} />
-                      <SpecRow label="Format plaque" value={`${p.plate?.width}x${p.plate?.height} mm`} barColor={col.bar} />
+                      <SpecRow label="Format plaque" value={p.plate ? `${p.plate.width}x${p.plate.height} mm` : '—'} barColor={col.bar} />
                       <SpecRow label="Format a plat" value={`${p.flatWidth}x${p.flatHeight} mm`} barColor={col.bar} />
                       <SpecRow label="Nb plaques" value={`${p.platesCount ?? '—'} pl.`} barColor={col.bar} />
+                      <SpecRow label="Decoupe" value={p.cuttingTimePerPoseSeconds > 0 ? `${fmtSec(p.cuttingTimePerPoseSeconds)}/pose` : '—'} barColor={col.bar} />
                       <SpecRow label="Quantite" value={`${p.quantity} ex`} barColor={col.bar} last />
                     </View>
                   </View>
@@ -314,6 +373,17 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             )
           })}
 
+          </View>
+
+          {/* Saisie atelier — à remplir à la main */}
+          <View style={s.fillBox} wrap={false}>
+            <Text style={s.fillTitle}>A remplir par l&apos;atelier</Text>
+            <View style={s.fillRow}>
+              <FillField label="Rebuts (plaques imprimees en plus)" />
+              <FillField label="Nb de chutes creees" />
+              <FillField label="Temps reel impression" />
+              <FillField label="Temps reel decoupe" />
+            </View>
           </View>
         </View>
 
@@ -403,6 +473,19 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
               </OpCard>
             )}
           </View>
+
+          {/* Saisie atelier — temps réels des opérations de finition */}
+          {(quote.hasFaconnage || quote.hasConditionnement || quote.hasPackaging) && (
+            <View style={s.fillBox} wrap={false}>
+              <Text style={s.fillTitle}>A remplir par l&apos;atelier</Text>
+              <View style={s.fillRow}>
+                {quote.hasFaconnage && <FillField label="Temps reel faconnage" />}
+                {quote.hasConditionnement && <FillField label="Temps reel conditionnement" />}
+                {quote.hasPackaging && <FillField label="Temps reel emballage" />}
+                <FillField label="Observations" />
+              </View>
+            </View>
+          )}
         </View>
 
         {/* Bande bas page 2 : temps total */}

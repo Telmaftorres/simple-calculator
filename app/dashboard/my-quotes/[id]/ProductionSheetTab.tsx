@@ -457,48 +457,73 @@ export function ProductionSheetTab({ quote }: { quote: Quote }) {
   // Pour un devis simple sans amalgame, on crée un run synthétique.
   const buildQuoteForPdf = () => {
     const prodRuns = ps.productionAmalgameRuns
+
+    // Matières corrigées dans le bloc « Matière(s) » : elles priment sur celles du devis (par nom de produit)
+    const correctedPlateByName = new Map(
+      ps.productionProductLines.filter(l => l.plate).map(l => [l.name.toLowerCase(), l.plate!])
+    )
+    const products = quote.products.map(p => {
+      const corrected = correctedPlateByName.get((p.productTypeName ?? '').toLowerCase())
+      return corrected ? { ...p, plate: corrected } : p
+    })
+
     if (prodRuns.length > 0) {
+      const scopeHasImpression = (ps.amalgameScope ?? 'decoupe_impression') === 'decoupe_impression'
       return {
         ...quote,
-        amalgameRuns: prodRuns.map(r => ({
-          name: r.name,
-          hasImpression: false,
-          platesCount: null,
-          cuttingTimePerPoseSeconds: 0,
-          machineTimeMinOverride: null,
-          isRectoVerso: false,
-          rectoVersoType: null,
-          plate: null,
-          items: r.items.map(it => ({
-            name: it.name,
-            flatWidth: it.flatWidth,
-            flatHeight: it.flatHeight,
-            countPerPlate: it.countPerPlate,
-            quantityPerUnit: it.quantityPerUnit,
-          })),
-        })),
+        amalgameRuns: prodRuns.map(r => {
+          // Repli sur le run du devis (même nom) pour tout ce qui n'a pas été saisi sur la fiche de prod
+          const quoteMatch = quote.amalgameRuns.find(qr => qr.name.toLowerCase() === r.name.toLowerCase())
+          const plate = r.plate ?? quoteMatch?.plate ?? null
+          return {
+            name: r.name,
+            hasImpression: scopeHasImpression && (quoteMatch?.hasImpression ?? true),
+            platesCount: r.platesCount ?? quoteMatch?.platesCount ?? null,
+            cuttingTimePerPoseSeconds: r.cuttingTimePerPoseSeconds ?? quoteMatch?.cuttingTimePerPoseSeconds ?? 0,
+            machineTimeMinOverride: quoteMatch?.machineTimeMinOverride ?? null,
+            printingMachineTimeMin: quoteMatch?.printingMachineTimeMin ?? null,
+            isRectoVerso: quoteMatch?.isRectoVerso ?? false,
+            rectoVersoType: quoteMatch?.rectoVersoType ?? null,
+            plate: plate ? { name: plate.name, width: plate.width, height: plate.height } : null,
+            items: r.items.map(it => ({
+              name: it.name,
+              flatWidth: it.flatWidth,
+              flatHeight: it.flatHeight,
+              countPerPlate: it.countPerPlate,
+              quantityPerUnit: it.quantityPerUnit,
+            })),
+          }
+        }),
         // Efface les produits standalone pour éviter les doublons
         products: [],
       }
     }
     const isSimple = !quote.isMultiProduct && quote.amalgameRuns.length === 0 && quote.products.length === 0
-    if (!isSimple) return quote
+    if (!isSimple) return { ...quote, products }
+
+    const plate = quote.plate
+      ? { name: quote.plate.name, width: quote.plate.width, height: quote.plate.height }
+      : quote.customPlateName
+        ? { name: quote.customPlateName, width: quote.customPlateWidth ?? 0, height: quote.customPlateHeight ?? 0 }
+        : null
     return {
       ...quote,
       amalgameRuns: [{
         name: quote.productType?.name ?? 'Produit',
         hasImpression: quote.hasImpression,
-        platesCount: quote.platesCount,
-        cuttingTimePerPoseSeconds: quote.cuttingTimePerPoseSeconds ?? 0,
-        machineTimeMinOverride: ps.prodMachineTimeMinOverride,
-        isRectoVerso: quote.isRectoVerso,
-        rectoVersoType: quote.rectoVersoType,
-        plate: quote.plate ? { name: quote.plate.name, width: quote.plate.width, height: quote.plate.height } : null,
+        platesCount: ps.prodPlatesCount ?? quote.platesCount,
+        cuttingTimePerPoseSeconds: ps.prodCuttingTimePerPoseSeconds ?? quote.cuttingTimePerPoseSeconds ?? 0,
+        cuttingTimePerPlateSeconds: quote.cuttingByPlate ? quote.cuttingTimePerPlateSeconds : null,
+        machineTimeMinOverride: ps.prodMachineTimeMinOverride ?? quote.machineTimeMinOverride,
+        printingMachineTimeMin: quote.printingMachineTimeMin,
+        isRectoVerso: ps.prodIsRectoVerso ?? quote.isRectoVerso,
+        rectoVersoType: ps.prodRectoVersoType ?? quote.rectoVersoType,
+        plate,
         items: [{
           name: quote.productType?.name ?? 'Produit',
           flatWidth: quote.flatWidth ?? 0,
           flatHeight: quote.flatHeight ?? 0,
-          countPerPlate: quote.itemsPerPlate ?? 1,
+          countPerPlate: ps.prodItemsPerPlate ?? quote.itemsPerPlate ?? 1,
           quantityPerUnit: 1,
         }],
       }],

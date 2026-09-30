@@ -27,6 +27,8 @@ export type AmalgameRunInput = {
   name: string
   notes?: string | null
   platesCount?: number | null
+  plateId?: number | null
+  cuttingTimePerPoseSeconds?: number | null
   items: AmalgameItemInput[]
 }
 
@@ -44,6 +46,8 @@ export async function saveProductionAmalgameRuns(productionSheetId: number, runs
           name: run.name,
           notes: run.notes ?? null,
           platesCount: run.platesCount ?? null,
+          plateId: run.plateId ?? null,
+          cuttingTimePerPoseSeconds: run.cuttingTimePerPoseSeconds ?? null,
           position: i,
           items: {
             create: run.items.map((item, j) => ({

@@ -26,12 +26,15 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
   const isAmalgame = quote.hasAmalgame || prodRuns.length > 0 || quoteRuns.length > 0
 
   const runs = prodRuns.length > 0
-    ? prodRuns.map(r => ({
-        name: r.name,
-        plateName: null as string | null,
-        cuttingTimeSec: null as number | null,
-        items: r.items.map(it => ({ name: it.name, countPerPlate: it.countPerPlate, qty: it.quantityPerUnit })),
-      }))
+    ? prodRuns.map(r => {
+        const quoteMatch = quoteRuns.find(qr => qr.name.toLowerCase() === r.name.toLowerCase())
+        return {
+          name: r.name,
+          plateName: (r.plate?.name ?? quoteMatch?.plate?.name ?? null) as string | null,
+          cuttingTimeSec: (r.cuttingTimePerPoseSeconds ?? quoteMatch?.cuttingTimePerPoseSeconds ?? null) as number | null,
+          items: r.items.map(it => ({ name: it.name, countPerPlate: it.countPerPlate, qty: it.quantityPerUnit })),
+        }
+      })
     : quoteRuns.map(r => ({
         name: r.name,
         plateName: r.plate?.name ?? null,
@@ -82,6 +85,7 @@ export function DecoupeBlock({ quote }: { quote: Quote }) {
           {isAmalgame ? (
             <div className="space-y-2">
               <p className="text-xs font-semibold text-slate-400 uppercase tracking-wide">Plaques de découpe</p>
+              <p className="text-[11px] text-slate-400 italic">Matière et temps de découpe se modifient dans la section Amalgame.</p>
               {runs.map((run, i) => (
                 <div key={i} className="rounded-xl border border-slate-200 p-3 space-y-2">
                   <div className="flex items-center justify-between gap-2">
