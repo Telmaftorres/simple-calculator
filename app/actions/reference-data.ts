@@ -190,18 +190,46 @@ export async function getPlates(companyId?: number) {
         // Miroir local de chaque matière CRM (nom/dimensions/prix) — nécessaire pour que
         // Quote.plateId (vraie clé étrangère vers Plate) reste valide, même pour une matière
         // toute nouvelle côté CRM. La catégorie emballage (B/EB/C/BC), elle, n'est jamais écrasée.
-        return await Promise.all(matieres.map(async (m) => {
+        const synced = await Promise.all(matieres.map(async (m) => {
           const { width, height } = parseFormatMatiere(m.format_matiere)
           const lots = stockByMat.get(String(m.id_matiere)) ?? []
           const stockRemaining = lots.reduce((sum, l) => sum + (parseFloat(String(l.stock)) || 0), 0)
           const cost = computeMatiereCost(lots, costMethod)
           const crmMaterialId = String(m.id_matiere)
           const name = m.nom_matiere ?? ''
+          // Ne jamais écraser une dimension ou un prix existant par 0 (format/prix CRM illisible)
+          const freshData = {
+            ...(width > 0 ? { width } : {}),
+            ...(height > 0 ? { height } : {}),
+            ...(cost > 0 ? { cost } : {}),
+          }
           try {
-            const plate = await prisma.plate.upsert({
+            const existing = await prisma.plate.findUnique({
               where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
-              update: { name, width, height, cost },
-              create: { companyId: cid, crmMaterialId, name, width, height, cost, material: '' },
+            })
+            if (existing) {
+              const plate = await prisma.plate.update({ where: { id: existing.id }, data: freshData })
+              return { ...plate, stockRemaining }
+            }
+            // Ligne historique déjà référencée par des devis (même id que le CRM, ou même nom) :
+            // on la réutilise au lieu de créer un doublon, sinon les anciens devis perdent leur matière.
+            const legacy = await prisma.plate.findFirst({
+              where: {
+                companyId: cid,
+                crmMaterialId: null,
+                OR: [{ id: Number(m.id_matiere) || -1 }, { name }],
+              },
+              orderBy: { id: 'asc' },
+            })
+            if (legacy) {
+              const plate = await prisma.plate.update({
+                where: { id: legacy.id },
+                data: { crmMaterialId, ...freshData },
+              })
+              return { ...plate, stockRemaining }
+            }
+            const plate = await prisma.plate.create({
+              data: { companyId: cid, crmMaterialId, name, width, height, cost, material: '' },
             })
             return { ...plate, stockRemaining }
           } catch {
@@ -209,12 +237,20 @@ export async function getPlates(companyId?: number) {
             // on désambiguïse pour garder une ligne locale stable malgré tout.
             const plate = await prisma.plate.upsert({
               where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
-              update: { name: `${name} (${crmMaterialId})`, width, height, cost },
+              update: freshData,
               create: { companyId: cid, crmMaterialId, name: `${name} (${crmMaterialId})`, width, height, cost, material: '' },
             })
             return { ...plate, stockRemaining }
           }
         }))
+        // Les autres plaques de l'entreprise restent disponibles : des devis existants les référencent
+        // et doivent pouvoir se recharger avec leur matière.
+        const syncedIds = new Set(synced.map(p => p.id))
+        const others = await prisma.plate.findMany({
+          where: { companyId: cid, id: { notIn: [...syncedIds] } },
+          orderBy: { name: 'asc' },
+        })
+        return [...synced, ...others]
       }
     } catch { /* fallback local */ }
   }
