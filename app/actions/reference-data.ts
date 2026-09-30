@@ -190,19 +190,30 @@ export async function getPlates(companyId?: number) {
         // Miroir local de chaque matière CRM (nom/dimensions/prix) — nécessaire pour que
         // Quote.plateId (vraie clé étrangère vers Plate) reste valide, même pour une matière
         // toute nouvelle côté CRM. La catégorie emballage (B/EB/C/BC), elle, n'est jamais écrasée.
-        return Promise.all(matieres.map(async (m) => {
+        return await Promise.all(matieres.map(async (m) => {
           const { width, height } = parseFormatMatiere(m.format_matiere)
           const lots = stockByMat.get(String(m.id_matiere)) ?? []
           const stockRemaining = lots.reduce((sum, l) => sum + (parseFloat(String(l.stock)) || 0), 0)
           const cost = computeMatiereCost(lots, costMethod)
           const crmMaterialId = String(m.id_matiere)
           const name = m.nom_matiere ?? ''
-          const plate = await prisma.plate.upsert({
-            where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
-            update: { name, width, height, cost },
-            create: { companyId: cid, crmMaterialId, name, width, height, cost, material: '' },
-          })
-          return { ...plate, stockRemaining }
+          try {
+            const plate = await prisma.plate.upsert({
+              where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
+              update: { name, width, height, cost },
+              create: { companyId: cid, crmMaterialId, name, width, height, cost, material: '' },
+            })
+            return { ...plate, stockRemaining }
+          } catch {
+            // Collision de nom avec une autre plaque (name+companyId est unique) :
+            // on désambiguïse pour garder une ligne locale stable malgré tout.
+            const plate = await prisma.plate.upsert({
+              where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
+              update: { name: `${name} (${crmMaterialId})`, width, height, cost },
+              create: { companyId: cid, crmMaterialId, name: `${name} (${crmMaterialId})`, width, height, cost, material: '' },
+            })
+            return { ...plate, stockRemaining }
+          }
         }))
       }
     } catch { /* fallback local */ }
