@@ -65,6 +65,7 @@ export function parseQuoteForLoad(initialQuote: Quote) {
     client: initialQuote.client || '',
     contactName: initialQuote.contactName || '',
     selectedProductTypeId: initialQuote.productTypeId?.toString() || '',
+    productSearch: initialQuote.productType?.name || '',
     quantity: initialQuote.quantity,
     selectedPlateId: initialQuote.plateId?.toString() || '',
     flatWidth: initialQuote.flatWidth || 0,

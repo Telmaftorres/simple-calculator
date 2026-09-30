@@ -1,6 +1,7 @@
 'use server'
 
 import { prisma } from '@/lib/server/prisma'
+import { syncCrmPlates } from '@/lib/server/crm-plates-sync'
 import { requireAdmin, requireAuth } from '@/lib/server/auth'
 import { revalidateCache } from '@/lib/server/cache'
 
@@ -187,70 +188,18 @@ export async function getPlates(companyId?: number) {
             else stockByMat.set(k, [s])
           }
         }
-        // Miroir local de chaque matière CRM (nom/dimensions/prix) — nécessaire pour que
-        // Quote.plateId (vraie clé étrangère vers Plate) reste valide, même pour une matière
-        // toute nouvelle côté CRM. La catégorie emballage (B/EB/C/BC), elle, n'est jamais écrasée.
-        const synced = await Promise.all(matieres.map(async (m) => {
+        return syncCrmPlates(prisma, cid, matieres.map((m) => {
           const { width, height } = parseFormatMatiere(m.format_matiere)
           const lots = stockByMat.get(String(m.id_matiere)) ?? []
-          const stockRemaining = lots.reduce((sum, l) => sum + (parseFloat(String(l.stock)) || 0), 0)
-          const cost = computeMatiereCost(lots, costMethod)
-          const crmMaterialId = String(m.id_matiere)
-          const name = m.nom_matiere ?? ''
-          // Ne jamais écraser une dimension ou un prix existant par 0 (format/prix CRM illisible)
-          const freshData = {
-            ...(width > 0 ? { width } : {}),
-            ...(height > 0 ? { height } : {}),
-            ...(cost > 0 ? { cost } : {}),
-          }
-          try {
-            const existing = await prisma.plate.findUnique({
-              where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
-            })
-            if (existing) {
-              const plate = await prisma.plate.update({ where: { id: existing.id }, data: freshData })
-              return { ...plate, stockRemaining }
-            }
-            // Ligne historique déjà référencée par des devis (même id que le CRM, ou même nom) :
-            // on la réutilise au lieu de créer un doublon, sinon les anciens devis perdent leur matière.
-            const legacy = await prisma.plate.findFirst({
-              where: {
-                companyId: cid,
-                crmMaterialId: null,
-                OR: [{ id: Number(m.id_matiere) || -1 }, { name }],
-              },
-              orderBy: { id: 'asc' },
-            })
-            if (legacy) {
-              const plate = await prisma.plate.update({
-                where: { id: legacy.id },
-                data: { crmMaterialId, ...freshData },
-              })
-              return { ...plate, stockRemaining }
-            }
-            const plate = await prisma.plate.create({
-              data: { companyId: cid, crmMaterialId, name, width, height, cost, material: '' },
-            })
-            return { ...plate, stockRemaining }
-          } catch {
-            // Collision de nom avec une autre plaque (name+companyId est unique) :
-            // on désambiguïse pour garder une ligne locale stable malgré tout.
-            const plate = await prisma.plate.upsert({
-              where: { companyId_crmMaterialId: { companyId: cid, crmMaterialId } },
-              update: freshData,
-              create: { companyId: cid, crmMaterialId, name: `${name} (${crmMaterialId})`, width, height, cost, material: '' },
-            })
-            return { ...plate, stockRemaining }
+          return {
+            crmMaterialId: String(m.id_matiere),
+            name: m.nom_matiere ?? '',
+            width,
+            height,
+            cost: computeMatiereCost(lots, costMethod),
+            stockRemaining: lots.reduce((sum, l) => sum + (parseFloat(String(l.stock)) || 0), 0),
           }
         }))
-        // Les autres plaques de l'entreprise restent disponibles : des devis existants les référencent
-        // et doivent pouvoir se recharger avec leur matière.
-        const syncedIds = new Set(synced.map(p => p.id))
-        const others = await prisma.plate.findMany({
-          where: { companyId: cid, id: { notIn: [...syncedIds] } },
-          orderBy: { name: 'asc' },
-        })
-        return [...synced, ...others]
       }
     } catch { /* fallback local */ }
   }
