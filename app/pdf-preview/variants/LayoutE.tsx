@@ -155,6 +155,9 @@ const s = StyleSheet.create({
   fillLabel: { fontSize: 7.5, color: C.mid, marginBottom: 12 },
   fillLine: { borderBottomWidth: 1, borderBottomColor: C.dark },
   remarksHint: { fontSize: 7, color: C.mid, marginBottom: 4 },
+  beLine: { flexDirection: 'row', alignItems: 'center', gap: 14, marginTop: 6, padding: '4 10', backgroundColor: C.indigoBg, borderRadius: 3 },
+  beLabel: { fontSize: 7.5, fontFamily: 'Helvetica-Bold', color: C.indigo, letterSpacing: 0.8 },
+  beValue: { fontSize: 8, fontFamily: 'Helvetica-Bold', color: C.dark },
   remarksLine: { borderBottomWidth: 1, borderBottomColor: C.border, height: 16 },
 })
 
@@ -377,6 +380,15 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
 
           </View>
 
+          {/* Bureau d'études : pas une opération de finition, une simple ligne au-dessus des temps */}
+          {quote.hasBE && (quote.beTimeMinutes > 0 || quote.batTimeMinutes > 0) && (
+            <View style={s.beLine}>
+              <Text style={s.beLabel}>BUREAU D&apos;ETUDES</Text>
+              {quote.beTimeMinutes > 0 && <Text style={s.beValue}>BE : {fmtTime(quote.beTimeMinutes * 60)}</Text>}
+              {quote.batTimeMinutes > 0 && <Text style={s.beValue}>BAT : {fmtTime(quote.batTimeMinutes * 60)}</Text>}
+            </View>
+          )}
+
           {/* Saisie atelier — à remplir à la main */}
           <View style={s.fillBox} wrap={false}>
             <Text style={s.fillTitle}>A remplir par l&apos;atelier</Text>
@@ -400,10 +412,10 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
             <Text style={s.summaryLabel}>Temps decoupe estime</Text>
             <Text style={s.summaryValue}>{fmtTime(cuttingSeconds)}</Text>
           </View>
-          {impressionSeconds > 0 && (
+          {(impressionSeconds > 0 || runs.some(r => r.hasImpression)) && (
             <View style={s.summaryItem}>
               <Text style={s.summaryLabel}>Temps impression estime</Text>
-              <Text style={s.summaryValue}>{fmtTime(impressionSeconds)}</Text>
+              <Text style={s.summaryValue}>{impressionSeconds > 0 ? fmtTime(impressionSeconds) : '—'}</Text>
             </View>
           )}
           <View style={s.summaryItemLast}>
@@ -428,12 +440,6 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
         <View style={[s.body, { padding: '14 22 80 22' }]}>
           <Text style={s.sectionLabel}>Operations de finition</Text>
           <View style={s.opsGrid}>
-            {quote.hasBE && (
-              <OpCard title="BUREAU D'ETUDES" bgColor={C.indigoBg} textColor={C.indigo}>
-                {quote.beTimeMinutes > 0 && <OpRow label="BE" value={`${quote.beTimeMinutes} min`} />}
-                {quote.batTimeMinutes > 0 && <OpRow label="BAT" value={`${quote.batTimeMinutes} min`} />}
-              </OpCard>
-            )}
             {quote.hasFaconnage && (
               <OpCard title="FACONNAGE" bgColor={C.amberBg} textColor={C.amber}>
                 <OpRow label="Temps / piece" value={`${ps.prodAssemblyTimePerPieceSeconds ?? quote.assemblyTimePerPieceSeconds ?? '—'} s`} />

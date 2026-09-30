@@ -282,7 +282,15 @@ export function SectionTransport() {
               >
                 −
               </button>
-              <span className="text-xs font-semibold w-4 text-center">{paletteQuantity}</span>
+              <input
+                type="number"
+                min={1}
+                value={paletteQuantity || ''}
+                onClick={(e) => e.stopPropagation()}
+                onChange={(e) => setPaletteQuantity(parseInt(e.target.value) || 0)}
+                onBlur={() => { if (paletteQuantity < 1) setPaletteQuantity(1) }}
+                className="w-10 h-6 text-xs font-semibold text-center bg-white rounded border border-slate-200 [appearance:textfield] [&::-webkit-inner-spin-button]:appearance-none [&::-webkit-outer-spin-button]:appearance-none"
+              />
               <button
                 onClick={() => setPaletteQuantity(paletteQuantity + 1)}
                 className="w-6 h-6 flex items-center justify-center text-slate-500 hover:text-slate-800 font-bold"
