@@ -206,10 +206,14 @@ function fmtSec(s: number): string {
 }
 
 function fmtTime(totalSeconds: number): string {
-  const h = Math.floor(totalSeconds / 3600)
-  const m = Math.floor((totalSeconds % 3600) / 60)
-  if (h > 0) return `${h}h${m.toString().padStart(2, '0')}`
-  return `${m} min`
+  const secs = Math.round(totalSeconds)
+  // Moins d'une heure : on garde les secondes (sinon 2min30s s'affichait « 2 min »)
+  if (secs < 3600) return fmtSec(secs)
+  // Au-delà : arrondi à la minute la plus proche (et non tronqué)
+  const totalMin = Math.round(secs / 60)
+  const h = Math.floor(totalMin / 60)
+  const m = totalMin % 60
+  return `${h}h${m.toString().padStart(2, '0')}`
 }
 
 function PageHeader({ quote, tag }: { quote: Q; tag: string }) {
