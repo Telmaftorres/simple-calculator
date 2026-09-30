@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useMemo } from 'react'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { GaugeSlider } from '@/components/calculator/GaugeSlider'
@@ -8,7 +8,9 @@ import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
 import { CUTTING_SHORTCUTS, CUTTING_SHORTCUTS_PER_PLATE } from '@/lib/config/ui'
-import { PACKAGING_SUPPLIER_PRICING_ENABLED } from '@/lib/config/pricing'
+import { PACKAGING_SUPPLIER_PRICING_ENABLED, POSE_SPACING_MM, PLATE_BORDER_MM } from '@/lib/config/pricing'
+import { calculateImposition } from '@/lib/calculation/imposition'
+import { ImpositionPreview } from '@/components/calculator/ImpositionPreview'
 import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 type BoxType = 'etui' | 'caisse' | 'plaque_rainee'
@@ -59,6 +61,7 @@ export function SectionEmballage() {
     flatWidth, flatHeight,
     plates,
     costResult,
+    settings,
   } = useCalculatorContext()
 
   const {
@@ -104,6 +107,20 @@ export function SectionEmballage() {
   }
 
   const { width: computedW, height: computedH } = computedPackagingDimensions
+
+  // Plan de la plaque d'emballage : même imposition que le calcul du coût (lib/calculation/costs.ts)
+  const packagingPlate = plates.find((p) => p.id.toString() === packagingPlateId)
+  const plateBorderMm = settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM
+  const packagingLayout = useMemo(() => {
+    if (isExternal || !packagingPlate || computedW <= 0 || computedH <= 0) return []
+    return calculateImposition(
+      { width: computedW, height: computedH },
+      { width: packagingPlate.width, height: packagingPlate.height },
+      settings?.POSE_SPACING_MM ?? POSE_SPACING_MM,
+      undefined,
+      plateBorderMm,
+    ).layout
+  }, [isExternal, packagingPlate, computedW, computedH, settings, plateBorderMm])
 
   return (
     <SectionDisplay
@@ -419,6 +436,16 @@ export function SectionEmballage() {
                   <div className="text-xs text-slate-400 uppercase">Plaques nécessaires</div>
                 </div>
               </div>
+            )}
+            {packagingPlate && packagingLayout.length > 0 && (
+              <ImpositionPreview
+                plateWidth={packagingPlate.width}
+                plateHeight={packagingPlate.height}
+                layout={packagingLayout}
+                plateBorderMm={plateBorderMm}
+                color="amber"
+                title="Plan de la plaque d'emballage"
+              />
             )}
 
             {/* Jauge découpe */}

@@ -26,6 +26,8 @@ import { SectionProductionExtra } from './sections/SectionProductionExtra'
 import { SectionActualsExtra } from './sections/SectionActualsExtra'
 import { ErrorBoundary } from '@/components/feedback/ErrorBoundary'
 import type { ImpositionResult } from '@/types/calculator'
+import { ImpositionPreview } from '@/components/calculator/ImpositionPreview'
+import { PLATE_BORDER_MM } from '@/lib/config/pricing'
 
 
 function ImpositionDisplay({
@@ -36,7 +38,11 @@ function ImpositionDisplay({
   onBordABordChange,
   itemsPerPlateOverride,
   onItemsPerPlateOverrideChange,
+  plate,
+  plateBorderMm,
 }: {
+  plate?: { width: number; height: number }
+  plateBorderMm: number
   impositionResult: ImpositionResult
   orientationOverride: 'normal' | 'rotated' | null
   onOrientationChange: (v: 'normal' | 'rotated' | null) => void
@@ -128,6 +134,15 @@ function ImpositionDisplay({
           />
         </div>
       </div>
+      {plate && impositionResult.layout && (
+        <ImpositionPreview
+          plateWidth={plate.width}
+          plateHeight={plate.height}
+          layout={impositionResult.layout}
+          plateBorderMm={plateBorderMm}
+          itemsPerPlate={impositionResult.itemsPerPlate}
+        />
+      )}
     </div>
   )
 }
@@ -272,6 +287,8 @@ export default function Calculator({
                         onBordABordChange={calc.setBordABord}
                         itemsPerPlateOverride={calc.formState.itemsPerPlateOverride}
                         onItemsPerPlateOverrideChange={calc.setItemsPerPlateOverride}
+                        plate={calc.selectedPlate}
+                        plateBorderMm={calc.settings?.PLATE_BORDER_MM ?? PLATE_BORDER_MM}
                       />
                     </SectionDisplay>
                   )}
