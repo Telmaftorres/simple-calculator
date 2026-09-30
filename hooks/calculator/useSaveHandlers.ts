@@ -40,6 +40,8 @@ export interface SaveContext {
   hasVarnish: boolean
   hasFlatColor: boolean
   cuttingTimePerPoseSeconds: number
+  cuttingByPlate: boolean
+  cuttingTimePerPlateSeconds: number
   machineTimeMinOverride: number | null
   itemsPerPlateOverride: number | null
   bordABord: boolean
@@ -60,6 +62,8 @@ export interface SaveContext {
   packagingPlateId: string
   packagingQuantity: number
   packagingCuttingTimePerPoseSeconds: number
+  packagingCuttingByPlate: boolean
+  packagingCuttingTimePerPlateSeconds: number
   packagingUnitPriceOverride: number | null
   printSetupType: 'none' | 'standard' | 'complexe'
   cuttingSetupType: 'none' | 'standard' | 'complexe'
@@ -203,6 +207,8 @@ export function useSaveHandlers(ctx: SaveContext) {
         hasVarnish: isMultiProduct ? false : ctx.hasVarnish,
         hasFlatColor: isMultiProduct ? false : ctx.hasFlatColor,
         cuttingTimePerPoseSeconds: isMultiProduct ? 0 : ctx.cuttingTimePerPoseSeconds,
+        cuttingByPlate: isMultiProduct ? false : ctx.cuttingByPlate,
+        cuttingTimePerPlateSeconds: isMultiProduct ? 0 : ctx.cuttingTimePerPlateSeconds,
         machineTimeMinOverride: isMultiProduct ? null : (ctx.machineTimeMinOverride ?? null),
         itemsPerPlateOverride: isMultiProduct ? null : (ctx.itemsPerPlateOverride ?? null),
         bordABord: ctx.bordABord,
@@ -223,6 +229,8 @@ export function useSaveHandlers(ctx: SaveContext) {
         packagingPlateId: ctx.packagingPlateId ? parseInt(ctx.packagingPlateId) : null,
         packagingQuantity: ctx.packagingQuantity || null,
         packagingCuttingTimePerPoseSeconds: ctx.packagingCuttingTimePerPoseSeconds,
+        packagingCuttingByPlate: ctx.packagingCuttingByPlate,
+        packagingCuttingTimePerPlateSeconds: ctx.packagingCuttingTimePerPlateSeconds,
         packagingUnitPriceOverride: ctx.packagingUnitPriceOverride ?? null,
         packagingWidth: computedPackagingDimensions.width || null,
         packagingHeight: computedPackagingDimensions.height || null,

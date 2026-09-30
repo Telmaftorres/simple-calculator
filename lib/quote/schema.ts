@@ -32,6 +32,8 @@ export const quoteFieldsSchema = z.object({
 
   cuttingSetupType: z.enum(['none', 'standard', 'complexe']).optional(),
   cuttingTimePerPoseSeconds: z.number().int().optional(),
+  cuttingByPlate: z.boolean().optional(),
+  cuttingTimePerPlateSeconds: z.number().int().optional(),
   machineTimeMinOverride: z.number().min(0).nullable().optional(),
   itemsPerPlateOverride: z.number().int().positive().nullable().optional(),
   bordABord: z.boolean().optional(),
@@ -66,6 +68,8 @@ export const quoteFieldsSchema = z.object({
   packagingPlateId: z.number().int().positive().nullable().optional(),
   packagingQuantity: z.number().int().positive().nullable().optional(),
   packagingCuttingTimePerPoseSeconds: z.number().int().optional(),
+  packagingCuttingByPlate: z.boolean().optional(),
+  packagingCuttingTimePerPlateSeconds: z.number().int().optional(),
   packagingWidth: z.number().int().positive().nullable().optional(),
   packagingHeight: z.number().int().positive().nullable().optional(),
   packagingUnitPriceOverride: z.number().min(0).nullable().optional(),

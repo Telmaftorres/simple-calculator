@@ -344,6 +344,8 @@ model Quote {
   hasVarnish                         Boolean           @default(false)
   hasFlatColor                       Boolean           @default(false)
   cuttingTimePerPoseSeconds          Int               @default(0)
+  cuttingByPlate                     Boolean           @default(false)
+  cuttingTimePerPlateSeconds         Int               @default(0)
   machineTimeMinOverride             Float?
   itemsPerPlateOverride              Int?
   bordABord                          Boolean           @default(false)
@@ -373,6 +375,8 @@ model Quote {
   packagingPlateId                   Int?
   packagingQuantity                  Int?
   packagingCuttingTimePerPoseSeconds Int               @default(20)
+  packagingCuttingByPlate            Boolean           @default(false)
+  packagingCuttingTimePerPlateSeconds Int              @default(0)
   packagingWidth                     Int?              // longueur carton calculée (mm)
   packagingHeight                    Int?              // largeur carton calculée (mm)
   packagingUnitPriceOverride         Float?

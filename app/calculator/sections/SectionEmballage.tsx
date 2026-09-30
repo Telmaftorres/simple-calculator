@@ -7,7 +7,7 @@ import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-import { CUTTING_SHORTCUTS } from '@/lib/config/ui'
+import { CUTTING_SHORTCUTS, CUTTING_SHORTCUTS_PER_PLATE } from '@/lib/config/ui'
 import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 type BoxType = 'etui' | 'caisse' | 'plaque_rainee'
@@ -47,6 +47,8 @@ export function SectionEmballage() {
     packagingPlateId, setPackagingPlateId,
     packagingQuantity, setPackagingQuantity,
     packagingCuttingTimePerPoseSeconds, setPackagingCuttingTimePerPoseSeconds,
+    packagingCuttingByPlate, setPackagingCuttingByPlate,
+    packagingCuttingTimePerPlateSeconds, setPackagingCuttingTimePerPlateSeconds,
     packagingUnitPriceOverride, setPackagingUnitPriceOverride,
     packagingMargePercent, setPackagingMargePercent,
     computedPackagingDimensions,
@@ -404,21 +406,64 @@ export function SectionEmballage() {
 
             {/* Jauge découpe */}
             <div className="space-y-2">
-              <GaugeSlider
-                label="Temps de découpe par pose"
-                value={packagingCuttingTimePerPoseSeconds}
-                min={0} max={300} unit="sec"
-                onChange={setPackagingCuttingTimePerPoseSeconds}
-                formatValue={formatTimeSeconds}
-                gradientColors="from-amber-300 to-orange-500"
-              />
-              <ShortcutButtons
-                values={CUTTING_SHORTCUTS}
-                selected={packagingCuttingTimePerPoseSeconds}
-                onSelect={setPackagingCuttingTimePerPoseSeconds}
-                activeClass="bg-amber-500 text-white border-amber-500"
-                formatValue={(val) => val === 0 ? '0s' : formatTimeSeconds(val)}
-              />
+              <div className="flex items-center justify-between">
+                <Label>Découpe</Label>
+                <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+                  <button
+                    onClick={() => setPackagingCuttingByPlate(false)}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      !packagingCuttingByPlate ? 'bg-white shadow-sm text-amber-700' : 'text-slate-400'
+                    }`}
+                  >
+                    Par pose
+                  </button>
+                  <button
+                    onClick={() => setPackagingCuttingByPlate(true)}
+                    className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                      packagingCuttingByPlate ? 'bg-white shadow-sm text-amber-700' : 'text-slate-400'
+                    }`}
+                  >
+                    Par plaque
+                  </button>
+                </div>
+              </div>
+              {packagingCuttingByPlate ? (
+                <>
+                  <GaugeSlider
+                    label="Temps de découpe par plaque"
+                    value={packagingCuttingTimePerPlateSeconds}
+                    min={0} max={900} unit="sec"
+                    onChange={setPackagingCuttingTimePerPlateSeconds}
+                    formatValue={formatTimeSeconds}
+                    gradientColors="from-amber-300 to-orange-500"
+                  />
+                  <ShortcutButtons
+                    values={CUTTING_SHORTCUTS_PER_PLATE}
+                    selected={packagingCuttingTimePerPlateSeconds}
+                    onSelect={setPackagingCuttingTimePerPlateSeconds}
+                    activeClass="bg-amber-500 text-white border-amber-500"
+                    formatValue={(val) => val === 0 ? '0s' : formatTimeSeconds(val)}
+                  />
+                </>
+              ) : (
+                <>
+                  <GaugeSlider
+                    label="Temps de découpe par pose"
+                    value={packagingCuttingTimePerPoseSeconds}
+                    min={0} max={300} unit="sec"
+                    onChange={setPackagingCuttingTimePerPoseSeconds}
+                    formatValue={formatTimeSeconds}
+                    gradientColors="from-amber-300 to-orange-500"
+                  />
+                  <ShortcutButtons
+                    values={CUTTING_SHORTCUTS}
+                    selected={packagingCuttingTimePerPoseSeconds}
+                    onSelect={setPackagingCuttingTimePerPoseSeconds}
+                    activeClass="bg-amber-500 text-white border-amber-500"
+                    formatValue={(val) => val === 0 ? '0s' : formatTimeSeconds(val)}
+                  />
+                </>
+              )}
             </div>
 
             {/* Récap C/BC */}

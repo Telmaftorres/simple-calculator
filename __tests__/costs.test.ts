@@ -121,6 +121,19 @@ describe('calculateCosts', () => {
       const result = calculateCosts({ ...defaultParams, impositionResult: null })
       expect(result.cuttingCost).toBe(0)
     })
+
+    it('découpe par plaque : calcule sur le nombre de plaques plutôt que la quantité', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        cuttingByPlate: true,
+        cuttingTimePerPlateSeconds: 45,
+      })
+      // mockImpositionResult.platesNeeded = 5
+      const machineTimeMin = (45 * 5) / 60
+      const machineCost = (machineTimeMin / 60) * HOURLY_RATE_CUTTING
+      const expected = machineCost + CUTTING_SETUP_STANDARD_COST
+      expect(result.cuttingCost).toBeCloseTo(expected, 2)
+    })
   })
 
   describe('assemblyCost', () => {
@@ -490,6 +503,22 @@ describe('calculateCosts', () => {
         packagingCuttingTimePerPoseSeconds: 30,
       })
       const machineMinutes = (30 * 100) / 60
+      const expectedCutting = (machineMinutes / 60) * HOURLY_RATE_PACKAGING + PACKAGING_SETUP_COST
+      expect(result.packagingCuttingCost).toBeCloseTo(expectedCutting, 2)
+    })
+
+    it('découpe par plaque : calcule sur le nombre de plaques plutôt que la quantité', () => {
+      const result = calculateCosts({
+        ...defaultParams,
+        hasPackaging: true,
+        packagingPlate,
+        packagingQuantity: 100,
+        packagingWidth: 200,
+        packagingHeight: 150,
+        packagingCuttingByPlate: true,
+        packagingCuttingTimePerPlateSeconds: 60,
+      })
+      const machineMinutes = (60 * result.packagingPlatesNeeded) / 60
       const expectedCutting = (machineMinutes / 60) * HOURLY_RATE_PACKAGING + PACKAGING_SETUP_COST
       expect(result.packagingCuttingCost).toBeCloseTo(expectedCutting, 2)
     })

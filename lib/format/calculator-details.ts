@@ -5,10 +5,15 @@ export function formatCuttingDetails(params: {
   cuttingSetupTimeMin: number
   cuttingSetupType: 'none' | 'standard' | 'complexe'
   cuttingTimePerPoseSeconds: number
+  cuttingByPlate?: boolean
+  cuttingTimePerPlateSeconds?: number
 }): string {
   const hasSetup = params.cuttingSetupType !== 'none'
   const totalMin = params.cuttingMachineTimeMin + (hasSetup ? params.cuttingSetupTimeMin : 0)
-  return `${formatMinutes(totalMin)} (${formatTimeSeconds(params.cuttingTimePerPoseSeconds)}/pose${
+  const perUnit = params.cuttingByPlate
+    ? `${formatTimeSeconds(params.cuttingTimePerPlateSeconds ?? 0)}/plaque`
+    : `${formatTimeSeconds(params.cuttingTimePerPoseSeconds)}/pose`
+  return `${formatMinutes(totalMin)} (${perUnit}${
     hasSetup ? ` + calage ${params.cuttingSetupType}` : ''
   })`
 }

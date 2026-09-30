@@ -109,6 +109,8 @@ export function calculateCosts(params: {
   hasConditionnement: boolean
   hasAccessoires: boolean
   cuttingTimePerPoseSeconds: number
+  cuttingByPlate?: boolean
+  cuttingTimePerPlateSeconds?: number
   assemblyTimePerPieceSeconds: number
   packTimePerPieceSeconds: number
   hasAssemblyNotice: boolean
@@ -127,6 +129,8 @@ export function calculateCosts(params: {
   packagingPlate: Plate | undefined
   packagingQuantity: number
   packagingCuttingTimePerPoseSeconds: number
+  packagingCuttingByPlate?: boolean
+  packagingCuttingTimePerPlateSeconds?: number
   packagingWidth: number
   packagingHeight: number
   transportTotal?: number
@@ -164,6 +168,8 @@ export function calculateCosts(params: {
     hasConditionnement,
     hasAccessoires,
     cuttingTimePerPoseSeconds,
+    cuttingByPlate = false,
+    cuttingTimePerPlateSeconds = 0,
     assemblyTimePerPieceSeconds,
     packTimePerPieceSeconds,
     hasAssemblyNotice,
@@ -189,6 +195,8 @@ export function calculateCosts(params: {
     packagingPlate,
     packagingQuantity,
     packagingCuttingTimePerPoseSeconds,
+    packagingCuttingByPlate = false,
+    packagingCuttingTimePerPlateSeconds = 0,
     packagingWidth,
     packagingHeight,
     transportTotal,
@@ -372,7 +380,9 @@ export function calculateCosts(params: {
 
   // ── Découpe ──
   const cuttingMachineTimeMin = impositionResult
-    ? (cuttingTimePerPoseSeconds * quantity) / 60
+    ? (cuttingByPlate
+        ? (cuttingTimePerPlateSeconds * impositionResult.platesNeeded) / 60
+        : (cuttingTimePerPoseSeconds * quantity) / 60)
     : 0
 
   const cuttingSetupCost = (() => {
@@ -497,7 +507,9 @@ export function calculateCosts(params: {
   const packagingCuttingCost = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
     if (isExternalPackaging) return 0  // Pas de découpe pour B/EB
-    const machineMinutes = (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
+    const machineMinutes = packagingCuttingByPlate
+      ? (packagingCuttingTimePerPlateSeconds * packagingPlatesNeeded) / 60
+      : (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
     return (machineMinutes / 60) * hourlyRatePackaging + packagingSetupCost
   })()
 
@@ -514,7 +526,9 @@ export function calculateCosts(params: {
   const packagingCuttingCostBrut = (() => {
     if (!hasPackaging || packagingQuantity <= 0) return 0
     if (isExternalPackaging) return 0
-    const machineMinutes = (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
+    const machineMinutes = packagingCuttingByPlate
+      ? (packagingCuttingTimePerPlateSeconds * packagingPlatesNeeded) / 60
+      : (packagingCuttingTimePerPoseSeconds * packagingQuantity) / 60
     return (machineMinutes / 60) * hourlyRatePackagingCost + packagingSetupCost
   })()
   const packagingTotalCostBrut = packagingMaterialCostBrut + packagingCuttingCostBrut

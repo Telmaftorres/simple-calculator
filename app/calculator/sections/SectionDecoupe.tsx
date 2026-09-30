@@ -5,12 +5,14 @@ import { GaugeSlider } from '@/components/calculator/GaugeSlider'
 import { SectionDisplay } from '../shared'
 import { formatTimeSeconds, formatMinutes } from '@/lib/format'
 import { useCalculatorContext } from '../context/CalculatorContext'
-import { CUTTING_SHORTCUTS } from '@/lib/config/ui'
+import { CUTTING_SHORTCUTS, CUTTING_SHORTCUTS_PER_PLATE } from '@/lib/config/ui'
 import { ShortcutButtons } from '@/components/calculator/ShortcutButtons'
 
 export function SectionDecoupe() {
   const {
     cuttingTimePerPoseSeconds, setCuttingTimePerPoseSeconds,
+    cuttingByPlate, setCuttingByPlate,
+    cuttingTimePerPlateSeconds, setCuttingTimePerPlateSeconds,
     cuttingSetupType, setCuttingSetupType,
     costResult,
   } = useCalculatorContext()
@@ -67,25 +69,70 @@ export function SectionDecoupe() {
           )}
         </div>
 
-        {/* ── Temps par pose ── */}
+        {/* ── Temps par pose / par plaque ── */}
         <div className="space-y-2">
-          <GaugeSlider
-            label="Temps par Pose"
-            value={cuttingTimePerPoseSeconds}
-            min={0}
-            max={300}
-            unit="sec"
-            onChange={setCuttingTimePerPoseSeconds}
-            formatValue={formatTimeSeconds}
-            gradientColors="from-yellow-300 to-orange-600"
-          />
-          <ShortcutButtons
-            values={CUTTING_SHORTCUTS}
-            selected={cuttingTimePerPoseSeconds}
-            onSelect={setCuttingTimePerPoseSeconds}
-            activeClass="bg-orange-500 text-white border-orange-500"
-            formatValue={formatTimeSeconds}
-          />
+          <div className="flex items-center justify-between">
+            <Label className="text-orange-900 font-medium">Temps de découpe</Label>
+            <div className="flex gap-1 bg-slate-100 p-1 rounded-lg">
+              <button
+                onClick={() => setCuttingByPlate(false)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                  !cuttingByPlate ? 'bg-white shadow-sm text-orange-700' : 'text-slate-400'
+                }`}
+              >
+                Par pose
+              </button>
+              <button
+                onClick={() => setCuttingByPlate(true)}
+                className={`px-2.5 py-1 text-xs font-semibold rounded-md transition-all ${
+                  cuttingByPlate ? 'bg-white shadow-sm text-orange-700' : 'text-slate-400'
+                }`}
+              >
+                Par plaque
+              </button>
+            </div>
+          </div>
+          {cuttingByPlate ? (
+            <>
+              <GaugeSlider
+                label="Temps par Plaque"
+                value={cuttingTimePerPlateSeconds}
+                min={0}
+                max={900}
+                unit="sec"
+                onChange={setCuttingTimePerPlateSeconds}
+                formatValue={formatTimeSeconds}
+                gradientColors="from-yellow-300 to-orange-600"
+              />
+              <ShortcutButtons
+                values={CUTTING_SHORTCUTS_PER_PLATE}
+                selected={cuttingTimePerPlateSeconds}
+                onSelect={setCuttingTimePerPlateSeconds}
+                activeClass="bg-orange-500 text-white border-orange-500"
+                formatValue={formatTimeSeconds}
+              />
+            </>
+          ) : (
+            <>
+              <GaugeSlider
+                label="Temps par Pose"
+                value={cuttingTimePerPoseSeconds}
+                min={0}
+                max={300}
+                unit="sec"
+                onChange={setCuttingTimePerPoseSeconds}
+                formatValue={formatTimeSeconds}
+                gradientColors="from-yellow-300 to-orange-600"
+              />
+              <ShortcutButtons
+                values={CUTTING_SHORTCUTS}
+                selected={cuttingTimePerPoseSeconds}
+                onSelect={setCuttingTimePerPoseSeconds}
+                activeClass="bg-orange-500 text-white border-orange-500"
+                formatValue={formatTimeSeconds}
+              />
+            </>
+          )}
         </div>
 
         {/* ── Résumé temps ── */}
