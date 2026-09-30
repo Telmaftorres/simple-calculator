@@ -159,6 +159,7 @@ export interface PrintingCostData {
   inkCostRaw?: number        // encre au prix d'achat (sans marge encre)
   machineCostBrut?: number   // temps machine × taux horaire coûtant
   costBrut?: number          // inkCostRaw + machineCostBrut + setupCost
+  timeBreakdown?: import('@/lib/calculation/printing-time').PrintingTimeBreakdown | null  // détail formule atelier
 }
 
 // ── Transport multi-livraisons ──

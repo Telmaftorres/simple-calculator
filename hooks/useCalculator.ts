@@ -86,6 +86,8 @@ export function useCalculator(
     machineTimeMinOverride, plvQuantity, packagingUnitPriceOverride, bordABord, itemsPerPlateOverride,
     accessoriesMargePercent, packagingMargePercent,
     materialMarginOverride, inkMarginStandardOverride, inkMarginVarnishOverride, inkMarginFlatColorOverride, transportMarginOverride,
+    printMarginOverride, cuttingMarginOverride, assemblyMarginOverride, conditioningMarginOverride, packagingCuttingMarginOverride, beMarginOverride, batMarginOverride,
+    varnishType, platesPerTray,
   } = formState
 
   const {
@@ -255,6 +257,8 @@ export function useCalculator(
     isRectoVerso: isMultiProduct ? false : effectiveIsRectoVerso,
     hasVarnish: isMultiProduct ? false : hasVarnish,
     hasFlatColor: isMultiProduct ? false : hasFlatColor,
+    varnishType,
+    platesPerTray: isMultiProduct ? 1 : platesPerTray,
     printSetupType: isMultiProduct ? 'none' : printSetupType,
     cuttingSetupType: isMultiProduct ? 'none' : cuttingSetupType,
     hasImpression: isMultiProduct ? false : hasImpression,
@@ -282,6 +286,13 @@ export function useCalculator(
     inkMarginVarnishOverride,
     inkMarginFlatColorOverride,
     transportMarginOverride,
+    printMarginOverride,
+    cuttingMarginOverride,
+    assemblyMarginOverride,
+    conditioningMarginOverride,
+    packagingCuttingMarginOverride,
+    beMarginOverride,
+    batMarginOverride,
   })
 
   const templateOptionsCost = templateOptionSelections.reduce((sum, s) => sum + s.priceHT * s.quantity, 0)
@@ -339,6 +350,8 @@ export function useCalculator(
     printSetupType, cuttingSetupType, hasImpression, hasFaconnage,
     hasConditionnement, hasAccessoires, accessoriesMargePercent, packagingMargePercent, hasBE, beTimeMinutes, batTimeMinutes,
     materialMarginOverride, inkMarginStandardOverride, inkMarginVarnishOverride, inkMarginFlatColorOverride, transportMarginOverride,
+    printMarginOverride, cuttingMarginOverride, assemblyMarginOverride, conditioningMarginOverride, packagingCuttingMarginOverride, beMarginOverride, batMarginOverride,
+    varnishType, platesPerTray,
     hasDossierFee, hasFournituresEmb, hasPalette, paletteQuantity, modePrototype, hasMargeCommerciale, cumulerTemps, isMultiProduct, products, showMargeCommerciale, showMargeSopano,
     transportDeliveries: formState.transportDeliveries,
     impositionResult, productSlotResults, amalgameGroupResults, amalgameGroups,
@@ -604,6 +617,15 @@ export function useCalculator(
     inkMarginVarnishOverride, setInkMarginVarnishOverride: (v: number) => setField('inkMarginVarnishOverride', v),
     inkMarginFlatColorOverride, setInkMarginFlatColorOverride: (v: number) => setField('inkMarginFlatColorOverride', v),
     transportMarginOverride, setTransportMarginOverride: (v: number) => setField('transportMarginOverride', v),
+    printMarginOverride, setPrintMarginOverride: (v: number) => setField('printMarginOverride', v),
+    cuttingMarginOverride, setCuttingMarginOverride: (v: number) => setField('cuttingMarginOverride', v),
+    assemblyMarginOverride, setAssemblyMarginOverride: (v: number) => setField('assemblyMarginOverride', v),
+    conditioningMarginOverride, setConditioningMarginOverride: (v: number) => setField('conditioningMarginOverride', v),
+    packagingCuttingMarginOverride, setPackagingCuttingMarginOverride: (v: number) => setField('packagingCuttingMarginOverride', v),
+    beMarginOverride, setBeMarginOverride: (v: number) => setField('beMarginOverride', v),
+    batMarginOverride, setBatMarginOverride: (v: number) => setField('batMarginOverride', v),
+    varnishType, setVarnishType: (v: 'gloss' | 'semi_gloss' | 'matte' | null) => setField('varnishType', v),
+    platesPerTray, setPlatesPerTray: (v: number) => setField('platesPerTray', Math.max(1, Math.floor(v) || 1)),
     selectedConsumables,
     currentConsumableId, setCurrentConsumableId: (v: string) => setField('currentConsumableId', v),
     currentConsumableSize, setCurrentConsumableSize: (v: number) => setField('currentConsumableSize', v),

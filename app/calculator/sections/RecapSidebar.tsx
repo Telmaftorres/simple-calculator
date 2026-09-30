@@ -41,6 +41,13 @@ export function RecapSidebar() {
     transportMarginOverride, setTransportMarginOverride,
     accessoriesMargePercent, setAccessoriesMargePercent,
     packagingMargePercent, setPackagingMargePercent,
+    printMarginOverride, setPrintMarginOverride,
+    cuttingMarginOverride, setCuttingMarginOverride,
+    assemblyMarginOverride, setAssemblyMarginOverride,
+    conditioningMarginOverride, setConditioningMarginOverride,
+    packagingCuttingMarginOverride, setPackagingCuttingMarginOverride,
+    beMarginOverride, setBeMarginOverride,
+    batMarginOverride, setBatMarginOverride,
   } = useCalculatorContext()
 
   const {
@@ -72,6 +79,7 @@ export function RecapSidebar() {
     inkMarginStandard,
     inkMarginVarnish,
     inkMarginFlatColor,
+    hourlyCoeffs,
     // ── Brut ──
     totalCostBrut,
     materialCostRaw,
@@ -349,6 +357,7 @@ export function RecapSidebar() {
                       label="Impression (temps machine)"
                       value={brut ? (printingCostData.machineCostBrut ?? 0) : printingCostData.machineCost}
                       details={printingCostData.machineTimeMin > 0 ? formatMinutes(printingCostData.machineTimeMin) : undefined}
+                      marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.print ?? 1} override={printMarginOverride} onChange={setPrintMarginOverride} /> : undefined}
                     />
                   )}
                   {printSetupType !== 'none' && printingCostData.setupCost > 0 && (
@@ -374,6 +383,7 @@ export function RecapSidebar() {
                   label="Découpe (temps machine)"
                   value={brut ? cuttingMachineCostBrut : cuttingMachineCost}
                   details={cuttingMachineTimeMin > 0 ? formatMinutes(cuttingMachineTimeMin) : undefined}
+                  marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.cutting ?? 1} override={cuttingMarginOverride} onChange={setCuttingMarginOverride} /> : undefined}
                 />
               )}
               {cuttingSetupType !== 'none' && cuttingSetupCost > 0 && (
@@ -395,12 +405,14 @@ export function RecapSidebar() {
                 label="Création / BE"
                 value={brut ? beCostBrut : beCost}
                 details={formState.beTimeMinutes > 0 ? `${formState.beTimeMinutes} min` : undefined}
+                marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.be ?? 1} override={beMarginOverride} onChange={setBeMarginOverride} /> : undefined}
               />
               {formState.batTimeMinutes > 0 && (
                 <CostRow
                   label="↳ BAT"
                   value={brut ? batCostBrut : batCost}
                   details={`${formState.batTimeMinutes} min`}
+                  marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.bat ?? 1} override={batMarginOverride} onChange={setBatMarginOverride} /> : undefined}
                 />
               )}
             </>
@@ -409,7 +421,12 @@ export function RecapSidebar() {
           {/* ── Sections communes ── */}
           {hasFaconnage && (
             <>
-              <CostRow label="Façonnage" value={brut ? assemblyCostBrut : assemblyCost} details={getAssemblyDetails()} />
+              <CostRow
+                label="Façonnage"
+                value={brut ? assemblyCostBrut : assemblyCost}
+                details={getAssemblyDetails()}
+                marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.assembly ?? 1} override={assemblyMarginOverride} onChange={setAssemblyMarginOverride} /> : undefined}
+              />
               {selectedConsumables.length > 0 && (
                 <CostRow label="Consommables" value={consumablesCost} details={`${selectedConsumables.length} ref(s)`} />
               )}
@@ -417,7 +434,12 @@ export function RecapSidebar() {
           )}
 
           {hasConditionnement && (
-            <CostRow label="Conditionnement" value={brut ? packagingCostBrut : packagingCost} details={getPackDetails()} />
+            <CostRow
+              label="Conditionnement"
+              value={brut ? packagingCostBrut : packagingCost}
+              details={getPackDetails()}
+              marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.conditioning ?? 1} override={conditioningMarginOverride} onChange={setConditioningMarginOverride} /> : undefined}
+            />
           )}
 
           {hasAccessoires && (
@@ -442,7 +464,11 @@ export function RecapSidebar() {
                     <MargeCoeffEditor value={1} override={packagingMargePercent} onChange={setPackagingMargePercent} />
                   ) : undefined}
                 />
-                <CostRow label="Emballage (découpe)" value={brut ? packagingEmbCuttingCostBrut : packagingEmbCuttingCost * packagingMarginMultiplier} />
+                <CostRow
+                  label="Emballage (découpe)"
+                  value={brut ? packagingEmbCuttingCostBrut : packagingEmbCuttingCost * packagingMarginMultiplier}
+                  marginEditor={!brut ? <MargeCoeffEditor value={hourlyCoeffs?.packagingCutting ?? 1} override={packagingCuttingMarginOverride} onChange={setPackagingCuttingMarginOverride} /> : undefined}
+                />
               </>
             )
           })()}

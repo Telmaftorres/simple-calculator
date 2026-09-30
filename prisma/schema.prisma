@@ -406,6 +406,15 @@ model Quote {
   inkMarginVarnishOverride           Float             @default(0)
   inkMarginFlatColorOverride         Float             @default(0)
   transportMarginOverride            Float             @default(0)
+  printMarginOverride                Float             @default(0)
+  cuttingMarginOverride              Float             @default(0)
+  assemblyMarginOverride             Float             @default(0)
+  conditioningMarginOverride         Float             @default(0)
+  packagingCuttingMarginOverride     Float             @default(0)
+  beMarginOverride                   Float             @default(0)
+  batMarginOverride                  Float             @default(0)
+  varnishType                        String?
+  platesPerTray                      Int               @default(1)
   isMultiProduct                     Boolean           @default(false)
   plvQuantity                        Int?              // Nombre de PLV (mode multi-produit) — base pour façonnage, conditionnement, transport
   products                           QuoteProduct[]

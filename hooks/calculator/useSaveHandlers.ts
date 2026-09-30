@@ -78,6 +78,15 @@ export interface SaveContext {
   inkMarginVarnishOverride: number
   inkMarginFlatColorOverride: number
   transportMarginOverride: number
+  printMarginOverride: number
+  cuttingMarginOverride: number
+  assemblyMarginOverride: number
+  conditioningMarginOverride: number
+  packagingCuttingMarginOverride: number
+  beMarginOverride: number
+  batMarginOverride: number
+  varnishType: 'gloss' | 'semi_gloss' | 'matte' | null
+  platesPerTray: number
   hasBE: boolean
   beTimeMinutes: number
   batTimeMinutes: number
@@ -248,6 +257,15 @@ export function useSaveHandlers(ctx: SaveContext) {
         inkMarginVarnishOverride: ctx.inkMarginVarnishOverride,
         inkMarginFlatColorOverride: ctx.inkMarginFlatColorOverride,
         transportMarginOverride: ctx.transportMarginOverride,
+        printMarginOverride: ctx.printMarginOverride,
+        cuttingMarginOverride: ctx.cuttingMarginOverride,
+        assemblyMarginOverride: ctx.assemblyMarginOverride,
+        conditioningMarginOverride: ctx.conditioningMarginOverride,
+        packagingCuttingMarginOverride: ctx.packagingCuttingMarginOverride,
+        beMarginOverride: ctx.beMarginOverride,
+        batMarginOverride: ctx.batMarginOverride,
+        varnishType: ctx.varnishType,
+        platesPerTray: ctx.platesPerTray,
         hasBE: ctx.hasBE,
         beTimeMinutes: ctx.beTimeMinutes,
         batTimeMinutes: ctx.batTimeMinutes,

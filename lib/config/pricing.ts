@@ -21,6 +21,17 @@ export const PRINT_SPEED_PRODUCTION = 1
 export const PRINT_SPEED_QUALITY = 2
 export const PRINT_SPEED_VARNISH = 1.5
 export const PRINT_SPEED_FLAT_COLOR = 1.5
+// Formule temps machine atelier (voir lib/calculation/printing-time.ts)
+export const PRINT_FIXED_TIME_SEC = 11.6
+export const PRINT_X_SEC_PER_MM = 0.01107
+export const PRINT_Y_SEC_PER_MM = 0.08266
+export const PRINT_TRAY_GAP_MM = 50
+export const PRINT_MODE_COEF_PRODUCTION = 1
+export const PRINT_MODE_COEF_QUALITY = 2
+export const PRINT_COEF_WHITE = 2.4
+export const PRINT_COEF_VARNISH_GLOSS = 1.8
+export const PRINT_COEF_VARNISH_SEMI_GLOSS = 1.75
+export const PRINT_COEF_VARNISH_MATTE = 2.2
 export const INK_COST_PER_LITER = 95
 export const INK_COST_VARNISH_PER_LITER = 120
 export const INK_COST_FLAT_COLOR_PER_LITER = 120

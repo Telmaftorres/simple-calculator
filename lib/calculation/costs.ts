@@ -58,7 +58,7 @@ const B_EB_PRICE_DEFAULTS: Record<string, number> = {
   PACKAGING_EB_GRAND_PRICE,
 }
 import { calculateImposition } from '@/lib/calculation/imposition'
-import { computePrintingMachineTimeMin } from '@/lib/calculation/printing-time'
+import { computePrintingTimeBreakdown } from '@/lib/calculation/printing-time'
 import type {
   ImpositionResult,
   SelectedAccessory,
@@ -96,6 +96,8 @@ export function calculateCosts(params: {
   isRectoVerso: boolean
   hasVarnish: boolean
   hasFlatColor: boolean
+  varnishType?: string | null
+  platesPerTray?: number | null
   hasDossierFee?: boolean
   hasFournituresEmb?: boolean
   hasPalette?: boolean
@@ -148,6 +150,13 @@ export function calculateCosts(params: {
   inkMarginVarnishOverride?: number
   inkMarginFlatColorOverride?: number
   transportMarginOverride?: number
+  printMarginOverride?: number
+  cuttingMarginOverride?: number
+  assemblyMarginOverride?: number
+  conditioningMarginOverride?: number
+  packagingCuttingMarginOverride?: number
+  beMarginOverride?: number
+  batMarginOverride?: number
 }) {
   const {
     quantity,
@@ -161,6 +170,8 @@ export function calculateCosts(params: {
     isRectoVerso,
     hasVarnish,
     hasFlatColor,
+    varnishType = null,
+    platesPerTray = 1,
     printSetupType,
     cuttingSetupType,
     hasImpression,
@@ -210,15 +221,22 @@ export function calculateCosts(params: {
     inkMarginVarnishOverride,
     inkMarginFlatColorOverride,
     transportMarginOverride,
+    printMarginOverride,
+    cuttingMarginOverride,
+    assemblyMarginOverride,
+    conditioningMarginOverride,
+    packagingCuttingMarginOverride,
+    beMarginOverride,
+    batMarginOverride,
   } = params
 
-  const hourlyRatePrint = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
-  const hourlyRateAssembly = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
-  const hourlyRatePackaging = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
-  const hourlyRateBE = settings?.HOURLY_RATE_BE ?? HOURLY_RATE_BE
-  const hourlyRateBAT = settings?.HOURLY_RATE_BAT ?? HOURLY_RATE_BAT
-  const hourlyRateConditioning = settings?.HOURLY_RATE_CONDITIONING ?? HOURLY_RATE_CONDITIONING
-  const hourlyRateCutting = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
+  const hourlyRatePrintBase = settings?.HOURLY_RATE_PRINT ?? HOURLY_RATE_PRINT
+  const hourlyRateAssemblyBase = settings?.HOURLY_RATE_ASSEMBLY ?? HOURLY_RATE_ASSEMBLY
+  const hourlyRatePackagingBase = settings?.HOURLY_RATE_PACKAGING ?? HOURLY_RATE_PACKAGING
+  const hourlyRateBEBase = settings?.HOURLY_RATE_BE ?? HOURLY_RATE_BE
+  const hourlyRateBATBase = settings?.HOURLY_RATE_BAT ?? HOURLY_RATE_BAT
+  const hourlyRateConditioningBase = settings?.HOURLY_RATE_CONDITIONING ?? HOURLY_RATE_CONDITIONING
+  const hourlyRateCuttingBase = settings?.HOURLY_RATE_CUTTING ?? HOURLY_RATE_CUTTING
   // ── Taux horaires coûtants (brut) ──
   const hourlyRatePrintCost = settings?.HOURLY_RATE_PRINT_COST ?? HOURLY_RATE_PRINT_COST
   const hourlyRateCuttingCost = settings?.HOURLY_RATE_CUTTING_COST ?? HOURLY_RATE_CUTTING_COST
@@ -227,6 +245,26 @@ export function calculateCosts(params: {
   const hourlyRatePackagingCost = settings?.HOURLY_RATE_PACKAGING_COST ?? HOURLY_RATE_PACKAGING_COST
   const hourlyRateBECost = settings?.HOURLY_RATE_BE_COST ?? HOURLY_RATE_BE_COST
   const hourlyRateBATCost = settings?.HOURLY_RATE_BAT_COST ?? HOURLY_RATE_BAT_COST
+  // Coefficient de marge des postes au taux horaire (taux margé ÷ taux brut) : surcharge possible
+  // par devis dans le récap Margé → taux margé effectif = taux brut × coefficient.
+  const withCoeff = (base: number, cost: number, coeff?: number) => ((coeff ?? 0) > 0 ? cost * coeff! : base)
+  const hourlyRatePrint = withCoeff(hourlyRatePrintBase, hourlyRatePrintCost, printMarginOverride)
+  const hourlyRateCutting = withCoeff(hourlyRateCuttingBase, hourlyRateCuttingCost, cuttingMarginOverride)
+  const hourlyRateAssembly = withCoeff(hourlyRateAssemblyBase, hourlyRateAssemblyCost, assemblyMarginOverride)
+  const hourlyRateConditioning = withCoeff(hourlyRateConditioningBase, hourlyRateConditioningCost, conditioningMarginOverride)
+  const hourlyRatePackaging = withCoeff(hourlyRatePackagingBase, hourlyRatePackagingCost, packagingCuttingMarginOverride)
+  const hourlyRateBE = withCoeff(hourlyRateBEBase, hourlyRateBECost, beMarginOverride)
+  const hourlyRateBAT = withCoeff(hourlyRateBATBase, hourlyRateBATCost, batMarginOverride)
+  const ratio = (a: number, b: number) => (b > 0 ? a / b : 0)
+  const hourlyCoeffs = {
+    print: ratio(hourlyRatePrint, hourlyRatePrintCost),
+    cutting: ratio(hourlyRateCutting, hourlyRateCuttingCost),
+    assembly: ratio(hourlyRateAssembly, hourlyRateAssemblyCost),
+    conditioning: ratio(hourlyRateConditioning, hourlyRateConditioningCost),
+    packagingCutting: ratio(hourlyRatePackaging, hourlyRatePackagingCost),
+    be: ratio(hourlyRateBE, hourlyRateBECost),
+    bat: ratio(hourlyRateBAT, hourlyRateBATCost),
+  }
   const inkCostPerLiter = settings?.INK_COST_PER_LITER ?? INK_COST_PER_LITER
   const inkCostVarnishPerLiter = settings?.INK_COST_VARNISH_PER_LITER ?? INK_COST_VARNISH_PER_LITER
   const inkCostFlatColorPerLiter = settings?.INK_COST_FLAT_COLOR_PER_LITER ?? INK_COST_FLAT_COLOR_PER_LITER
@@ -336,7 +374,7 @@ export function calculateCosts(params: {
       + varnishVolumeL * inkCostVarnishPerLiter
       + flatColorVolumeL * inkCostFlatColorPerLiter
 
-    const autoMachineTimeMin = computePrintingMachineTimeMin({
+    const timeBreakdown = computePrintingTimeBreakdown({
       plateWidthMm: selectedPlate.width,
       plateHeightMm: selectedPlate.height,
       platesCount: platesNeeded,
@@ -344,8 +382,13 @@ export function calculateCosts(params: {
       isRectoVerso,
       hasVarnish,
       hasFlatColor,
+      varnishType,
+      varnishSurfacePercent,
+      flatColorSurfacePercent,
+      platesPerTray,
       settings,
     })
+    const autoMachineTimeMin = timeBreakdown.totalMin
     const machineTimeMin = (machineTimeMinOverride != null && machineTimeMinOverride > 0)
       ? machineTimeMinOverride
       : autoMachineTimeMin
@@ -371,6 +414,7 @@ export function calculateCosts(params: {
       inkCostRaw,
       machineCostBrut,
       costBrut: inkCostRaw + machineCostBrut + setupCost,
+      timeBreakdown,
     }
   })()
 
@@ -657,6 +701,7 @@ const prototypeFeeCost = modePrototype ? prototypeForfait : 0
     inkMarginStandard,
     inkMarginVarnish,
     inkMarginFlatColor,
+    hourlyCoeffs,
     accessoriesMargePercent: accessoriesMargePercent ?? 0,
     packagingMargePercent: packagingMargePercent ?? 0,
     // ── Brut (coût de revient, hors marge) ──

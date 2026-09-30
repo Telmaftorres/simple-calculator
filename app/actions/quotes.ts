@@ -498,7 +498,9 @@ export async function getQuoteDetail(id: number) {
       ? computePrintingMachineTimeMin({
           plateWidthMm: plateW, plateHeightMm: plateH, platesCount: quote.platesCount,
           printMode: quote.printMode, isRectoVerso: quote.isRectoVerso,
-          hasVarnish: quote.hasVarnish, hasFlatColor: quote.hasFlatColor, settings,
+          hasVarnish: quote.hasVarnish, hasFlatColor: quote.hasFlatColor,
+          varnishType: quote.varnishType, varnishSurfacePercent: quote.varnishSurfacePercent,
+          flatColorSurfacePercent: quote.flatColorSurfacePercent, platesPerTray: quote.platesPerTray, settings,
         })
       : quote.printingMachineTimeMin,
     amalgameRuns: quote.amalgameRuns.map(r =>
@@ -508,7 +510,8 @@ export async function getQuoteDetail(id: number) {
             printingMachineTimeMin: computePrintingMachineTimeMin({
               plateWidthMm: r.plate.width, plateHeightMm: r.plate.height, platesCount: r.platesCount,
               printMode: r.printMode, isRectoVerso: r.isRectoVerso,
-              hasVarnish: r.hasVarnish, hasFlatColor: r.hasFlatColor, settings,
+              hasVarnish: r.hasVarnish, hasFlatColor: r.hasFlatColor,
+              varnishSurfacePercent: r.varnishSurfacePercent, flatColorSurfacePercent: r.flatColorSurfacePercent, settings,
             }),
           }
         : r

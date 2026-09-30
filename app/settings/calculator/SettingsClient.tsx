@@ -45,6 +45,18 @@ const FORMULAS: Record<string, {
       return `(${setup} min / 60) × ${rate} €/h = ${result.toFixed(2)} €`
     },
   },
+  PRINT_FIXED_TIME_SEC: {
+    usedIn: ['Impression (temps machine)'],
+    formula: 'plateau_s = temps_fixe + (X × n + écart × (n−1)) × vitesse_X + Y × vitesse_Y) × (mode + coef_blanc × % + coef_vernis × %) ; par plaque = plateau_s ÷ n ÷ 60',
+    getExample: (v) => {
+      const f = parseFloat(v.PRINT_FIXED_TIME_SEC) || 0
+      const kx = parseFloat(v.PRINT_X_SEC_PER_MM) || 0
+      const ky = parseFloat(v.PRINT_Y_SEC_PER_MM) || 0
+      const base = 2100 * kx + 1700 * ky
+      const tray = f + base * 1
+      return `2100 × 1700 mm, 1 plaque, Production : ${f} s + ${base.toFixed(1)} s × 1 = ${tray.toFixed(1)} s → ${(tray / 60).toFixed(2)} min / plaque`
+    },
+  },
   PRINT_SPEED_PRODUCTION: {
     usedIn: ['Impression (temps machine) — mode Production'],
     formula: 'temps_machine_min = min_par_m² × surface_plaque_m² × multiplicateur × nb_plaques',
@@ -406,10 +418,21 @@ const CATEGORIES: {
         keys: [
           'HOURLY_RATE_PRINT',
           'HOURLY_RATE_PRINT_COST',
-          'PRINT_SPEED_PRODUCTION',
-          'PRINT_SPEED_QUALITY',
-          'PRINT_SPEED_VARNISH',
-          'PRINT_SPEED_FLAT_COLOR',
+        ],
+      },
+      {
+        label: 'Temps machine (formule atelier)',
+        keys: [
+          'PRINT_FIXED_TIME_SEC',
+          'PRINT_X_SEC_PER_MM',
+          'PRINT_Y_SEC_PER_MM',
+          'PRINT_TRAY_GAP_MM',
+          'PRINT_MODE_COEF_PRODUCTION',
+          'PRINT_MODE_COEF_QUALITY',
+          'PRINT_COEF_WHITE',
+          'PRINT_COEF_VARNISH_GLOSS',
+          'PRINT_COEF_VARNISH_SEMI_GLOSS',
+          'PRINT_COEF_VARNISH_MATTE',
         ],
       },
       {
@@ -635,6 +658,17 @@ const COLOR_MAP: Record<string, {
 
 type Colors = typeof COLOR_MAP[string]
 
+// Taux brut (coût réel) → taux margé : le coefficient = margé ÷ brut, éditable juste sous le taux brut
+const HOURLY_COEFF_PAIRS: Record<string, string> = {
+  HOURLY_RATE_PRINT_COST: 'HOURLY_RATE_PRINT',
+  HOURLY_RATE_CUTTING_COST: 'HOURLY_RATE_CUTTING',
+  HOURLY_RATE_ASSEMBLY_COST: 'HOURLY_RATE_ASSEMBLY',
+  HOURLY_RATE_CONDITIONING_COST: 'HOURLY_RATE_CONDITIONING',
+  HOURLY_RATE_PACKAGING_COST: 'HOURLY_RATE_PACKAGING',
+  HOURLY_RATE_BE_COST: 'HOURLY_RATE_BE',
+  HOURLY_RATE_BAT_COST: 'HOURLY_RATE_BAT',
+}
+
 function SettingRowContent({
   setting,
   formula,
@@ -742,6 +776,7 @@ export function SettingsClient({
   const [saving, setSaving] = useState<string | null>(null)
   const [expandedFormulas, setExpandedFormulas] = useState<Record<string, boolean>>({})
   const [showDegressifs, setShowDegressifs] = useState(false)
+  const [coeffDrafts, setCoeffDrafts] = useState<Record<string, string>>({})
 
   const settingsMap = Object.fromEntries(settings.map((s) => [s.key, s]))
 
@@ -793,6 +828,58 @@ export function SettingsClient({
   const baseSettings = categorySettings.filter((s) => !DEGRESSIVE_KEYS.has(s.key))
   const degressiveSettings = categorySettings.filter((s) => DEGRESSIVE_KEYS.has(s.key))
 
+  const renderCoeffRow = (costKey: string) => {
+    const margeKey = HOURLY_COEFF_PAIRS[costKey]
+    if (!margeKey || !settingsMap[margeKey]) return null
+    const cost = parseFloat(values[costKey]) || 0
+    const marge = parseFloat(values[margeKey]) || 0
+    const computed = cost > 0 ? (marge / cost).toFixed(2) : ''
+    const draft = coeffDrafts[costKey]
+    return (
+      <div className="flex items-center gap-4 mt-3">
+        <div className="flex-1 min-w-0">
+          <label className="text-sm font-medium text-slate-700 block">Coefficient de marge</label>
+          <p className="text-xs text-slate-400">Taux margé = taux brut × coeff ({marge.toFixed(2)} €/h)</p>
+        </div>
+        <div className="flex items-center gap-2 shrink-0">
+          <Input
+            type="number"
+            step="0.01"
+            min="0"
+            value={draft ?? computed}
+            disabled={cost <= 0}
+            onChange={(e) => {
+              const raw = e.target.value
+              setCoeffDrafts((prev) => ({ ...prev, [costKey]: raw }))
+              const coeff = parseFloat(raw)
+              if (coeff > 0 && cost > 0) {
+                setValues((prev) => ({ ...prev, [margeKey]: String(Math.round(cost * coeff * 100) / 100) }))
+              }
+            }}
+            className="w-28 text-right"
+          />
+          <span className="text-sm text-slate-500 w-14 shrink-0">×</span>
+          <Button
+            size="icon"
+            variant="ghost"
+            className="text-emerald-600 hover:text-emerald-700 hover:bg-emerald-50"
+            onClick={async () => {
+              await handleSave(margeKey)
+              setCoeffDrafts((prev) => {
+                const next = { ...prev }
+                delete next[costKey]
+                return next
+              })
+            }}
+            disabled={saving === margeKey || cost <= 0}
+          >
+            <Save className="h-4 w-4" />
+          </Button>
+        </div>
+      </div>
+    )
+  }
+
   const renderSettingRow = (setting: (typeof categorySettings)[number], index: number, total: number) => {
     const formula = FORMULAS[setting.key]
     const isExpanded = expandedFormulas[setting.key]
@@ -809,6 +896,7 @@ export function SettingsClient({
           onValueChange={(val) => setValues((prev) => ({ ...prev, [setting.key]: val }))}
           onSave={() => handleSave(setting.key)}
         />
+        {renderCoeffRow(setting.key)}
       </div>
     )
   }
