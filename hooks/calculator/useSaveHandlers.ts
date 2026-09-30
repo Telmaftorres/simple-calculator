@@ -432,6 +432,14 @@ export function useSaveHandlers(ctx: SaveContext) {
 
       setScreenState('success')
       setTimeout(() => setScreenState('recap'), 3000)
+      // Raccourci vers la fiche de prod du devis qu'on vient d'enregistrer (nouvel onglet)
+      toast.success('Devis enregistré', {
+        duration: 15000,
+        action: {
+          label: 'Fiche de prod',
+          onClick: () => window.open(`/dashboard/my-quotes/${quote.id}?tab=production`, '_blank'),
+        },
+      })
     } catch (error: unknown) {
       const knownMessages: Record<string, string> = {
         'Non autorisé': 'Vous devez être connecté pour enregistrer un devis.',
