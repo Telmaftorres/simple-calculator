@@ -125,7 +125,10 @@ const s = StyleSheet.create({
   miniCellMid: { fontSize: 8, color: C.mid },
   miniCellBold: { fontSize: 8, fontFamily: 'Helvetica-Bold' },
   // Zone tracé
-  traceBox: { width: 130, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 4, backgroundColor: '#f8fafc' },
+  // Colonne de droite : tableau produits puis tracé en dessous, sur toute la largeur
+  rightCol: { flex: 1, flexDirection: 'column', gap: 8 },
+  traceSide: { width: 130, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 4, backgroundColor: '#f8fafc' },
+  traceBox: { height: 190, borderWidth: 1, borderColor: '#cbd5e1', borderRadius: 4, backgroundColor: '#f8fafc' },
   traceLabel: { fontSize: 6.5, fontFamily: 'Helvetica-Bold', color: C.light, letterSpacing: 0.8, textAlign: 'center', paddingTop: 5 },
   // Ops communes
   opsSection: { marginTop: 6 },
@@ -239,6 +242,9 @@ function PageHeader({ quote, tag }: { quote: Q; tag: string }) {
 export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; productionSheet: PS }) {
   const runs = quote.amalgameRuns ?? []
   const standaloneProducts = quote.products.filter(p => p.amalgameGroupIndex === null)
+  // Un seul bloc (produit simple) : tracé sous le tableau produits, sur toute la largeur.
+  // Plusieurs blocs : tracé à droite, sinon la page déborde.
+  const traceBelow = runs.length + standaloneProducts.length <= 1
   const qty = quote.plvQuantity ?? quote.quantity
 
   const totalPlates = runs.reduce((sum, r) => sum + (r.platesCount ?? 0), 0) +
@@ -324,7 +330,8 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                       {run.hasImpression && !run.isRectoVerso && <SpecRow label="Impression" value="Recto seul" barColor={col.bar} last />}
                     </View>
                   </View>
-                  <View style={s.miniTable}>
+                  <View style={s.rightCol}>
+                  <View style={[s.miniTable, { alignSelf: 'stretch', flexGrow: 0, flexShrink: 0, flexBasis: 'auto' }]}>
                     <View style={s.miniHead}>
                       <Text style={[s.miniHCell, { flex: 2.5 }]}>PRODUIT</Text>
                       <Text style={[s.miniHCell, { flex: 1.8 }]}>FORMAT A PLAT</Text>
@@ -340,9 +347,17 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                       </View>
                     ))}
                   </View>
-                  <View style={s.traceBox}>
-                    <Text style={s.traceLabel}>TRACE / GABARIT</Text>
+                  {traceBelow && (
+                    <View style={s.traceBox}>
+                      <Text style={s.traceLabel}>TRACE / GABARIT</Text>
+                    </View>
+                  )}
                   </View>
+                  {!traceBelow && (
+                    <View style={s.traceSide}>
+                      <Text style={s.traceLabel}>TRACE / GABARIT</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             )
@@ -369,10 +384,18 @@ export function ProductionSheetPDFE({ quote, productionSheet: ps }: { quote: Q; 
                       <SpecRow label="Quantite" value={`${p.quantity} ex`} barColor={col.bar} last />
                     </View>
                   </View>
-                  <View style={{ flex: 1 }} />
-                  <View style={s.traceBox}>
-                    <Text style={s.traceLabel}>TRACE / GABARIT</Text>
+                  <View style={s.rightCol}>
+                    {traceBelow && (
+                      <View style={s.traceBox}>
+                        <Text style={s.traceLabel}>TRACE / GABARIT</Text>
+                      </View>
+                    )}
                   </View>
+                  {!traceBelow && (
+                    <View style={s.traceSide}>
+                      <Text style={s.traceLabel}>TRACE / GABARIT</Text>
+                    </View>
+                  )}
                 </View>
               </View>
             )
