@@ -17,10 +17,21 @@ export const PACK30_RATES = {
   CORSE: [75.60, 83.29, 104.06, 111.76, 130.89],
 } // tranches: 0-4, 5-9, 10-14, 15-19, 20-30 kg
 
-export function getPack30Rate(department: string, weightKg: number): number | null {
+// PACK 30 — Validité 01/01/2027 - 31/12/2027 (réf. LY30K50 - 01/10/2026), mêmes zones
+export const PACK30_RATES_2027 = {
+  Z01:   [10.49, 13.09, 15.72, 18.32, 20.91],
+  Z02:   [13.51, 16.79, 20.06, 23.35, 26.63],
+  CORSE: [81.60, 89.91, 112.33, 120.64, 141.29],
+}
+
+// Les grilles 2027 s'appliquent automatiquement à partir du 1er janvier 2027
+export const GEODIS_2027_START = new Date('2027-01-01T00:00:00')
+const is2027 = (date: Date) => date.getTime() >= GEODIS_2027_START.getTime()
+
+export function getPack30Rate(department: string, weightKg: number, date: Date = new Date()): number | null {
   if (weightKg > 30) return null
   const zone = PACK30_ZONES[department] ?? 'Z02'
-  const rates = PACK30_RATES[zone]
+  const rates = (is2027(date) ? PACK30_RATES_2027 : PACK30_RATES)[zone]
   const weight = Math.ceil(weightKg)
   if (weight <= 4)  return rates[0]
   if (weight <= 9)  return rates[1]
@@ -43,7 +54,7 @@ export const MESSAGERIE_ZONES: Record<string, string> = {
   '14': 'Z02', '27': 'Z02', '60': 'Z02', '80': 'Z02',
   '02': 'Z03', '28': 'Z03', '59': 'Z03', '61': 'Z03', '62': 'Z03',
   '10': 'Z04', '35': 'Z04', '37': 'Z04', '41': 'Z04', '45': 'Z04',
-  '49': 'Z04', '51': 'Z04', '53': 'Z04', '72': 'Z04', '75': 'Z04',
+  '49': 'Z04', '50': 'Z04', '51': 'Z04', '53': 'Z04', '72': 'Z04', '75': 'Z04',
   '77': 'Z04', '78': 'Z04', '91': 'Z04', '92': 'Z04', '93': 'Z04',
   '94': 'Z04', '95': 'Z04',
   '08': 'Z05', '18': 'Z05', '22': 'Z05', '36': 'Z05', '44': 'Z05',
@@ -80,10 +91,26 @@ export const MESSAGERIE_RATES: Record<string, number[]> = {
   CORSE: [91.11, 104.44, 130.78, 144.09, 168.78, 189.60, 213.68, 234.48, 248.74, 266.29, 282.23, 289.98, 289.98, 282.30, 275.05, 268.14],
 }
 
-export function getMessagerieRate(department: string, weightKg: number): number | null {
+// MESSAGERIE PLUS — Validité 01/01/2027 - 31/12/2027 (réf. KY30K50 - 01/10/2026), mêmes zones
+export const MESSAGERIE_RATES_2027: Record<string, number[]> = {
+  Z01:   [9.25,  10.13, 10.99, 11.85, 12.71, 15.29, 17.85, 19.42, 21.00, 22.55, 24.10, 25.68, 25.68, 24.39, 23.18, 22.02],
+  Z02:   [15.48, 17.44, 19.41, 21.37, 23.33, 25.95, 28.55, 31.18, 33.79, 36.40, 39.01, 41.63, 41.63, 39.54, 37.57, 35.69],
+  Z03:   [17.02, 19.79, 22.53, 25.28, 28.03, 31.64, 35.25, 38.85, 42.47, 46.09, 49.67, 53.27, 53.27, 50.62, 48.09, 45.68],
+  Z04:   [18.21, 21.32, 24.42, 27.51, 30.64, 34.66, 38.68, 42.70, 46.72, 50.73, 54.76, 58.78, 58.78, 55.85, 53.05, 50.38],
+  Z05:   [19.40, 22.77, 26.18, 29.57, 32.95, 37.24, 41.51, 45.78, 50.05, 54.33, 58.60, 62.89, 62.89, 59.75, 56.75, 53.92],
+  Z06:   [20.57, 24.33, 28.08, 31.83, 35.60, 40.14, 44.64, 49.17, 53.71, 58.23, 62.76, 67.29, 67.29, 63.92, 60.72, 57.69],
+  Z07:   [21.48, 25.72, 29.96, 34.20, 38.45, 43.16, 47.85, 52.54, 57.24, 61.92, 66.62, 71.32, 71.32, 67.76, 64.37, 61.15],
+  Z08:   [21.62, 26.49, 31.38, 36.26, 41.14, 45.95, 50.78, 55.60, 60.43, 65.26, 70.05, 74.89, 74.89, 71.14, 67.59, 64.22],
+  Z09:   [21.75, 27.31, 32.89, 38.45, 44.02, 48.96, 53.91, 58.86, 63.80, 68.74, 73.68, 78.63, 78.63, 74.70, 70.98, 67.41],
+  Z10:   [21.89, 28.19, 34.50, 40.80, 47.10, 52.16, 57.24, 62.30, 67.36, 72.43, 77.49, 82.57, 82.57, 78.44, 74.52, 70.79],
+  Z11:   [22.04, 29.00, 35.97, 42.95, 49.92, 55.18, 60.43, 65.70, 70.93, 76.19, 81.44, 86.69, 86.69, 82.36, 78.24, 74.32],
+  CORSE: [98.34, 112.74, 141.16, 155.54, 182.18, 204.66, 230.65, 253.10, 268.49, 287.44, 304.64, 313.01, 313.01, 304.72, 296.90, 289.44],
+}
+
+export function getMessagerieRate(department: string, weightKg: number, date: Date = new Date()): number | null {
   if (weightKg > 1000) return null
   const zone = MESSAGERIE_ZONES[department] ?? 'Z06' // fallback zone médiane
-  const rates = MESSAGERIE_RATES[zone]
+  const rates = (is2027(date) ? MESSAGERIE_RATES_2027 : MESSAGERIE_RATES)[zone]
 
   if (weightKg <= 99) {
     // Forfait, arrondi au kg supérieur
